@@ -1,0 +1,219 @@
+[
+  {
+    "id": "v47-umbrella-001",
+    "sku": "V47-UMBRELLA-001",
+    "slug": "v47-umbrella-001",
+    "name": "Dù trong suốt phong cách Nhật",
+    "category": "accessories",
+    "subcategory": "umbrella",
+    "price": 179000,
+    "originalPrice": 229000,
+    "discountPercent": 22,
+    "image": "https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=umbrella+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=umbrella+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=umbrella+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Trong suốt",
+      "Trắng"
+    ],
+    "fit": "cầm tay",
+    "visualTags": [
+      "umbrella",
+      "rainy",
+      "japan",
+      "transparent",
+      "cute"
+    ],
+    "description": "Dù trong suốt dùng làm phụ kiện phối outfit khi chụp ngoài trời.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  },
+  {
+    "id": "v47-headscarf-002",
+    "sku": "V47-HEADSCARF-002",
+    "slug": "v47-headscarf-002",
+    "name": "Khăn trùm đầu lụa pastel",
+    "category": "accessories",
+    "subcategory": "headscarf",
+    "price": 129000,
+    "originalPrice": 169000,
+    "discountPercent": 24,
+    "image": "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=headscarf+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=headscarf+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=headscarf+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Hồng pastel",
+      "Kem"
+    ],
+    "fit": "lụa nhẹ",
+    "visualTags": [
+      "headscarf",
+      "scarf",
+      "pastel",
+      "soft",
+      "feminine"
+    ],
+    "description": "Khăn trùm đầu/khăn lụa nhẹ phối với váy, áo croptop hoặc outfit đi biển.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  },
+  {
+    "id": "v47-earrings-pearl-003",
+    "sku": "V47-EARRINGS-PEARL-003",
+    "slug": "v47-earrings-pearl-003",
+    "name": "Bông tai ngọc trai nhỏ",
+    "category": "accessories",
+    "subcategory": "earrings",
+    "price": 89000,
+    "originalPrice": 119000,
+    "discountPercent": 25,
+    "image": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=earrings+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=earrings+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=earrings+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Trắng ngọc trai"
+    ],
+    "fit": "nhỏ gọn",
+    "visualTags": [
+      "earrings",
+      "pearl",
+      "elegant",
+      "small"
+    ],
+    "description": "Bông tai nhỏ giúp outfit thanh lịch hơn, hợp sơ mi, cardigan, váy.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  },
+  {
+    "id": "v47-belt-brown-004",
+    "sku": "V47-BELT-BROWN-004",
+    "slug": "v47-belt-brown-004",
+    "name": "Thắt lưng nâu basic",
+    "category": "accessories",
+    "subcategory": "belt",
+    "price": 99000,
+    "originalPrice": 139000,
+    "discountPercent": 29,
+    "image": "https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=belt+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=belt+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=belt+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Nâu",
+      "Đen"
+    ],
+    "fit": "eo 60-85cm",
+    "visualTags": [
+      "belt",
+      "brown",
+      "basic",
+      "waist"
+    ],
+    "description": "Thắt lưng dùng phối quần jeans, váy chữ A, quần ống rộng.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  },
+  {
+    "id": "v47-hairclip-ribbon-005",
+    "sku": "V47-HAIRCLIP-RIBBON-005",
+    "slug": "v47-hairclip-ribbon-005",
+    "name": "Kẹp tóc nơ đen",
+    "category": "accessories",
+    "subcategory": "hairclip",
+    "price": 59000,
+    "originalPrice": 79000,
+    "discountPercent": 25,
+    "image": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=hairclip+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=hairclip+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=hairclip+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Đen"
+    ],
+    "fit": "kẹp tóc",
+    "visualTags": [
+      "hairclip",
+      "ribbon",
+      "cute",
+      "black"
+    ],
+    "description": "Kẹp tóc nơ đen phối phong cách dễ thương, học đường, Nhật.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  },
+  {
+    "id": "v47-tote-flower-006",
+    "sku": "V47-TOTE-FLOWER-006",
+    "slug": "v47-tote-flower-006",
+    "name": "Túi tote hoa mini",
+    "category": "accessories",
+    "subcategory": "bags",
+    "price": 149000,
+    "originalPrice": 189000,
+    "discountPercent": 21,
+    "image": "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=85",
+    "images": [
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=85",
+      "https://placehold.co/900x1200/fdf2f8/be185d?text=tote+2",
+      "https://placehold.co/900x1200/ecfeff/0891b2?text=tote+3",
+      "https://placehold.co/900x1200/fff7ed/c2410c?text=tote+4"
+    ],
+    "sizes": [
+      "Free size"
+    ],
+    "colors": [
+      "Kem",
+      "Hoa nhí"
+    ],
+    "fit": "đeo vai",
+    "visualTags": [
+      "tote",
+      "bag",
+      "flower",
+      "casual",
+      "cute"
+    ],
+    "description": "Túi tote hoa mini phối với outfit đi học, cafe, du lịch nhẹ.",
+    "status": "active",
+    "stock": 50,
+    "allowTryOn": true
+  }
+]
