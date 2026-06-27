@@ -145,7 +145,7 @@ export default function CheckoutScreen() {
   const canContinue = useMemo(() => {
     if (step === "address") return !missingAddress;
     if (step === "payment") return Boolean(payment?.id);
-    return true;
+    return true;  
   }, [step, missingAddress, payment?.id]);
 
   const checkoutMeta = () => ({

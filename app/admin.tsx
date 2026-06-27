@@ -19,12 +19,29 @@ import { router } from "expo-router";
 import { useApp } from "../context/AppContext";
 import { api, uploadMediaFile } from "../lib/api";
 
+type ExtendedAdminApi = typeof api & {
+  getAdminCategories?: (adminId: string) => Promise<any>;
+  saveAdminCategory?: (adminId: string, body: any) => Promise<any>;
+  updateAdminCategory?: (adminId: string, categoryId: string, body: any) => Promise<any>;
+  deleteAdminCategory?: (adminId: string, categoryId: string) => Promise<any>;
+  updateAdminOrderStatus?: (adminId: string, orderId: string, status: string) => Promise<any>;
+  getAdminReviews?: (adminId: string) => Promise<any>;
+  deleteAdminReview?: (adminId: string, reviewId: string) => Promise<any>;
+  getAdminBanners?: (adminId: string) => Promise<any>;
+  deleteAdminBanner?: (adminId: string, bannerId: string) => Promise<any>;
+};
+
+const adminApi = api as ExtendedAdminApi;
+
+// ─── Kiểu dữ liệu theo ERD ───────────────────────────────────────────────────
+
 type AdminUser = {
   id: string;
-  name?: string;
   fullName?: string;
+  name?: string;
   email: string;
   phone?: string;
+  address?: string;
   role: "customer" | "admin";
   status?: string;
   coins?: number;
@@ -40,9 +57,9 @@ type AdminProduct = {
   productName?: string;
   status?: string;
   description?: string;
-  story?: string;
-  badge?: string;
+  categoryId?: string;
   category?: string;
+  badge?: string;
   subcategory?: string;
   price?: number;
   originalPrice?: number;
@@ -58,11 +75,98 @@ type AdminProduct = {
   stockQuantity?: number;
   visualTags?: string[];
   styleUseCase?: string;
+  story?: string;
 };
 
-type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games";
+type AdminCategory = {
+  id: string;
+  categoryId?: string;
+  categoryName?: string;
+  name?: string;
+  description?: string;
+};
 
-type NavItem = { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap; group: string; badge?: string };
+type AdminReview = {
+  id: string;
+  reviewId?: string;
+  rating?: number;
+  comment?: string;
+  userId?: string;
+  orderItemId?: string;
+  reviewDate?: string;
+  userName?: string;
+  productName?: string;
+};
+
+type AdminOrder = {
+  id: string;
+  orderId?: string;
+  orderDate?: string;
+  totalAmount?: number;
+  total?: number;
+  shippingAddress?: string;
+  orderStatus?: string;
+  status?: string;
+  paymentStatus?: string;
+  phoneNumber?: string;
+  userId?: string;
+  discountCodeId?: string;
+  paymentId?: string;
+  paymentMethod?: string;
+  createdAt?: string;
+  transactionId?: string;
+};
+
+type AdminPayment = {
+  id: string;
+  amount?: number;
+  paymentMethod?: string;
+  status?: string;
+  createdAt?: string;
+  transactionId?: string;
+  userId?: string;
+};
+
+type AdminDiscountCode = {
+  id: string;
+  code?: string;
+  title?: string;
+  discountValue?: number;
+  discountType?: string;
+  expiryDate?: string;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  status?: string;
+  active?: boolean;
+  kind?: string;
+  description?: string;
+  startsAt?: string;
+  scope?: string;
+  bannerImage?: string;
+};
+
+type TabKey =
+  | "tongquan"
+  | "thongke"
+  | "sanpham"
+  | "danhmuc"
+  | "donhang"
+  | "nguoidung"
+  | "giamgia"
+  | "danhgia"
+  | "banner";
+
+type NavItem = {
+  key: TabKey;
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  group: string;
+  badge?: string;
+};
+
+// ─── Màu sắc ─────────────────────────────────────────────────────────────────
 
 const ADMIN_GREEN = "#00A76F";
 const ADMIN_DARK = "#07140F";
@@ -75,9 +179,85 @@ const ADMIN_MUTED = "#75808A";
 const ADMIN_BLUE = "#1E88E5";
 const ADMIN_ORANGE = "#F59E0B";
 const ADMIN_RED = "#EF4444";
-const ADMIN_CARD_SHADOW = Platform.OS === "web"
-  ? ({ boxShadow: "0 10px 22px rgba(94,107,120,0.08)" } as any)
-  : { shadowColor: "#5E6B78", shadowOpacity: 0.08, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 3 };
+const ADMIN_CARD_SHADOW =
+  Platform.OS === "web"
+    ? ({ boxShadow: "0 10px 22px rgba(94,107,120,0.08)" } as any)
+    : {
+        shadowColor: "#5E6B78",
+        shadowOpacity: 0.08,
+        shadowRadius: 22,
+        shadowOffset: { width: 0, height: 10 },
+        elevation: 3,
+      };
+
+// ─── Danh sách nav theo Use Case ─────────────────────────────────────────────
+
+const navItems: NavItem[] = [
+  { key: "tongquan", label: "Tổng quan", icon: "grid", group: "BÁO CÁO" },
+  { key: "thongke", label: "Thống kê doanh thu", icon: "bar-chart-2", group: "BÁO CÁO" },
+  { key: "sanpham", label: "Quản lý sản phẩm", icon: "package", group: "THƯƠNG MẠI" },
+  { key: "danhmuc", label: "Quản lý danh mục", icon: "layers", group: "THƯƠNG MẠI" },
+  { key: "donhang", label: "Quản lý đơn hàng", icon: "shopping-bag", group: "THƯƠNG MẠI" },
+  { key: "nguoidung", label: "Quản lý người dùng", icon: "users", group: "THƯƠNG MẠI" },
+  { key: "giamgia", label: "Quản lý mã giảm giá", icon: "percent", group: "THƯƠNG MẠI" },
+  { key: "danhgia", label: "Quản lý đánh giá", icon: "star", group: "NỘI DUNG" },
+  { key: "banner", label: "Banner / Nổi bật", icon: "image", group: "NỘI DUNG" },
+];
+
+// ─── Form trống ───────────────────────────────────────────────────────────────
+
+const emptyProductForm = {
+  id: "",
+  name: "",
+  categoryId: "",
+  description: "",
+  status: "active",
+  price: "",
+  originalPrice: "",
+  discountPercent: "",
+  discountLabel: "",
+  badge: "",
+  image: "",
+  image2: "",
+  image3: "",
+  image4: "",
+  stockQuantity: "999",
+  sku: "",
+  visualTags: "",
+  styleUseCase: "",
+  sizes: "S, M, L, XL",
+  dimensions: "",
+  colors: "Đen, Trắng, Kem",
+  fit: "Regular fit",
+  story: "",
+};
+
+const emptyCategoryForm = {
+  categoryId: "",
+  categoryName: "",
+  description: "",
+};
+
+const emptyDiscountForm = {
+  code: "",
+  title: "",
+  discountType: "percent",
+  discountValue: "",
+  minOrderAmount: "",
+  maxDiscountAmount: "",
+  usageLimit: "",
+  expiryDate: "",
+  description: "",
+  status: "active",
+  kind: "voucher",
+  scope: "all",
+  bannerImage: "",
+  startsAt: "",
+};
+
+const emptyNotificationForm = { title: "", content: "" };
+
+// ─── Tiện ích ─────────────────────────────────────────────────────────────────
 
 const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=900&q=80",
@@ -88,76 +268,15 @@ const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
 ];
 
-const navItems: NavItem[] = [
-  { key: "overview", label: "Overview", icon: "grid", group: "DASHBOARDS" },
-  { key: "analytics", label: "Analytics / ML", icon: "bar-chart-2", group: "DASHBOARDS" },
-  { key: "products", label: "Products", icon: "package", group: "COMMERCE" },
-  { key: "promotions", label: "Vouchers & Sales", icon: "percent", group: "COMMERCE" },
-  { key: "users", label: "Customers", icon: "users", group: "COMMERCE" },
-  { key: "transactions", label: "Orders / Payments", icon: "credit-card", group: "COMMERCE" },
-  { key: "games", label: "Games", icon: "zap", group: "APPS" },
-];
-
-const emptyProductForm = {
-  id: "",
-  name: "",
-  price: "",
-  originalPrice: "",
-  discountPercent: "",
-  discountLabel: "",
-  badge: "",
-  image: "",
-  image2: "",
-  image3: "",
-  image4: "",
-  description: "",
-  category: "",
-  subcategory: "",
-  stockQuantity: "999",
-  sku: "",
-  visualTags: "",
-  styleUseCase: "",
-  sizes: "S, M, L, XL",
-  dimensions: "",
-  colors: "Đen, Trắng, Kem",
-  fit: "Regular fit",
-};
-
-const emptyVoucherForm = {
-  code: "",
-  title: "",
-  discountType: "percent",
-  discountValue: "",
-  minOrderValue: "",
-  expiryDate: "",
-  description: "",
-};
-
-const emptyPromotionForm = {
-  code: "",
-  title: "",
-  discountType: "percent",
-  discountValue: "",
-  minOrderValue: "",
-  startsAt: "",
-  expiryDate: "",
-  scope: "all",
-  bannerImage: "",
-  description: "",
-};
-
-const emptyNotificationForm = { title: "", content: "" };
-const emptyGameForm = { slug: "", name: "", description: "", rewardCoins: "" };
-
 function formatMoney(value: any) {
   return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 }
 
 function formatCompactMoney(value: any) {
   const n = Number(value || 0);
-  if (n >= 1_000_000_000) return `${Math.round(n / 100_000_000) / 10}Bđ`;
-  if (n >= 1_000_000) return `${Math.round(n / 100_000) / 10}Mđ`;
-  if (n >= 1000) return `${Math.round(n / 1000)}Kđ`;
+  if (n >= 1_000_000_000) return `${Math.round(n / 100_000_000) / 10}Tỷ`;
+  if (n >= 1_000_000) return `${Math.round(n / 100_000) / 10}Tr`;
+  if (n >= 1000) return `${Math.round(n / 1000)}K`;
   return `${n.toLocaleString("vi-VN")}đ`;
 }
 
@@ -175,16 +294,22 @@ function compactDate(value: any) {
 function calcDiscount(product: AdminProduct) {
   const price = Number(product.price || 0);
   const original = Number(product.originalPrice || 0);
-  if (original > price && price > 0) return Math.max(1, Math.round((1 - price / original) * 100));
+  if (original > price && price > 0)
+    return Math.max(1, Math.round((1 - price / original) * 100));
   return Number(product.discountPercent || 0);
 }
 
 function splitAdminList(value: any) {
   if (Array.isArray(value)) return value.map((x) => String(x || "").trim()).filter(Boolean);
-  return String(value || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
+  return String(value || "")
+    .split(/[\n,;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
-function adminGalleryImages(product: Partial<AdminProduct> & Record<string, any>) {
+function adminGalleryImages(
+  product: Partial<AdminProduct> & Record<string, any>
+) {
   const seen = new Set<string>();
   const gallery = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
     .map((url) => String(url || "").trim())
@@ -193,7 +318,9 @@ function adminGalleryImages(product: Partial<AdminProduct> & Record<string, any>
       seen.add(url);
       return true;
     });
-  let offset = String(product.id || product.name || product.image || "japano").length;
+  let offset = String(
+    product.id || product.name || product.image || "japano"
+  ).length;
   while (gallery.length < 4) {
     const fallback = ADMIN_FALLBACK_IMAGES[offset % ADMIN_FALLBACK_IMAGES.length];
     if (!seen.has(fallback)) {
@@ -210,6 +337,9 @@ function toProductForm(product: AdminProduct) {
   return {
     id: product.id || "",
     name: product.name || product.productName || "",
+    categoryId: product.categoryId || product.category || "",
+    description: product.description || "",
+    status: product.status || "active",
     price: String(product.price || 0),
     originalPrice: String(product.originalPrice || ""),
     discountPercent: String(product.discountPercent || ""),
@@ -219,17 +349,21 @@ function toProductForm(product: AdminProduct) {
     image2: gallery[1] || "",
     image3: gallery[2] || "",
     image4: gallery[3] || "",
-    description: product.description || "",
-    category: product.category || "",
-    subcategory: product.subcategory || "",
     stockQuantity: String(product.stockQuantity ?? 999),
     sku: product.sku || "",
-    visualTags: Array.isArray(product.visualTags) ? product.visualTags.join(", ") : "",
+    visualTags: Array.isArray(product.visualTags)
+      ? product.visualTags.join(", ")
+      : "",
     styleUseCase: product.styleUseCase || "",
-    sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "S, M, L, XL",
+    sizes: Array.isArray(product.sizes)
+      ? product.sizes.join(", ")
+      : "S, M, L, XL",
     dimensions: product.dimensions || "",
-    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "Đen, Trắng, Kem",
+    colors: Array.isArray(product.colors)
+      ? product.colors.join(", ")
+      : "Đen, Trắng, Kem",
     fit: product.fit || "Regular fit",
+    story: product.story || "",
   };
 }
 
@@ -246,7 +380,17 @@ function miniTrendData(input: any[]) {
   ];
 }
 
-function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+// ─── Component nhỏ ────────────────────────────────────────────────────────────
+
+function SectionHeader({
+  title,
+  subtitle,
+  right,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+}) {
   return (
     <View style={styles.sectionHeader}>
       <View style={{ flex: 1 }}>
@@ -258,7 +402,16 @@ function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: s
   );
 }
 
-function StatCard({ label, value, change, icon, accent = ADMIN_GREEN, trend = [] }: any) {
+function StatCard({
+  label,
+  value,
+  change,
+  icon,
+  accent = ADMIN_GREEN,
+  trend = [],
+  positiveChange = true,
+}: any) {
+  const isNeg = String(change || "").startsWith("-");
   return (
     <View style={styles.statCard}>
       <View style={styles.statTop}>
@@ -271,28 +424,69 @@ function StatCard({ label, value, change, icon, accent = ADMIN_GREEN, trend = []
         </View>
       </View>
       <View style={styles.statBottom}>
-        <Text style={[styles.statChange, { color: String(change || "").startsWith("-") ? ADMIN_RED : ADMIN_GREEN }]}>{change || "+0%"}</Text>
-        <MiniBars data={miniTrendData(trend).slice(-7)} compact accent={accent} />
+        <Text
+          style={[
+            styles.statChange,
+            { color: isNeg ? ADMIN_RED : ADMIN_GREEN },
+          ]}
+        >
+          {change || "+0%"}
+        </Text>
+        <MiniBars
+          data={miniTrendData(trend).slice(-7)}
+          compact
+          accent={accent}
+        />
       </View>
     </View>
   );
 }
 
-function MiniBars({ data, compact = false, accent = ADMIN_GREEN, money = false }: any) {
+function MiniBars({
+  data,
+  compact = false,
+  accent = ADMIN_GREEN,
+  money = false,
+}: any) {
   const rows = Array.isArray(data) && data.length ? data : [];
-  const max = Math.max(1, ...rows.map((item: any) => Number(item.value || item.revenue || item.unitsSold || 0)));
+  const max = Math.max(
+    1,
+    ...rows.map((item: any) =>
+      Number(item.value || item.revenue || item.unitsSold || 0)
+    )
+  );
   return (
-    <View style={[styles.miniBars, compact ? styles.miniBarsCompact : null]}>
+    <View
+      style={[styles.miniBars, compact ? styles.miniBarsCompact : null]}
+    >
       {rows.map((item: any, index: number) => {
-        const rawValue = Number(item.value ?? item.revenue ?? item.unitsSold ?? 0);
+        const rawValue = Number(
+          item.value ?? item.revenue ?? item.unitsSold ?? 0
+        );
         const height = `${Math.max(8, Math.round((rawValue / max) * 100))}%` as any;
         return (
-          <View key={`${item.label || item.month || index}`} style={styles.miniBarItem}>
+          <View
+            key={`${item.label || item.month || index}`}
+            style={styles.miniBarItem}
+          >
             <View style={styles.miniBarTrack}>
-              <View style={[styles.miniBarFill, { height, backgroundColor: accent }]} />
+              <View
+                style={[
+                  styles.miniBarFill,
+                  { height, backgroundColor: accent },
+                ]}
+              />
             </View>
-            {!compact ? <Text style={styles.chartLabel}>{item.label || item.month || "--"}</Text> : null}
-            {!compact ? <Text style={styles.chartValue}>{money ? formatCompactMoney(rawValue) : formatNumber(rawValue)}</Text> : null}
+            {!compact ? (
+              <Text style={styles.chartLabel}>
+                {item.label || item.month || "--"}
+              </Text>
+            ) : null}
+            {!compact ? (
+              <Text style={styles.chartValue}>
+                {money ? formatCompactMoney(rawValue) : formatNumber(rawValue)}
+              </Text>
+            ) : null}
           </View>
         );
       })}
@@ -300,10 +494,17 @@ function MiniBars({ data, compact = false, accent = ADMIN_GREEN, money = false }
   );
 }
 
-function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
+function HorizontalBars({
+  data,
+  accent = ADMIN_GREEN,
+  money = false,
+}: any) {
   const rows = Array.isArray(data) ? data : [];
   const max = Math.max(1, ...rows.map((x: any) => Number(x.value || 0)));
-  if (!rows.length) return <Text style={styles.emptyText}>Chưa có dữ liệu đủ để vẽ biểu đồ.</Text>;
+  if (!rows.length)
+    return (
+      <Text style={styles.emptyText}>Chưa có dữ liệu đủ để vẽ biểu đồ.</Text>
+    );
   return (
     <View style={{ gap: 14 }}>
       {rows.map((item: any, index: number) => {
@@ -312,11 +513,17 @@ function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
         return (
           <View key={`${item.label}-${index}`} style={{ gap: 7 }}>
             <View style={styles.barLineTop}>
-              <Text numberOfLines={1} style={styles.barName}>{item.label}</Text>
-              <Text style={styles.barValue}>{money ? formatMoney(value) : formatNumber(value)}</Text>
+              <Text numberOfLines={1} style={styles.barName}>
+                {item.label}
+              </Text>
+              <Text style={styles.barValue}>
+                {money ? formatMoney(value) : formatNumber(value)}
+              </Text>
             </View>
             <View style={styles.hTrack}>
-              <View style={[styles.hFill, { width, backgroundColor: accent }]} />
+              <View
+                style={[styles.hFill, { width, backgroundColor: accent }]}
+              />
             </View>
           </View>
         );
@@ -325,41 +532,25 @@ function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
   );
 }
 
-function Funnel({ orders, users }: { orders: number; users: number }) {
-  const visitors = Math.max(10000, users * 9, orders * 15);
-  const leads = Math.max(users * 2, Math.round(visitors * 0.24));
-  const customers = Math.max(users, Math.round(leads * 0.37));
-  const paying = Math.max(orders, Math.round(customers * 0.72));
-  const rows = [
-    { label: "Visitors", value: visitors, color: ADMIN_GREEN, pct: 100 },
-    { label: "Leads", value: leads, color: "#00A6A6", pct: Math.round((leads / visitors) * 100) },
-    { label: "Customers", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
-    { label: "Paying", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
-  ];
-  return (
-    <View style={{ gap: 13 }}>
-      {rows.map((row) => (
-        <View key={row.label}>
-          <View style={styles.funnelTop}>
-            <Text style={styles.funnelLabel}>{row.label}</Text>
-            <Text style={styles.funnelValue}>{formatNumber(row.value)}</Text>
-          </View>
-          <View style={styles.funnelTrack}>
-            <View style={[styles.funnelFill, { width: `${Math.max(8, row.pct)}%` as any, backgroundColor: row.color }]} />
-          </View>
-        </View>
-      ))}
-      <View style={styles.funnelRates}>
-        <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Visit→Lead 24%</Text>
-        <Text style={[styles.rateText, { color: "#00A6A6" }]}>Lead→Customer 37%</Text>
-        <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer→Paid 72%</Text>
-      </View>
-    </View>
+function ProductPreview({
+  name,
+  price,
+  originalPrice,
+  image,
+  images = [],
+  discountPercent,
+  sizes = [],
+  colors = [],
+  dimensions = "",
+}: any) {
+  const percent = Number(
+    discountPercent ||
+      (Number(originalPrice) > Number(price)
+        ? Math.round(
+            (1 - Number(price || 0) / Number(originalPrice || 1)) * 100
+          )
+        : 0)
   );
-}
-
-function ProductDiscountPreview({ name, price, originalPrice, image, images = [], discountPercent, sizes = [], colors = [], dimensions = "" }: any) {
-  const percent = Number(discountPercent || (Number(originalPrice) > Number(price) ? Math.round((1 - Number(price || 0) / Number(originalPrice || 1)) * 100) : 0));
   const gallery = adminGalleryImages({ image, images });
   return (
     <View style={styles.marketPreview}>
@@ -371,28 +562,50 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
         </View>
       </View>
       <View style={styles.previewImageBox}>
-        {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.previewImage} /> : <Feather name="image" size={52} color={ADMIN_MUTED} />}
-        {percent > 0 ? <View style={styles.previewDiscount}><Text style={styles.previewDiscountText}>-{percent}%</Text></View> : null}
+        {gallery[0] ? (
+          <Image
+            source={{ uri: gallery[0] }}
+            style={styles.previewImage}
+          />
+        ) : (
+          <Feather name="image" size={52} color={ADMIN_MUTED} />
+        )}
+        {percent > 0 ? (
+          <View style={styles.previewDiscount}>
+            <Text style={styles.previewDiscountText}>-{percent}%</Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.previewThumbRow}>
         {gallery.map((url: string, index: number) => (
-          <Image key={`preview-${index}`} source={{ uri: url }} style={styles.previewThumb} />
+          <Image
+            key={`preview-${index}`}
+            source={{ uri: url }}
+            style={styles.previewThumb}
+          />
         ))}
       </View>
       <View style={styles.previewBody}>
-        <Text numberOfLines={2} style={styles.previewTitle}>{name || "Tên sản phẩm"}</Text>
+        <Text numberOfLines={2} style={styles.previewTitle}>
+          {name || "Tên sản phẩm"}
+        </Text>
         <View style={styles.previewPriceLine}>
           <Text style={styles.previewSalePrice}>{formatMoney(price)}</Text>
-          {Number(originalPrice || 0) > Number(price || 0) ? <Text style={styles.previewOldPrice}>{formatMoney(originalPrice)}</Text> : null}
+          {Number(originalPrice || 0) > Number(price || 0) ? (
+            <Text style={styles.previewOldPrice}>
+              {formatMoney(originalPrice)}
+            </Text>
+          ) : null}
         </View>
-        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' • ') || 'S • M • L • XL'}</Text>
-        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(' • ') || 'Đen • Trắng • Kem'}</Text>
-        {!!dimensions ? <Text style={styles.previewMeta}>Kích thước: {dimensions}</Text> : null}
-        <View style={styles.messageBox}>
-          <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
-          <Text style={styles.messageText}>Mặt hàng này còn không?</Text>
-          <View style={styles.sendPill}><Text style={styles.sendText}>Gửi</Text></View>
-        </View>
+        <Text style={styles.previewMeta}>
+          Size: {splitAdminList(sizes).join(" • ") || "S • M • L • XL"}
+        </Text>
+        <Text style={styles.previewMeta}>
+          Màu: {splitAdminList(colors).join(" • ") || "Đen • Trắng • Kem"}
+        </Text>
+        {!!dimensions ? (
+          <Text style={styles.previewMeta}>Kích thước: {dimensions}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -402,126 +615,237 @@ function Input({ label, style, ...props }: any) {
   return (
     <View style={[styles.inputWrap, style]}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <TextInput {...props} placeholderTextColor="#A5AFB8" style={[styles.input, props.multiline ? styles.inputMultiline : null]} />
+      <TextInput
+        {...props}
+        placeholderTextColor="#A5AFB8"
+        style={[
+          styles.input,
+          props.multiline ? styles.inputMultiline : null,
+        ]}
+      />
     </View>
   );
 }
 
 function SelectChip({ active, label, onPress }: any) {
   return (
-    <Pressable onPress={onPress} style={[styles.selectChip, active ? styles.selectChipActive : null]}>
-      <Text style={[styles.selectChipText, active ? styles.selectChipTextActive : null]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[styles.selectChip, active ? styles.selectChipActive : null]}
+    >
+      <Text
+        style={[
+          styles.selectChipText,
+          active ? styles.selectChipTextActive : null,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
+
+function RatingStars({ rating }: { rating?: number }) {
+  const r = Number(rating || 0);
+  return (
+    <View style={{ flexDirection: "row", gap: 3 }}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Feather
+          key={star}
+          name="star"
+          size={14}
+          color={star <= r ? ADMIN_ORANGE : ADMIN_BORDER}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ─── Màn hình chính ───────────────────────────────────────────────────────────
 
 export default function AdminScreen() {
   const { width } = useWindowDimensions();
   const desktop = width >= 920;
   const { user, isLoggedIn } = useApp();
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>("tongquan");
+
+  // Dữ liệu từ API
   const [overview, setOverview] = useState<any>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [vouchers, setVouchers] = useState<any[]>([]);
-  const [games, setGames] = useState<any[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
+  const [discountCodes, setDiscountCodes] = useState<AdminDiscountCode[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
+
+  // Trạng thái UI
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [uploadingMediaField, setUploadingMediaField] = useState<string | null>(null);
-  const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [editingGameId, setEditingGameId] = useState<string | null>(null);
-  const [productForm, setProductForm] = useState(emptyProductForm);
-  const [voucherForm, setVoucherForm] = useState(emptyVoucherForm);
-  const [promotionForm, setPromotionForm] = useState(emptyPromotionForm);
-  const [notificationForm, setNotificationForm] = useState(emptyNotificationForm);
-  const [gameForm, setGameForm] = useState(emptyGameForm);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  // Form sản phẩm
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productForm, setProductForm] = useState(emptyProductForm);
+
+  // Form danh mục
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [categoryForm, setCategoryForm] = useState(emptyCategoryForm);
+
+  // Form mã giảm giá
+  const [editingDiscountId, setEditingDiscountId] = useState<string | null>(null);
+  const [discountForm, setDiscountForm] = useState(emptyDiscountForm);
+
+  // Form thông báo
+  const [notificationForm, setNotificationForm] = useState(emptyNotificationForm);
+
+  // Form banner
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [bannerLink, setBannerLink] = useState("");
+
   const isAdmin = user?.role === "admin" || (user as any)?.isAdmin;
-  const openAdminLogin = () => router.replace({ pathname: "/login", params: { redirectTo: "/admin" } } as any);
+
+  const openAdminLogin = () =>
+    router.replace({
+      pathname: "/login",
+      params: { redirectTo: "/admin" },
+    } as any);
+
   const dashboard = overview?.dashboard || {};
   const kpis = dashboard?.kpis || {};
 
+  // ─── Load dữ liệu ────────────────────────────────────────────────────────────
+
   const load = useCallback(async () => {
     if (!user?.id || !isAdmin) return;
-    const [nextOverview, nextUsers, nextProducts, nextOrders, nextPayments, nextVouchers, nextGames] = await Promise.all([
+    const [
+      nextOverview,
+      nextUsers,
+      nextProducts,
+      nextCategories,
+      nextOrders,
+      nextPayments,
+      nextDiscounts,
+      nextReviews,
+      nextBanners,
+    ] = await Promise.all([
       api.getAdminOverview(user.id),
       api.getAdminUsers(user.id),
       api.getAdminProducts(user.id),
+      adminApi.getAdminCategories?.(user.id).catch(() => ({ categories: [] })),
       api.getAdminOrders(user.id),
       api.getAdminPayments(user.id),
       api.getAdminVouchers(user.id),
-      api.getAdminGames(user.id),
+      adminApi.getAdminReviews?.(user.id).catch(() => ({ reviews: [] })),
+      adminApi.getAdminBanners?.(user.id).catch(() => ({ banners: [] })),
     ]);
     setOverview(nextOverview);
     setUsers(Array.isArray(nextUsers?.users) ? nextUsers.users : []);
-    setProducts(Array.isArray(nextProducts?.products) ? nextProducts.products : []);
+    setProducts(
+      Array.isArray(nextProducts?.products) ? nextProducts.products : []
+    );
+    setCategories(
+      Array.isArray(nextCategories?.categories) ? nextCategories.categories : []
+    );
     setOrders(Array.isArray(nextOrders?.orders) ? nextOrders.orders : []);
-    setPayments(Array.isArray(nextPayments?.payments) ? nextPayments.payments : []);
-    setVouchers(Array.isArray(nextVouchers?.vouchers) ? nextVouchers.vouchers : []);
-    setGames(Array.isArray(nextGames?.games) ? nextGames.games : []);
+    setPayments(
+      Array.isArray(nextPayments?.payments) ? nextPayments.payments : []
+    );
+    setDiscountCodes(
+      Array.isArray(nextDiscounts?.vouchers)
+        ? nextDiscounts.vouchers
+        : Array.isArray(nextDiscounts?.discountCodes)
+        ? nextDiscounts.discountCodes
+        : []
+    );
+    setReviews(Array.isArray(nextReviews?.reviews) ? nextReviews.reviews : []);
+    setBanners(Array.isArray(nextBanners?.banners) ? nextBanners.banners : []);
   }, [user?.id, isAdmin]);
 
   useEffect(() => {
     setLoading(true);
     load()
-      .catch((e: any) => Alert.alert("Không mở được admin", e?.message || "Kiểm tra backend/MongoDB."))
+      .catch((e: any) =>
+        Alert.alert("Không mở được admin", e?.message || "Kiểm tra backend/MongoDB.")
+      )
       .finally(() => setLoading(false));
   }, [load]);
 
   const refresh = async () => {
     setRefreshing(true);
-    await load().catch((e: any) => Alert.alert("Không tải lại được", e?.message || "Có lỗi xảy ra."));
+    await load().catch((e: any) =>
+      Alert.alert("Không tải lại được", e?.message || "Có lỗi xảy ra.")
+    );
     setRefreshing(false);
   };
 
-
-  const quickUpdateOrder = async (order: any, nextStatus: "completed" | "cancelled") => {
-    if (!user?.id) return;
-    const orderId = String(order.id || order._id || "");
-    if (!orderId) return Alert.alert("Thiếu mã đơn", "Không tìm thấy ID đơn hàng.");
-    try {
-      setActionId(`order-${nextStatus}-${orderId}`);
-      const res = await api.updateAdminOrderStatus(user.id, orderId, nextStatus);
-      Alert.alert(nextStatus === "completed" ? "Đã xác nhận" : "Đã hủy", res?.message || "Đã cập nhật đơn hàng.");
-      await load();
-    } catch (e: any) {
-      Alert.alert("Không cập nhật được đơn", e?.message || "Kiểm tra backend.");
-    } finally {
-      setActionId(null);
-    }
-  };
+  // ─── Lọc dữ liệu ─────────────────────────────────────────────────────────────
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return products;
-    return products.filter((p) => `${p.name} ${p.id} ${p.category} ${p.sku}`.toLowerCase().includes(q));
+    return products.filter((p) =>
+      `${p.name} ${p.id} ${p.category} ${p.sku}`.toLowerCase().includes(q)
+    );
   }, [products, search]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
-    return users.filter((u) => `${u.name || ""} ${u.fullName || ""} ${u.email}`.toLowerCase().includes(q));
+    return users.filter((u) =>
+      `${u.name || ""} ${u.fullName || ""} ${u.email}`.toLowerCase().includes(q)
+    );
   }, [users, search]);
 
-  const revenueByMonth = Array.isArray(dashboard?.revenueByMonth) ? dashboard.revenueByMonth.map((x: any) => ({ label: String(x.month || x.label || "").slice(5), value: Number(x.value ?? x.revenue ?? 0) })) : [];
-  const topProducts = Array.isArray(dashboard?.salesByProduct) ? dashboard.salesByProduct : [];
-  const predictions = Array.isArray(dashboard?.ml?.predictions) ? dashboard.ml.predictions : [];
-  const customerTrends = Array.isArray(dashboard?.ml?.customerTrends) ? dashboard.ml.customerTrends : [];
-  const activeProducts = products.filter((p) => (p.status || "active") === "active").length;
-  const hiddenProducts = products.filter((p) => (p.status || "active") !== "active").length;
-  const activeVouchers = vouchers.filter((v) => v.active !== false && (v.kind || "voucher") === "voucher").length;
-  const activePromotions = vouchers.filter((v) => v.active !== false && v.kind === "promotion").length;
-  const latestActivity = [
-    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `Đơn #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} • ${o.status || "pending"}` })),
-    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toán ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} • ${compactDate(p.createdAt)}` })),
-  ].slice(0, 6);
+  const filteredOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orders;
+    return orders.filter((o) =>
+      `${o.id} ${o.userId} ${o.orderStatus || o.status}`.toLowerCase().includes(q)
+    );
+  }, [orders, search]);
+
+  // ─── Thống kê ─────────────────────────────────────────────────────────────────
+
+  const revenueByMonth = Array.isArray(dashboard?.revenueByMonth)
+    ? dashboard.revenueByMonth.map((x: any) => ({
+        label: String(x.month || x.label || "").slice(5),
+        value: Number(x.value ?? x.revenue ?? 0),
+      }))
+    : [];
+  const topProducts = Array.isArray(dashboard?.salesByProduct)
+    ? dashboard.salesByProduct
+    : [];
+  const predictions = Array.isArray(dashboard?.ml?.predictions)
+    ? dashboard.ml.predictions
+    : [];
+
+  const activeProducts = products.filter(
+    (p) => (p.status || "active") === "active"
+  ).length;
+  const hiddenProducts = products.filter(
+    (p) => (p.status || "active") !== "active"
+  ).length;
+  const activeDiscounts = discountCodes.filter(
+    (d) => d.active !== false && d.status !== "inactive"
+  ).length;
+
+  const pendingOrders = orders.filter(
+    (o) => (o.orderStatus || o.status) === "pending"
+  ).length;
+  const totalRevenue = payments
+    .filter((p) => p.status === "success" || p.status === "completed")
+    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  // ─── CRUD Sản phẩm ────────────────────────────────────────────────────────────
 
   const saveProduct = async () => {
     if (!user?.id) return;
-    if (!productForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên sản phẩm trước khi lưu.");
+    if (!productForm.name.trim())
+      return Alert.alert("Thiếu tên", "Nhập tên sản phẩm trước khi lưu.");
     try {
       setActionId("product-save");
       const body = {
@@ -529,14 +853,21 @@ export default function AdminScreen() {
         price: Number(productForm.price || 0),
         originalPrice: Number(productForm.originalPrice || 0),
         discountPercent: Number(productForm.discountPercent || 0),
-        images: [productForm.image, productForm.image2, productForm.image3, productForm.image4].map((x) => x.trim()).filter(Boolean),
+        stockQuantity: Number(productForm.stockQuantity || 999),
+        images: [
+          productForm.image,
+          productForm.image2,
+          productForm.image3,
+          productForm.image4,
+        ]
+          .map((x) => x.trim())
+          .filter(Boolean),
         visualTags: splitAdminList(productForm.visualTags),
         sizes: splitAdminList(productForm.sizes),
         colors: splitAdminList(productForm.colors),
-        dimensions: productForm.dimensions.trim(),
-        fit: productForm.fit.trim(),
       };
-      if (editingProductId) await api.updateAdminProduct(user.id, editingProductId, body);
+      if (editingProductId)
+        await api.updateAdminProduct(user.id, editingProductId, body);
       else await api.saveAdminProduct(user.id, body);
       setProductForm(emptyProductForm);
       setEditingProductId(null);
@@ -552,7 +883,24 @@ export default function AdminScreen() {
   const editProduct = (product: AdminProduct) => {
     setProductForm(toProductForm(product));
     setEditingProductId(product.id);
-    setActiveTab("products");
+    setActiveTab("sanpham");
+  };
+
+  const toggleProduct = async (product: AdminProduct) => {
+    if (!user?.id) return;
+    try {
+      setActionId(`hide-${product.id}`);
+      await api.setAdminProductHidden(
+        user.id,
+        product.id,
+        (product.status || "active") === "active"
+      );
+      await load();
+    } catch (e: any) {
+      Alert.alert("Không ẩn/hiện được", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
   };
 
   const quickDiscount = async (product: AdminProduct, percent: number) => {
@@ -576,114 +924,103 @@ export default function AdminScreen() {
     }
   };
 
-  const changeProductPrice = async (product: AdminProduct, percent: number) => {
+  // ─── CRUD Danh mục ────────────────────────────────────────────────────────────
+
+  const saveCategory = async () => {
     if (!user?.id) return;
+    if (!categoryForm.categoryName.trim())
+      return Alert.alert("Thiếu tên", "Nhập tên danh mục trước.");
     try {
-      setActionId(`price-${product.id}`);
-      await api.changeAdminProductPrice(user.id, product.id, percent);
+      setActionId("category-save");
+      if (editingCategoryId)
+        await adminApi.updateAdminCategory?.(user.id, editingCategoryId, categoryForm);
+      else await adminApi.saveAdminCategory?.(user.id, categoryForm);
+      setCategoryForm(emptyCategoryForm);
+      setEditingCategoryId(null);
       await load();
+      Alert.alert("Đã lưu", "Danh mục đã được lưu.");
     } catch (e: any) {
-      Alert.alert("Không chỉnh được giá", e?.message || "Có lỗi xảy ra.");
+      Alert.alert("Không lưu được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
   };
 
-  const toggleProduct = async (product: AdminProduct) => {
+  const deleteCategory = async (cat: AdminCategory) => {
     if (!user?.id) return;
-    try {
-      setActionId(`hide-${product.id}`);
-      await api.setAdminProductHidden(user.id, product.id, (product.status || "active") === "active");
-      await load();
-    } catch (e: any) {
-      Alert.alert("Không ẩn/hiện được", e?.message || "Có lỗi xảy ra.");
-    } finally {
-      setActionId(null);
-    }
-  };
-
-  const pickAndUploadAdminImage = async (target: "image" | "image2" | "image3" | "image4" | "bannerImage") => {
-    if (!user?.id) return;
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert("Cần quyền ảnh", "Cho phép truy cập thư viện để upload ảnh lên Cloudinary.");
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.86, allowsEditing: false });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-    const uploadKey = `upload-${target}`;
-    try {
-      setUploadingMediaField(uploadKey);
-      const data = await uploadMediaFile(
-        {
-          uri: asset.uri,
-          name: asset.fileName || `${target}-${Date.now()}.jpg`,
-          type: asset.mimeType || "image/jpeg",
+    Alert.alert("Xác nhận", `Xóa danh mục "${cat.categoryName || cat.name}"?`, [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setActionId(`cat-${cat.id}`);
+            await adminApi.deleteAdminCategory?.(user.id!, cat.id);
+            await load();
+          } catch (e: any) {
+            Alert.alert("Không xóa được", e?.message || "Có lỗi xảy ra.");
+          } finally {
+            setActionId(null);
+          }
         },
-        user.id,
-        target === "bannerImage" ? "admin/banners" : "admin/products",
-        target === "bannerImage" ? "admin-banner-image" : "admin-product-image",
-        user.id,
-      );
-      const url = data.secureUrl || data.url;
-      if (!url) throw new Error("Cloudinary không trả về URL ảnh.");
-      if (target === "bannerImage") setPromotionForm((p) => ({ ...p, bannerImage: url }));
-      else setProductForm((p) => ({ ...p, [target]: url }));
-      Alert.alert("Đã upload", "Ảnh đã lưu trên Cloudinary và URL đã được điền vào form.");
-    } catch (e: any) {
-      Alert.alert("Upload Cloudinary lỗi", e?.message || "Không upload được ảnh.");
-    } finally {
-      setUploadingMediaField(null);
-    }
+      },
+    ]);
   };
 
-  const saveVoucher = async () => {
+  // ─── Cập nhật trạng thái đơn hàng ────────────────────────────────────────────
+
+  const updateOrderStatus = async (order: AdminOrder, status: string) => {
     if (!user?.id) return;
-    if (!voucherForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã voucher trước.");
     try {
-      setActionId("voucher-save");
-      await api.saveAdminVoucher(user.id, {
-        ...voucherForm,
-        kind: "voucher",
-        discountValue: Number(voucherForm.discountValue || 0),
-        minOrderValue: Number(voucherForm.minOrderValue || 0),
-        active: true,
-      });
-      setVoucherForm(emptyVoucherForm);
+      setActionId(`order-${order.id}`);
+      await adminApi.updateAdminOrderStatus?.(user.id, order.id, status);
       await load();
-      Alert.alert("Đã tạo voucher", "Voucher đã sẵn sàng cho người dùng.");
     } catch (e: any) {
-      Alert.alert("Không lưu voucher", e?.message || "Có lỗi xảy ra.");
+      Alert.alert("Không cập nhật được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
   };
 
-  const savePromotion = async () => {
+  // ─── CRUD Mã giảm giá ─────────────────────────────────────────────────────────
+
+  const saveDiscount = async () => {
     if (!user?.id) return;
-    if (!promotionForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã khuyến mãi trước.");
+    if (!discountForm.code.trim())
+      return Alert.alert("Thiếu mã", "Nhập mã giảm giá trước.");
     try {
-      setActionId("promotion-save");
-      await api.saveAdminVoucher(user.id, {
-        ...promotionForm,
-        kind: "promotion",
-        discountValue: Number(promotionForm.discountValue || 0),
-        minOrderValue: Number(promotionForm.minOrderValue || 0),
+      setActionId("discount-save");
+      const body = {
+        ...discountForm,
+        discountValue: Number(discountForm.discountValue || 0),
+        minOrderAmount: Number(discountForm.minOrderAmount || 0),
+        maxDiscountAmount: Number(discountForm.maxDiscountAmount || 0),
+        usageLimit: Number(discountForm.usageLimit || 0),
         active: true,
-      });
-      setPromotionForm(emptyPromotionForm);
+      };
+      if (editingDiscountId)
+        await api.updateAdminVoucher(user.id, editingDiscountId, body);
+      else await api.saveAdminVoucher(user.id, body);
+      setDiscountForm(emptyDiscountForm);
+      setEditingDiscountId(null);
       await load();
-      Alert.alert("Đã tạo khuyến mãi", "Campaign đã được lưu trong DiscountCodes theo ERD.");
+      Alert.alert("Đã lưu", "Mã giảm giá đã được lưu.");
     } catch (e: any) {
-      Alert.alert("Không lưu khuyến mãi", e?.message || "Có lỗi xảy ra.");
+      Alert.alert("Không lưu được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
   };
 
-  const toggleVoucher = async (voucher: any) => {
+  const toggleDiscount = async (discount: AdminDiscountCode) => {
     if (!user?.id) return;
     try {
-      setActionId(`voucher-${voucher.id}`);
-      await api.updateAdminVoucher(user.id, voucher.id, { active: !voucher.active });
+      setActionId(`discount-toggle-${discount.id}`);
+      await api.updateAdminVoucher(user.id, discount.id, {
+        active: !discount.active,
+        status: discount.active ? "inactive" : "active",
+      });
       await load();
     } catch (e: any) {
       Alert.alert("Không đổi trạng thái", e?.message || "Có lỗi xảy ra.");
@@ -692,28 +1029,45 @@ export default function AdminScreen() {
     }
   };
 
-  const sendNotification = async () => {
+  // ─── Quản lý đánh giá ─────────────────────────────────────────────────────────
+
+  const deleteReview = async (review: AdminReview) => {
     if (!user?.id) return;
-    if (!notificationForm.title.trim()) return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề thông báo.");
-    try {
-      setActionId("notification-send");
-      const data = await api.sendAdminNotification(user.id, notificationForm);
-      setNotificationForm(emptyNotificationForm);
-      await load();
-      Alert.alert("Đã gửi", data?.message || "Thông báo đã được gửi.");
-    } catch (e: any) {
-      Alert.alert("Không gửi được", e?.message || "Có lỗi xảy ra.");
-    } finally {
-      setActionId(null);
-    }
+    Alert.alert("Xác nhận", "Xóa đánh giá này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setActionId(`review-${review.id}`);
+            await adminApi.deleteAdminReview?.(user.id!, review.id);
+            await load();
+          } catch (e: any) {
+            Alert.alert("Không xóa được", e?.message || "Có lỗi xảy ra.");
+          } finally {
+            setActionId(null);
+          }
+        },
+      },
+    ]);
   };
 
-  const changeRole = async (target: AdminUser, nextRole: "admin" | "customer") => {
+  // ─── Quản lý người dùng ───────────────────────────────────────────────────────
+
+  const changeRole = async (
+    target: AdminUser,
+    nextRole: "admin" | "customer"
+  ) => {
     if (!user?.id) return;
     try {
       setActionId(target.id);
       const data = await api.setAdminUserRole(user.id, target.id, nextRole);
-      setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === target.id ? { ...item, ...data.user } : item
+        )
+      );
       await load().catch(() => null);
       Alert.alert("Đã cập nhật", data?.message || "Đã đổi quyền tài khoản.");
     } catch (e: any) {
@@ -728,7 +1082,11 @@ export default function AdminScreen() {
     try {
       setActionId(`coins-${target.id}`);
       const data = await api.adjustAdminUserCoins(user.id, target.id, delta);
-      setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === target.id ? { ...item, ...data.user } : item
+        )
+      );
     } catch (e: any) {
       Alert.alert("Không chỉnh được xu", e?.message || "Có lỗi xảy ra.");
     } finally {
@@ -736,80 +1094,195 @@ export default function AdminScreen() {
     }
   };
 
-  const saveGame = async () => {
-    if (!user?.id) return;
-    if (!gameForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên game trước.");
+  // ─── Banner ───────────────────────────────────────────────────────────────────
+
+  const saveBanner = async () => {
+    if (!user?.id || !bannerUrl.trim()) return;
     try {
-      setActionId("game-save");
-      const body = { ...gameForm, rewardCoins: Number(gameForm.rewardCoins || 0), active: true };
-      if (editingGameId) await api.updateAdminGame(user.id, editingGameId, body);
-      else await api.saveAdminGame(user.id, body);
-      setGameForm(emptyGameForm);
-      setEditingGameId(null);
+      setActionId("banner-save");
+      await api.saveAdminGame?.(user.id, { url: bannerUrl, link: bannerLink });
+      setBannerUrl("");
+      setBannerLink("");
       await load();
+      Alert.alert("Đã lưu banner");
     } catch (e: any) {
-      Alert.alert("Không lưu game", e?.message || "Có lỗi xảy ra.");
+      Alert.alert("Không lưu được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
   };
 
-  const editGame = (game: any) => {
-    setEditingGameId(String(game._id || game.id));
-    setGameForm({ slug: game.slug || "", name: game.name || "", description: game.description || "", rewardCoins: String(game.rewardCoins || 0) });
-  };
-
-  const deleteGame = async (game: any) => {
+  const deleteBanner = async (bannerId: string) => {
     if (!user?.id) return;
     try {
-      setActionId(`game-${game._id || game.id}`);
-      await api.deleteAdminGame(user.id, String(game._id || game.id));
+      setActionId(`banner-${bannerId}`);
+      await adminApi.deleteAdminBanner?.(user.id, bannerId);
       await load();
     } catch (e: any) {
-      Alert.alert("Không xoá game", e?.message || "Có lỗi xảy ra.");
+      Alert.alert("Không xóa được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
   };
+
+  // ─── Thông báo ────────────────────────────────────────────────────────────────
+
+  const sendNotification = async () => {
+    if (!user?.id) return;
+    if (!notificationForm.title.trim())
+      return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề thông báo.");
+    try {
+      setActionId("notification-send");
+      const data = await api.sendAdminNotification(user.id, notificationForm);
+      setNotificationForm(emptyNotificationForm);
+      Alert.alert("Đã gửi", data?.message || "Thông báo đã được gửi.");
+    } catch (e: any) {
+      Alert.alert("Không gửi được", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // ─── Upload ảnh Cloudinary ────────────────────────────────────────────────────
+
+  const pickAndUpload = async (
+    target:
+      | "image"
+      | "image2"
+      | "image3"
+      | "image4"
+      | "bannerUrl"
+      | "discountBanner"
+  ) => {
+    if (!user?.id) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted)
+      return Alert.alert(
+        "Cần quyền ảnh",
+        "Cho phép truy cập thư viện để upload ảnh."
+      );
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.86,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    try {
+      setUploadingField(target);
+      const data = await uploadMediaFile(
+        {
+          uri: asset.uri,
+          name: asset.fileName || `${target}-${Date.now()}.jpg`,
+          type: asset.mimeType || "image/jpeg",
+        },
+        user.id,
+        target === "bannerUrl" || target === "discountBanner"
+          ? "admin/banners"
+          : "admin/products",
+        "admin-upload",
+        user.id
+      );
+      const url = data.secureUrl || data.url;
+      if (!url) throw new Error("Cloudinary không trả về URL ảnh.");
+      if (target === "bannerUrl") setBannerUrl(url);
+      else if (target === "discountBanner")
+        setDiscountForm((p) => ({ ...p, bannerImage: url }));
+      else setProductForm((p) => ({ ...p, [target]: url }));
+      Alert.alert("Upload thành công", "Ảnh đã được lưu trên Cloudinary.");
+    } catch (e: any) {
+      Alert.alert("Upload lỗi", e?.message || "Không upload được ảnh.");
+    } finally {
+      setUploadingField(null);
+    }
+  };
+
+  // ─── Guard ────────────────────────────────────────────────────────────────────
 
   if (!isLoggedIn || !isAdmin) {
     return (
       <View style={styles.authPage}>
         <View style={styles.authCard}>
-          <View style={styles.logoBox}><Feather name={isLoggedIn ? "lock" : "shield"} size={26} color="#fff" /></View>
-          <Text style={styles.authTitle}>{isLoggedIn ? "Không có quyền admin" : "Đăng nhập admin"}</Text>
-          <Text style={styles.authText}>{isLoggedIn ? `Email hiện tại: ${user?.email}. Hãy dùng tài khoản admin.` : "Tài khoản admin mặc định: a@gmail.com / mật khẩu 1."}</Text>
+          <View style={styles.logoBox}>
+            <Feather
+              name={isLoggedIn ? "lock" : "shield"}
+              size={26}
+              color="#fff"
+            />
+          </View>
+          <Text style={styles.authTitle}>
+            {isLoggedIn ? "Không có quyền admin" : "Đăng nhập admin"}
+          </Text>
+          <Text style={styles.authText}>
+            {isLoggedIn
+              ? `Email hiện tại: ${user?.email}. Hãy dùng tài khoản admin.`
+              : "Tài khoản admin mặc định: a@gmail.com / mật khẩu 1."}
+          </Text>
           <Pressable onPress={openAdminLogin} style={styles.authButton}>
-            <Text style={styles.authButtonText}>{isLoggedIn ? "Đổi tài khoản" : "Đăng nhập"}</Text>
+            <Text style={styles.authButtonText}>
+              {isLoggedIn ? "Đổi tài khoản" : "Đăng nhập"}
+            </Text>
           </Pressable>
         </View>
       </View>
     );
   }
 
+  // ─── Sidebar ──────────────────────────────────────────────────────────────────
+
   const Sidebar = () => {
     let lastGroup = "";
     return (
-      <View style={[styles.sidebar, !desktop ? styles.sidebarMobile : null]}>
+      <View
+        style={[styles.sidebar, !desktop ? styles.sidebarMobile : null]}
+      >
         <View style={styles.sidebarLogoRow}>
-          <View style={styles.sidebarLogo}><Feather name="zap" size={19} color="#fff" /></View>
+          <View style={styles.sidebarLogo}>
+            <Feather name="zap" size={19} color="#fff" />
+          </View>
           <View>
             <Text style={styles.sidebarBrand}>JAPANO</Text>
-            <Text style={styles.sidebarSub}>ADMIN DASHBOARD</Text>
+            <Text style={styles.sidebarSub}>QUẢN TRỊ</Text>
           </View>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={desktop ? styles.navContent : styles.navContentMobile} horizontal={!desktop}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={
+            desktop ? styles.navContent : styles.navContentMobile
+          }
+          horizontal={!desktop}
+        >
           {navItems.map((item) => {
             const showGroup = desktop && item.group !== lastGroup;
             lastGroup = item.group;
             const active = activeTab === item.key;
             return (
               <React.Fragment key={item.key}>
-                {showGroup ? <Text style={styles.navGroup}>{item.group}</Text> : null}
-                <Pressable onPress={() => setActiveTab(item.key)} style={[styles.navItem, active ? styles.navItemActive : null]}>
-                  <Feather name={item.icon} size={17} color={active ? ADMIN_GREEN : ADMIN_MUTED_DARK} />
-                  <Text style={[styles.navText, active ? styles.navTextActive : null]}>{item.label}</Text>
-                  {item.badge ? <Text style={styles.navBadge}>{item.badge}</Text> : null}
+                {showGroup ? (
+                  <Text style={styles.navGroup}>{item.group}</Text>
+                ) : null}
+                <Pressable
+                  onPress={() => setActiveTab(item.key)}
+                  style={[
+                    styles.navItem,
+                    active ? styles.navItemActive : null,
+                  ]}
+                >
+                  <Feather
+                    name={item.icon}
+                    size={17}
+                    color={active ? ADMIN_GREEN : ADMIN_MUTED_DARK}
+                  />
+                  <Text
+                    style={[
+                      styles.navText,
+                      active ? styles.navTextActive : null,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  {item.badge ? (
+                    <Text style={styles.navBadge}>{item.badge}</Text>
+                  ) : null}
                 </Pressable>
               </React.Fragment>
             );
@@ -817,10 +1290,18 @@ export default function AdminScreen() {
         </ScrollView>
         {desktop ? (
           <View style={styles.sidebarUser}>
-            <View style={styles.sidebarAvatar}><Text style={styles.sidebarAvatarText}>{String(user?.email || "A").slice(0, 1).toUpperCase()}</Text></View>
+            <View style={styles.sidebarAvatar}>
+              <Text style={styles.sidebarAvatarText}>
+                {String(user?.email || "A")
+                  .slice(0, 1)
+                  .toUpperCase()}
+              </Text>
+            </View>
             <View style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={styles.sidebarUserName}>{user?.email}</Text>
-              <Text style={styles.sidebarUserRole}>Admin</Text>
+              <Text numberOfLines={1} style={styles.sidebarUserName}>
+                {user?.email}
+              </Text>
+              <Text style={styles.sidebarUserRole}>Quản trị viên</Text>
             </View>
           </View>
         ) : null}
@@ -828,165 +1309,630 @@ export default function AdminScreen() {
     );
   };
 
+  // ─── Topbar ───────────────────────────────────────────────────────────────────
+
   const Topbar = () => (
     <View style={styles.topbar}>
       <View style={styles.searchBox}>
         <Feather name="search" size={18} color={ADMIN_MUTED} />
-        <TextInput value={search} onChangeText={setSearch} placeholder="Search products, users, orders..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Tìm sản phẩm, người dùng, đơn hàng..."
+          placeholderTextColor={ADMIN_MUTED}
+          style={styles.searchInput}
+        />
       </View>
-      <Pressable onPress={refresh} style={styles.topIconBtn}><Feather name="refresh-cw" size={18} color={ADMIN_TEXT} /></Pressable>
-      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>New Product</Text></Pressable>
+      <Pressable onPress={refresh} style={styles.topIconBtn}>
+        <Feather name="refresh-cw" size={18} color={ADMIN_TEXT} />
+      </Pressable>
+      <Pressable
+        onPress={() => setActiveTab("sanpham")}
+        style={styles.newOrderBtn}
+      >
+        <Feather name="plus" size={16} color="#fff" />
+        <Text style={styles.newOrderText}>Thêm sản phẩm</Text>
+      </Pressable>
     </View>
   );
 
-  const renderOverview = () => (
+  // ─── Tab: Tổng quan ───────────────────────────────────────────────────────────
+
+  const renderTongQuan = () => (
     <View style={styles.pageGap}>
       <View style={styles.heroCard}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.heroTitle}>Welcome back, {user?.name || "Admin"}</Text>
-          <Text style={styles.heroSub}>Hôm nay có {formatNumber(orders.length)} đơn trong hệ thống, {activeVouchers + activePromotions} campaign đang hoạt động.</Text>
+          <Text style={styles.heroTitle}>
+            Chào mừng, {user?.name || user?.email?.split("@")[0] || "Admin"}!
+          </Text>
+          <Text style={styles.heroSub}>
+            {formatNumber(orders.length)} đơn hàng • {formatNumber(products.length)} sản phẩm •{" "}
+            {formatNumber(users.length)} khách hàng
+          </Text>
         </View>
-        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>View Analytics</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
+        <Pressable
+          onPress={() => setActiveTab("thongke")}
+          style={styles.heroButton}
+        >
+          <Text style={styles.heroButtonText}>Xem thống kê</Text>
+          <Feather name="arrow-right" size={16} color="#fff" />
+        </Pressable>
       </View>
 
       <View style={styles.statsGrid}>
-        <StatCard label="Total Revenue" value={formatCompactMoney(kpis.revenueTotal)} change="↗ +12.5%" icon="dollar-sign" accent={ADMIN_GREEN} trend={revenueByMonth} />
-        <StatCard label="Orders" value={formatNumber(kpis.orders || orders.length)} change="↗ +8.2%" icon="shopping-bag" accent={ADMIN_BLUE} />
-        <StatCard label="Customers" value={formatNumber(kpis.users || users.length)} change="↗ +5.1%" icon="users" accent="#00A6A6" />
-        <StatCard label="Products" value={formatNumber(kpis.products || products.length)} change={`${activeProducts} active`} icon="package" accent={ADMIN_ORANGE} />
+        <StatCard
+          label="Tổng doanh thu"
+          value={formatCompactMoney(kpis.revenueTotal || totalRevenue)}
+          change="↗ +12.5%"
+          icon="dollar-sign"
+          accent={ADMIN_GREEN}
+          trend={revenueByMonth}
+        />
+        <StatCard
+          label="Đơn hàng"
+          value={formatNumber(kpis.orders || orders.length)}
+          change={`${pendingOrders} chờ xử lý`}
+          icon="shopping-bag"
+          accent={ADMIN_BLUE}
+        />
+        <StatCard
+          label="Khách hàng"
+          value={formatNumber(kpis.users || users.length)}
+          change="↗ +5.1%"
+          icon="users"
+          accent="#00A6A6"
+        />
+        <StatCard
+          label="Sản phẩm"
+          value={formatNumber(kpis.products || products.length)}
+          change={`${activeProducts} đang bán`}
+          icon="package"
+          accent={ADMIN_ORANGE}
+        />
       </View>
 
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Revenue Growth" subtitle="Monthly revenue trend" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
-          <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
+          <SectionHeader
+            title="Doanh thu theo tháng"
+            subtitle="Tăng trưởng doanh thu"
+            right={
+              <View style={styles.segment}>
+                <Text style={styles.segmentActive}>Tháng</Text>
+                <Text style={styles.segmentText}>Năm</Text>
+              </View>
+            }
+          />
+          <MiniBars
+            data={
+              revenueByMonth.length ? revenueByMonth : miniTrendData([])
+            }
+            accent={ADMIN_GREEN}
+            money
+          />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Monthly Goal" subtitle="Revenue target" />
-          <View style={styles.goalCircle}><Text style={styles.goalNumber}>72%</Text><Text style={styles.goalText}>Goal</Text></View>
-          <Text style={styles.centerMuted}>{formatCompactMoney(kpis.monthRevenue)} of {formatCompactMoney(Number(kpis.monthRevenue || 0) / 0.72 || 0)}</Text>
+          <SectionHeader title="Mục tiêu tháng" subtitle="Tiến độ doanh thu" />
+          <View style={styles.goalCircle}>
+            <Text style={styles.goalNumber}>72%</Text>
+            <Text style={styles.goalText}>Mục tiêu</Text>
+          </View>
+          <Text style={styles.centerMuted}>
+            {formatCompactMoney(kpis.monthRevenue)} /{" "}
+            {formatCompactMoney(
+              Number(kpis.monthRevenue || 0) / 0.72 || 0
+            )}
+          </Text>
         </View>
       </View>
 
       <View style={styles.dashboardGrid3}>
         <View style={styles.card}>
-          <SectionHeader title="Top Products" subtitle="Best sellers" />
-          <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} />
+          <SectionHeader
+            title="Sản phẩm bán chạy"
+            subtitle="Theo số lượng đã bán"
+          />
+          <HorizontalBars
+            data={topProducts.map((x: any) => ({
+              label: x.name,
+              value: x.unitsSold,
+            }))}
+            accent={ADMIN_GREEN}
+          />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Conversion Funnel" subtitle="This month" />
-          <Funnel orders={Number(kpis.orders || orders.length)} users={Number(kpis.users || users.length)} />
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Recent Activity" subtitle="Orders and payments" />
+          <SectionHeader
+            title="Đơn hàng gần đây"
+            subtitle="5 đơn mới nhất"
+          />
           <View style={{ gap: 13 }}>
-            {latestActivity.length ? latestActivity.map((item, idx) => (
-              <View key={`${item.title}-${idx}`} style={styles.activityRow}>
-                <View style={styles.activityIcon}><Feather name={item.icon as any} size={16} color={ADMIN_GREEN} /></View>
-                <View style={{ flex: 1 }}><Text style={styles.activityTitle}>{item.title}</Text><Text style={styles.activityMeta}>{item.meta}</Text></View>
+            {orders.slice(0, 5).map((order, idx) => (
+              <View
+                key={`${order.id}-${idx}`}
+                style={styles.activityRow}
+              >
+                <View style={styles.activityIcon}>
+                  <Feather
+                    name="shopping-bag"
+                    size={16}
+                    color={ADMIN_GREEN}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.activityTitle}>
+                    #{String(order.id).slice(-8)}{" "}
+                    •{" "}
+                    {formatMoney(order.totalAmount || order.total)}
+                  </Text>
+                  <Text style={styles.activityMeta}>
+                    {order.orderStatus || order.status || "pending"} •{" "}
+                    {compactDate(order.orderDate || order.createdAt)}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setActiveTab("donhang")}
+                  style={styles.smallBtn}
+                >
+                  <Text style={styles.smallBtnText}>Xem</Text>
+                </Pressable>
               </View>
-            )) : <Text style={styles.emptyText}>Chưa có hoạt động gần đây.</Text>}
+            ))}
+            {!orders.length ? (
+              <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>
+            ) : null}
           </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderAnalytics = () => (
-    <View style={styles.pageGap}>
-      <SectionHeader title="Machine Learning Demand Forecast" subtitle="JAPANO DemandScore v2: dự đoán sản phẩm dễ bán chạy và xu hướng khách hàng." />
-      <View style={styles.analyticsGrid}>
-        <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title={dashboard?.ml?.modelName || "JAPANO DemandScore v2"} subtitle={dashboard?.ml?.algorithm || "Weighted feature scoring + trend mining."} />
-          <View style={styles.featureWrap}>{(dashboard?.ml?.features || ["unitsSold", "wishlist", "cart", "rating", "recency", "chatMention"]).map((f: string) => <Text key={f} style={styles.featureChip}>{f}</Text>)}</View>
-          <HorizontalBars data={predictions.map((x: any) => ({ label: x.name, value: x.score }))} accent={ADMIN_GREEN} />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Customer Trends" subtitle="Category demand" />
-          <HorizontalBars data={customerTrends.map((x: any) => ({ label: x.category, value: x.score }))} accent="#00A6A6" />
-        </View>
-      </View>
-      <View style={styles.predictionGrid}>
-        {predictions.map((item: any) => (
-          <View key={item.productId} style={styles.predictionCard}>
-            {item.image ? <Image source={{ uri: item.image }} style={styles.predictionImage} /> : <View style={styles.predictionImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
-            <View style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={styles.predictionTitle}>{item.name}</Text>
-              <Text style={styles.predictionMeta}>{item.category} • {formatMoney(item.price)}</Text>
-              <Text style={styles.predictionSuggestion}>{item.suggestion}</Text>
-              <Text style={styles.predictionSmall}>Sold {item.features?.sold || 0} • Wishlist {item.features?.wishlist || 0} • Cart {item.features?.cart || 0}</Text>
-            </View>
-            <View style={styles.scoreBox}><Text style={styles.scoreText}>{item.score}</Text><Text style={styles.scoreLabel}>score</Text></View>
+          <SectionHeader
+            title="Đánh giá gần đây"
+            subtitle="Phản hồi của khách"
+          />
+          <View style={{ gap: 13 }}>
+            {reviews.slice(0, 4).map((r, idx) => (
+              <View key={`${r.id}-${idx}`} style={styles.activityRow}>
+                <View style={styles.activityIcon}>
+                  <Feather name="star" size={16} color={ADMIN_ORANGE} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <RatingStars rating={r.rating} />
+                  <Text
+                    numberOfLines={1}
+                    style={styles.activityMeta}
+                  >
+                    {r.comment || "Không có nhận xét"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            {!reviews.length ? (
+              <Text style={styles.emptyText}>Chưa có đánh giá.</Text>
+            ) : null}
           </View>
-        ))}
+        </View>
       </View>
     </View>
   );
 
-  const renderProducts = () => (
+  // ─── Tab: Thống kê doanh thu ──────────────────────────────────────────────────
+
+  const renderThongKe = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Products Manager" subtitle="Thêm, ẩn, sửa 4 ảnh sản phẩm, size/kích cỡ, kích thước, màu sắc, mô tả, giá và sale." right={<Text style={styles.counterPill}>{activeProducts} active / {hiddenProducts} hidden</Text>} />
+      <SectionHeader
+        title="Thống kê doanh thu"
+        subtitle="Phân tích chi tiết doanh thu, đơn hàng và sản phẩm."
+      />
+      <View style={styles.statsGrid}>
+        <StatCard
+          label="Tổng doanh thu"
+          value={formatCompactMoney(kpis.revenueTotal || totalRevenue)}
+          change="↗ +12.5%"
+          icon="dollar-sign"
+          accent={ADMIN_GREEN}
+        />
+        <StatCard
+          label="Tổng đơn hàng"
+          value={formatNumber(orders.length)}
+          change={`${pendingOrders} chờ`}
+          icon="shopping-bag"
+          accent={ADMIN_BLUE}
+        />
+        <StatCard
+          label="Đơn thành công"
+          value={formatNumber(
+            orders.filter(
+              (o) =>
+                o.orderStatus === "completed" || o.status === "completed"
+            ).length
+          )}
+          change="↗ +8.2%"
+          icon="check-circle"
+          accent={ADMIN_GREEN}
+        />
+        <StatCard
+          label="Tổng thanh toán"
+          value={formatNumber(payments.length)}
+          change={`${formatCompactMoney(totalRevenue)} thành công`}
+          icon="credit-card"
+          accent={ADMIN_ORANGE}
+        />
+      </View>
+      <View style={styles.dashboardGrid}>
+        <View style={[styles.card, styles.bigChartCard]}>
+          <SectionHeader
+            title="Doanh thu theo tháng"
+            subtitle="Biểu đồ tăng trưởng"
+          />
+          <MiniBars
+            data={
+              revenueByMonth.length ? revenueByMonth : miniTrendData([])
+            }
+            accent={ADMIN_GREEN}
+            money
+          />
+        </View>
+        <View style={styles.card}>
+          <SectionHeader
+            title="Sản phẩm bán chạy"
+            subtitle="Top theo doanh số"
+          />
+          <HorizontalBars
+            data={topProducts.slice(0, 6).map((x: any) => ({
+              label: x.name,
+              value: x.unitsSold || x.revenue,
+            }))}
+            accent={ADMIN_GREEN}
+          />
+        </View>
+      </View>
+      <View style={[styles.card]}>
+        <SectionHeader
+          title="Danh sách thanh toán"
+          subtitle="Giao dịch gần đây"
+        />
+        {payments.length ? (
+          payments.map((payment) => (
+            <View key={payment.id} style={styles.paymentRow}>
+              <View style={styles.paymentIcon}>
+                <Feather name="credit-card" size={16} color={ADMIN_GREEN} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.paymentTitle}>
+                  {formatMoney(payment.amount)}
+                </Text>
+                <Text style={styles.paymentMeta}>
+                  {payment.paymentMethod || "Thanh toán"} •{" "}
+                  {payment.status} •{" "}
+                  {compactDate(payment.createdAt)}
+                </Text>
+                <Text numberOfLines={1} style={styles.paymentMeta}>
+                  Mã GD: {payment.transactionId || "--"} • User:{" "}
+                  {payment.userId || "--"}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.statusPill,
+                  payment.status === "success" ||
+                  payment.status === "completed"
+                    ? styles.statusOn
+                    : styles.statusOff,
+                ]}
+              >
+                <Text style={styles.statusText}>
+                  {payment.status === "success" ||
+                  payment.status === "completed"
+                    ? "Thành công"
+                    : payment.status || "Chờ"}
+                </Text>
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>Chưa có giao dịch.</Text>
+        )}
+      </View>
+    </View>
+  );
+
+  // ─── Tab: Quản lý sản phẩm ───────────────────────────────────────────────────
+
+  const renderSanPham = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Quản lý sản phẩm"
+        subtitle="Thêm, sửa, ẩn sản phẩm. Quản lý ảnh, size, màu sắc, giá và khuyến mãi."
+        right={
+          <Text style={styles.counterPill}>
+            {activeProducts} đang bán / {hiddenProducts} ẩn
+          </Text>
+        }
+      />
       <View style={styles.productManagerGrid}>
         <View style={[styles.card, styles.formCard]}>
-          <Text style={styles.formTitle}>{editingProductId ? `Đang sửa: ${editingProductId}` : "Thêm sản phẩm mới"}</Text>
+          <Text style={styles.formTitle}>
+            {editingProductId
+              ? `Đang sửa: ${editingProductId}`
+              : "Thêm sản phẩm mới"}
+          </Text>
           <View style={styles.formGrid2}>
-            <Input label="Product ID" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
-            <Input label="SKU" value={productForm.sku} onChangeText={(sku: string) => setProductForm((p) => ({ ...p, sku }))} placeholder="JP-001" />
+            <Input
+              label="Mã sản phẩm (ProductID)"
+              value={productForm.id}
+              onChangeText={(id: string) =>
+                setProductForm((p) => ({ ...p, id }))
+              }
+              placeholder="jp-kimono-001"
+            />
+            <Input
+              label="Mã SKU"
+              value={productForm.sku}
+              onChangeText={(sku: string) =>
+                setProductForm((p) => ({ ...p, sku }))
+              }
+              placeholder="JP-001"
+            />
           </View>
-          <Input label="Tên sản phẩm" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Đàn guitar và giá đỡ đàn" />
+          <Input
+            label="Tên sản phẩm (ProductName)"
+            value={productForm.name}
+            onChangeText={(name: string) =>
+              setProductForm((p) => ({ ...p, name }))
+            }
+            placeholder="Áo kimono truyền thống Nhật"
+          />
+          <View style={styles.formGrid2}>
+            <Input
+              label="Danh mục (CategoryID)"
+              value={productForm.categoryId}
+              onChangeText={(categoryId: string) =>
+                setProductForm((p) => ({ ...p, categoryId }))
+              }
+              placeholder={
+                categories.length
+                  ? categories[0].id || ""
+                  : "fashion"
+              }
+            />
+            <Input
+              label="Trạng thái"
+              value={productForm.status}
+              onChangeText={(status: string) =>
+                setProductForm((p) => ({ ...p, status }))
+              }
+              placeholder="active / inactive"
+            />
+          </View>
           <View style={styles.formGrid3}>
-            <Input label="Giá đang bán" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
-            <Input label="Giá gốc / giá gạch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
-            <Input label="% giảm" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
+            <Input
+              label="Giá bán (Price)"
+              value={productForm.price}
+              keyboardType="numeric"
+              onChangeText={(price: string) =>
+                setProductForm((p) => ({ ...p, price }))
+              }
+              placeholder="250000"
+            />
+            <Input
+              label="Giá gốc (gạch)"
+              value={productForm.originalPrice}
+              keyboardType="numeric"
+              onChangeText={(originalPrice: string) =>
+                setProductForm((p) => ({ ...p, originalPrice }))
+              }
+              placeholder="300000"
+            />
+            <Input
+              label="% giảm giá"
+              value={productForm.discountPercent}
+              keyboardType="numeric"
+              onChangeText={(discountPercent: string) =>
+                setProductForm((p) => ({ ...p, discountPercent }))
+              }
+              placeholder="17"
+            />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Nhãn giảm giá" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
-            <Input label="Badge" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GIẢM 17%" />
+            <Input
+              label="Nhãn giảm giá"
+              value={productForm.discountLabel}
+              onChangeText={(discountLabel: string) =>
+                setProductForm((p) => ({ ...p, discountLabel }))
+              }
+              placeholder="Flash Sale"
+            />
+            <Input
+              label="Badge hiển thị"
+              value={productForm.badge}
+              onChangeText={(badge: string) =>
+                setProductForm((p) => ({ ...p, badge }))
+              }
+              placeholder="GIẢM 17%"
+            />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Ảnh lớn / ảnh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
-            <Input label="Ảnh nhỏ 2 URL" value={productForm.image2} onChangeText={(image2: string) => setProductForm((p) => ({ ...p, image2 }))} placeholder="https://..." />
+            <Input
+              label="Ảnh chính (Image 1)"
+              value={productForm.image}
+              onChangeText={(image: string) =>
+                setProductForm((p) => ({ ...p, image }))
+              }
+              placeholder="https://..."
+            />
+            <Input
+              label="Ảnh 2"
+              value={productForm.image2}
+              onChangeText={(image2: string) =>
+                setProductForm((p) => ({ ...p, image2 }))
+              }
+              placeholder="https://..."
+            />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Ảnh nhỏ 3 URL" value={productForm.image3} onChangeText={(image3: string) => setProductForm((p) => ({ ...p, image3 }))} placeholder="https://..." />
-            <Input label="Ảnh nhỏ 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
+            <Input
+              label="Ảnh 3"
+              value={productForm.image3}
+              onChangeText={(image3: string) =>
+                setProductForm((p) => ({ ...p, image3 }))
+              }
+              placeholder="https://..."
+            />
+            <Input
+              label="Ảnh 4"
+              value={productForm.image4}
+              onChangeText={(image4: string) =>
+                setProductForm((p) => ({ ...p, image4 }))
+              }
+              placeholder="https://..."
+            />
           </View>
           <View style={styles.mediaUploadBox}>
-            <Text style={styles.mediaUploadTitle}>Upload ảnh sản phẩm lên Cloudinary</Text>
-            <Text style={styles.mediaUploadHint}>Chọn ảnh từ máy, hệ thống sẽ upload lên Cloudinary rồi tự điền URL vào 4 ô ảnh.</Text>
+            <Text style={styles.mediaUploadTitle}>
+              Upload ảnh sản phẩm lên Cloudinary
+            </Text>
+            <Text style={styles.mediaUploadHint}>
+              Chọn ảnh từ thiết bị, hệ thống upload lên Cloudinary và tự điền URL.
+            </Text>
             <View style={styles.actionRow}>
-              {(["image", "image2", "image3", "image4"] as const).map((field, index) => {
-                const key = `upload-${field}`;
-                return (
-                  <Pressable key={field} disabled={uploadingMediaField === key} onPress={() => pickAndUploadAdminImage(field)} style={styles.smallBtn}>
-                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "Đang upload..." : `Upload ảnh ${index + 1}`}</Text>
+              {(["image", "image2", "image3", "image4"] as const).map(
+                (field, index) => (
+                  <Pressable
+                    key={field}
+                    disabled={uploadingField === field}
+                    onPress={() => pickAndUpload(field)}
+                    style={styles.smallBtn}
+                  >
+                    <Text style={styles.smallBtnText}>
+                      {uploadingField === field
+                        ? "Đang upload..."
+                        : `Upload ảnh ${index + 1}`}
+                    </Text>
                   </Pressable>
-                );
-              })}
+                )
+              )}
             </View>
           </View>
-          <Input label="Mô tả sản phẩm" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="Mô tả ngắn..." multiline />
+          <Input
+            label="Mô tả sản phẩm (Description)"
+            value={productForm.description}
+            onChangeText={(description: string) =>
+              setProductForm((p) => ({ ...p, description }))
+            }
+            placeholder="Mô tả chi tiết sản phẩm..."
+            multiline
+          />
+          <Input
+            label="Câu chuyện sản phẩm (Story)"
+            value={productForm.story}
+            onChangeText={(story: string) =>
+              setProductForm((p) => ({ ...p, story }))
+            }
+            placeholder="Nguồn gốc, ý nghĩa sản phẩm..."
+            multiline
+          />
           <View style={styles.formGrid3}>
-            <Input label="Category" value={productForm.category} onChangeText={(category: string) => setProductForm((p) => ({ ...p, category }))} placeholder="fashion" />
-            <Input label="Subcategory" value={productForm.subcategory} onChangeText={(subcategory: string) => setProductForm((p) => ({ ...p, subcategory }))} placeholder="streetwear" />
-            <Input label="Tồn kho" value={productForm.stockQuantity} keyboardType="numeric" onChangeText={(stockQuantity: string) => setProductForm((p) => ({ ...p, stockQuantity }))} placeholder="999" />
+            <Input
+              label="Tồn kho (StockQuantity)"
+              value={productForm.stockQuantity}
+              keyboardType="numeric"
+              onChangeText={(stockQuantity: string) =>
+                setProductForm((p) => ({ ...p, stockQuantity }))
+              }
+              placeholder="999"
+            />
+            <Input
+              label="Size / kích cỡ"
+              value={productForm.sizes}
+              onChangeText={(sizes: string) =>
+                setProductForm((p) => ({ ...p, sizes }))
+              }
+              placeholder="S, M, L, XL"
+            />
+            <Input
+              label="Màu sắc"
+              value={productForm.colors}
+              onChangeText={(colors: string) =>
+                setProductForm((p) => ({ ...p, colors }))
+              }
+              placeholder="Đen, Trắng, Kem"
+            />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Size / kích cỡ" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
-            <Input label="Màu sắc" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Đen, trắng, kem" />
+            <Input
+              label="Kích thước (Dimensions)"
+              value={productForm.dimensions}
+              onChangeText={(dimensions: string) =>
+                setProductForm((p) => ({ ...p, dimensions }))
+              }
+              placeholder="Dài 68cm, vai 46cm..."
+            />
+            <Input
+              label="Form / kiểu dáng (Fit)"
+              value={productForm.fit}
+              onChangeText={(fit: string) =>
+                setProductForm((p) => ({ ...p, fit }))
+              }
+              placeholder="Regular / Oversize / Slim"
+            />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Kích thước" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dài 68cm, ngang vai 46cm..." />
-            <Input label="Form / kiểu vừa" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
+            <Input
+              label="Thẻ hình ảnh (VisualTags)"
+              value={productForm.visualTags}
+              onChangeText={(visualTags: string) =>
+                setProductForm((p) => ({ ...p, visualTags }))
+              }
+              placeholder="japanese, black, minimal"
+            />
+            <Input
+              label="Phong cách sử dụng"
+              value={productForm.styleUseCase}
+              onChangeText={(styleUseCase: string) =>
+                setProductForm((p) => ({ ...p, styleUseCase }))
+              }
+              placeholder="Đi chơi, chụp ảnh, cosplay"
+            />
           </View>
-          <Input label="Visual tags" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
-          <Input label="Style use case" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Đi chơi, chụp ảnh, cosplay nhẹ" />
           <View style={styles.actionRow}>
-            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Đang lưu..." : editingProductId ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}</Text></Pressable>
-            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
+            <Pressable
+              disabled={actionId === "product-save"}
+              onPress={saveProduct}
+              style={styles.primaryBtn}
+            >
+              <Text style={styles.primaryBtnText}>
+                {actionId === "product-save"
+                  ? "Đang lưu..."
+                  : editingProductId
+                  ? "Cập nhật sản phẩm"
+                  : "Thêm sản phẩm"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setProductForm(emptyProductForm);
+                setEditingProductId(null);
+              }}
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>Xóa form</Text>
+            </Pressable>
           </View>
         </View>
-        <ProductDiscountPreview name={productForm.name} price={Number(productForm.price || 0)} originalPrice={Number(productForm.originalPrice || 0)} discountPercent={Number(productForm.discountPercent || 0)} image={productForm.image} images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]} sizes={productForm.sizes} colors={productForm.colors} dimensions={productForm.dimensions} />
+        <ProductPreview
+          name={productForm.name}
+          price={Number(productForm.price || 0)}
+          originalPrice={Number(productForm.originalPrice || 0)}
+          discountPercent={Number(productForm.discountPercent || 0)}
+          image={productForm.image}
+          images={[
+            productForm.image,
+            productForm.image2,
+            productForm.image3,
+            productForm.image4,
+          ]}
+          sizes={productForm.sizes}
+          colors={productForm.colors}
+          dimensions={productForm.dimensions}
+        />
       </View>
 
       <View style={styles.productListGrid}>
@@ -999,254 +1945,1131 @@ export default function AdminScreen() {
           return (
             <View key={product.id} style={styles.productCard}>
               <View style={styles.productTop}>
-                {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.productImage} /> : <View style={styles.productImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text numberOfLines={1} style={styles.productTitle}>{product.name || product.productName}</Text>
-                  <Text style={styles.productMeta}>{product.id} • {product.category || "general"}</Text>
-                  <View style={styles.productPriceLine}>
-                    <Text style={styles.productPrice}>{formatMoney(product.price)}</Text>
-                    {Number(product.originalPrice || 0) > Number(product.price || 0) ? <Text style={styles.productOldPrice}>{formatMoney(product.originalPrice)}</Text> : null}
-                    {discount > 0 ? <Text style={styles.discountBadge}>-{discount}%</Text> : null}
+                {gallery[0] ? (
+                  <Image
+                    source={{ uri: gallery[0] }}
+                    style={styles.productImage}
+                  />
+                ) : (
+                  <View style={styles.productImage}>
+                    <Feather name="image" size={22} color={ADMIN_MUTED} />
                   </View>
-                  <Text style={styles.productMeta}>Status: {product.status || "active"} • Stock: {product.stockQuantity || 0}</Text>
+                )}
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text numberOfLines={1} style={styles.productTitle}>
+                    {product.name || product.productName}
+                  </Text>
+                  <Text style={styles.productMeta}>
+                    ID: {product.id} • SKU: {product.sku || "--"}
+                  </Text>
+                  <Text style={styles.productMeta}>
+                    Danh mục: {product.categoryId || product.category || "--"}
+                  </Text>
+                  <View style={styles.productPriceLine}>
+                    <Text style={styles.productPrice}>
+                      {formatMoney(product.price)}
+                    </Text>
+                    {Number(product.originalPrice || 0) >
+                    Number(product.price || 0) ? (
+                      <Text style={styles.productOldPrice}>
+                        {formatMoney(product.originalPrice)}
+                      </Text>
+                    ) : null}
+                    {discount > 0 ? (
+                      <Text style={styles.discountBadge}>
+                        -{discount}%
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.productMeta}>
+                    Trạng thái:{" "}
+                    {hidden ? "Đang ẩn" : "Đang bán"} • Tồn kho:{" "}
+                    {product.stockQuantity ?? "--"}
+                  </Text>
                 </View>
               </View>
-              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chưa có mô tả."}</Text>
+              <Text numberOfLines={2} style={styles.productDesc}>
+                {product.description || "Chưa có mô tả."}
+              </Text>
               <View style={styles.adminThumbRow}>
-                {gallery.map((url, index) => <Image key={`${product.id}-thumb-${index}`} source={{ uri: url }} style={styles.adminThumb} />)}
+                {gallery.map((url, index) => (
+                  <Image
+                    key={`${product.id}-thumb-${index}`}
+                    source={{ uri: url }}
+                    style={styles.adminThumb}
+                  />
+                ))}
               </View>
-              <Text style={styles.productMeta}>Ảnh: {gallery.length}/4 • Size: {sizes.join(' / ') || 'S / M / L / XL'} • Màu: {colors.join(' / ') || 'Đen / Trắng / Kem'}</Text>
-              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kích thước: {product.dimensions || '--'} • Form: {product.fit || '--'}</Text> : null}
+              <Text style={styles.productMeta}>
+                Size:{" "}
+                {sizes.length ? sizes.join(" / ") : "S / M / L / XL"} •
+                Màu:{" "}
+                {colors.length ? colors.join(" / ") : "Đen / Trắng / Kem"}
+              </Text>
+              {product.dimensions || product.fit ? (
+                <Text style={styles.productMeta}>
+                  Kích thước: {product.dimensions || "--"} • Form:{" "}
+                  {product.fit || "--"}
+                </Text>
+              ) : null}
               <View style={styles.actionRow}>
-                <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
-                <Pressable onPress={() => toggleProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{hidden ? "Hiện" : "Ẩn"}</Text></Pressable>
-                <Pressable onPress={() => changeProductPrice(product, 10)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+10%</Text></Pressable>
-                <Pressable onPress={() => changeProductPrice(product, -10)} style={styles.smallBtn}><Text style={styles.smallBtnText}>-10%</Text></Pressable>
-                <Pressable onPress={() => quickDiscount(product, 15)} style={styles.saleBtn}><Text style={styles.saleBtnText}>Sale -15%</Text></Pressable>
+                <Pressable
+                  onPress={() => editProduct(product)}
+                  style={styles.smallBtn}
+                >
+                  <Text style={styles.smallBtnText}>Sửa</Text>
+                </Pressable>
+                <Pressable
+                  disabled={!!actionId?.startsWith(`hide-${product.id}`)}
+                  onPress={() => toggleProduct(product)}
+                  style={styles.smallBtn}
+                >
+                  <Text style={styles.smallBtnText}>
+                    {hidden ? "Hiện" : "Ẩn"}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  disabled={!!actionId?.startsWith(`discount-${product.id}`)}
+                  onPress={() => quickDiscount(product, 10)}
+                  style={styles.saleBtn}
+                >
+                  <Text style={styles.saleBtnText}>Sale -10%</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => quickDiscount(product, 20)}
+                  style={styles.saleBtn}
+                >
+                  <Text style={styles.saleBtnText}>Sale -20%</Text>
+                </Pressable>
+              </View>
+            </View>
+          );
+        })}
+        {!filteredProducts.length ? (
+          <Text style={styles.emptyText}>Chưa có sản phẩm nào.</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+
+  // ─── Tab: Quản lý danh mục ────────────────────────────────────────────────────
+
+  const renderDanhMuc = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Quản lý danh mục"
+        subtitle="Thêm, sửa, xóa danh mục sản phẩm (Categories)."
+        right={
+          <Text style={styles.counterPill}>
+            {categories.length} danh mục
+          </Text>
+        }
+      />
+      <View style={styles.promoGrid}>
+        <View style={styles.card}>
+          <Text style={styles.formTitle}>
+            {editingCategoryId ? "Sửa danh mục" : "Thêm danh mục mới"}
+          </Text>
+          <Input
+            label="Mã danh mục (CategoryID)"
+            value={categoryForm.categoryId}
+            onChangeText={(categoryId: string) =>
+              setCategoryForm((p) => ({ ...p, categoryId }))
+            }
+            placeholder="fashion, home-decor..."
+          />
+          <Input
+            label="Tên danh mục (CategoryName)"
+            value={categoryForm.categoryName}
+            onChangeText={(categoryName: string) =>
+              setCategoryForm((p) => ({ ...p, categoryName }))
+            }
+            placeholder="Thời trang, Đồ gia dụng..."
+          />
+          <Input
+            label="Mô tả"
+            value={categoryForm.description}
+            onChangeText={(description: string) =>
+              setCategoryForm((p) => ({ ...p, description }))
+            }
+            placeholder="Mô tả danh mục..."
+            multiline
+          />
+          <View style={styles.actionRow}>
+            <Pressable
+              disabled={actionId === "category-save"}
+              onPress={saveCategory}
+              style={styles.primaryBtn}
+            >
+              <Text style={styles.primaryBtnText}>
+                {actionId === "category-save"
+                  ? "Đang lưu..."
+                  : editingCategoryId
+                  ? "Cập nhật"
+                  : "Thêm danh mục"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setCategoryForm(emptyCategoryForm);
+                setEditingCategoryId(null);
+              }}
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>Xóa form</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <SectionHeader
+            title="Danh sách danh mục"
+            subtitle="Tất cả danh mục hiện có"
+          />
+          {categories.length ? (
+            categories.map((cat) => (
+              <View key={cat.id} style={styles.voucherRow}>
+                <View style={styles.voucherIcon}>
+                  <Feather name="layers" size={17} color={ADMIN_GREEN} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.voucherCode}>
+                    {cat.categoryName || cat.name}
+                  </Text>
+                  <Text style={styles.voucherMeta}>
+                    ID: {cat.id || cat.categoryId} •{" "}
+                    {cat.description || "Không có mô tả"}
+                  </Text>
+                </View>
+                <View style={styles.actionRow}>
+                  <Pressable
+                    onPress={() => {
+                      setEditingCategoryId(cat.id);
+                      setCategoryForm({
+                        categoryId: cat.categoryId || cat.id || "",
+                        categoryName: cat.categoryName || cat.name || "",
+                        description: cat.description || "",
+                      });
+                    }}
+                    style={styles.smallBtn}
+                  >
+                    <Text style={styles.smallBtnText}>Sửa</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => deleteCategory(cat)}
+                    style={styles.dangerBtn}
+                  >
+                    <Text style={styles.dangerBtnText}>Xóa</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Chưa có danh mục.</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Tab: Quản lý đơn hàng ───────────────────────────────────────────────────
+
+  const ORDER_STATUSES = [
+    "pending",
+    "confirmed",
+    "shipping",
+    "completed",
+    "cancelled",
+  ];
+  const ORDER_STATUS_LABELS: Record<string, string> = {
+    pending: "Chờ xử lý",
+    confirmed: "Đã xác nhận",
+    shipping: "Đang giao",
+    completed: "Hoàn thành",
+    cancelled: "Đã hủy",
+  };
+  const ORDER_STATUS_COLORS: Record<string, string> = {
+    pending: ADMIN_ORANGE,
+    confirmed: ADMIN_BLUE,
+    shipping: "#00A6A6",
+    completed: ADMIN_GREEN,
+    cancelled: ADMIN_RED,
+  };
+
+  const renderDonHang = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Quản lý đơn hàng"
+        subtitle="Xem và cập nhật trạng thái đơn hàng, thông tin giao hàng, thanh toán."
+        right={
+          <Text style={styles.counterPill}>
+            {orders.length} đơn • {pendingOrders} chờ xử lý
+          </Text>
+        }
+      />
+      <View style={styles.statsGrid}>
+        {ORDER_STATUSES.map((status) => {
+          const count = orders.filter(
+            (o) => (o.orderStatus || o.status) === status
+          ).length;
+          return (
+            <View key={status} style={styles.statCard}>
+              <View style={styles.statTop}>
+                <View>
+                  <Text style={styles.statLabel}>
+                    {ORDER_STATUS_LABELS[status]}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      { color: ORDER_STATUS_COLORS[status] },
+                    ]}
+                  >
+                    {formatNumber(count)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.statIcon,
+                    {
+                      backgroundColor: `${ORDER_STATUS_COLORS[status]}18`,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="shopping-bag"
+                    size={20}
+                    color={ORDER_STATUS_COLORS[status]}
+                  />
+                </View>
               </View>
             </View>
           );
         })}
       </View>
+      <View style={styles.tableCard}>
+        {filteredOrders.length ? (
+          filteredOrders.map((order) => {
+            const status = order.orderStatus || order.status || "pending";
+            const statusColor =
+              ORDER_STATUS_COLORS[status] || ADMIN_MUTED;
+            return (
+              <View key={order.id} style={styles.orderRow}>
+                <View style={styles.paymentIcon}>
+                  <Feather
+                    name="shopping-bag"
+                    size={16}
+                    color={statusColor}
+                  />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.paymentTitle}>
+                    Đơn #{String(order.id).slice(-10)} •{" "}
+                    {formatMoney(order.totalAmount || order.total)}
+                  </Text>
+                  <Text style={styles.paymentMeta}>
+                    Khách: {order.userId || "--"} • SĐT:{" "}
+                    {order.phoneNumber || "--"}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.paymentMeta}>
+                    Địa chỉ:{" "}
+                    {order.shippingAddress || "--"} •{" "}
+                    {compactDate(order.orderDate || order.createdAt)}
+                  </Text>
+                  <Text style={styles.paymentMeta}>
+                    Thanh toán: {order.paymentStatus || "--"} • Mã giảm
+                    giá: {order.discountCodeId || "Không có"}
+                  </Text>
+                </View>
+                <View style={{ gap: 8, alignItems: "flex-end" }}>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      { backgroundColor: `${statusColor}18` },
+                    ]}
+                  >
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                      {ORDER_STATUS_LABELS[status] || status}
+                    </Text>
+                  </View>
+                  <View style={styles.actionRow}>
+                    {ORDER_STATUSES.filter((s) => s !== status).map(
+                      (nextStatus) => (
+                        <Pressable
+                          key={nextStatus}
+                          disabled={
+                            actionId === `order-${order.id}`
+                          }
+                          onPress={() =>
+                            updateOrderStatus(order, nextStatus)
+                          }
+                          style={[
+                            styles.smallBtn,
+                            {
+                              borderColor:
+                                ORDER_STATUS_COLORS[nextStatus],
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.smallBtnText,
+                              {
+                                color:
+                                  ORDER_STATUS_COLORS[nextStatus],
+                              },
+                            ]}
+                          >
+                            → {ORDER_STATUS_LABELS[nextStatus]}
+                          </Text>
+                        </Pressable>
+                      )
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })
+        ) : (
+          <View style={{ padding: 20 }}>
+            <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 
-  const renderPromotions = () => {
-    const voucherRows = vouchers.filter((v) => (v.kind || "voucher") === "voucher");
-    const promotionRows = vouchers.filter((v) => v.kind === "promotion");
-    return (
-      <View style={styles.pageGap}>
-        <SectionHeader title="Vouchers & Promotions" subtitle="Tạo voucher, khuyến mãi, flash sale và gửi thông báo chung cho người dùng." right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} campaign</Text>} />
-        <View style={styles.promoGrid}>
-          <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm voucher cho người dùng</Text>
-            <View style={styles.formGrid2}>
-              <Input label="Mã voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
-              <Input label="Tên voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Giảm cho khách mới" />
-            </View>
-            <View style={styles.actionRow}>
-              <SelectChip active={voucherForm.discountType === "percent"} label="Theo %" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "percent" }))} />
-              <SelectChip active={voucherForm.discountType === "fixed"} label="Theo tiền" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "fixed" }))} />
-            </View>
-            <View style={styles.formGrid3}>
-              <Input label="Giá trị giảm" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 hoặc 50000" />
-              <Input label="Đơn tối thiểu" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
-              <Input label="Hết hạn" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
-            </View>
-            <Input label="Mô tả" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="Áp dụng toàn shop..." multiline />
-            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "Đang tạo..." : "Tạo voucher"}</Text></Pressable>
-          </View>
+  // ─── Tab: Quản lý người dùng ─────────────────────────────────────────────────
 
-          <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm khuyến mãi / campaign</Text>
-            <View style={styles.formGrid2}>
-              <Input label="Mã campaign" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
-              <Input label="Tên khuyến mãi" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cuối tuần" />
-            </View>
-            <View style={styles.actionRow}>
-              <SelectChip active={promotionForm.discountType === "percent"} label="Giảm %" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "percent" }))} />
-              <SelectChip active={promotionForm.discountType === "fixed"} label="Giảm tiền" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "fixed" }))} />
-            </View>
-            <View style={styles.formGrid3}>
-              <Input label="Giá trị" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
-              <Input label="Đơn tối thiểu" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
-              <Input label="Scope" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:áo" />
-            </View>
-            <View style={styles.formGrid2}>
-              <Input label="Bắt đầu" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
-              <Input label="Kết thúc" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
-            </View>
-            <View style={styles.inputWrap}>
-              <Input label="Banner image URL" value={promotionForm.bannerImage} onChangeText={(bannerImage: string) => setPromotionForm((p) => ({ ...p, bannerImage }))} placeholder="https://..." />
-              <Pressable disabled={uploadingMediaField === "upload-bannerImage"} onPress={() => pickAndUploadAdminImage("bannerImage")} style={styles.smallBtn}>
-                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "Đang upload..." : "Upload banner Cloudinary"}</Text>
-              </Pressable>
-            </View>
-            <Input label="Mô tả campaign" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Giảm giá cuối tuần cho toàn bộ sản phẩm..." multiline />
-            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "Đang tạo..." : "Tạo khuyến mãi"}</Text></Pressable>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.formTitle}>Thông báo chung</Text>
-          <View style={styles.formGrid2}>
-            <Input label="Tiêu đề" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
-            <Input label="Nội dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="Mở app nhận voucher hôm nay..." />
-          </View>
-          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "Đang gửi..." : "Gửi thông báo cho tất cả user"}</Text></Pressable>
-        </View>
-
-        <View style={styles.listGrid2}>
-          <View style={styles.card}>
-            <SectionHeader title="Danh sách voucher" subtitle="Bật/tắt mã giảm giá" />
-            {voucherRows.length ? voucherRows.map((voucher) => (
-              <View key={voucher.id} style={styles.voucherRow}>
-                <View style={styles.voucherIcon}><Feather name="tag" size={17} color={ADMIN_GREEN} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.voucherCode}>{voucher.code}</Text>
-                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} • HSD {compactDate(voucher.expiryDate)}</Text>
-                </View>
-                <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
-              </View>
-            )) : <Text style={styles.emptyText}>Chưa có voucher.</Text>}
-          </View>
-
-          <View style={styles.card}>
-            <SectionHeader title="Danh sách khuyến mãi" subtitle="Campaign đang chạy" />
-            {promotionRows.length ? promotionRows.map((promo) => (
-              <View key={promo.id} style={styles.promoRow}>
-                {promo.bannerImage ? <Image source={{ uri: promo.bannerImage }} style={styles.promoThumb} /> : <View style={styles.promoThumb}><Feather name="image" size={18} color={ADMIN_MUTED} /></View>}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.voucherCode}>{promo.title || promo.code}</Text>
-                  <Text style={styles.voucherMeta}>{promo.code} • {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} • {compactDate(promo.startsAt)} → {compactDate(promo.expiryDate)}</Text>
-                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Campaign khuyến mãi"}</Text>
-                </View>
-                <Pressable onPress={() => toggleVoucher(promo)} style={[styles.statusPill, promo.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{promo.active ? "ON" : "OFF"}</Text></Pressable>
-              </View>
-            )) : <Text style={styles.emptyText}>Chưa có khuyến mãi.</Text>}
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderUsers = () => (
+  const renderNguoiDung = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Customers & Permissions" subtitle="Thông tin tài khoản, quyền admin và tăng/giảm xu." />
+      <SectionHeader
+        title="Quản lý người dùng"
+        subtitle="Xem thông tin, phân quyền admin và điều chỉnh xu của khách hàng."
+        right={
+          <Text style={styles.counterPill}>
+            {users.length} tài khoản
+          </Text>
+        }
+      />
+      <View style={styles.card}>
+        <SectionHeader
+          title="Gửi thông báo chung"
+          subtitle="Thông báo đến tất cả người dùng (Notifications)"
+        />
+        <View style={styles.formGrid2}>
+          <Input
+            label="Tiêu đề (Title)"
+            value={notificationForm.title}
+            onChangeText={(title: string) =>
+              setNotificationForm((p) => ({ ...p, title }))
+            }
+            placeholder="Flash Sale 50% hôm nay!"
+          />
+          <Input
+            label="Nội dung (Content)"
+            value={notificationForm.content}
+            onChangeText={(content: string) =>
+              setNotificationForm((p) => ({ ...p, content }))
+            }
+            placeholder="Mở app ngay để nhận voucher..."
+          />
+        </View>
+        <Pressable
+          disabled={actionId === "notification-send"}
+          onPress={sendNotification}
+          style={styles.primaryBtn}
+        >
+          <Text style={styles.primaryBtnText}>
+            {actionId === "notification-send"
+              ? "Đang gửi..."
+              : "Gửi thông báo cho tất cả"}
+          </Text>
+        </Pressable>
+      </View>
       <View style={styles.tableCard}>
         {filteredUsers.map((item) => {
           const isSelf = item.id === user?.id;
           const isItemAdmin = item.role === "admin";
           const canGrant = !isItemAdmin;
-          const canRevoke = isItemAdmin && !isSelf && !item.isProtectedAdmin;
+          const canRevoke =
+            isItemAdmin && !isSelf && !item.isProtectedAdmin;
           return (
             <View key={item.id} style={styles.userRow}>
-              <View style={[styles.userAvatar, isItemAdmin ? styles.userAvatarAdmin : null]}><Feather name={isItemAdmin ? "shield" : "user"} size={18} color={isItemAdmin ? "#fff" : ADMIN_GREEN} /></View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text numberOfLines={1} style={styles.userName}>{item.name || item.fullName || "JAPANO Member"}</Text>
-                <Text numberOfLines={1} style={styles.userEmail}>{item.email}</Text>
-                <Text style={styles.userMeta}>Status {item.status || "active"} • Xu {formatNumber(item.coins)} {item.vip ? "• VIP" : ""}</Text>
+              <View
+                style={[
+                  styles.userAvatar,
+                  isItemAdmin ? styles.userAvatarAdmin : null,
+                ]}
+              >
+                <Feather
+                  name={isItemAdmin ? "shield" : "user"}
+                  size={18}
+                  color={isItemAdmin ? "#fff" : ADMIN_GREEN}
+                />
               </View>
-              <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "CUSTOMER"}</Text></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text numberOfLines={1} style={styles.userName}>
+                  {item.fullName || item.name || "Thành viên JAPANO"}
+                </Text>
+                <Text numberOfLines={1} style={styles.userEmail}>
+                  {item.email}
+                </Text>
+                <Text style={styles.userMeta}>
+                  SĐT: {item.phone || "--"} • Trạng thái:{" "}
+                  {item.status || "active"} • Xu:{" "}
+                  {formatNumber(item.coins)}
+                  {item.vip ? " • VIP" : ""}
+                </Text>
+                {item.address ? (
+                  <Text numberOfLines={1} style={styles.userMeta}>
+                    Địa chỉ: {item.address}
+                  </Text>
+                ) : null}
+              </View>
+              <View
+                style={[
+                  styles.rolePill,
+                  isItemAdmin ? styles.roleAdmin : null,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.rolePillText,
+                    isItemAdmin ? styles.rolePillTextAdmin : null,
+                  ]}
+                >
+                  {isItemAdmin ? "ADMIN" : "KHÁCH"}
+                </Text>
+              </View>
               <View style={styles.userActions}>
-                <Pressable onPress={() => adjustCoins(item, 100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+100 xu</Text></Pressable>
-                <Pressable onPress={() => adjustCoins(item, -100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>-100 xu</Text></Pressable>
-                {canGrant ? <Pressable onPress={() => changeRole(item, "admin")} style={styles.saleBtn}><Text style={styles.saleBtnText}>Cấp admin</Text></Pressable> : null}
-                {canRevoke ? <Pressable onPress={() => changeRole(item, "customer")} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Gỡ admin</Text></Pressable> : null}
+                <Pressable
+                  onPress={() => adjustCoins(item, 100)}
+                  style={styles.smallBtn}
+                >
+                  <Text style={styles.smallBtnText}>+100 xu</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => adjustCoins(item, -100)}
+                  style={styles.smallBtn}
+                >
+                  <Text style={styles.smallBtnText}>-100 xu</Text>
+                </Pressable>
+                {canGrant ? (
+                  <Pressable
+                    onPress={() => changeRole(item, "admin")}
+                    style={styles.saleBtn}
+                  >
+                    <Text style={styles.saleBtnText}>Cấp admin</Text>
+                  </Pressable>
+                ) : null}
+                {canRevoke ? (
+                  <Pressable
+                    onPress={() => changeRole(item, "customer")}
+                    style={styles.dangerBtn}
+                  >
+                    <Text style={styles.dangerBtnText}>Gỡ admin</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
+        {!filteredUsers.length ? (
+          <View style={{ padding: 20 }}>
+            <Text style={styles.emptyText}>Không tìm thấy người dùng.</Text>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+
+  // ─── Tab: Quản lý mã giảm giá ────────────────────────────────────────────────
+
+  const renderGiamGia = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Quản lý mã giảm giá"
+        subtitle="Tạo và quản lý DiscountCodes theo ERD: Code, DiscountValue/Type, ExpiryDate, MinOrderAmount, MaxDiscountAmount, UsageLimit."
+        right={
+          <Text style={styles.counterPill}>
+            {activeDiscounts} đang hoạt động / {discountCodes.length} tổng
+          </Text>
+        }
+      />
+      <View style={styles.promoGrid}>
+        <View style={[styles.card, styles.formCard]}>
+          <Text style={styles.formTitle}>
+            {editingDiscountId
+              ? "Sửa mã giảm giá"
+              : "Thêm mã giảm giá mới"}
+          </Text>
+          <View style={styles.formGrid2}>
+            <Input
+              label="Mã giảm giá (Code)"
+              value={discountForm.code}
+              onChangeText={(code: string) =>
+                setDiscountForm((p) => ({ ...p, code }))
+              }
+              placeholder="JAPANO50"
+            />
+            <Input
+              label="Tên / tiêu đề"
+              value={discountForm.title}
+              onChangeText={(title: string) =>
+                setDiscountForm((p) => ({ ...p, title }))
+              }
+              placeholder="Giảm cho khách mới"
+            />
+          </View>
+          <View style={styles.actionRow}>
+            <Text style={[styles.inputLabel, { marginRight: 8 }]}>
+              Loại giảm giá:
+            </Text>
+            <SelectChip
+              active={discountForm.discountType === "percent"}
+              label="Theo % (Percent)"
+              onPress={() =>
+                setDiscountForm((p) => ({
+                  ...p,
+                  discountType: "percent",
+                }))
+              }
+            />
+            <SelectChip
+              active={discountForm.discountType === "fixed"}
+              label="Theo tiền (Fixed)"
+              onPress={() =>
+                setDiscountForm((p) => ({
+                  ...p,
+                  discountType: "fixed",
+                }))
+              }
+            />
+          </View>
+          <View style={styles.formGrid3}>
+            <Input
+              label="Giá trị giảm (DiscountValue)"
+              value={discountForm.discountValue}
+              keyboardType="numeric"
+              onChangeText={(discountValue: string) =>
+                setDiscountForm((p) => ({ ...p, discountValue }))
+              }
+              placeholder="20 hoặc 50000"
+            />
+            <Input
+              label="Đơn tối thiểu (MinOrderAmount)"
+              value={discountForm.minOrderAmount}
+              keyboardType="numeric"
+              onChangeText={(minOrderAmount: string) =>
+                setDiscountForm((p) => ({ ...p, minOrderAmount }))
+              }
+              placeholder="300000"
+            />
+            <Input
+              label="Giảm tối đa (MaxDiscountAmount)"
+              value={discountForm.maxDiscountAmount}
+              keyboardType="numeric"
+              onChangeText={(maxDiscountAmount: string) =>
+                setDiscountForm((p) => ({
+                  ...p,
+                  maxDiscountAmount,
+                }))
+              }
+              placeholder="100000"
+            />
+          </View>
+          <View style={styles.formGrid3}>
+            <Input
+              label="Giới hạn dùng (UsageLimit)"
+              value={discountForm.usageLimit}
+              keyboardType="numeric"
+              onChangeText={(usageLimit: string) =>
+                setDiscountForm((p) => ({ ...p, usageLimit }))
+              }
+              placeholder="100"
+            />
+            <Input
+              label="Ngày bắt đầu"
+              value={discountForm.startsAt}
+              onChangeText={(startsAt: string) =>
+                setDiscountForm((p) => ({ ...p, startsAt }))
+              }
+              placeholder="2026-06-01"
+            />
+            <Input
+              label="Ngày hết hạn (ExpiryDate)"
+              value={discountForm.expiryDate}
+              onChangeText={(expiryDate: string) =>
+                setDiscountForm((p) => ({ ...p, expiryDate }))
+              }
+              placeholder="2026-12-31"
+            />
+          </View>
+          <View style={styles.formGrid2}>
+            <Input
+              label="Phạm vi áp dụng"
+              value={discountForm.scope}
+              onChangeText={(scope: string) =>
+                setDiscountForm((p) => ({ ...p, scope }))
+              }
+              placeholder="all / category:áo"
+            />
+            <Input
+              label="Loại (voucher / promotion)"
+              value={discountForm.kind}
+              onChangeText={(kind: string) =>
+                setDiscountForm((p) => ({ ...p, kind }))
+              }
+              placeholder="voucher"
+            />
+          </View>
+          <View style={styles.inputWrap}>
+            <Input
+              label="URL ảnh banner (tùy chọn)"
+              value={discountForm.bannerImage}
+              onChangeText={(bannerImage: string) =>
+                setDiscountForm((p) => ({ ...p, bannerImage }))
+              }
+              placeholder="https://..."
+            />
+            <Pressable
+              disabled={uploadingField === "discountBanner"}
+              onPress={() => pickAndUpload("discountBanner")}
+              style={styles.smallBtn}
+            >
+              <Text style={styles.smallBtnText}>
+                {uploadingField === "discountBanner"
+                  ? "Đang upload..."
+                  : "Upload banner"}
+              </Text>
+            </Pressable>
+          </View>
+          <Input
+            label="Mô tả"
+            value={discountForm.description}
+            onChangeText={(description: string) =>
+              setDiscountForm((p) => ({ ...p, description }))
+            }
+            placeholder="Áp dụng toàn shop, không áp dụng với hàng giảm giá..."
+            multiline
+          />
+          <View style={styles.actionRow}>
+            <Pressable
+              disabled={actionId === "discount-save"}
+              onPress={saveDiscount}
+              style={styles.primaryBtn}
+            >
+              <Text style={styles.primaryBtnText}>
+                {actionId === "discount-save"
+                  ? "Đang lưu..."
+                  : editingDiscountId
+                  ? "Cập nhật mã"
+                  : "Tạo mã giảm giá"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setDiscountForm(emptyDiscountForm);
+                setEditingDiscountId(null);
+              }}
+              style={styles.secondaryBtn}
+            >
+              <Text style={styles.secondaryBtnText}>Xóa form</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <SectionHeader
+            title="Danh sách mã giảm giá"
+            subtitle="Bật/tắt từng mã, theo dõi lượt dùng"
+          />
+          {discountCodes.length ? (
+            discountCodes.map((dc) => (
+              <View key={dc.id} style={styles.voucherRow}>
+                {dc.bannerImage ? (
+                  <Image
+                    source={{ uri: dc.bannerImage }}
+                    style={styles.promoThumb}
+                  />
+                ) : (
+                  <View style={styles.voucherIcon}>
+                    <Feather
+                      name="tag"
+                      size={17}
+                      color={ADMIN_GREEN}
+                    />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.voucherCode}>
+                    {dc.code}{" "}
+                    {dc.kind === "promotion" ? "🎯 Campaign" : "🎟 Voucher"}
+                  </Text>
+                  <Text style={styles.voucherMeta}>
+                    {dc.title || "Mã giảm giá"} •{" "}
+                    {dc.discountType === "fixed"
+                      ? formatMoney(dc.discountValue)
+                      : `${dc.discountValue}%`}{" "}
+                    • HSD: {compactDate(dc.expiryDate)}
+                  </Text>
+                  <Text style={styles.voucherMeta}>
+                    Tối thiểu: {formatMoney(dc.minOrderAmount)} • Giảm
+                    tối đa: {formatMoney(dc.maxDiscountAmount)} •
+                    Dùng: {dc.usedCount || 0}/{dc.usageLimit || "∞"}
+                  </Text>
+                </View>
+                <View style={{ gap: 8 }}>
+                  <Pressable
+                    onPress={() => toggleDiscount(dc)}
+                    style={[
+                      styles.statusPill,
+                      dc.active !== false &&
+                      dc.status !== "inactive"
+                        ? styles.statusOn
+                        : styles.statusOff,
+                    ]}
+                  >
+                    <Text style={styles.statusText}>
+                      {dc.active !== false &&
+                      dc.status !== "inactive"
+                        ? "BẬT"
+                        : "TẮT"}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setEditingDiscountId(dc.id);
+                      setDiscountForm({
+                        code: dc.code || "",
+                        title: dc.title || "",
+                        discountType: dc.discountType || "percent",
+                        discountValue: String(dc.discountValue || ""),
+                        minOrderAmount: String(dc.minOrderAmount || ""),
+                        maxDiscountAmount: String(
+                          dc.maxDiscountAmount || ""
+                        ),
+                        usageLimit: String(dc.usageLimit || ""),
+                        expiryDate: dc.expiryDate || "",
+                        description: dc.description || "",
+                        status: dc.status || "active",
+                        kind: dc.kind || "voucher",
+                        scope: dc.scope || "all",
+                        bannerImage: dc.bannerImage || "",
+                        startsAt: dc.startsAt || "",
+                      });
+                    }}
+                    style={styles.smallBtn}
+                  >
+                    <Text style={styles.smallBtnText}>Sửa</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Chưa có mã giảm giá.</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Tab: Quản lý đánh giá ────────────────────────────────────────────────────
+
+  const renderDanhGia = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Quản lý đánh giá"
+        subtitle="Xem và xóa đánh giá của khách hàng (Reviews: Rating, Comment, ReviewDate)."
+        right={
+          <Text style={styles.counterPill}>
+            {reviews.length} đánh giá
+          </Text>
+        }
+      />
+      <View style={styles.statsGrid}>
+        {[5, 4, 3, 2, 1].map((star) => {
+          const count = reviews.filter(
+            (r) => Number(r.rating) === star
+          ).length;
+          return (
+            <View key={star} style={styles.statCard}>
+              <View style={styles.statTop}>
+                <View>
+                  <Text style={styles.statLabel}>{star} sao</Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      { color: ADMIN_ORANGE },
+                    ]}
+                  >
+                    {formatNumber(count)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.statIcon,
+                    { backgroundColor: `${ADMIN_ORANGE}18` },
+                  ]}
+                >
+                  <Feather name="star" size={20} color={ADMIN_ORANGE} />
+                </View>
               </View>
             </View>
           );
         })}
       </View>
+      <View style={styles.tableCard}>
+        {reviews.length ? (
+          reviews.map((review) => (
+            <View key={review.id} style={styles.reviewRow}>
+              <View style={styles.reviewLeft}>
+                <RatingStars rating={review.rating} />
+                <Text style={styles.reviewDate}>
+                  {compactDate(review.reviewDate)}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.paymentTitle}>
+                  {review.comment || "Không có nhận xét"}
+                </Text>
+                <Text style={styles.paymentMeta}>
+                  Người dùng: {review.userId || "--"} • Sản phẩm:{" "}
+                  {review.productName || review.orderItemId || "--"}
+                </Text>
+              </View>
+              <Pressable
+                disabled={actionId === `review-${review.id}`}
+                onPress={() => deleteReview(review)}
+                style={styles.dangerBtn}
+              >
+                <Text style={styles.dangerBtnText}>
+                  {actionId === `review-${review.id}`
+                    ? "Đang xóa..."
+                    : "Xóa"}
+                </Text>
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <View style={{ padding: 20 }}>
+            <Text style={styles.emptyText}>Chưa có đánh giá.</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 
-  const renderTransactions = () => (
+  // ─── Tab: Banner / Sản phẩm nổi bật ─────────────────────────────────────────
+
+  const renderBanner = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Orders / Payments" subtitle="Theo dõi thông tin giao dịch, đơn hàng và trạng thái thanh toán." />
-      <View style={styles.listGrid2}>
+      <SectionHeader
+        title="Quản lý Banner & Sản phẩm nổi bật"
+        subtitle="Thêm, xóa ảnh banner hiển thị trên trang chủ và đánh dấu sản phẩm nổi bật."
+        right={
+          <Text style={styles.counterPill}>
+            {banners.length} banner
+          </Text>
+        }
+      />
+      <View style={styles.promoGrid}>
         <View style={styles.card}>
-          <SectionHeader title="Payments" subtitle="Giao dịch gần đây" />
-          {payments.length ? payments.map((payment) => (
-            <View key={payment.id} style={styles.paymentRow}>
-              <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
-                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Payment"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
-              </View>
-            </View>
-          )) : <Text style={styles.emptyText}>Chưa có giao dịch.</Text>}
+          <Text style={styles.formTitle}>Thêm banner mới</Text>
+          <Input
+            label="URL ảnh banner"
+            value={bannerUrl}
+            onChangeText={setBannerUrl}
+            placeholder="https://..."
+          />
+          <Pressable
+            disabled={uploadingField === "bannerUrl"}
+            onPress={() => pickAndUpload("bannerUrl")}
+            style={styles.smallBtn}
+          >
+            <Text style={styles.smallBtnText}>
+              {uploadingField === "bannerUrl"
+                ? "Đang upload..."
+                : "Upload ảnh từ thiết bị"}
+            </Text>
+          </Pressable>
+          <Input
+            label="Liên kết khi bấm vào banner (tùy chọn)"
+            value={bannerLink}
+            onChangeText={setBannerLink}
+            placeholder="https://... hoặc /products/sale"
+          />
+          <Pressable
+            disabled={actionId === "banner-save"}
+            onPress={saveBanner}
+            style={styles.primaryBtn}
+          >
+            <Text style={styles.primaryBtnText}>
+              {actionId === "banner-save" ? "Đang lưu..." : "Lưu banner"}
+            </Text>
+          </Pressable>
         </View>
+
         <View style={styles.card}>
-          <SectionHeader title="Recent Orders" subtitle="Đơn hàng mới" />
-          {orders.length ? orders.map((order) => (
-            <View key={order.id} style={styles.paymentRow}>
-              <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
-                <Text style={styles.paymentMeta}>Status: {order.status} • Payment: {order.paymentStatus} • {compactDate(order.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} • {order.paymentMethod || "COD"}</Text>
-                <View style={styles.adminOrderQuickRow}>
-                  <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
-                    <Text style={styles.successBtnText}>Xác nhận thành công</Text>
-                  </Pressable>
-                  <Pressable disabled={actionId === `order-cancelled-${order.id}`} onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}>
-                    <Text style={styles.dangerBtnText}>Hủy nhanh</Text>
+          <SectionHeader
+            title="Banner hiện tại"
+            subtitle="Ảnh đang hiển thị trên trang chủ"
+          />
+          {banners.length ? (
+            <View style={{ gap: 12 }}>
+              {banners.map((b, idx) => (
+                <View key={b.id || idx} style={styles.bannerRow}>
+                  {b.url ? (
+                    <Image
+                      source={{ uri: b.url }}
+                      style={styles.bannerThumb}
+                    />
+                  ) : (
+                    <View style={styles.bannerThumb}>
+                      <Feather name="image" size={24} color={ADMIN_MUTED} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      numberOfLines={1}
+                      style={styles.paymentTitle}
+                    >
+                      Banner #{idx + 1}
+                    </Text>
+                    {b.link ? (
+                      <Text numberOfLines={1} style={styles.paymentMeta}>
+                        Link: {b.link}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Pressable
+                    disabled={actionId === `banner-${b.id}`}
+                    onPress={() => deleteBanner(b.id)}
+                    style={styles.dangerBtn}
+                  >
+                    <Text style={styles.dangerBtnText}>Xóa</Text>
                   </Pressable>
                 </View>
-              </View>
+              ))}
             </View>
-          )) : <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>}
+          ) : (
+            <Text style={styles.emptyText}>Chưa có banner nào.</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <SectionHeader
+          title="Đánh dấu sản phẩm nổi bật"
+          subtitle="Chọn sản phẩm hiển thị nổi bật trên trang chủ (badge = FEATURED)"
+        />
+        <View style={styles.productListGrid}>
+          {products.slice(0, 12).map((product) => {
+            const isFeatured =
+              product.badge === "FEATURED" ||
+              product.badge === "NỔI BẬT";
+            return (
+              <View key={product.id} style={styles.productCard}>
+                <View style={styles.productTop}>
+                  <Image
+                    source={{
+                      uri:
+                        product.image || ADMIN_FALLBACK_IMAGES[0],
+                    }}
+                    style={styles.productImage}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={styles.productTitle}>
+                      {product.name}
+                    </Text>
+                    <Text style={styles.productMeta}>
+                      {product.category || "--"} •{" "}
+                      {formatMoney(product.price)}
+                    </Text>
+                    {isFeatured ? (
+                      <View style={styles.featuredBadge}>
+                        <Text style={styles.featuredBadgeText}>
+                          ⭐ NỔI BẬT
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+                <Pressable
+                  onPress={async () => {
+                    if (!user?.id) return;
+                    try {
+                      await api.updateAdminProduct(
+                        user.id,
+                        product.id,
+                        {
+                          badge: isFeatured ? "" : "NỔI BẬT",
+                        }
+                      );
+                      await load();
+                    } catch (e: any) {
+                      Alert.alert("Lỗi", e?.message);
+                    }
+                  }}
+                  style={[
+                    isFeatured ? styles.dangerBtn : styles.saleBtn,
+                  ]}
+                >
+                  <Text
+                    style={
+                      isFeatured
+                        ? styles.dangerBtnText
+                        : styles.saleBtnText
+                    }
+                  >
+                    {isFeatured ? "Bỏ nổi bật" : "Đánh dấu nổi bật"}
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          })}
         </View>
       </View>
     </View>
   );
 
-  const renderGames = () => (
-    <View style={styles.pageGap}>
-      <SectionHeader title="Game Manager" subtitle="Thêm, sửa, xóa game và cấu hình thưởng xu." />
-      <View style={styles.card}>
-        <Text style={styles.formTitle}>{editingGameId ? "Sửa game" : "Thêm game"}</Text>
-        <View style={styles.formGrid2}>
-          <Input label="Slug" value={gameForm.slug} onChangeText={(slug: string) => setGameForm((p) => ({ ...p, slug }))} placeholder="quiz-battle" />
-          <Input label="Tên game" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder="Quiz Battle" />
-        </View>
-        <Input label="Mô tả" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder="Trả lời nhanh nhận xu" multiline />
-        <Input label="Thưởng xu" value={gameForm.rewardCoins} keyboardType="numeric" onChangeText={(rewardCoins: string) => setGameForm((p) => ({ ...p, rewardCoins }))} placeholder="30" />
-        <View style={styles.actionRow}>
-          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? "Cập nhật game" : "Thêm game"}</Text></Pressable>
-          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
-        </View>
-      </View>
-      <View style={styles.productListGrid}>
-        {games.map((game) => (
-          <View key={String(game._id || game.id)} style={styles.productCard}>
-            <Text style={styles.productTitle}>{game.name}</Text>
-            <Text style={styles.productMeta}>{game.slug} • Thưởng {formatNumber(game.rewardCoins)} xu</Text>
-            <Text style={styles.productDesc}>{game.description || "Chưa có mô tả."}</Text>
-            <View style={styles.actionRow}>
-              <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
-              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+  // ─── Render tab ───────────────────────────────────────────────────────────────
 
   const renderActive = () => {
     if (loading) {
-      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>Đang tải dữ liệu admin...</Text></View>;
+      return (
+        <View style={styles.loadingCard}>
+          <ActivityIndicator color={ADMIN_GREEN} size="large" />
+          <Text style={styles.emptyText}>Đang tải dữ liệu admin...</Text>
+        </View>
+      );
     }
-    if (activeTab === "overview") return renderOverview();
-    if (activeTab === "analytics") return renderAnalytics();
-    if (activeTab === "products") return renderProducts();
-    if (activeTab === "promotions") return renderPromotions();
-    if (activeTab === "users") return renderUsers();
-    if (activeTab === "transactions") return renderTransactions();
-    return renderGames();
+    switch (activeTab) {
+      case "tongquan":
+        return renderTongQuan();
+      case "thongke":
+        return renderThongKe();
+      case "sanpham":
+        return renderSanPham();
+      case "danhmuc":
+        return renderDanhMuc();
+      case "donhang":
+        return renderDonHang();
+      case "nguoidung":
+        return renderNguoiDung();
+      case "giamgia":
+        return renderGiamGia();
+      case "danhgia":
+        return renderDanhGia();
+      case "banner":
+        return renderBanner();
+      default:
+        return renderTongQuan();
+    }
   };
+
+  // ─── Layout chính ─────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.appShell}>
@@ -1256,7 +3079,13 @@ export default function AdminScreen() {
         <Topbar />
         <ScrollView
           contentContainerStyle={styles.content}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={ADMIN_GREEN} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              tintColor={ADMIN_GREEN}
+            />
+          }
           showsVerticalScrollIndicator
         >
           {renderActive()}
@@ -1265,6 +3094,8 @@ export default function AdminScreen() {
     </View>
   );
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   appShell: { flex: 1, flexDirection: "row", backgroundColor: ADMIN_BG },
@@ -1302,7 +3133,7 @@ const styles = StyleSheet.create({
   heroButton: { minHeight: 42, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
   heroButtonText: { color: "#fff", fontWeight: "900" },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  statCard: { flexGrow: 1, flexBasis: 220, minHeight: 150, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18 },
+  statCard: { flexGrow: 1, flexBasis: 200, minHeight: 130, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, ...ADMIN_CARD_SHADOW },
   statTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
   statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
   statValue: { color: ADMIN_TEXT, fontSize: 25, fontWeight: "900", marginTop: 6 },
@@ -1335,31 +3166,11 @@ const styles = StyleSheet.create({
   barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
   hTrack: { height: 9, backgroundColor: "#EEF3F6", borderRadius: 99, overflow: "hidden" },
   hFill: { height: "100%", borderRadius: 99 },
-  funnelTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  funnelTrack: { height: 10, borderRadius: 99, backgroundColor: "#EEF3F6", overflow: "hidden", marginTop: 6 },
-  funnelFill: { height: "100%", borderRadius: 99 },
-  funnelRates: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
-  rateText: { fontSize: 12, fontWeight: "900" },
   activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   activityIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
   activityTitle: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
   activityMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
   emptyText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "700", lineHeight: 20 },
-  analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  featureChip: { color: ADMIN_TEXT, backgroundColor: "#F1F4F6", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 99, overflow: "hidden", fontSize: 12, fontWeight: "900" },
-  predictionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
-  predictionImage: { width: 64, height: 64, borderRadius: 14, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  predictionTitle: { color: ADMIN_TEXT, fontSize: 15, fontWeight: "900" },
-  predictionMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  predictionSuggestion: { color: ADMIN_TEXT, fontSize: 12, marginTop: 6, fontWeight: "700", lineHeight: 18 },
-  predictionSmall: { color: ADMIN_MUTED, fontSize: 11, marginTop: 4, fontWeight: "800" },
-  scoreBox: { width: 60, height: 60, borderRadius: 18, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
-  scoreText: { color: ADMIN_GREEN, fontSize: 19, fontWeight: "900" },
-  scoreLabel: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
   productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
   formCard: { flexBasis: 650 },
   formTitle: { color: ADMIN_TEXT, fontSize: 17, fontWeight: "900" },
@@ -1376,7 +3187,6 @@ const styles = StyleSheet.create({
   primaryBtn: { minHeight: 44, borderRadius: 12, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "900" },
   secondaryBtn: { minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  secondaryBtnWide: { minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: "#F0FFF8", paddingHorizontal: 16, alignItems: "center", justifyContent: "center", alignSelf: "flex-start" },
   secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
   smallBtn: { minHeight: 36, borderRadius: 10, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
   smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
@@ -1398,10 +3208,6 @@ const styles = StyleSheet.create({
   previewSalePrice: { color: "#111", fontSize: 24, fontWeight: "600" },
   previewOldPrice: { color: "#777", fontSize: 22, textDecorationLine: "line-through" },
   previewMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 18, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9, fontWeight: "700" },
-  sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
-  sendText: { color: "#fff", fontWeight: "900" },
   productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
   productTop: { flexDirection: "row", gap: 12 },
@@ -1414,10 +3220,6 @@ const styles = StyleSheet.create({
   discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 7, overflow: "hidden", fontSize: 11, fontWeight: "900" },
   productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "700" },
   adminThumbRow: { flexDirection: "row", gap: 8 },
-
-  adminOrderQuickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
-  successBtnText: { color: "#fff", fontSize: 12, fontWeight: "900" },
   adminThumb: { flex: 1, height: 58, borderRadius: 12, backgroundColor: "#F1F4F6" },
   counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "900" },
   promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
@@ -1425,7 +3227,6 @@ const styles = StyleSheet.create({
   selectChipActive: { borderColor: ADMIN_GREEN, backgroundColor: "#E9F8F1" },
   selectChipText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
   selectChipTextActive: { color: ADMIN_GREEN },
-  listGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
   voucherIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
   voucherCode: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
@@ -1434,9 +3235,9 @@ const styles = StyleSheet.create({
   statusOn: { backgroundColor: "#E9F8F1" },
   statusOff: { backgroundColor: "#EEF1F3" },
   statusText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
-  promoRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
   promoThumb: { width: 54, height: 44, borderRadius: 12, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
   tableCard: { borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
+  orderRow: { padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
   userRow: { padding: 14, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
   userAvatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
   userAvatarAdmin: { backgroundColor: ADMIN_GREEN },
@@ -1452,6 +3253,13 @@ const styles = StyleSheet.create({
   paymentIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#F1F8FF", alignItems: "center", justifyContent: "center" },
   paymentTitle: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
   paymentMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
+  reviewRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  reviewLeft: { alignItems: "center", gap: 4 },
+  reviewDate: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
+  bannerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  bannerThumb: { width: 100, height: 60, borderRadius: 12, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
+  featuredBadge: { marginTop: 4, backgroundColor: "#FFF7E6", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" },
+  featuredBadgeText: { color: "#B45309", fontSize: 11, fontWeight: "900" },
   loadingCard: { minHeight: 220, borderRadius: 18, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center", gap: 12 },
   authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
   authCard: { width: "100%", maxWidth: 420, borderRadius: 24, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
