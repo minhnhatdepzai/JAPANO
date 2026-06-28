@@ -169,26 +169,32 @@ type NavItem = {
 // ─── Màu sắc ─────────────────────────────────────────────────────────────────
 
 const ADMIN_GREEN = "#00A76F";
+const ADMIN_GREEN_LIGHT = "#E6F7F1";
+const ADMIN_GREEN_MID = "#00C984";
 const ADMIN_DARK = "#07140F";
+const ADMIN_DARK_2 = "#0D1F17";
 const ADMIN_MUTED_DARK = "#84918B";
-const ADMIN_BG = "#F5F7FA";
+const ADMIN_BG = "#F4F6F9";
 const ADMIN_CARD = "#FFFFFF";
-const ADMIN_BORDER = "#E7ECF0";
-const ADMIN_TEXT = "#1D252C";
-const ADMIN_MUTED = "#75808A";
-const ADMIN_BLUE = "#1E88E5";
+const ADMIN_BORDER = "#E8ECF0";
+const ADMIN_TEXT = "#1A2228";
+const ADMIN_MUTED = "#7A8899";
+const ADMIN_BLUE = "#2563EB";
 const ADMIN_ORANGE = "#F59E0B";
 const ADMIN_RED = "#EF4444";
-const ADMIN_CARD_SHADOW =
+
+const CARD_SHADOW =
   Platform.OS === "web"
-    ? ({ boxShadow: "0 10px 22px rgba(94,107,120,0.08)" } as any)
+    ? ({ boxShadow: "0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)" } as any)
     : {
-        shadowColor: "#5E6B78",
-        shadowOpacity: 0.08,
-        shadowRadius: 22,
-        shadowOffset: { width: 0, height: 10 },
+        shadowColor: "#000",
+        shadowOpacity: 0.07,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
         elevation: 3,
       };
+
+const ADMIN_CARD_SHADOW = CARD_SHADOW;
 
 // ─── Danh sách nav theo Use Case ─────────────────────────────────────────────
 
@@ -545,11 +551,11 @@ function ProductPreview({
 }: any) {
   const percent = Number(
     discountPercent ||
-      (Number(originalPrice) > Number(price)
-        ? Math.round(
-            (1 - Number(price || 0) / Number(originalPrice || 1)) * 100
-          )
-        : 0)
+    (Number(originalPrice) > Number(price)
+      ? Math.round(
+        (1 - Number(price || 0) / Number(originalPrice || 1)) * 100
+      )
+      : 0)
   );
   const gallery = adminGalleryImages({ image, images });
   return (
@@ -617,7 +623,7 @@ function Input({ label, style, ...props }: any) {
       <Text style={styles.inputLabel}>{label}</Text>
       <TextInput
         {...props}
-        placeholderTextColor="#A5AFB8"
+        placeholderTextColor="#B0BAC4"
         style={[
           styles.input,
           props.multiline ? styles.inputMultiline : null,
@@ -758,8 +764,8 @@ export default function AdminScreen() {
       Array.isArray(nextDiscounts?.vouchers)
         ? nextDiscounts.vouchers
         : Array.isArray(nextDiscounts?.discountCodes)
-        ? nextDiscounts.discountCodes
-        : []
+          ? nextDiscounts.discountCodes
+          : []
     );
     setReviews(Array.isArray(nextReviews?.reviews) ? nextReviews.reviews : []);
     setBanners(Array.isArray(nextBanners?.banners) ? nextBanners.banners : []);
@@ -812,9 +818,9 @@ export default function AdminScreen() {
 
   const revenueByMonth = Array.isArray(dashboard?.revenueByMonth)
     ? dashboard.revenueByMonth.map((x: any) => ({
-        label: String(x.month || x.label || "").slice(5),
-        value: Number(x.value ?? x.revenue ?? 0),
-      }))
+      label: String(x.month || x.label || "").slice(5),
+      value: Number(x.value ?? x.revenue ?? 0),
+    }))
     : [];
   const topProducts = Array.isArray(dashboard?.salesByProduct)
     ? dashboard.salesByProduct
@@ -1613,14 +1619,14 @@ export default function AdminScreen() {
                 style={[
                   styles.statusPill,
                   payment.status === "success" ||
-                  payment.status === "completed"
+                    payment.status === "completed"
                     ? styles.statusOn
                     : styles.statusOff,
                 ]}
               >
                 <Text style={styles.statusText}>
                   {payment.status === "success" ||
-                  payment.status === "completed"
+                    payment.status === "completed"
                     ? "Thành công"
                     : payment.status || "Chờ"}
                 </Text>
@@ -1902,8 +1908,8 @@ export default function AdminScreen() {
                 {actionId === "product-save"
                   ? "Đang lưu..."
                   : editingProductId
-                  ? "Cập nhật sản phẩm"
-                  : "Thêm sản phẩm"}
+                    ? "Cập nhật sản phẩm"
+                    : "Thêm sản phẩm"}
               </Text>
             </Pressable>
             <Pressable
@@ -1970,7 +1976,7 @@ export default function AdminScreen() {
                       {formatMoney(product.price)}
                     </Text>
                     {Number(product.originalPrice || 0) >
-                    Number(product.price || 0) ? (
+                      Number(product.price || 0) ? (
                       <Text style={styles.productOldPrice}>
                         {formatMoney(product.originalPrice)}
                       </Text>
@@ -2105,8 +2111,8 @@ export default function AdminScreen() {
                 {actionId === "category-save"
                   ? "Đang lưu..."
                   : editingCategoryId
-                  ? "Cập nhật"
-                  : "Thêm danh mục"}
+                    ? "Cập nhật"
+                    : "Thêm danh mục"}
               </Text>
             </Pressable>
             <Pressable
@@ -2664,8 +2670,8 @@ export default function AdminScreen() {
                 {actionId === "discount-save"
                   ? "Đang lưu..."
                   : editingDiscountId
-                  ? "Cập nhật mã"
-                  : "Tạo mã giảm giá"}
+                    ? "Cập nhật mã"
+                    : "Tạo mã giảm giá"}
               </Text>
             </Pressable>
             <Pressable
@@ -2726,14 +2732,14 @@ export default function AdminScreen() {
                     style={[
                       styles.statusPill,
                       dc.active !== false &&
-                      dc.status !== "inactive"
+                        dc.status !== "inactive"
                         ? styles.statusOn
                         : styles.statusOff,
                     ]}
                   >
                     <Text style={styles.statusText}>
                       {dc.active !== false &&
-                      dc.status !== "inactive"
+                        dc.status !== "inactive"
                         ? "BẬT"
                         : "TẮT"}
                     </Text>
@@ -3095,177 +3101,1179 @@ export default function AdminScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles (Refined & Polished) ─────────────────────────────────────────────
+
+const R = 16; // base border radius token
+const R_SM = 10;
+const R_MD = 14;
+const R_LG = 20;
+const R_XL = 24;
 
 const styles = StyleSheet.create({
-  appShell: { flex: 1, flexDirection: "row", backgroundColor: ADMIN_BG },
-  sidebar: { width: 238, backgroundColor: ADMIN_DARK, padding: 20, paddingBottom: 16 },
-  sidebarMobile: { width: "100%", padding: 12, paddingBottom: 10 },
-  sidebarLogoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-  sidebarLogo: { width: 34, height: 34, borderRadius: 10, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarBrand: { color: "#fff", fontSize: 15, fontWeight: "900" },
-  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 10, fontWeight: "900", letterSpacing: 1.2, marginTop: 2 },
-  navContent: { gap: 4, paddingBottom: 20 },
-  navContentMobile: { gap: 8, alignItems: "center" },
-  navGroup: { color: "#52605A", fontSize: 10, fontWeight: "900", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },
-  navItem: { minHeight: 40, borderRadius: 12, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  navItemActive: { backgroundColor: "#10251C" },
-  navText: { color: ADMIN_MUTED_DARK, fontSize: 13, fontWeight: "800" },
-  navTextActive: { color: ADMIN_GREEN },
-  navBadge: { marginLeft: "auto", backgroundColor: ADMIN_GREEN, color: "#fff", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, fontSize: 10, overflow: "hidden" },
-  sidebarUser: { marginTop: "auto", paddingTop: 14, borderTopWidth: 1, borderTopColor: "#13221B", flexDirection: "row", alignItems: "center", gap: 10 },
-  sidebarAvatar: { width: 34, height: 34, borderRadius: 17, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarAvatarText: { color: "#fff", fontWeight: "900" },
-  sidebarUserName: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 11, marginTop: 2 },
-  mainArea: { flex: 1, minWidth: 0 },
-  topbar: { minHeight: 68, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", gap: 12 },
-  searchBox: { flex: 1, maxWidth: 420, minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#FAFBFC", borderRadius: 13, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 9 },
-  searchInput: { flex: 1, fontSize: 14, color: ADMIN_TEXT },
-  topIconBtn: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff" },
-  newOrderBtn: { minHeight: 42, borderRadius: 12, backgroundColor: ADMIN_GREEN, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  newOrderText: { color: "#fff", fontWeight: "900", fontSize: 13 },
-  content: { padding: 24, paddingBottom: 80 },
-  pageGap: { gap: 18 },
-  heroCard: { minHeight: 108, borderRadius: 22, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: "row", alignItems: "center", gap: 18, overflow: "hidden" },
-  heroTitle: { color: "#fff", fontSize: 28, fontWeight: "900" },
-  heroSub: { color: "#B9C8C0", fontSize: 14, marginTop: 6, fontWeight: "700" },
-  heroButton: { minHeight: 42, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
-  heroButtonText: { color: "#fff", fontWeight: "900" },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  statCard: { flexGrow: 1, flexBasis: 200, minHeight: 130, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, ...ADMIN_CARD_SHADOW },
-  statTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  statValue: { color: ADMIN_TEXT, fontSize: 25, fontWeight: "900", marginTop: 6 },
-  statIcon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  statBottom: { flex: 1, marginTop: 13, flexDirection: "row", alignItems: "flex-end", gap: 10 },
-  statChange: { fontSize: 12, fontWeight: "900", minWidth: 70 },
-  dashboardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  dashboardGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  card: { flexGrow: 1, flexBasis: 300, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, gap: 15, ...ADMIN_CARD_SHADOW },
-  bigChartCard: { flexBasis: 560 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  sectionTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "900" },
-  sectionSub: { color: ADMIN_MUTED, fontSize: 13, marginTop: 3, fontWeight: "700" },
-  segment: { flexDirection: "row", backgroundColor: "#F1F4F6", borderRadius: 12, padding: 4, gap: 3 },
-  segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 9, fontSize: 12, fontWeight: "900", overflow: "hidden" },
-  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "900" },
-  miniBars: { height: 220, flexDirection: "row", alignItems: "flex-end", gap: 10, paddingTop: 12 },
-  miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },
-  miniBarItem: { flex: 1, minWidth: 14, alignItems: "center", gap: 6 },
-  miniBarTrack: { flex: 1, width: "100%", minHeight: 54, borderRadius: 10, backgroundColor: "#EEF3F6", overflow: "hidden", justifyContent: "flex-end" },
-  miniBarFill: { width: "100%", borderTopLeftRadius: 10, borderTopRightRadius: 10, opacity: 0.92 },
-  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "800" },
-  chartValue: { color: ADMIN_TEXT, fontSize: 10, fontWeight: "900" },
-  goalCircle: { alignSelf: "center", width: 150, height: 150, borderRadius: 75, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center", marginTop: 10 },
-  goalNumber: { color: ADMIN_TEXT, fontSize: 30, fontWeight: "900" },
-  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "800", textAlign: "center" },
-  barLineTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  hTrack: { height: 9, backgroundColor: "#EEF3F6", borderRadius: 99, overflow: "hidden" },
-  hFill: { height: "100%", borderRadius: 99 },
-  activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  activityIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  activityTitle: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  activityMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  emptyText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "700", lineHeight: 20 },
-  productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
-  formCard: { flexBasis: 650 },
-  formTitle: { color: ADMIN_TEXT, fontSize: 17, fontWeight: "900" },
-  formGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  formGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  inputWrap: { flex: 1, minWidth: 170, gap: 6 },
-  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 12, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "700" },
-  inputMultiline: { minHeight: 88, textAlignVertical: "top" },
-  mediaUploadBox: { borderWidth: 1, borderColor: "#D8F3E6", backgroundColor: "#F0FFF8", borderRadius: 14, padding: 12, gap: 8 },
-  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: "900" },
-  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700", lineHeight: 18 },
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 9, alignItems: "center" },
-  primaryBtn: { minHeight: 44, borderRadius: 12, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "900" },
-  secondaryBtn: { minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  smallBtn: { minHeight: 36, borderRadius: 10, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
-  saleBtn: { minHeight: 36, borderRadius: 10, backgroundColor: "#FFF7E6", borderWidth: 1, borderColor: "#F3D38A", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "900" },
-  dangerBtn: { minHeight: 36, borderRadius: 10, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "900" },
-  marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 22, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-  previewTopIcons: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  previewImageBox: { height: 270, backgroundColor: "#EEF1F3", alignItems: "center", justifyContent: "center" },
-  previewImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  previewThumbRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#fff" },
-  previewThumb: { flex: 1, height: 58, borderRadius: 12, backgroundColor: "#EEF1F3" },
-  previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10 },
-  previewDiscountText: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  previewBody: { padding: 18, gap: 11 },
-  previewTitle: { color: "#000", fontSize: 25, fontWeight: "900" },
-  previewPriceLine: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  previewSalePrice: { color: "#111", fontSize: 24, fontWeight: "600" },
-  previewOldPrice: { color: "#777", fontSize: 22, textDecorationLine: "line-through" },
-  previewMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
-  productTop: { flexDirection: "row", gap: 12 },
-  productImage: { width: 78, height: 78, borderRadius: 14, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  productTitle: { color: ADMIN_TEXT, fontSize: 16, fontWeight: "900" },
-  productMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800", marginTop: 3 },
-  productPriceLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  productPrice: { color: ADMIN_GREEN, fontSize: 16, fontWeight: "900" },
-  productOldPrice: { color: ADMIN_MUTED, fontSize: 14, textDecorationLine: "line-through", fontWeight: "800" },
-  discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 7, overflow: "hidden", fontSize: 11, fontWeight: "900" },
-  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "700" },
-  adminThumbRow: { flexDirection: "row", gap: 8 },
-  adminThumb: { flex: 1, height: 58, borderRadius: 12, backgroundColor: "#F1F4F6" },
-  counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, overflow: "hidden", fontSize: 12, fontWeight: "900" },
-  promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  selectChip: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#fff" },
-  selectChipActive: { borderColor: ADMIN_GREEN, backgroundColor: "#E9F8F1" },
-  selectChipText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
-  selectChipTextActive: { color: ADMIN_GREEN },
-  voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  voucherIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  voucherCode: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  voucherMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  statusPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
-  statusOn: { backgroundColor: "#E9F8F1" },
-  statusOff: { backgroundColor: "#EEF1F3" },
-  statusText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
-  promoThumb: { width: 54, height: 44, borderRadius: 12, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  tableCard: { borderRadius: 18, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-  orderRow: { padding: 14, flexDirection: "row", alignItems: "flex-start", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
-  userRow: { padding: 14, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
-  userAvatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  userAvatarAdmin: { backgroundColor: ADMIN_GREEN },
-  userName: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  userEmail: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  userMeta: { color: ADMIN_MUTED, fontSize: 11, marginTop: 3, fontWeight: "700" },
-  rolePill: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#fff" },
-  roleAdmin: { backgroundColor: ADMIN_GREEN, borderColor: ADMIN_GREEN },
-  rolePillText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
-  rolePillTextAdmin: { color: "#fff" },
-  userActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  paymentRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  paymentIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#F1F8FF", alignItems: "center", justifyContent: "center" },
-  paymentTitle: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  paymentMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  reviewRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  reviewLeft: { alignItems: "center", gap: 4 },
-  reviewDate: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
-  bannerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  bannerThumb: { width: 100, height: 60, borderRadius: 12, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  featuredBadge: { marginTop: 4, backgroundColor: "#FFF7E6", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" },
-  featuredBadgeText: { color: "#B45309", fontSize: 11, fontWeight: "900" },
-  loadingCard: { minHeight: 220, borderRadius: 18, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center", gap: 12 },
-  authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
-  authCard: { width: "100%", maxWidth: 420, borderRadius: 24, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
-  logoBox: { width: 54, height: 54, borderRadius: 18, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  authTitle: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "900", textAlign: "center" },
-  authText: { color: ADMIN_MUTED, fontSize: 14, fontWeight: "700", textAlign: "center", lineHeight: 21 },
-  authButton: { minHeight: 46, alignSelf: "stretch", backgroundColor: ADMIN_GREEN, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  authButtonText: { color: "#fff", fontSize: 14, fontWeight: "900" },
+  // ── Shell & Layout ──────────────────────────────────────────────────────────
+  appShell: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: ADMIN_BG,
+  },
+
+  // ── Sidebar ─────────────────────────────────────────────────────────────────
+  sidebar: {
+    width: 244,
+    backgroundColor: ADMIN_DARK,
+    paddingHorizontal: 16,
+    paddingTop: 22,
+    paddingBottom: 16,
+  },
+  sidebarMobile: {
+    width: "100%",
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+  sidebarLogoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 28,
+    paddingHorizontal: 4,
+  },
+  sidebarLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: R_MD,
+    backgroundColor: ADMIN_GREEN,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sidebarBrand: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+  sidebarSub: {
+    color: ADMIN_MUTED_DARK,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    marginTop: 1,
+  },
+  navContent: {
+    gap: 2,
+    paddingBottom: 20,
+  },
+  navContentMobile: {
+    gap: 6,
+    alignItems: "center",
+  },
+  navGroup: {
+    color: "#4A5A50",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    marginTop: 18,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+  },
+  navItem: {
+    minHeight: 42,
+    borderRadius: R_MD,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  navItemActive: {
+    backgroundColor: "#0F2218",
+  },
+  navText: {
+    color: ADMIN_MUTED_DARK,
+    fontSize: 13,
+    fontWeight: "700",
+    flex: 1,
+  },
+  navTextActive: {
+    color: ADMIN_GREEN,
+    fontWeight: "800",
+  },
+  navBadge: {
+    backgroundColor: ADMIN_GREEN,
+    color: "#fff",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: "900",
+    overflow: "hidden",
+  },
+  sidebarUser: {
+    marginTop: "auto",
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#0F2218",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  sidebarAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    backgroundColor: ADMIN_GREEN,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sidebarAvatarText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 14,
+  },
+  sidebarUserName: {
+    color: "#E8F0EC",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  sidebarUserRole: {
+    color: ADMIN_MUTED_DARK,
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+
+  // ── Main area ───────────────────────────────────────────────────────────────
+  mainArea: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  // ── Topbar ──────────────────────────────────────────────────────────────────
+  topbar: {
+    minHeight: 66,
+    backgroundColor: ADMIN_CARD,
+    borderBottomWidth: 1,
+    borderBottomColor: ADMIN_BORDER,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  searchBox: {
+    flex: 1,
+    maxWidth: 420,
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    backgroundColor: ADMIN_BG,
+    borderRadius: R_MD,
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: ADMIN_TEXT,
+    fontWeight: "500",
+  },
+  topIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: R_MD,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    backgroundColor: ADMIN_CARD,
+  },
+  newOrderBtn: {
+    minHeight: 42,
+    borderRadius: R_MD,
+    backgroundColor: ADMIN_GREEN,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+  },
+  newOrderText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+
+  // ── Content area ────────────────────────────────────────────────────────────
+  content: {
+    padding: 22,
+    paddingBottom: 80,
+  },
+  pageGap: {
+    gap: 20,
+  },
+
+  // ── Section header ──────────────────────────────────────────────────────────
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  sectionTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  sectionSub: {
+    color: ADMIN_MUTED,
+    fontSize: 13,
+    marginTop: 3,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
+
+  // ── Hero card ───────────────────────────────────────────────────────────────
+  heroCard: {
+    minHeight: 112,
+    borderRadius: R_XL,
+    backgroundColor: ADMIN_DARK,
+    padding: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    overflow: "hidden",
+  },
+  heroTitle: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+  },
+  heroSub: {
+    color: "#A8C4B8",
+    fontSize: 14,
+    marginTop: 6,
+    fontWeight: "600",
+  },
+  heroButton: {
+    minHeight: 42,
+    borderRadius: R_MD,
+    backgroundColor: "rgba(255,255,255,0.13)",
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  heroButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+
+  // ── Stat cards ──────────────────────────────────────────────────────────────
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+  statCard: {
+    flexGrow: 1,
+    flexBasis: 200,
+    minHeight: 130,
+    borderRadius: R_LG,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    padding: 18,
+    ...CARD_SHADOW,
+  },
+  statTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  statLabel: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  statValue: {
+    color: ADMIN_TEXT,
+    fontSize: 26,
+    fontWeight: "900",
+    marginTop: 5,
+    letterSpacing: -0.5,
+  },
+  statIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: R_MD,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statBottom: {
+    flex: 1,
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+  },
+  statChange: {
+    fontSize: 12,
+    fontWeight: "800",
+    minWidth: 70,
+  },
+
+  // ── Cards ───────────────────────────────────────────────────────────────────
+  dashboardGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  dashboardGrid3: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  card: {
+    flexGrow: 1,
+    flexBasis: 300,
+    borderRadius: R_LG,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    padding: 20,
+    gap: 16,
+    ...CARD_SHADOW,
+  },
+  bigChartCard: {
+    flexBasis: 560,
+  },
+
+  // ── Segment control ─────────────────────────────────────────────────────────
+  segment: {
+    flexDirection: "row",
+    backgroundColor: ADMIN_BG,
+    borderRadius: R_MD,
+    padding: 4,
+    gap: 2,
+  },
+  segmentActive: {
+    backgroundColor: ADMIN_CARD,
+    color: ADMIN_TEXT,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: R_SM,
+    fontSize: 12,
+    fontWeight: "800",
+    overflow: "hidden",
+    ...Platform.select({ web: { boxShadow: "0 1px 4px rgba(0,0,0,0.08)" } as any, default: {} }),
+  },
+  segmentText: {
+    color: ADMIN_MUTED,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  // ── Mini bar chart ──────────────────────────────────────────────────────────
+  miniBars: {
+    height: 220,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+    paddingTop: 12,
+  },
+  miniBarsCompact: {
+    flex: 1,
+    height: 54,
+    gap: 3,
+    paddingTop: 0,
+  },
+  miniBarItem: {
+    flex: 1,
+    minWidth: 14,
+    alignItems: "center",
+    gap: 6,
+  },
+  miniBarTrack: {
+    flex: 1,
+    width: "100%",
+    minHeight: 54,
+    borderRadius: R_SM,
+    backgroundColor: "#EDF0F4",
+    overflow: "hidden",
+    justifyContent: "flex-end",
+  },
+  miniBarFill: {
+    width: "100%",
+    borderTopLeftRadius: R_SM,
+    borderTopRightRadius: R_SM,
+    opacity: 0.9,
+  },
+  chartLabel: {
+    color: ADMIN_MUTED,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  chartValue: {
+    color: ADMIN_TEXT,
+    fontSize: 10,
+    fontWeight: "800",
+  },
+
+  // ── Goal circle ─────────────────────────────────────────────────────────────
+  goalCircle: {
+    alignSelf: "center",
+    width: 148,
+    height: 148,
+    borderRadius: 999,
+    borderWidth: 14,
+    borderColor: ADMIN_GREEN,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  goalNumber: {
+    color: ADMIN_TEXT,
+    fontSize: 30,
+    fontWeight: "900",
+  },
+  goalText: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  centerMuted: {
+    color: ADMIN_MUTED,
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  // ── Horizontal bar ──────────────────────────────────────────────────────────
+  barLineTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  barName: {
+    flex: 1,
+    color: ADMIN_TEXT,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  barValue: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  hTrack: {
+    height: 8,
+    backgroundColor: "#EDF0F4",
+    borderRadius: 999,
+    overflow: "hidden",
+  },
+  hFill: {
+    height: "100%",
+    borderRadius: 999,
+  },
+
+  // ── Activity rows ───────────────────────────────────────────────────────────
+  activityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  activityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: R_SM,
+    backgroundColor: ADMIN_GREEN_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activityTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  activityMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  emptyText: {
+    color: ADMIN_MUTED,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 20,
+  },
+
+  // ── Product manager ─────────────────────────────────────────────────────────
+  productManagerGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+    alignItems: "flex-start",
+  },
+  formCard: {
+    flexBasis: 650,
+  },
+  formTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: -0.2,
+  },
+  formGrid2: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  formGrid3: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+
+  // ── Input ───────────────────────────────────────────────────────────────────
+  inputWrap: {
+    flex: 1,
+    minWidth: 170,
+    gap: 6,
+  },
+  inputLabel: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.1,
+  },
+  input: {
+    minHeight: 44,
+    borderWidth: 1.5,
+    borderColor: ADMIN_BORDER,
+    borderRadius: R_MD,
+    backgroundColor: "#FAFBFC",
+    color: ADMIN_TEXT,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  inputMultiline: {
+    minHeight: 90,
+    textAlignVertical: "top",
+  },
+
+  // ── Media upload box ────────────────────────────────────────────────────────
+  mediaUploadBox: {
+    borderWidth: 1.5,
+    borderColor: "#C6EDD9",
+    backgroundColor: "#F0FBF5",
+    borderRadius: R_LG,
+    padding: 14,
+    gap: 8,
+  },
+  mediaUploadTitle: {
+    color: ADMIN_GREEN,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  mediaUploadHint: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
+
+  // ── Action rows & buttons ───────────────────────────────────────────────────
+  actionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    alignItems: "center",
+  },
+  primaryBtn: {
+    minHeight: 44,
+    borderRadius: R_MD,
+    backgroundColor: ADMIN_GREEN,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  secondaryBtn: {
+    minHeight: 44,
+    borderRadius: R_MD,
+    borderWidth: 1.5,
+    borderColor: ADMIN_BORDER,
+    backgroundColor: ADMIN_CARD,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryBtnText: {
+    color: ADMIN_TEXT,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  smallBtn: {
+    minHeight: 34,
+    borderRadius: R_SM,
+    borderWidth: 1.5,
+    borderColor: ADMIN_BORDER,
+    paddingHorizontal: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: ADMIN_CARD,
+  },
+  smallBtnText: {
+    color: ADMIN_TEXT,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  saleBtn: {
+    minHeight: 34,
+    borderRadius: R_SM,
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1.5,
+    borderColor: "#FDE68A",
+    paddingHorizontal: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  saleBtnText: {
+    color: "#92400E",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  dangerBtn: {
+    minHeight: 34,
+    borderRadius: R_SM,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1.5,
+    borderColor: "#FECACA",
+    paddingHorizontal: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dangerBtnText: {
+    color: ADMIN_RED,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  // ── Product preview (marketplace) ───────────────────────────────────────────
+  marketPreview: {
+    flexGrow: 1,
+    flexBasis: 300,
+    borderRadius: R_XL,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    overflow: "hidden",
+    ...CARD_SHADOW,
+  },
+  previewTopIcons: {
+    height: 56,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  previewImageBox: {
+    height: 270,
+    backgroundColor: "#ECEEF2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  previewThumbRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: ADMIN_CARD,
+  },
+  previewThumb: {
+    flex: 1,
+    height: 58,
+    borderRadius: R_MD,
+    backgroundColor: "#ECEEF2",
+  },
+  previewDiscount: {
+    position: "absolute",
+    left: 14,
+    top: 14,
+    backgroundColor: ADMIN_RED,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: R_SM,
+  },
+  previewDiscountText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  previewBody: {
+    padding: 18,
+    gap: 10,
+  },
+  previewTitle: {
+    color: "#000",
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  previewPriceLine: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+  },
+  previewSalePrice: {
+    color: "#111",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  previewOldPrice: {
+    color: "#9CA3AF",
+    fontSize: 18,
+    textDecorationLine: "line-through",
+    fontWeight: "500",
+  },
+  previewMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  // ── Product list & cards ────────────────────────────────────────────────────
+  productListGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+  productCard: {
+    flexGrow: 1,
+    flexBasis: 350,
+    borderRadius: R_LG,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    padding: 14,
+    gap: 11,
+    ...CARD_SHADOW,
+  },
+  productTop: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  productImage: {
+    width: 80,
+    height: 80,
+    borderRadius: R_MD,
+    backgroundColor: "#F1F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  productTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: -0.1,
+  },
+  productMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 3,
+  },
+  productPriceLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 7,
+    marginTop: 6,
+  },
+  productPrice: {
+    color: ADMIN_GREEN,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  productOldPrice: {
+    color: ADMIN_MUTED,
+    fontSize: 13,
+    textDecorationLine: "line-through",
+    fontWeight: "600",
+  },
+  discountBadge: {
+    color: "#fff",
+    backgroundColor: ADMIN_RED,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: R_SM,
+    overflow: "hidden",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  productDesc: {
+    color: ADMIN_MUTED,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: "600",
+  },
+  adminThumbRow: {
+    flexDirection: "row",
+    gap: 7,
+  },
+  adminThumb: {
+    flex: 1,
+    height: 56,
+    borderRadius: R_MD,
+    backgroundColor: "#F1F4F7",
+  },
+
+  // ── Counter pill ────────────────────────────────────────────────────────────
+  counterPill: {
+    color: ADMIN_GREEN,
+    backgroundColor: ADMIN_GREEN_LIGHT,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    overflow: "hidden",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  // ── Promo / Voucher ─────────────────────────────────────────────────────────
+  promoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
+  },
+  selectChip: {
+    borderWidth: 1.5,
+    borderColor: ADMIN_BORDER,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: ADMIN_CARD,
+  },
+  selectChipActive: {
+    borderColor: ADMIN_GREEN,
+    backgroundColor: ADMIN_GREEN_LIGHT,
+  },
+  selectChipText: {
+    color: ADMIN_TEXT,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  selectChipTextActive: {
+    color: ADMIN_GREEN,
+    fontWeight: "800",
+  },
+  voucherRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F3F6",
+  },
+  voucherIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: R_MD,
+    backgroundColor: ADMIN_GREEN_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  voucherCode: {
+    color: ADMIN_TEXT,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  voucherMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+
+  // ── Status pills ────────────────────────────────────────────────────────────
+  statusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+  },
+  statusOn: {
+    backgroundColor: ADMIN_GREEN_LIGHT,
+  },
+  statusOff: {
+    backgroundColor: "#F0F3F6",
+  },
+  statusText: {
+    color: ADMIN_TEXT,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+
+  // ── Promo thumb ─────────────────────────────────────────────────────────────
+  promoThumb: {
+    width: 56,
+    height: 44,
+    borderRadius: R_MD,
+    backgroundColor: "#F1F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // ── Table cards ─────────────────────────────────────────────────────────────
+  tableCard: {
+    borderRadius: R_LG,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    overflow: "hidden",
+    ...CARD_SHADOW,
+  },
+  orderRow: {
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F3F6",
+    flexWrap: "wrap",
+  },
+  userRow: {
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F3F6",
+    flexWrap: "wrap",
+  },
+  userAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    backgroundColor: ADMIN_GREEN_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userAvatarAdmin: {
+    backgroundColor: ADMIN_GREEN,
+  },
+  userName: {
+    color: ADMIN_TEXT,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  userEmail: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  userMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 11,
+    marginTop: 3,
+    fontWeight: "600",
+  },
+  rolePill: {
+    borderWidth: 1.5,
+    borderColor: ADMIN_BORDER,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    backgroundColor: ADMIN_CARD,
+  },
+  roleAdmin: {
+    backgroundColor: ADMIN_GREEN,
+    borderColor: ADMIN_GREEN,
+  },
+  rolePillText: {
+    color: ADMIN_TEXT,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  rolePillTextAdmin: {
+    color: "#fff",
+  },
+  userActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+  },
+
+  // ── Payment rows ────────────────────────────────────────────────────────────
+  paymentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F3F6",
+  },
+  paymentIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: R_MD,
+    backgroundColor: "#EEF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  paymentTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  paymentMeta: {
+    color: ADMIN_MUTED,
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+
+  // ── Review rows ─────────────────────────────────────────────────────────────
+  reviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F3F6",
+  },
+  reviewLeft: {
+    alignItems: "center",
+    gap: 4,
+  },
+  reviewDate: {
+    color: ADMIN_MUTED,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  // ── Banner rows ─────────────────────────────────────────────────────────────
+  bannerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  bannerThumb: {
+    width: 100,
+    height: 60,
+    borderRadius: R_MD,
+    backgroundColor: "#F1F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // ── Featured badge ──────────────────────────────────────────────────────────
+  featuredBadge: {
+    marginTop: 5,
+    backgroundColor: "#FFFBEB",
+    borderRadius: R_SM,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+  featuredBadgeText: {
+    color: "#92400E",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+
+  // ── Loading card ────────────────────────────────────────────────────────────
+  loadingCard: {
+    minHeight: 240,
+    borderRadius: R_XL,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    ...CARD_SHADOW,
+  },
+
+  // ── Auth page ───────────────────────────────────────────────────────────────
+  authPage: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: ADMIN_BG,
+    padding: 20,
+  },
+  authCard: {
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: R_XL,
+    backgroundColor: ADMIN_CARD,
+    borderWidth: 1,
+    borderColor: ADMIN_BORDER,
+    padding: 28,
+    alignItems: "center",
+    gap: 14,
+    ...CARD_SHADOW,
+  },
+  logoBox: {
+    width: 58,
+    height: 58,
+    borderRadius: R_LG,
+    backgroundColor: ADMIN_GREEN,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authTitle: {
+    color: ADMIN_TEXT,
+    fontSize: 22,
+    fontWeight: "900",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  authText: {
+    color: ADMIN_MUTED,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 21,
+  },
+  authButton: {
+    minHeight: 46,
+    alignSelf: "stretch",
+    backgroundColor: ADMIN_GREEN,
+    borderRadius: R_MD,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "800",
+  },
 });
