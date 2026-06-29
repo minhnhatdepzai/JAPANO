@@ -168,31 +168,31 @@ type NavItem = {
 
 // ─── Màu sắc ─────────────────────────────────────────────────────────────────
 
-const ADMIN_GREEN = "#00A76F";
-const ADMIN_GREEN_LIGHT = "#E6F7F1";
-const ADMIN_GREEN_MID = "#00C984";
-const ADMIN_DARK = "#07140F";
-const ADMIN_DARK_2 = "#0D1F17";
-const ADMIN_MUTED_DARK = "#84918B";
-const ADMIN_BG = "#F4F6F9";
-const ADMIN_CARD = "#FFFFFF";
-const ADMIN_BORDER = "#E8ECF0";
-const ADMIN_TEXT = "#1A2228";
-const ADMIN_MUTED = "#7A8899";
-const ADMIN_BLUE = "#2563EB";
-const ADMIN_ORANGE = "#F59E0B";
-const ADMIN_RED = "#EF4444";
+const ADMIN_GREEN = "#A33A2F"; // primary
+const ADMIN_GREEN_LIGHT = "#F5E4E2"; // primary light
+const ADMIN_GREEN_MID = "#BA4336"; // primary hover
+const ADMIN_DARK = "#2B211B"; // heading (darkest)
+const ADMIN_DARK_2 = "#4A3A30"; // text (dark)
+const ADMIN_MUTED_DARK = "#847267"; // muted
+const ADMIN_BG = "#F7EFE3"; // background
+const ADMIN_CARD = "#FFFDF7"; // card
+const ADMIN_BORDER = "#E7D6C4"; // border
+const ADMIN_TEXT = "#4A3A30"; // text
+const ADMIN_MUTED = "#847267"; // muted
+const ADMIN_BLUE = "#566D4F"; // secondary (matcha)
+const ADMIN_ORANGE = "#D8A85A"; // accent (gold)
+const ADMIN_RED = "#B54862"; // sakura red/pink
 
 const CARD_SHADOW =
   Platform.OS === "web"
     ? ({ boxShadow: "0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)" } as any)
     : {
-        shadowColor: "#000",
-        shadowOpacity: 0.07,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
-      };
+      shadowColor: "#000",
+      shadowOpacity: 0.07,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 3,
+    };
 
 const ADMIN_CARD_SHADOW = CARD_SHADOW;
 
