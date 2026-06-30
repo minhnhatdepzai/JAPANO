@@ -32,9 +32,7 @@ type ExtendedAdminApi = typeof api & {
 };
 
 const adminApi = api as ExtendedAdminApi;
-
-// ─── Kiểu dữ liệu theo ERD ───────────────────────────────────────────────────
-
+// ─── Kiểu dữ liệu theo ERD ───────────────────────────────────────────────────//
 type AdminUser = {
   id: string;
   fullName?: string;
@@ -76,6 +74,10 @@ type AdminProduct = {
   visualTags?: string[];
   styleUseCase?: string;
   story?: string;
+  variantId?: string;
+  variantStatus?: string;
+  colorId?: string;
+  sizeId?: string;
 };
 
 type AdminCategory = {
@@ -136,7 +138,7 @@ type AdminDiscountCode = {
   expiryDate?: string;
   minOrderAmount?: number;
   maxDiscountAmount?: number;
-  usageLimit?: number;
+  usageLimit?: number; 
   usedCount?: number;
   status?: string;
   active?: boolean;
@@ -196,8 +198,7 @@ const CARD_SHADOW =
 
 const ADMIN_CARD_SHADOW = CARD_SHADOW;
 
-// ─── Danh sách nav theo Use Case ─────────────────────────────────────────────
-
+// ─── Danh sách nav theo Use Case ─────────────────────────────────────────────//
 const navItems: NavItem[] = [
   { key: "tongquan", label: "Tổng quan", icon: "grid", group: "BÁO CÁO" },
   { key: "thongke", label: "Thống kê doanh thu", icon: "bar-chart-2", group: "BÁO CÁO" },
@@ -210,8 +211,7 @@ const navItems: NavItem[] = [
   { key: "banner", label: "Banner / Nổi bật", icon: "image", group: "NỘI DUNG" },
 ];
 
-// ─── Form trống ───────────────────────────────────────────────────────────────
-
+// ─── Form trống ───────────────────────────────────────────────────────────────//
 const emptyProductForm = {
   id: "",
   name: "",
@@ -234,8 +234,12 @@ const emptyProductForm = {
   sizes: "S, M, L, XL",
   dimensions: "",
   colors: "Đen, Trắng, Kem",
-  fit: "Regular fit",
+  fit: "Form vừa vặn",
   story: "",
+  variantId: "",
+  variantStatus: "active",
+  colorId: "",
+  sizeId: "",
 };
 
 const emptyCategoryForm = {
@@ -262,8 +266,7 @@ const emptyDiscountForm = {
 };
 
 const emptyNotificationForm = { title: "", content: "" };
-
-// ─── Tiện ích ─────────────────────────────────────────────────────────────────
+// ─── Tiện ích ─────────────────────────────────────────────────────────────────//
 
 const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=900&q=80",
@@ -273,6 +276,22 @@ const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
 ];
+
+const AVAILABLE_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Một cỡ"];
+const AVAILABLE_COLORS = [
+  { label: "Đen", hex: "#000000" },
+  { label: "Trắng", hex: "#FFFFFF" },
+  { label: "Xám", hex: "#9CA3AF" },
+  { label: "Kem", hex: "#F5F5DC" },
+  { label: "Đỏ", hex: "#EF4444" },
+  { label: "Xanh dương", hex: "#3B82F6" },
+  { label: "Xanh lá", hex: "#10B981" },
+  { label: "Vàng", hex: "#FBBF24" },
+  { label: "Nâu", hex: "#8B4513" },
+  { label: "Hồng", hex: "#EC4899" },
+];
+
+const AVAILABLE_FITS = ["Form vừa vặn", "Form rộng", "Form ôm", "Form thoải mái", "Dáng ngắn"];
 
 function formatMoney(value: any) {
   return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
@@ -368,8 +387,12 @@ function toProductForm(product: AdminProduct) {
     colors: Array.isArray(product.colors)
       ? product.colors.join(", ")
       : "Đen, Trắng, Kem",
-    fit: product.fit || "Regular fit",
+    fit: product.fit || "Form vừa vặn",
     story: product.story || "",
+    variantId: product.variantId || "",
+    variantStatus: product.variantStatus || "active",
+    colorId: product.colorId || "",
+    sizeId: product.sizeId || "",
   };
 }
 
@@ -386,7 +409,7 @@ function miniTrendData(input: any[]) {
   ];
 }
 
-// ─── Component nhỏ ────────────────────────────────────────────────────────────
+// ─── Component nhỏ ────────────────────────────────────────────────────────────//
 
 function SectionHeader({
   title,
@@ -651,6 +674,38 @@ function SelectChip({ active, label, onPress }: any) {
   );
 }
 
+function ColorChip({ active, label, hex, onPress }: any) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.selectChip,
+        active ? styles.selectChipActive : null,
+        { flexDirection: "row", alignItems: "center", gap: 6 },
+      ]}
+    >
+      <View
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 7,
+          backgroundColor: hex,
+          borderWidth: 1,
+          borderColor: "rgba(0,0,0,0.1)",
+        }}
+      />
+      <Text
+        style={[
+          styles.selectChipText,
+          active ? styles.selectChipTextActive : null,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 function RatingStars({ rating }: { rating?: number }) {
   const r = Number(rating || 0);
   return (
@@ -667,7 +722,7 @@ function RatingStars({ rating }: { rating?: number }) {
   );
 }
 
-// ─── Màn hình chính ───────────────────────────────────────────────────────────
+// ─── Màn hình chính ───────────────────────────────────────────────────────────//
 
 export default function AdminScreen() {
   const { width } = useWindowDimensions();
@@ -723,7 +778,7 @@ export default function AdminScreen() {
   const dashboard = overview?.dashboard || {};
   const kpis = dashboard?.kpis || {};
 
-  // ─── Load dữ liệu ────────────────────────────────────────────────────────────
+  // ─── Load dữ liệu ────────────────────────────────────────────────────────────//
 
   const load = useCallback(async () => {
     if (!user?.id || !isAdmin) return;
@@ -787,7 +842,6 @@ export default function AdminScreen() {
     );
     setRefreshing(false);
   };
-
   // ─── Lọc dữ liệu ─────────────────────────────────────────────────────────────
 
   const filteredProducts = useMemo(() => {
@@ -1662,7 +1716,7 @@ export default function AdminScreen() {
           </Text>
           <View style={styles.formGrid2}>
             <Input
-              label="Mã sản phẩm (ProductID)"
+              label="Mã sản phẩm"
               value={productForm.id}
               onChangeText={(id: string) =>
                 setProductForm((p) => ({ ...p, id }))
@@ -1678,8 +1732,33 @@ export default function AdminScreen() {
               placeholder="JP-001"
             />
           </View>
+          <View style={styles.formGrid2}>
+            <Input
+              label="Mã biến thể"
+              value={productForm.variantId}
+              onChangeText={(variantId: string) =>
+                setProductForm((p) => ({ ...p, variantId }))
+              }
+              placeholder="var-001"
+            />
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Trạng thái biến thể</Text>
+              <View style={styles.actionRow}>
+                <SelectChip
+                  active={productForm.variantStatus === "active"}
+                  label="Hoạt động"
+                  onPress={() => setProductForm((p) => ({ ...p, variantStatus: "active" }))}
+                />
+                <SelectChip
+                  active={productForm.variantStatus === "inactive"}
+                  label="Ẩn"
+                  onPress={() => setProductForm((p) => ({ ...p, variantStatus: "inactive" }))}
+                />
+              </View>
+            </View>
+          </View>
           <Input
-            label="Tên sản phẩm (ProductName)"
+            label="Tên sản phẩm"
             value={productForm.name}
             onChangeText={(name: string) =>
               setProductForm((p) => ({ ...p, name }))
@@ -1688,7 +1767,7 @@ export default function AdminScreen() {
           />
           <View style={styles.formGrid2}>
             <Input
-              label="Danh mục (CategoryID)"
+              label="Mã danh mục"
               value={productForm.categoryId}
               onChangeText={(categoryId: string) =>
                 setProductForm((p) => ({ ...p, categoryId }))
@@ -1699,18 +1778,25 @@ export default function AdminScreen() {
                   : "fashion"
               }
             />
-            <Input
-              label="Trạng thái"
-              value={productForm.status}
-              onChangeText={(status: string) =>
-                setProductForm((p) => ({ ...p, status }))
-              }
-              placeholder="active / inactive"
-            />
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Trạng thái</Text>
+              <View style={styles.actionRow}>
+                <SelectChip
+                  active={productForm.status === "active"}
+                  label="Hoạt động"
+                  onPress={() => setProductForm((p) => ({ ...p, status: "active" }))}
+                />
+                <SelectChip
+                  active={productForm.status === "inactive"}
+                  label="Ẩn"
+                  onPress={() => setProductForm((p) => ({ ...p, status: "inactive" }))}
+                />
+              </View>
+            </View>
           </View>
           <View style={styles.formGrid3}>
             <Input
-              label="Giá bán (Price)"
+              label="Giá bán"
               value={productForm.price}
               keyboardType="numeric"
               onChangeText={(price: string) =>
@@ -1757,7 +1843,7 @@ export default function AdminScreen() {
           </View>
           <View style={styles.formGrid2}>
             <Input
-              label="Ảnh chính (Image 1)"
+              label="Ảnh chính"
               value={productForm.image}
               onChangeText={(image: string) =>
                 setProductForm((p) => ({ ...p, image }))
@@ -1793,10 +1879,10 @@ export default function AdminScreen() {
           </View>
           <View style={styles.mediaUploadBox}>
             <Text style={styles.mediaUploadTitle}>
-              Upload ảnh sản phẩm lên Cloudinary
+              Tải ảnh sản phẩm lên Cloudinary
             </Text>
             <Text style={styles.mediaUploadHint}>
-              Chọn ảnh từ thiết bị, hệ thống upload lên Cloudinary và tự điền URL.
+              Chọn ảnh từ thiết bị, hệ thống tải lên Cloudinary và tự điền URL.
             </Text>
             <View style={styles.actionRow}>
               {(["image", "image2", "image3", "image4"] as const).map(
@@ -1809,8 +1895,8 @@ export default function AdminScreen() {
                   >
                     <Text style={styles.smallBtnText}>
                       {uploadingField === field
-                        ? "Đang upload..."
-                        : `Upload ảnh ${index + 1}`}
+                        ? "Đang tải lên..."
+                        : `Tải ảnh ${index + 1} lên`}
                     </Text>
                   </Pressable>
                 )
@@ -1818,7 +1904,7 @@ export default function AdminScreen() {
             </View>
           </View>
           <Input
-            label="Mô tả sản phẩm (Description)"
+            label="Mô tả sản phẩm"
             value={productForm.description}
             onChangeText={(description: string) =>
               setProductForm((p) => ({ ...p, description }))
@@ -1827,7 +1913,7 @@ export default function AdminScreen() {
             multiline
           />
           <Input
-            label="Câu chuyện sản phẩm (Story)"
+            label="Câu chuyện sản phẩm"
             value={productForm.story}
             onChangeText={(story: string) =>
               setProductForm((p) => ({ ...p, story }))
@@ -1835,9 +1921,9 @@ export default function AdminScreen() {
             placeholder="Nguồn gốc, ý nghĩa sản phẩm..."
             multiline
           />
-          <View style={styles.formGrid3}>
+          <View style={styles.formGrid2}>
             <Input
-              label="Tồn kho (StockQuantity)"
+              label="Tồn kho"
               value={productForm.stockQuantity}
               keyboardType="numeric"
               onChangeText={(stockQuantity: string) =>
@@ -1846,43 +1932,132 @@ export default function AdminScreen() {
               placeholder="999"
             />
             <Input
-              label="Size / kích cỡ"
-              value={productForm.sizes}
-              onChangeText={(sizes: string) =>
-                setProductForm((p) => ({ ...p, sizes }))
+              label="Mã size"
+              value={productForm.sizeId}
+              onChangeText={(sizeId: string) =>
+                setProductForm((p) => ({ ...p, sizeId }))
               }
-              placeholder="S, M, L, XL"
+              placeholder="size-m"
             />
-            <Input
-              label="Màu sắc"
-              value={productForm.colors}
-              onChangeText={(colors: string) =>
-                setProductForm((p) => ({ ...p, colors }))
-              }
-              placeholder="Đen, Trắng, Kem"
-            />
+          </View>
+          <View style={{ gap: 12 }}>
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Size / kích cỡ</Text>
+              <View style={styles.actionRow}>
+                {AVAILABLE_SIZES.map((size) => {
+                  const arr = splitAdminList(productForm.sizes);
+                  const isActive = arr.includes(size);
+                  return (
+                    <SelectChip
+                      key={size}
+                      active={isActive}
+                      label={size}
+                      onPress={() => {
+                        if (isActive) {
+                          setProductForm((p) => ({
+                            ...p,
+                            sizes: arr.filter((s) => s !== size).join(", "),
+                          }));
+                        } else {
+                          setProductForm((p) => ({
+                            ...p,
+                            sizes: [...arr, size].join(", "),
+                          }));
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </View>
+              <Input
+                label="Size tùy chỉnh (nếu có)"
+                value={productForm.sizes}
+                onChangeText={(sizes: string) =>
+                  setProductForm((p) => ({ ...p, sizes }))
+                }
+                placeholder="Hoặc nhập tay: 38, 39, 40..."
+                style={{ marginTop: 6 }}
+              />
+            </View>
+          </View>
+          <View style={{ gap: 12 }}>
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Màu sắc</Text>
+              <View style={styles.actionRow}>
+                {AVAILABLE_COLORS.map((c) => {
+                  const arr = splitAdminList(productForm.colors);
+                  const isActive = arr.includes(c.label);
+                  return (
+                    <ColorChip
+                      key={c.label}
+                      active={isActive}
+                      label={c.label}
+                      hex={c.hex}
+                      onPress={() => {
+                        if (isActive) {
+                          setProductForm((p) => ({
+                            ...p,
+                            colors: arr.filter((s) => s !== c.label).join(", "),
+                          }));
+                        } else {
+                          setProductForm((p) => ({
+                            ...p,
+                            colors: [...arr, c.label].join(", "),
+                          }));
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </View>
+              <View style={styles.formGrid2}>
+                <Input
+                  label="Màu tùy chỉnh (nếu có)"
+                  value={productForm.colors}
+                  onChangeText={(colors: string) =>
+                    setProductForm((p) => ({ ...p, colors }))
+                  }
+                  placeholder="Hoặc nhập tay: Đỏ thẫm, Xanh ngọc..."
+                  style={{ marginTop: 6 }}
+                />
+                <Input
+                  label="Mã màu"
+                  value={productForm.colorId}
+                  onChangeText={(colorId: string) =>
+                    setProductForm((p) => ({ ...p, colorId }))
+                  }
+                  placeholder="color-black"
+                  style={{ marginTop: 6 }}
+                />
+              </View>
+            </View>
           </View>
           <View style={styles.formGrid2}>
             <Input
-              label="Kích thước (Dimensions)"
+              label="Kích thước"
               value={productForm.dimensions}
               onChangeText={(dimensions: string) =>
                 setProductForm((p) => ({ ...p, dimensions }))
               }
               placeholder="Dài 68cm, vai 46cm..."
             />
-            <Input
-              label="Form / kiểu dáng (Fit)"
-              value={productForm.fit}
-              onChangeText={(fit: string) =>
-                setProductForm((p) => ({ ...p, fit }))
-              }
-              placeholder="Regular / Oversize / Slim"
-            />
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Form / kiểu dáng (Fit)</Text>
+              <View style={styles.actionRow}>
+                {AVAILABLE_FITS.map((fit) => (
+                  <SelectChip
+                    key={fit}
+                    active={productForm.fit === fit}
+                    label={fit}
+                    onPress={() => setProductForm((p) => ({ ...p, fit }))}
+                  />
+                ))}
+              </View>
+            </View>
           </View>
           <View style={styles.formGrid2}>
             <Input
-              label="Thẻ hình ảnh (VisualTags)"
+              label="Thẻ hình ảnh"
               value={productForm.visualTags}
               onChangeText={(visualTags: string) =>
                 setProductForm((p) => ({ ...p, visualTags }))
@@ -2077,7 +2252,7 @@ export default function AdminScreen() {
             {editingCategoryId ? "Sửa danh mục" : "Thêm danh mục mới"}
           </Text>
           <Input
-            label="Mã danh mục (CategoryID)"
+            label="Mã danh mục"
             value={categoryForm.categoryId}
             onChangeText={(categoryId: string) =>
               setCategoryForm((p) => ({ ...p, categoryId }))
@@ -2085,7 +2260,7 @@ export default function AdminScreen() {
             placeholder="fashion, home-decor..."
           />
           <Input
-            label="Tên danh mục (CategoryName)"
+            label="Tên danh mục"
             value={categoryForm.categoryName}
             onChangeText={(categoryName: string) =>
               setCategoryForm((p) => ({ ...p, categoryName }))
@@ -2365,7 +2540,7 @@ export default function AdminScreen() {
         />
         <View style={styles.formGrid2}>
           <Input
-            label="Tiêu đề (Title)"
+            label="Tiêu đề"
             value={notificationForm.title}
             onChangeText={(title: string) =>
               setNotificationForm((p) => ({ ...p, title }))
@@ -2373,7 +2548,7 @@ export default function AdminScreen() {
             placeholder="Flash Sale 50% hôm nay!"
           />
           <Input
-            label="Nội dung (Content)"
+            label="Nội dung"
             value={notificationForm.content}
             onChangeText={(content: string) =>
               setNotificationForm((p) => ({ ...p, content }))
@@ -2445,7 +2620,7 @@ export default function AdminScreen() {
                     isItemAdmin ? styles.rolePillTextAdmin : null,
                   ]}
                 >
-                  {isItemAdmin ? "ADMIN" : "KHÁCH"}
+                  {isItemAdmin ? "Quản trị viên" : "Khách hàng"}
                 </Text>
               </View>
               <View style={styles.userActions}>
@@ -2512,7 +2687,7 @@ export default function AdminScreen() {
           </Text>
           <View style={styles.formGrid2}>
             <Input
-              label="Mã giảm giá (Code)"
+              label="Mã giảm giá"
               value={discountForm.code}
               onChangeText={(code: string) =>
                 setDiscountForm((p) => ({ ...p, code }))
@@ -2534,7 +2709,7 @@ export default function AdminScreen() {
             </Text>
             <SelectChip
               active={discountForm.discountType === "percent"}
-              label="Theo % (Percent)"
+              label="Theo %"
               onPress={() =>
                 setDiscountForm((p) => ({
                   ...p,
@@ -2544,7 +2719,7 @@ export default function AdminScreen() {
             />
             <SelectChip
               active={discountForm.discountType === "fixed"}
-              label="Theo tiền (Fixed)"
+              label="Theo số tiền"
               onPress={() =>
                 setDiscountForm((p) => ({
                   ...p,
@@ -2555,7 +2730,7 @@ export default function AdminScreen() {
           </View>
           <View style={styles.formGrid3}>
             <Input
-              label="Giá trị giảm (DiscountValue)"
+              label="Giá trị giảm"
               value={discountForm.discountValue}
               keyboardType="numeric"
               onChangeText={(discountValue: string) =>
@@ -2564,7 +2739,7 @@ export default function AdminScreen() {
               placeholder="20 hoặc 50000"
             />
             <Input
-              label="Đơn tối thiểu (MinOrderAmount)"
+              label="Đơn tối thiểu"
               value={discountForm.minOrderAmount}
               keyboardType="numeric"
               onChangeText={(minOrderAmount: string) =>
@@ -2573,7 +2748,7 @@ export default function AdminScreen() {
               placeholder="300000"
             />
             <Input
-              label="Giảm tối đa (MaxDiscountAmount)"
+              label="Giảm tối đa"
               value={discountForm.maxDiscountAmount}
               keyboardType="numeric"
               onChangeText={(maxDiscountAmount: string) =>
@@ -2587,7 +2762,7 @@ export default function AdminScreen() {
           </View>
           <View style={styles.formGrid3}>
             <Input
-              label="Giới hạn dùng (UsageLimit)"
+              label="Giới hạn dùng"
               value={discountForm.usageLimit}
               keyboardType="numeric"
               onChangeText={(usageLimit: string) =>
@@ -2604,7 +2779,7 @@ export default function AdminScreen() {
               placeholder="2026-06-01"
             />
             <Input
-              label="Ngày hết hạn (ExpiryDate)"
+              label="Ngày hết hạn"
               value={discountForm.expiryDate}
               onChangeText={(expiryDate: string) =>
                 setDiscountForm((p) => ({ ...p, expiryDate }))
@@ -2619,16 +2794,23 @@ export default function AdminScreen() {
               onChangeText={(scope: string) =>
                 setDiscountForm((p) => ({ ...p, scope }))
               }
-              placeholder="all / category:áo"
+              placeholder="tất cả / danh mục:áo"
             />
-            <Input
-              label="Loại (voucher / promotion)"
-              value={discountForm.kind}
-              onChangeText={(kind: string) =>
-                setDiscountForm((p) => ({ ...p, kind }))
-              }
-              placeholder="voucher"
-            />
+            <View style={styles.inputWrap}>
+              <Text style={styles.inputLabel}>Loại</Text>
+              <View style={styles.actionRow}>
+                <SelectChip
+                  active={discountForm.kind === "voucher"}
+                  label="Phiếu giảm giá"
+                  onPress={() => setDiscountForm((p) => ({ ...p, kind: "voucher" }))}
+                />
+                <SelectChip
+                  active={discountForm.kind === "promotion"}
+                  label="Khuyến mãi"
+                  onPress={() => setDiscountForm((p) => ({ ...p, kind: "promotion" }))}
+                />
+              </View>
+            </View>
           </View>
           <View style={styles.inputWrap}>
             <Input
@@ -2646,8 +2828,8 @@ export default function AdminScreen() {
             >
               <Text style={styles.smallBtnText}>
                 {uploadingField === "discountBanner"
-                  ? "Đang upload..."
-                  : "Upload banner"}
+                  ? "Đang tải lên..."
+                  : "Tải banner lên"}
               </Text>
             </Pressable>
           </View>
@@ -2896,8 +3078,8 @@ export default function AdminScreen() {
           >
             <Text style={styles.smallBtnText}>
               {uploadingField === "bannerUrl"
-                ? "Đang upload..."
-                : "Upload ảnh từ thiết bị"}
+                ? "Đang tải lên..."
+                : "Tải ảnh từ thiết bị lên"}
             </Text>
           </Pressable>
           <Input
