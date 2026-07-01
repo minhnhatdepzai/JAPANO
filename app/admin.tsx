@@ -2356,24 +2356,30 @@ export default function AdminScreen() {
   // ─── Tab: Quản lý đơn hàng ───────────────────────────────────────────────────
 
   const ORDER_STATUSES = [
+    "pending_payment",
     "pending",
     "confirmed",
     "shipping",
     "completed",
+    "returned",
     "cancelled",
   ];
   const ORDER_STATUS_LABELS: Record<string, string> = {
-    pending: "Chờ xử lý",
-    confirmed: "Đã xác nhận",
+    pending_payment: "Chờ thanh toán",
+    pending: "Chờ xác nhận",
+    confirmed: "Chờ lấy hàng",
     shipping: "Đang giao",
     completed: "Hoàn thành",
+    returned: "Trả hàng/Hoàn tiền",
     cancelled: "Đã hủy",
   };
   const ORDER_STATUS_COLORS: Record<string, string> = {
+    pending_payment: "#B98900",
     pending: ADMIN_ORANGE,
     confirmed: ADMIN_BLUE,
     shipping: "#00A6A6",
     completed: ADMIN_GREEN,
+    returned: "#8B5CF6",
     cancelled: ADMIN_RED,
   };
 
