@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { StableTextInput } from '../components/StableTextInput';
 import { fontFamily, radius, scaleFont, shadow } from '../lib/styles';
+import AppButton from '../components/AppButton';
 
 const AuthInput = memo(function AuthInput({ theme, label, ...props }: any) {
   return (
@@ -67,9 +68,7 @@ export default function LoginScreen() {
         <Text style={[styles.desc, { color: theme.muted }]}>Đăng nhập để mua hàng, lưu giỏ, thanh toán, yêu thích và đồng bộ dữ liệu với MongoDB.</Text>
         <AuthInput theme={theme} label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" />
         <AuthInput theme={theme} label="Mật khẩu" value={password} onChangeText={setPassword} secureTextEntry textContentType="password" autoComplete="password" />
-        <Pressable disabled={loading} onPress={submit} style={[styles.btn, { backgroundColor: theme.primary, opacity: loading ? 0.7 : 1 }]}>
-          <Text style={[styles.btnText, { color: theme.background }]}>{loading ? 'Đang đăng nhập...' : 'Đăng nhập'}</Text>
-        </Pressable>
+        <AppButton title="Đăng nhập" icon="log-in" loading={loading} onPress={submit} />
         <Pressable onPress={() => router.push('/forgot-password')}>
           <Text style={[styles.link, { color: theme.primary }]}>Quên mật khẩu?</Text>
         </Pressable>

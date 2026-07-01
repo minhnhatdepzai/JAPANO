@@ -7,7 +7,7 @@ import { SafeImage } from '../components/SafeImage';
 import { useApp } from '../context/AppContext';
 import { api } from '../lib/api';
 import { cardStyle, fontFamily, radius, scaleFont } from '../lib/styles';
- 
+
 export default function TryOnHistoryScreen() {
   const { theme, user, generatedImages } = useApp();
   const userId = user?.id || 'guest';

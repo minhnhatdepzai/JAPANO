@@ -1,13 +1,17 @@
-// JAPANO V54 TRYON SIZE COLOR SELECTORS
+// JAPANO - THỬ ĐỒ AI (đồ chính + phụ kiện), giao diện theo theme, bền lỗi
 // @ts-nocheck
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useApp } from '../context/AppContext';
+import AppButton from '../components/AppButton';
+import { SafeImage } from '../components/SafeImage';
+import { cardStyle, fontFamily, inputStyle, onPrimary, pill, pillText, scaleFont, shadow } from '../lib/styles';
 import {
   V49_FALLBACK_ACCESSORIES,
   V49_FALLBACK_PRODUCTS,
-  V49_SIZE_CHART,
   v49FirstImage,
   v49Get,
   v49IsAccessory,
@@ -17,519 +21,276 @@ import {
   v49RecommendSize,
 } from '../lib/japanoV49ShopApi';
 
-type Img = { uri: string; base64?: string };
-
-async function pickUserImage(setter: (v: Img) => void) {
-  const r = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.9,
-    base64: true,
-    allowsEditing: false,
-  });
+async function pickUserImage(setter) {
+  const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9, base64: true, allowsEditing: false });
   if (r.canceled || !r.assets?.[0]) return;
   const a = r.assets[0];
-  const mime = a.mimeType || 'image/jpeg';
-  setter({ uri: a.uri, base64: `data:${mime};base64,${a.base64 || ''}` });
+  setter({ uri: a.uri, base64: `data:${a.mimeType || 'image/jpeg'};base64,${a.base64 || ''}` });
 }
-
-async function takeUserPhoto(setter: (v: Img) => void) {
+async function takeUserPhoto(setter) {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) {
-    Alert.alert('Chưa có quyền camera', 'Hãy cấp quyền camera để chụp ảnh.');
-    return;
-  }
-  const r = await ImagePicker.launchCameraAsync({
-    quality: 0.9,
-    base64: true,
-    allowsEditing: false,
-  });
+  if (!perm.granted) { Alert.alert('Chưa có quyền camera', 'Hãy cấp quyền camera để chụp ảnh.'); return; }
+  const r = await ImagePicker.launchCameraAsync({ quality: 0.9, base64: true, allowsEditing: false });
   if (r.canceled || !r.assets?.[0]) return;
   const a = r.assets[0];
-  const mime = a.mimeType || 'image/jpeg';
-  setter({ uri: a.uri, base64: `data:${mime};base64,${a.base64 || ''}` });
+  setter({ uri: a.uri, base64: `data:${a.mimeType || 'image/jpeg'};base64,${a.base64 || ''}` });
 }
 
-function AccessoryCard({ item, selected, onPress }: any) {
-  return (
-    <TouchableOpacity onPress={() => onPress(item)} style={[s.accCard, selected && s.accSelected]}>
-      <Image source={{ uri: v49FirstImage(item) || 'https://placehold.co/500x700/fdf2f8/be185d?text=JAPANO' }} style={s.accImg} />
-      <View style={s.accBody}>
-        <Text numberOfLines={2} style={s.accName}>{item?.name || 'Phụ kiện shop'}</Text>
-        <Text style={s.price}>{v49Money(item?.price)}</Text>
-        <Text numberOfLines={1} style={s.small}>{item?.subcategory || item?.category || 'phụ kiện'}</Text>
-      </View>
-      {selected ? <View style={s.check}><Text style={s.checkText}>✓</Text></View> : null}
-    </TouchableOpacity>
-  );
-}
-
-export default function ThuDoAiV49ShopFlowScreen() {
-  const router = useRouter?.();
-  const params = useLocalSearchParams?.() || {};
+export default function ThuDoAiScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams() || {};
+  const { theme } = useApp();
 
   const paramProductId = String(params.productId || params.id || params._id || params.sku || '');
   const paramProductJson = String(params.product || '');
-  const paramSelectedSize = String(params.selectedSize || '');
-  const paramSelectedColor = String(params.selectedColor || '');
-  const paramVariantId = String(params.variantId || '');
 
-  const [userImage, setUserImage] = useState<Img | null>(null);
-  const [mainProduct, setMainProduct] = useState<any | null>(null);
-  const [accessories, setAccessories] = useState<any[]>(V49_FALLBACK_ACCESSORIES);
-  const [selectedAccessories, setSelectedAccessories] = useState<any[]>([]);
+  const [userImage, setUserImage] = useState(null);
+  const [mainProduct, setMainProduct] = useState(null);
+  const [accessories, setAccessories] = useState(V49_FALLBACK_ACCESSORIES);
+  const [selectedAccessories, setSelectedAccessories] = useState([]);
   const [query, setQuery] = useState('');
-  const [suggested, setSuggested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resultImg, setResultImg] = useState('');
-  const [message, setMessage] = useState('Bạn đang ở trang thử đồ. Hãy thêm ảnh của bạn để xem gợi ý size và phụ kiện.');
-  const [tips, setTips] = useState<any>(null);
+  const [message, setMessage] = useState('Thêm ảnh của bạn, chọn món đồ và phụ kiện rồi bấm "Tạo thử đồ".');
   const [adultConfirmed, setAdultConfirmed] = useState(false);
 
   const [quiz, setQuiz] = useState({ height: '', weight: '', bust: '', waist: '', hip: '', shoulder: '' });
-  const [selectedSize, setSelectedSize] = useState(paramSelectedSize);
-  const [selectedColor, setSelectedColor] = useState(paramSelectedColor);
-  const [selectedVariantId, setSelectedVariantId] = useState(paramVariantId);
+  const [selectedSize, setSelectedSize] = useState(String(params.selectedSize || ''));
+  const [selectedColor, setSelectedColor] = useState(String(params.selectedColor || ''));
   const [recommendedSize, setRecommendedSize] = useState('');
+  const [sizeAdvice, setSizeAdvice] = useState('');
+  const [suggestingSize, setSuggestingSize] = useState(false);
+  const [suggestingAcc, setSuggestingAcc] = useState(false);
 
   async function loadShopData() {
     try {
       setLoading(true);
+      let fromParam = null;
+      if (paramProductJson) { try { fromParam = JSON.parse(decodeURIComponent(paramProductJson)); } catch {} }
 
-      let selectedFromParam: any = null;
-      if (paramProductJson) {
-        try {
-          selectedFromParam = JSON.parse(decodeURIComponent(paramProductJson));
-        } catch {}
-      }
-
-      const data = await v49Get('/api/v49/shop/products', {
-        ok: false,
-        items: [...V49_FALLBACK_PRODUCTS, ...V49_FALLBACK_ACCESSORIES],
-        offline: true,
-      });
-
+      const data = await v49Get('/api/v49/shop/products', { items: [...V49_FALLBACK_PRODUCTS, ...V49_FALLBACK_ACCESSORIES], offline: true });
       const items = data.items || [];
       const acc = items.filter(v49IsAccessory);
       setAccessories(acc.length ? acc : V49_FALLBACK_ACCESSORIES);
 
-      if (selectedFromParam) {
-        setMainProduct(selectedFromParam);
-        if (selectedFromParam.selectedSize && !selectedSize) setSelectedSize(String(selectedFromParam.selectedSize));
-        if (selectedFromParam.selectedColor && !selectedColor) setSelectedColor(String(selectedFromParam.selectedColor));
-        if (selectedFromParam.selectedVariantId && !selectedVariantId) setSelectedVariantId(String(selectedFromParam.selectedVariantId));
-      } else if (paramProductId) {
-        const found = items.find((p) => v49ProductId(p) === paramProductId);
-        setMainProduct(found || V49_FALLBACK_PRODUCTS[0]);
-      } else {
-        setMainProduct(V49_FALLBACK_PRODUCTS[0]);
-      }
-
-      if (data.offline) {
-        setMessage('Không kết nối được backend nên đang dùng dữ liệu tạm để hiển thị UI. Khi backend chạy, app sẽ lấy sản phẩm shop thật.');
-      } else {
-        setMessage('Đã nhận sản phẩm và phụ kiện từ shop. Đồ chính lấy từ ảnh đầu tiên của sản phẩm.');
-      }
-    } catch (e: any) {
-      setMainProduct(V49_FALLBACK_PRODUCTS[0]);
+      if (fromParam) setMainProduct(fromParam);
+      else if (paramProductId) setMainProduct(items.find((p) => v49ProductId(p) === paramProductId) || V49_FALLBACK_PRODUCTS[0]);
+      else setMainProduct(V49_FALLBACK_PRODUCTS[0]);
+    } catch {
+      setMainProduct((m) => m || V49_FALLBACK_PRODUCTS[0]);
       setAccessories(V49_FALLBACK_ACCESSORIES);
-      setMessage('Không tải được dữ liệu shop, đang dùng dữ liệu tạm để giao diện vẫn chạy.');
     } finally {
       setLoading(false);
     }
   }
-
   useEffect(() => { loadShopData(); }, []);
 
   const visibleAccessories = useMemo(() => {
     const q = query.trim().toLowerCase();
     return accessories.filter((p) => {
-      const text = `${p.name || ''} ${p.category || ''} ${p.subcategory || ''} ${p.description || ''} ${(p.visualTags || []).join(' ')}`.toLowerCase();
+      const text = `${p.name || ''} ${p.category || ''} ${p.subcategory || ''} ${(p.visualTags || []).join(' ')}`.toLowerCase();
       return !q || text.includes(q);
     });
   }, [accessories, query]);
 
-  function toggleAccessory(p: any) {
+  function toggleAccessory(p) {
     const id = v49ProductId(p);
-    setSelectedAccessories((old) => {
-      if (old.some((x) => v49ProductId(x) === id)) return old.filter((x) => v49ProductId(x) !== id);
-      return [...old, p].slice(0, 5);
-    });
+    setSelectedAccessories((old) => (old.some((x) => v49ProductId(x) === id) ? old.filter((x) => v49ProductId(x) !== id) : [...old, p].slice(0, 5)));
   }
 
+  const sizes = useMemo(() => {
+    const s = Array.isArray(mainProduct?.sizes) ? mainProduct.sizes.map(String) : [];
+    return Array.from(new Set([...s, 'S', 'M', 'L', 'XL', '2XL', '3XL'].filter(Boolean)));
+  }, [mainProduct]);
+  const colors = useMemo(() => {
+    const c = Array.isArray(mainProduct?.colors) ? mainProduct.colors.map(String) : [];
+    return c.length ? Array.from(new Set(c)) : ['Mặc định'];
+  }, [mainProduct]);
 
-  function normalizeVariantText(v: any) {
-    return String(v?.name || v?.size || v?.sizeName || v?.color || v?.colorName || v || '').trim();
-  }
-
-  function productSizes(item: any) {
-    const list: any[] = [];
-    if (Array.isArray(item?.sizes)) list.push(...item.sizes);
-    if (Array.isArray(item?.availableSizes)) list.push(...item.availableSizes);
-    if (Array.isArray(item?.variants)) item.variants.forEach((v: any) => list.push(v.size || v.sizeName || v.SizeName));
-    return Array.from(new Set([...list.map(normalizeVariantText).filter(Boolean), 'S', 'M', 'L', 'XL', '2XL', '3XL']));
-  }
-
-  function productColors(item: any) {
-    const list: any[] = [];
-    if (Array.isArray(item?.colors)) list.push(...item.colors);
-    if (Array.isArray(item?.availableColors)) list.push(...item.availableColors);
-    if (Array.isArray(item?.variants)) item.variants.forEach((v: any) => list.push(v.color || v.colorName || v.ColorName));
-    const clean = Array.from(new Set(list.map(normalizeVariantText).filter(Boolean)));
-    return clean.length ? clean : ['Mặc định'];
-  }
-
-  function findSelectedVariant(item: any, size = selectedSize, color = selectedColor) {
-    const variants = Array.isArray(item?.variants) ? item.variants : [];
-    if (!variants.length) return null;
-    const s0 = String(size || '').toLowerCase();
-    const c0 = String(color || '').toLowerCase();
-    return variants.find((v: any) => {
-      const vs = String(v.size || v.sizeName || v.SizeName || '').toLowerCase();
-      const vc = String(v.color || v.colorName || v.ColorName || '').toLowerCase();
-      return (!s0 || vs === s0) && (!c0 || vc === c0 || c0 === 'mặc định');
-    }) || variants.find((v: any) => {
-      const vs = String(v.size || v.sizeName || v.SizeName || '').toLowerCase();
-      return !s0 || vs === s0;
-    }) || variants[0];
-  }
-
-  function updateSelectedColor(c: string) {
-    setSelectedColor(c);
-    const variant = findSelectedVariant(mainProduct, selectedSize, c);
-    setSelectedVariantId(String(variant?.id || variant?._id || variant?.variantId || ''));
-  }
-
-  function updateSelectedSize(size: string) {
-    setSelectedSize(size);
-    const variant = findSelectedVariant(mainProduct, size, selectedColor);
-    setSelectedVariantId(String(variant?.id || variant?._id || variant?.variantId || ''));
-  }
-
-  function requireSizeColor() {
-    const ss = productSizes(mainProduct);
-    const cc = productColors(mainProduct);
-    if (ss.length && !selectedSize) {
-      Alert.alert('Chưa chọn size', 'Vui lòng chọn size muốn thử trước.');
-      return false;
-    }
-    if (cc.length > 1 && !selectedColor) {
-      Alert.alert('Chưa chọn màu', 'Vui lòng chọn màu sắc muốn thử trước.');
-      return false;
-    }
-    return true;
-  }
-
-  function updateQuiz(key: string, value: string) {
+  function updateQuiz(key, value) {
     const next = { ...quiz, [key]: value };
     setQuiz(next);
     const rec = v49RecommendSize(next);
     setRecommendedSize(rec);
-    if (!selectedSize) updateSelectedSize(rec);
+    if (!selectedSize) setSelectedSize(rec);
   }
 
-  async function suggestByUserPhoto() {
-    if (!userImage?.base64) {
-      Alert.alert('Cần ảnh của bạn', 'Hãy chọn hoặc chụp ảnh của bạn trước.');
-      return;
-    }
-    if (!mainProduct) {
-      Alert.alert('Chưa có sản phẩm', 'Hãy quay lại sản phẩm bạn thích và bấm Thử đồ.');
-      return;
-    }
-    if (!requireSizeColor()) return;
-
-    const rec = v49RecommendSize(quiz);
-    setRecommendedSize(rec);
-    setSelectedSize(selectedSize || rec);
-
+  async function suggestSize() {
     try {
-      setLoading(true);
-      const data = await v49Post('/api/v49/shop/recommend-accessories', {
-        personImageBase64: userImage.base64,
-        mainProductId: v49ProductId(mainProduct),
-        quiz,
-        selectedSize: selectedSize || rec,
-        selectedColor: selectedColor || 'Mặc định',
-        selectedVariantId,
-        adultConfirmed,
-      }, {
-        ok: false,
-        items: accessories,
-        autoSelected: accessories.slice(0, 3),
-        tips: {
-          summary: 'Đang dùng gợi ý offline. Khi backend chạy, AI sẽ phân tích ảnh người dùng và sắp xếp phụ kiện phù hợp hơn.',
-          sizeAdvice: [`Size gợi ý theo quiz: ${rec}`],
-          accessoryAdvice: ['Dây chuyền/cổ, đồng hồ/cổ tay, túi/vai hoặc tay, dù/cầm tay, khăn trùm đầu/tóc.'],
-        },
-      });
+      setSuggestingSize(true);
+      const data = await v49Post('/api/v49/shop/suggest-size', {
+        productId: v49ProductId(mainProduct),
+        category: mainProduct?.category || '',
+        height: quiz.height, weight: quiz.weight, bust: quiz.bust, waist: quiz.waist, hip: quiz.hip,
+      }, { ok: true, size: v49RecommendSize(quiz), advice: 'Gợi ý theo số đo bạn nhập.' });
+      if (data?.size) { setRecommendedSize(data.size); setSelectedSize(data.size); }
+      setSizeAdvice(data?.advice || '');
+    } catch {
+      const rec = v49RecommendSize(quiz);
+      setRecommendedSize(rec); setSelectedSize(rec); setSizeAdvice('Gợi ý theo số đo bạn nhập.');
+    } finally { setSuggestingSize(false); }
+  }
 
-      const newAccessories = data.items || accessories;
-      const autoSelected = data.autoSelected || newAccessories.slice(0, 3);
-      setAccessories(newAccessories);
-      setSelectedAccessories(autoSelected.slice(0, 3));
-      setTips(data.tips || null);
-      setSuggested(true);
-      setMessage('Đã gợi ý lại phụ kiện theo ảnh của bạn và món đồ đang thử.');
-    } catch (e: any) {
-      Alert.alert('Gợi ý lỗi', e.message);
-    } finally {
-      setLoading(false);
-    }
+  async function suggestAccessories() {
+    try {
+      setSuggestingAcc(true);
+      const data = await v49Get(`/api/v49/shop/suggest-accessories?productId=${encodeURIComponent(v49ProductId(mainProduct))}&limit=5`, { ok: true, productIds: [] });
+      const ids = Array.isArray(data?.productIds) ? data.productIds : [];
+      let picked = ids.map((x) => accessories.find((p) => String(v49ProductId(p)) === String(x))).filter(Boolean);
+      if (!picked.length) picked = accessories.slice(0, 3);
+      setSelectedAccessories(picked.slice(0, 5));
+      setMessage(picked.length ? `Đã gợi ý ${picked.length} phụ kiện đi kèm hợp với "${mainProduct?.name || 'sản phẩm'}".` : 'Chưa tìm được phụ kiện phù hợp.');
+    } catch {
+      setSelectedAccessories(accessories.slice(0, 3));
+    } finally { setSuggestingAcc(false); }
   }
 
   async function runTryOn() {
-    if (!userImage?.base64) {
-      Alert.alert('Thiếu ảnh người', 'Hãy chọn hoặc chụp ảnh của bạn trước.');
-      return;
-    }
-    if (!mainProduct) {
-      Alert.alert('Thiếu sản phẩm chính', 'Hãy quay lại sản phẩm bạn thích và bấm Thử đồ.');
-      return;
-    }
-    if (!requireSizeColor()) return;
-
+    if (!userImage?.base64) { Alert.alert('Thiếu ảnh người', 'Hãy chọn hoặc chụp ảnh của bạn trước.'); return; }
+    if (!mainProduct) { Alert.alert('Thiếu sản phẩm', 'Hãy vào sản phẩm và bấm "Thử đồ AI".'); return; }
     try {
       setLoading(true);
       setResultImg('');
+      setMessage('Đang tạo ảnh thử đồ...');
       const rec = recommendedSize || v49RecommendSize(quiz);
       const data = await v49Post('/api/v49/mobile/tryon-selected-product', {
         personImageBase64: userImage.base64,
         mainProductId: v49ProductId(mainProduct),
+        mainProductImageUrl: v49FirstImage(mainProduct),
+        mainProductImageUrls: (Array.isArray(mainProduct?.images) ? mainProduct.images : []).map((x) => (typeof x === 'string' ? x : (x?.url || x?.secure_url || ''))).filter(Boolean),
+        mainProductName: mainProduct?.name || '',
         accessoryProductIds: selectedAccessories.map(v49ProductId),
         quiz,
         selectedSize: selectedSize || rec,
         selectedColor: selectedColor || 'Mặc định',
-        selectedVariantId,
         recommendedSize: rec,
         adultConfirmed,
-      });
+      }, { ok: false, message: 'Không kết nối được máy chủ. Hãy chạy backend (cổng 4000) rồi thử lại.' });
 
-      const final = data?.finalImageBase64
-        ? (String(data.finalImageBase64).startsWith('data:') ? data.finalImageBase64 : `data:image/png;base64,${data.finalImageBase64}`)
-        : '';
-
+      const raw = data?.finalImageBase64 || data?.imageBase64 || '';
+      const final = raw ? (String(raw).startsWith('data:') ? raw : `data:image/png;base64,${raw}`) : '';
       setResultImg(final);
-      setTips(data?.tips || tips);
-      setMessage(data?.message || 'Đã tạo thử đồ với sản phẩm shop.');
-      if (!final) Alert.alert('Chưa có ảnh kết quả', data?.message || 'AI Gateway chưa trả ảnh.');
-    } catch (e: any) {
-      Alert.alert('Thử đồ lỗi', e.message || 'Network request failed');
+      setMessage(data?.message || (final ? 'Đã tạo ảnh thử đồ.' : 'Chưa có ảnh kết quả.'));
+    } catch (e) {
+      setMessage(`Không tạo được ảnh: ${e?.message || 'lỗi mạng'}.`);
     } finally {
       setLoading(false);
     }
   }
 
   const mainImage = v49FirstImage(mainProduct);
-  const sizes = productSizes(mainProduct);
-  const colors = productColors(mainProduct);
 
   return (
-    <ScrollView contentContainerStyle={s.container}>
-      <View style={s.topbar}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router?.back?.()}>
-          <Text style={s.backText}>← Quay lại</Text>
-        </TouchableOpacity>
-        <Text style={s.topTitle}>Thử đồ</Text>
-        <View style={{ width: 76 }} />
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingTop: 50, paddingBottom: 12, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+        <Pressable onPress={() => (router.canGoBack?.() ? router.back() : router.replace('/(tabs)/shop'))} style={{ width: 42, height: 42, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center' }}>
+          <Feather name="arrow-left" size={20} color={theme.text} />
+        </Pressable>
+        <Text style={{ flex: 1, color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 17) }}>Thử đồ AI</Text>
       </View>
 
-      <Text style={s.title}>Thử đồ AI Shop</Text>
-      <Text style={s.sub}>
-        Sản phẩm chính là món bạn đã bấm trong shop. App dùng ảnh đầu tiên của sản phẩm, không cho chọn ảnh sản phẩm ngoài.
-      </Text>
-
-      <View style={s.productCard}>
-        <Image source={{ uri: mainImage || 'https://placehold.co/600x800/fdf2f8/be185d?text=JAPANO' }} style={s.productImg} />
-        <View style={s.productInfo}>
-          <Text style={s.productName}>{mainProduct?.name || 'Sản phẩm đang thử'}</Text>
-          <View style={s.priceRow}>
-            <Text style={s.productPrice}>{v49Money(mainProduct?.price)}</Text>
-            {mainProduct?.originalPrice ? <Text style={s.oldPrice}>{v49Money(mainProduct.originalPrice)}</Text> : null}
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }}>
+        {/* Đồ chính */}
+        <View style={[cardStyle(theme), { padding: 12, flexDirection: 'row', gap: 12 }]}>
+          <SafeImage source={{ uri: mainImage }} style={{ width: 104, height: 134, backgroundColor: theme.background }} resizeMode="cover" />
+          <View style={{ flex: 1, gap: 5 }}>
+            <Text style={{ color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 17) }}>{mainProduct?.name || 'Sản phẩm đang thử'}</Text>
+            <Text style={{ color: theme.primary, fontWeight: '900', fontSize: scaleFont(theme, 18) }}>{v49Money(mainProduct?.price)}</Text>
+            <Text style={{ color: theme.muted, fontSize: scaleFont(theme, 12) }}>Ảnh đồ = ảnh đầu tiên của sản phẩm.</Text>
+            <Text style={{ color: theme.text, fontWeight: '800', fontSize: scaleFont(theme, 12) }}>Đang thử: size {selectedSize || 'chưa chọn'} • màu {selectedColor || 'Mặc định'}</Text>
           </View>
-          <Text style={s.productNote}>Ảnh đồ = ảnh đầu tiên của sản phẩm này.</Text>
-          <Text style={s.selectedLine}>Đang thử: Size {selectedSize || 'chưa chọn'} • Màu {selectedColor || 'Mặc định'}</Text>
         </View>
-      </View>
 
-      <View style={s.card}>
-        <Text style={s.section}>1. Thêm ảnh của bạn</Text>
-        <Text style={s.note}>Sau khi thêm ảnh, phần gợi ý size/phụ kiện mới xuất hiện.</Text>
-        <View style={s.rowButtons}>
-          <TouchableOpacity style={s.secondaryBtn} onPress={() => pickUserImage(setUserImage)}>
-            <Text style={s.secondaryText}>Chọn ảnh</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.secondaryBtn} onPress={() => takeUserPhoto(setUserImage)}>
-            <Text style={s.secondaryText}>Chụp ảnh</Text>
-          </TouchableOpacity>
+        {/* 1. Ảnh người */}
+        <View style={[cardStyle(theme), { padding: 14, gap: 10 }]}>
+          <Text style={{ color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 16) }}>1. Ảnh của bạn</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}><AppButton title="Chọn ảnh" icon="image" variant="outline" onPress={() => pickUserImage(setUserImage)} /></View>
+            <View style={{ flex: 1 }}><AppButton title="Chụp ảnh" icon="camera" variant="outline" onPress={() => takeUserPhoto(setUserImage)} /></View>
+          </View>
+          {userImage?.uri ? <SafeImage source={{ uri: userImage.uri }} style={{ width: '100%', height: 320, backgroundColor: theme.background }} resizeMode="contain" /> : null}
         </View>
-        {userImage?.uri ? <Image source={{ uri: userImage.uri }} style={s.userPreview} /> : null}
-      </View>
 
-      {userImage?.uri ? (
-        <View style={s.card}>
-          <Text style={s.section}>2. Quiz size & gợi ý</Text>
-          <Text style={s.note}>Nhập nhanh số đo để chương trình gợi ý size. Bạn vẫn có thể chọn size khác.</Text>
-
-          <View style={s.grid2}>
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Chiều cao cm" value={quiz.height} onChangeText={(v) => updateQuiz('height', v)} />
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Cân nặng kg" value={quiz.weight} onChangeText={(v) => updateQuiz('weight', v)} />
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Ngực cm" value={quiz.bust} onChangeText={(v) => updateQuiz('bust', v)} />
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Eo cm" value={quiz.waist} onChangeText={(v) => updateQuiz('waist', v)} />
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Hông cm" value={quiz.hip} onChangeText={(v) => updateQuiz('hip', v)} />
-            <TextInput style={s.input} keyboardType="numeric" placeholder="Vai cm" value={quiz.shoulder} onChangeText={(v) => updateQuiz('shoulder', v)} />
-          </View>
-
-          <Text style={s.label}>Chọn màu sắc</Text>
-          <View style={s.sizeWrap}>
-            {colors.map((c) => (
-              <TouchableOpacity key={c} style={[s.sizePill, selectedColor === c && s.sizeSelected]} onPress={() => updateSelectedColor(c)}>
-                <Text style={[s.sizeText, selectedColor === c && s.sizeTextSelected]}>{c}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={s.label}>Chọn size</Text>
-          <View style={s.sizeWrap}>
-            {sizes.map((size) => (
-              <TouchableOpacity key={size} style={[s.sizePill, selectedSize === size && s.sizeSelected]} onPress={() => updateSelectedSize(size)}>
-                <Text style={[s.sizeText, selectedSize === size && s.sizeTextSelected]}>{size}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={s.selectionSummary}>
-            <Text style={s.selectionSummaryText}>Đang chọn: Size {selectedSize || recommendedSize || 'chưa chọn'} • Màu {selectedColor || 'Mặc định'}</Text>
-            <Text style={s.selectionSummarySub}>Thông tin này sẽ gửi qua backend khi tạo thử đồ AI thật.</Text>
-          </View>
-
-          <View style={s.recommendBox}>
-            <Text style={s.recommendTitle}>Size gợi ý: {recommendedSize || v49RecommendSize(quiz)}</Text>
-            <Text style={s.note}>Gợi ý dựa vào quiz. Khi có backend/AI, hệ thống có thể cộng thêm phân tích ảnh người dùng.</Text>
-          </View>
-
-          <Text style={s.label}>Bảng kích thước tham khảo</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
-              <View style={[s.tableRow, s.tableHead]}>
-                <Text style={s.cell}>Size</Text><Text style={s.cell}>Cao</Text><Text style={s.cell}>Nặng</Text><Text style={s.cell}>Ngực</Text><Text style={s.cell}>Eo</Text><Text style={s.cell}>Hông</Text>
-              </View>
-              {V49_SIZE_CHART.map((r) => (
-                <View key={r.size} style={s.tableRow}>
-                  <Text style={s.cell}>{r.size}</Text><Text style={s.cell}>{r.height}</Text><Text style={s.cell}>{r.weight}</Text><Text style={s.cell}>{r.bust}</Text><Text style={s.cell}>{r.waist}</Text><Text style={s.cell}>{r.hip}</Text>
-                </View>
+        {/* 2. Quiz size */}
+        {userImage?.uri ? (
+          <View style={[cardStyle(theme), { padding: 14, gap: 10 }]}>
+            <Text style={{ color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 16) }}>2. Số đo & size</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {[['height', 'Cao (cm)'], ['weight', 'Nặng (kg)'], ['bust', 'Ngực (cm)'], ['waist', 'Eo (cm)'], ['hip', 'Hông (cm)'], ['shoulder', 'Vai (cm)']].map(([k, ph]) => (
+                <TextInput key={k} style={[inputStyle(theme), { width: '48%' }]} keyboardType="numeric" placeholder={ph} placeholderTextColor={theme.muted} value={quiz[k]} onChangeText={(v) => updateQuiz(k, v)} />
               ))}
             </View>
-          </ScrollView>
 
-          <View style={s.row}>
-            <Text style={{ flex: 1, color: '#9d174d', fontWeight: '800' }}>Xác nhận adult fashion nếu là bikini / đồ bơi / crop-top</Text>
-            <Switch value={adultConfirmed} onValueChange={setAdultConfirmed} />
+            <Text style={{ color: theme.heading, fontWeight: '900', marginTop: 4 }}>Màu sắc</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {colors.map((c) => (
+                <Pressable key={c} onPress={() => setSelectedColor(c)} style={pill(theme, selectedColor === c)}><Text style={pillText(theme, selectedColor === c)}>{c}</Text></Pressable>
+              ))}
+            </View>
+
+            <Text style={{ color: theme.heading, fontWeight: '900', marginTop: 4 }}>Kích cỡ</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {sizes.map((sz) => (
+                <Pressable key={sz} onPress={() => setSelectedSize(sz)} style={pill(theme, selectedSize === sz)}><Text style={pillText(theme, selectedSize === sz)}>{sz}</Text></Pressable>
+              ))}
+            </View>
+
+            <View style={{ backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border, padding: 10, gap: 6 }}>
+              <Text style={{ color: theme.primary, fontWeight: '900' }}>Size gợi ý: {recommendedSize || v49RecommendSize(quiz)}</Text>
+              {sizeAdvice ? <Text style={{ color: theme.text, fontSize: scaleFont(theme, 12), lineHeight: 18 }}>{sizeAdvice}</Text> : null}
+              <AppButton title={suggestingSize ? 'Đang tính size...' : 'Gợi ý size cho tôi'} icon="maximize-2" variant="outline" loading={suggestingSize} onPress={suggestSize} />
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Text style={{ flex: 1, color: theme.text, fontWeight: '800' }}>Xác nhận người lớn nếu là bikini / đồ bơi / crop-top</Text>
+              <Switch value={adultConfirmed} onValueChange={setAdultConfirmed} trackColor={{ true: theme.primary }} />
+            </View>
           </View>
+        ) : null}
 
-          <TouchableOpacity style={s.primaryBtn} onPress={suggestByUserPhoto} disabled={loading}>
-            <Text style={s.primaryText}>{loading ? 'Đang gợi ý...' : 'Gợi ý size & phụ kiện từ shop'}</Text>
-          </TouchableOpacity>
+        {/* 3. Phụ kiện */}
+        <View style={[cardStyle(theme), { padding: 14, gap: 10 }]}>
+          <Text style={{ color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 16) }}>3. Chọn phụ kiện để thử</Text>
+          <Text style={{ color: theme.muted, fontSize: scaleFont(theme, 12) }}>Dây chuyền, đồng hồ, túi, kính, dù, khăn, bông tai... Chọn tối đa 5.</Text>
+          <AppButton title={suggestingAcc ? 'Đang gợi ý...' : 'Gợi ý phụ kiện đi kèm'} icon="zap" variant="outline" loading={suggestingAcc} onPress={suggestAccessories} />
+          <TextInput style={inputStyle(theme)} placeholder="Tìm phụ kiện..." placeholderTextColor={theme.muted} value={query} onChangeText={setQuery} />
+          <FlatList
+            horizontal
+            data={visibleAccessories}
+            keyExtractor={(p, i) => `${v49ProductId(p)}-${i}`}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 10 }}
+            renderItem={({ item }) => {
+              const sel = selectedAccessories.some((x) => v49ProductId(x) === v49ProductId(item));
+              return (
+                <Pressable onPress={() => toggleAccessory(item)} style={{ width: 150, borderWidth: sel ? 2 : 1, borderColor: sel ? theme.primary : theme.border, backgroundColor: theme.card }}>
+                  <SafeImage source={{ uri: v49FirstImage(item) }} style={{ width: '100%', height: 130, backgroundColor: theme.background }} resizeMode="cover" />
+                  <View style={{ padding: 8, gap: 3 }}>
+                    <Text numberOfLines={2} style={{ color: theme.heading, fontWeight: '900', fontSize: scaleFont(theme, 12), minHeight: 32 }}>{item?.name || 'Phụ kiện'}</Text>
+                    <Text style={{ color: theme.primary, fontWeight: '900', fontSize: scaleFont(theme, 12) }}>{v49Money(item?.price)}</Text>
+                  </View>
+                  {sel ? <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: theme.primary, width: 26, height: 26, alignItems: 'center', justifyContent: 'center' }}><Feather name="check" size={15} color={onPrimary(theme)} /></View> : null}
+                </Pressable>
+              );
+            }}
+          />
+          <Text style={{ color: theme.muted, fontSize: scaleFont(theme, 12) }}>Đã chọn: {selectedAccessories.map((x) => x.name).join(', ') || 'chưa chọn phụ kiện'}</Text>
         </View>
-      ) : null}
 
-      <View style={s.card}>
-        <Text style={s.section}>{suggested ? '3. Phụ kiện phù hợp đã gợi ý' : '3. Chọn phụ kiện shop'}</Text>
-        <Text style={s.note}>Phụ kiện lấy từ database shop: dù, dây chuyền, khăn trùm đầu, đồng hồ, túi, kính, bông tai...</Text>
-        <TextInput style={s.input} placeholder="Tìm phụ kiện..." value={query} onChangeText={setQuery} />
-        <FlatList
-          horizontal
-          data={visibleAccessories}
-          keyExtractor={(p, i) => `${v49ProductId(p)}-${i}`}
-          renderItem={({ item }) => (
-            <AccessoryCard item={item} selected={selectedAccessories.some((x) => v49ProductId(x) === v49ProductId(item))} onPress={toggleAccessory} />
-          )}
-          showsHorizontalScrollIndicator={false}
-        />
-        <Text style={s.note}>Đã chọn: {selectedAccessories.map((x) => x.name).join(', ') || 'chưa chọn phụ kiện'}</Text>
-      </View>
+        <AppButton title={loading ? 'Đang tạo...' : 'Tạo thử đồ'} icon="zap" loading={loading} onPress={runTryOn} />
 
-      {tips ? (
-        <View style={s.card}>
-          <Text style={s.section}>Gợi ý của hệ thống</Text>
-          <Text style={s.note}>Tóm tắt: {tips.summary || '—'}</Text>
-          <Text style={s.note}>Size: {(tips.sizeAdvice || []).join(' | ') || '—'}</Text>
-          <Text style={s.note}>Phụ kiện: {(tips.accessoryAdvice || []).join(' | ') || '—'}</Text>
+        <View style={[cardStyle(theme), { padding: 14, gap: 6 }]}>
+          <Text style={{ color: theme.heading, fontWeight: '900' }}>Trạng thái</Text>
+          <Text style={{ color: theme.text, lineHeight: 20 }}>{message}</Text>
         </View>
-      ) : null}
 
-      <TouchableOpacity style={s.tryBtn} onPress={runTryOn} disabled={loading}>
-        <Text style={s.tryText}>{loading ? 'Đang tạo...' : 'Tạo thử đồ với sản phẩm này'}</Text>
-      </TouchableOpacity>
-
-      <View style={s.card}>
-        <Text style={s.section}>Trạng thái</Text>
-        <Text style={s.note}>{message}</Text>
-      </View>
-
-      {resultImg ? (
-        <View style={s.card}>
-          <Text style={s.section}>Kết quả cuối</Text>
-          <Image source={{ uri: resultImg }} style={s.result} />
-          <Text style={s.note}>Nếu AI trả nhiều ảnh khác nhau, hệ thống lấy ảnh đầu tiên làm final.</Text>
-        </View>
-      ) : null}
-    </ScrollView>
+        {resultImg ? (
+          <View style={[cardStyle(theme), { padding: 14, gap: 8 }]}>
+            <Text style={{ color: theme.heading, fontFamily: fontFamily(theme), fontWeight: '900', fontSize: scaleFont(theme, 16) }}>Kết quả</Text>
+            <SafeImage source={{ uri: resultImg }} style={{ width: '100%', height: 540, backgroundColor: theme.background }} resizeMode="contain" />
+          </View>
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }
-
-const s = StyleSheet.create({
-  container: { padding: 16, gap: 14, backgroundColor: '#fff7fb' },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  backBtn: { paddingHorizontal: 12, paddingVertical: 9, backgroundColor: '#fff', borderRadius: 999, borderWidth: 1, borderColor: '#fbcfe8' },
-  backText: { color: '#9d174d', fontWeight: '900' },
-  topTitle: { color: '#831843', fontWeight: '900', fontSize: 16 },
-  title: { fontSize: 30, fontWeight: '900', color: '#831843' },
-  sub: { color: '#6b7280', lineHeight: 20 },
-  card: { backgroundColor: 'white', borderRadius: 22, padding: 14, borderWidth: 1, borderColor: '#fbcfe8', gap: 10 },
-  productCard: { backgroundColor: 'white', borderRadius: 24, padding: 12, borderWidth: 1, borderColor: '#fbcfe8', flexDirection: 'row', gap: 14 },
-  productImg: { width: 116, height: 152, borderRadius: 18, backgroundColor: '#f3f4f6' },
-  productInfo: { flex: 1, gap: 6 },
-  productName: { fontWeight: '900', fontSize: 19, color: '#111827' },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  productPrice: { color: '#be185d', fontWeight: '900', fontSize: 21 },
-  oldPrice: { color: '#9ca3af', textDecorationLine: 'line-through' },
-  productNote: { color: '#6b7280', lineHeight: 18 },
-  selectedLine: { color: '#be185d', fontWeight: '900', lineHeight: 18 },
-  section: { fontSize: 20, fontWeight: '900', color: '#9d174d' },
-  note: { color: '#374151', lineHeight: 20 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowButtons: { flexDirection: 'row', gap: 10 },
-  primaryBtn: { backgroundColor: '#ec4899', borderRadius: 16, padding: 14, alignItems: 'center' },
-  primaryText: { color: 'white', fontWeight: '900' },
-  secondaryBtn: { flex: 1, backgroundColor: '#fdf2f8', borderRadius: 14, padding: 13, alignItems: 'center', borderWidth: 1, borderColor: '#f9a8d4' },
-  secondaryText: { color: '#be185d', fontWeight: '900' },
-  tryBtn: { backgroundColor: '#111827', borderRadius: 18, padding: 16, alignItems: 'center' },
-  tryText: { color: '#fff', fontWeight: '900', fontSize: 16 },
-  userPreview: { width: '100%', height: 310, borderRadius: 18, backgroundColor: '#f3f4f6' },
-  input: { borderWidth: 1, borderColor: '#f9a8d4', borderRadius: 14, padding: 12, backgroundColor: '#fff' },
-  grid2: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  label: { fontWeight: '900', color: '#831843', marginTop: 2 },
-  sizeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  sizePill: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#f9a8d4', backgroundColor: '#fff' },
-  sizeSelected: { backgroundColor: '#ec4899', borderColor: '#ec4899' },
-  sizeText: { color: '#831843', fontWeight: '900' },
-  sizeTextSelected: { color: 'white' },
-  selectionSummary: { backgroundColor: '#fff1f2', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#fda4af' },
-  selectionSummaryText: { color: '#9f1239', fontWeight: '900' },
-  selectionSummarySub: { color: '#be123c', fontSize: 12, fontWeight: '700', marginTop: 3 },
-  recommendBox: { backgroundColor: '#fdf2f8', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#fbcfe8' },
-  recommendTitle: { color: '#be185d', fontWeight: '900', fontSize: 16 },
-  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#fce7f3' },
-  tableHead: { backgroundColor: '#fdf2f8' },
-  cell: { width: 92, padding: 8, color: '#374151', fontWeight: '700' },
-  accCard: { width: 156, marginRight: 10, borderRadius: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: '#fce7f3', overflow: 'hidden' },
-  accSelected: { borderColor: '#ec4899', borderWidth: 3, backgroundColor: '#fdf2f8' },
-  accImg: { width: '100%', height: 148, backgroundColor: '#f3f4f6' },
-  accBody: { padding: 9 },
-  accName: { fontWeight: '900', color: '#111827', minHeight: 40 },
-  price: { color: '#be185d', fontWeight: '900' },
-  small: { color: '#6b7280', fontSize: 12 },
-  check: { position: 'absolute', top: 8, right: 8, backgroundColor: '#ec4899', borderRadius: 999, width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  checkText: { color: 'white', fontWeight: '900' },
-  result: { width: '100%', height: 540, borderRadius: 18, backgroundColor: '#f3f4f6' },
-});

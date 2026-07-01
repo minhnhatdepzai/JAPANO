@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -12,9 +12,10 @@ import { ProductCard } from '../../components/ProductCard';
 import { AISearchBox } from '../../components/AISearchBox';
 import { goBackOrReplace } from '../../lib/navigation';
 import { ShopQuickActions } from '../../components/ShopQuickActions';
+import { api } from '../../lib/api';
 
 export default function HomeScreen() {
-  const { theme, user } = useApp();
+  const { theme, user, recentlyViewed } = useApp();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const columns = width > 760 ? 3 : 2;
@@ -23,6 +24,26 @@ export default function HomeScreen() {
   const occasionProducts = getOccasionProducts(occasion);
   const fade = useRef(new Animated.Value(0)).current;
   React.useEffect(() => { Animated.timing(fade, { toValue: 1, duration: 450, useNativeDriver: Platform.OS !== 'web' }).start(); }, []);
+
+  // Gợi ý cho bạn: cá nhân hoá theo sản phẩm đã xem + hành vi (recommender ML); fallback đã xem gần đây.
+  const [recommended, setRecommended] = useState<any[]>([]);
+  const findInCatalog = (id: string) => products.find((p: any) => String(p.id) === String(id) || String(p._id) === String(id));
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      let ids: string[] = [];
+      if (user?.id) {
+        try { const r = await api.getRecommendations(user.id, 12); ids = Array.isArray(r?.productIds) ? r.productIds : []; } catch {}
+      }
+      let list = ids.map(findInCatalog).filter(Boolean);
+      // ưu tiên xen các sản phẩm đã xem gần đây
+      const viewed = (recentlyViewed || []).map(findInCatalog).filter(Boolean);
+      for (const v of viewed) { if (!list.find((x: any) => String(x.id) === String(v.id))) list.unshift(v); }
+      if (list.length < 6) for (const p of products) { if (!list.find((x: any) => String(x.id) === String(p.id))) list.push(p); if (list.length >= 10) break; }
+      if (alive) setRecommended(list.slice(0, 10));
+    })();
+    return () => { alive = false; };
+  }, [user?.id, recentlyViewed]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: theme.background }} contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 150 + insets.bottom }]} showsVerticalScrollIndicator keyboardShouldPersistTaps="always" keyboardDismissMode="none">
@@ -86,7 +107,20 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.sectionHeaderPlain}><Text style={[styles.sectionTitle, { color: theme.heading, fontFamily: fontFamily(theme), fontSize: scaleFont(theme, 25) }]}>Sản phẩm nổi bật</Text></View>
+        {recommended.length ? (
+          <>
+            <View style={styles.sectionHeaderPlain}>
+              <Text style={[styles.sectionTitle, { color: theme.heading, fontFamily: fontFamily(theme), fontSize: scaleFont(theme, 25) }]}>Gợi ý cho bạn</Text>
+              <View style={{ width: 46, height: 4, backgroundColor: theme.primary, marginTop: 6 }} />
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.horizontalList}>{recommended.map((p, index) => <ProductCard key={`reco-${String(p.id || p.name)}-${index}`} product={p} compact />)}</ScrollView>
+          </>
+        ) : null}
+
+        <View style={styles.sectionHeaderPlain}>
+          <Text style={[styles.sectionTitle, { color: theme.heading, fontFamily: fontFamily(theme), fontSize: scaleFont(theme, 25) }]}>Sản phẩm nổi bật</Text>
+          <View style={{ width: 46, height: 4, backgroundColor: theme.primary, marginTop: 6 }} />
+        </View>
         <View style={styles.grid}>{products.slice(0, 8).map((p, index) => <View key={`home-product-${String(p.id || p.name)}-${index}`} style={{ width: `${100 / columns - 2}%` }}><ProductCard product={p} /></View>)}</View>
       </Animated.View>
     </ScrollView>

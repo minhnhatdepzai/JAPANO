@@ -8,7 +8,7 @@ import { fontFamily, radius, scaleFont, shadow } from '../lib/styles';
 import { SafeImage } from './SafeImage';
 
 export function ProductCard({ product, compact = false }: { product: Product; compact?: boolean }) {
-  const { theme, formatCurrency, addToCart, wishlist, toggleWishlist } = useApp();
+  const { theme, formatCurrency, wishlist, toggleWishlist } = useApp();
   const scale = useRef(new Animated.Value(1)).current;
   const fade = useRef(new Animated.Value(0)).current;
   React.useEffect(() => {
@@ -19,7 +19,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
   const originalPrice = Number((product as any).originalPrice || 0);
   const hasDiscount = originalPrice > Number(product.price || 0);
   const discountPercent = Number((product as any).discountPercent || (hasDiscount ? Math.round((1 - Number(product.price || 0) / originalPrice) * 100) : 0));
-  const width = compact ? 178 : '100%';
+  const width = compact ? 190 : '100%';
   return (
     <Animated.View style={{ width, opacity: fade, transform: [{ scale }] }}>
     <Pressable
@@ -29,7 +29,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
       style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }, shadow(theme)]}
     >
       <View style={[styles.imageWrap, { backgroundColor: theme.background }]}> 
-        <SafeImage source={{ uri: product.image }} style={styles.image} resizeMode="contain" />
+        <SafeImage source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
         {(product.badge || hasDiscount) ? <View style={[styles.badge, { backgroundColor: theme.primary }]}><Text style={[styles.badgeText, { color: theme.background }]}>{hasDiscount ? `GIẢM ${discountPercent}%` : product.badge}</Text></View> : null}
         <Pressable onPress={(e) => { e.stopPropagation(); toggleWishlist(product); }} style={[styles.heart, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Feather name="heart" size={17} color={liked ? theme.primary : theme.muted} />
@@ -40,12 +40,19 @@ export function ProductCard({ product, compact = false }: { product: Product; co
         <Text numberOfLines={2} style={[styles.desc, { color: theme.muted, fontSize: scaleFont(theme, 12) }]}>{product.description}</Text>
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.price, { color: theme.primary, fontSize: scaleFont(theme, 14) }]}>{formatCurrency(product.price)}</Text>
-            {hasDiscount ? <Text style={[styles.oldPrice, { color: theme.muted }]}>{formatCurrency(originalPrice)}</Text> : null}
+            <Text style={[styles.price, { color: theme.primary, fontSize: scaleFont(theme, 15) }]}>{formatCurrency(product.price)}</Text>
+            {hasDiscount ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                <Text style={[styles.oldPrice, { color: theme.muted }]}>{formatCurrency(originalPrice)}</Text>
+                <View style={{ backgroundColor: theme.primary, paddingHorizontal: 5, paddingVertical: 1 }}>
+                  <Text style={{ color: theme.background, fontSize: 9, fontWeight: '900' }}>-{discountPercent}%</Text>
+                </View>
+              </View>
+            ) : null}
           </View>
-          <Pressable onPress={(e) => { e.stopPropagation(); addToCart(product); }} style={[styles.add, { backgroundColor: theme.primary }]}>
-            <Feather name="plus" size={16} color={theme.background} />
-          </Pressable>
+          <View style={[styles.add, { backgroundColor: theme.primary }]}>
+            <Feather name="chevron-right" size={18} color={theme.background} />
+          </View>
         </View>
       </View>
     </Pressable>
@@ -55,7 +62,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 0, padding: 10, gap: 10, overflow: 'hidden' },
-  imageWrap: { height: 168, borderRadius: 0, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  imageWrap: { height: 200, borderRadius: 0, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   image: { width: '100%', height: '100%' },
   badge: { position: 'absolute', left: 10, top: 10, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 0},
   badgeText: { fontSize: 10, fontWeight: '900' },

@@ -14,6 +14,7 @@ import { Header } from "../../components/Header";
 import { ProductCard } from "../../components/ProductCard";
 import { useApp } from "../../context/AppContext";
 import { fontFamily, radius, scaleFont, shadow } from "../../lib/styles";
+import AppButton from "../../components/AppButton";
 import { SafeImage } from "../../components/SafeImage";
 import { StableTextInput } from "../../components/StableTextInput";
 import { uploadMediaFile } from "../../lib/api";
@@ -136,22 +137,8 @@ export default function ProfileScreen() {
               Đăng nhập để đồng bộ giỏ hàng, yêu thích, lịch sử mua, ảnh AI,
               thông tin giao hàng và cài đặt giao diện lên MongoDB.
             </Text>
-            <Pressable
-              onPress={() => router.push("/login")}
-              style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
-            >
-              <Text style={[styles.primaryText, { color: theme.background }]}>
-                Đăng nhập
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/register")}
-              style={[styles.secondaryBtn, { borderColor: theme.primary }]}
-            >
-              <Text style={[styles.secondaryText, { color: theme.primary }]}>
-                Tạo tài khoản mới
-              </Text>
-            </Pressable>
+            <AppButton title="Đăng nhập" icon="log-in" onPress={() => router.push("/login")} />
+            <AppButton title="Tạo tài khoản mới" icon="user-plus" variant="outline" onPress={() => router.push("/register")} />
           </View>
         </ScrollView>
       </View>
@@ -299,14 +286,7 @@ export default function ProfileScreen() {
               onChangeText={setSpecialDate}
               placeholder="Ví dụ: 14/02 hoặc 2026-02-14"
             />
-            <Pressable
-              onPress={save}
-              style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
-            >
-              <Text style={[styles.primaryText, { color: theme.background }]}>
-                Lưu thông tin
-              </Text>
-            </Pressable>
+            <AppButton title="Lưu thông tin" icon="save" onPress={save} />
           </View>
         )}
 
@@ -746,7 +726,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 0,
   },
-  reviewOrderBtn: { alignSelf: "flex-start", marginTop: 8, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#ec4899" },
+  reviewOrderBtn: { alignSelf: "flex-start", marginTop: 8, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#ec4899" },
   reviewOrderBtnText: { color: "#fff", fontSize: 12, fontWeight: "900" },
 
 });

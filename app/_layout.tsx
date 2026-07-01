@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../context/AppContext';
 import { RoutePersistence } from '../components/RoutePersistence';
 import { FloatingButterflies } from '../components/FloatingButterflies';
+import { ToastHost } from '../components/ToastHost';
 import { TextThemeRuntime } from '../components/TextThemeRuntime';
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
@@ -32,6 +33,8 @@ function RootStack() {
         <Stack.Screen name="admin" options={{ presentation: 'card' }} />
         <Stack.Screen name="checkout" options={{ presentation: 'card' }} />
         <Stack.Screen name="try-on" options={{ presentation: 'card' }} />
+        <Stack.Screen name="thu-do-3d" options={{ presentation: 'card' }} />
+        <Stack.Screen name="thu-do-ai-v49-shop-flow" options={{ presentation: 'card' }} />
         <Stack.Screen name="ai-camera" options={{ presentation: 'card' }} />
         <Stack.Screen name="stylist-quiz" options={{ presentation: 'modal' }} />
         <Stack.Screen name="ai-stylist" options={{ presentation: 'card' }} />
@@ -40,6 +43,7 @@ function RootStack() {
         <Stack.Screen name="outfit-collections" options={{ presentation: 'card' }} />
       </Stack>
       <FloatingButterflies />
+      <ToastHost />
     </>
   );
 }

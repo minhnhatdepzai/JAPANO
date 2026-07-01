@@ -4,14 +4,14 @@ cd "$(dirname "$0")"
 ROOT="$(pwd)"
 
 PROJECT_SERVER="$ROOT/server/index.mjs"
-CATVTON_DIR="/home/rd/jp/ai/CatVTON"
+CATVTON_DIR="/home/nhat/jp/ai/CatVTON"
 CATVTON_API="$CATVTON_DIR/japano_catvton_simple_web.py"
 
 echo "=== JAPANO V52 REAL CATVTON CONNECTOR - NO FALLBACK PREVIEW ==="
 echo "Mục tiêu: app JAPANO gọi CatVTON thật ở port 7861. Nếu CatVTON chưa chạy thì báo lỗi, KHÔNG tạo preview giả nữa."
 
 if [ ! -f "$PROJECT_SERVER" ]; then
-  echo "[ERROR] Không thấy server/index.mjs. Hãy copy zip này vào /home/rd/Downloads/v37 rồi chạy."
+  echo "[ERROR] Không thấy server/index.mjs. Hãy copy zip này vào /home/nhat/Downloads/v37 rồi chạy."
   exit 1
 fi
 
@@ -233,12 +233,12 @@ PY
 echo
 echo "=== XONG V52 ==="
 echo "Terminal 1 chạy CatVTON API thật:"
-echo "cd /home/rd/jp/ai/CatVTON"
+echo "cd /home/nhat/jp/ai/CatVTON"
 echo "source .venv/bin/activate"
 echo "GRADIO_ANALYTICS_ENABLED=False CUDA_VISIBLE_DEVICES=0 python japano_catvton_simple_web.py"
 echo
 echo "Terminal 2 chạy backend JAPANO:"
-echo "cd /home/rd/Downloads/v37"
+echo "cd /home/nhat/Downloads/v37"
 echo "source .venv/bin/activate"
 echo "export PYTHON_BIN=\"\$PWD/.venv/bin/python\""
 echo "export JAPANO_CATVTON_URL=\"http://127.0.0.1:7861\""

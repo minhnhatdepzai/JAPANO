@@ -1,0 +1,184 @@
+[
+  {
+    "level_": 0,
+    "message_": "Start JSON generation. Platform version: 24 min SDK version: arm64-v8a",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "rebuilding JSON /home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a/android_gradle_build.json due to:",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "- no fingerprint file, will remove stale configuration folder",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "/usr/lib/jvm/java-17-openjdk-amd64/bin/java \\\n  --class-path \\\n  /home/nhat/.gradle/caches/modules-2/files-2.1/com.google.prefab/cli/2.1.0/aa32fec809c44fa531f01dcfb739b5b3304d3050/cli-2.1.0-all.jar \\\n  com.google.prefab.cli.AppKt \\\n  --build-system \\\n  cmake \\\n  --platform \\\n  android \\\n  --abi \\\n  arm64-v8a \\\n  --os-version \\\n  24 \\\n  --stl \\\n  c++_shared \\\n  --ndk-version \\\n  27 \\\n  --output \\\n  /tmp/agp-prefab-staging9905818308350055443/staged-cli-output \\\n  /home/nhat/.gradle/caches/8.14.3/transforms/52fba397ee69a489802542663b2a7886/transformed/react-android-0.81.5-debug/prefab \\\n  /home/nhat/Downloads/v37/android/app/build/intermediates/cxx/refs/react-native-reanimated/1330w1q7 \\\n  /home/nhat/Downloads/v37/android/app/build/intermediates/cxx/refs/react-native-worklets/1534v5z3 \\\n  /home/nhat/.gradle/caches/8.14.3/transforms/140d610d73c892c669ee13e90e6310ec/transformed/hermes-android-0.81.5-debug/prefab \\\n  /home/nhat/.gradle/caches/8.14.3/transforms/6347936a505aab872d9b18fa868e791d/transformed/fbjni-0.7.0/prefab\n",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "Received process result: 0",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "removing stale contents from \u0027/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a\u0027",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "created folder \u0027/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a\u0027",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "executing cmake /home/nhat/Android/Sdk/cmake/3.22.1/bin/cmake \\\n  -H/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup \\\n  -DCMAKE_SYSTEM_NAME\u003dAndroid \\\n  -DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON \\\n  -DCMAKE_SYSTEM_VERSION\u003d24 \\\n  -DANDROID_PLATFORM\u003dandroid-24 \\\n  -DANDROID_ABI\u003darm64-v8a \\\n  -DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a \\\n  -DANDROID_NDK\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006 \\\n  -DCMAKE_ANDROID_NDK\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006 \\\n  -DCMAKE_TOOLCHAIN_FILE\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006/build/cmake/android.toolchain.cmake \\\n  -DCMAKE_MAKE_PROGRAM\u003d/home/nhat/Android/Sdk/cmake/3.22.1/bin/ninja \\\n  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/nhat/Downloads/v37/android/app/build/intermediates/cxx/Debug/5o2c36x2/obj/arm64-v8a \\\n  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003d/home/nhat/Downloads/v37/android/app/build/intermediates/cxx/Debug/5o2c36x2/obj/arm64-v8a \\\n  -DCMAKE_BUILD_TYPE\u003dDebug \\\n  -DCMAKE_FIND_ROOT_PATH\u003d/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/prefab/arm64-v8a/prefab \\\n  -B/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a \\\n  -GNinja \\\n  -DPROJECT_BUILD_DIR\u003d/home/nhat/Downloads/v37/android/app/build \\\n  -DPROJECT_ROOT_DIR\u003d/home/nhat/Downloads/v37/android \\\n  -DREACT_ANDROID_DIR\u003d/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid \\\n  -DANDROID_STL\u003dc++_shared \\\n  -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES\u003dON\n",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "/home/nhat/Android/Sdk/cmake/3.22.1/bin/cmake \\\n  -H/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup \\\n  -DCMAKE_SYSTEM_NAME\u003dAndroid \\\n  -DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON \\\n  -DCMAKE_SYSTEM_VERSION\u003d24 \\\n  -DANDROID_PLATFORM\u003dandroid-24 \\\n  -DANDROID_ABI\u003darm64-v8a \\\n  -DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a \\\n  -DANDROID_NDK\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006 \\\n  -DCMAKE_ANDROID_NDK\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006 \\\n  -DCMAKE_TOOLCHAIN_FILE\u003d/home/nhat/Android/Sdk/ndk/27.1.12297006/build/cmake/android.toolchain.cmake \\\n  -DCMAKE_MAKE_PROGRAM\u003d/home/nhat/Android/Sdk/cmake/3.22.1/bin/ninja \\\n  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003d/home/nhat/Downloads/v37/android/app/build/intermediates/cxx/Debug/5o2c36x2/obj/arm64-v8a \\\n  -DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003d/home/nhat/Downloads/v37/android/app/build/intermediates/cxx/Debug/5o2c36x2/obj/arm64-v8a \\\n  -DCMAKE_BUILD_TYPE\u003dDebug \\\n  -DCMAKE_FIND_ROOT_PATH\u003d/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/prefab/arm64-v8a/prefab \\\n  -B/home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a \\\n  -GNinja \\\n  -DPROJECT_BUILD_DIR\u003d/home/nhat/Downloads/v37/android/app/build \\\n  -DPROJECT_ROOT_DIR\u003d/home/nhat/Downloads/v37/android \\\n  -DREACT_ANDROID_DIR\u003d/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid \\\n  -DANDROID_STL\u003dc++_shared \\\n  -DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES\u003dON\n",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "Received process result: 0",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "Exiting generation of /home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a/compile_commands.json.bin normally",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "done executing cmake",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "hard linked /home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/arm64-v8a/compile_commands.json to /home/nhat/Downloads/v37/android/app/.cxx/tools/debug/arm64-v8a/compile_commands.json",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  },
+  {
+    "level_": 0,
+    "message_": "JSON generation completed without problems",
+    "file_": "/home/nhat/Downloads/v37/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt",
+    "tag_": "debug|arm64-v8a",
+    "diagnosticCode_": 0,
+    "memoizedIsInitialized": 1,
+    "unknownFields": {
+      "fields": {}
+    },
+    "memoizedSize": -1,
+    "memoizedHashCode": 0
+  }
+]

@@ -1,0 +1,1077 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.leminhnhat123.japanofashionai"
+4    android:versionCode="1"
+5    android:versionName="1.0.26" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+11-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:7:3-75
+11-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:7:20-73
+12    <uses-permission android:name="android.permission.CAMERA" />
+12-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:2:3-62
+12-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:2:20-60
+13    <uses-permission android:name="android.permission.INTERNET" />
+13-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:3:3-64
+13-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:3:20-62
+14    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+14-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:4:3-77
+14-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:4:20-75
+15    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+15-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:5:3-73
+15-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:5:20-71
+16    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+16-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:6:3-68
+16-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:6:20-66
+17    <uses-permission android:name="android.permission.VIBRATE" />
+17-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:8:3-63
+17-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:8:20-61
+18    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+18-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:9:3-78
+18-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:9:20-76
+19
+20    <queries>
+20-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:10:3-16:13
+21        <intent>
+21-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:11:5-15:14
+22            <action android:name="android.intent.action.VIEW" />
+22-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+22-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+23
+24            <category android:name="android.intent.category.BROWSABLE" />
+24-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+24-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+25
+26            <data android:scheme="https" />
+26-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+26-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+27        </intent>
+28
+29        <package android:name="host.exp.exponent" />
+29-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-53
+29-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:18-50
+30
+31        <intent>
+31-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:15:9-19:18
+32
+33            <!-- Required for picking images from the camera roll if targeting API 30 -->
+34            <action android:name="android.media.action.IMAGE_CAPTURE" />
+34-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:18:13-73
+34-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:18:21-70
+35        </intent>
+36        <intent>
+36-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:20:9-24:18
+37
+38            <!-- Required for picking images from the camera if targeting API 30 -->
+39            <action android:name="android.media.action.ACTION_VIDEO_CAPTURE" />
+39-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:23:13-80
+39-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:23:21-77
+40        </intent>
+41        <intent>
+41-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:8:9-14:18
+42            <action android:name="android.intent.action.GET_CONTENT" />
+42-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:9:13-72
+42-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:9:21-69
+43
+44            <category android:name="android.intent.category.OPENABLE" />
+44-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:11:13-73
+44-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:11:23-70
+45
+46            <data android:mimeType="*/*" />
+46-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+47        </intent> <!-- Added to check the default browser that will host the AuthFlow. -->
+48        <intent>
+48-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:13:9-17:18
+49            <action android:name="android.intent.action.VIEW" />
+49-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+49-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+50
+51            <data android:scheme="http" />
+51-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+51-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+52        </intent> <!-- Added to check if Chrome is installed for browser-based payment authentication (e.g. 3DS1). -->
+53        <package android:name="com.android.chrome" />
+53-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:11:9-54
+53-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:11:18-51
+54
+55        <intent>
+55-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:23:9-25:18
+56            <action android:name="androidx.camera.extensions.action.VENDOR_ACTION" />
+56-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:24:13-86
+56-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:24:21-83
+57        </intent> <!-- Query open documents -->
+58        <intent>
+58-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:15:9-17:18
+59            <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
+59-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:16:13-79
+59-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:16:21-76
+60        </intent> <!-- Needs to be explicitly declared on Android R+ -->
+61        <package android:name="com.google.android.apps.maps" /> <!-- Query open documents -->
+61-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:33:9-64
+61-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:33:18-61
+62        <intent>
+62-->[host.exp.exponent:expo.modules.documentpicker:14.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/d90dd1f54631b391356bb040e00a898a/transformed/expo.modules.documentpicker-14.0.8/AndroidManifest.xml:10:9-17:18
+63            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+63-->[host.exp.exponent:expo.modules.documentpicker:14.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/d90dd1f54631b391356bb040e00a898a/transformed/expo.modules.documentpicker-14.0.8/AndroidManifest.xml:11:13-74
+63-->[host.exp.exponent:expo.modules.documentpicker:14.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/d90dd1f54631b391356bb040e00a898a/transformed/expo.modules.documentpicker-14.0.8/AndroidManifest.xml:11:21-71
+64
+65            <category android:name="android.intent.category.DEFAULT" />
+65-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+65-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+66            <category android:name="android.intent.category.OPENABLE" />
+66-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:11:13-73
+66-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:11:23-70
+67
+68            <data android:mimeType="*/*" />
+68-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+69        </intent>
+70    </queries> <!-- Include required permissions for Google Maps API to run. -->
+71    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+71-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:23:5-79
+71-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:23:22-76
+72
+73    <uses-feature
+73-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:26:5-28:35
+74        android:glEsVersion="0x00020000"
+74-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:27:9-41
+75        android:required="true" />
+75-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:28:9-32
+76
+77    <permission
+77-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:22:5-24:47
+78        android:name="com.leminhnhat123.japanofashionai.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+78-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:23:9-81
+79        android:protectionLevel="signature" />
+79-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:24:9-44
+80
+81    <uses-permission android:name="com.leminhnhat123.japanofashionai.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+81-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:26:5-97
+81-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:26:22-94
+82
+83    <application
+83-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:3-36:17
+84        android:name="com.leminhnhat123.japanofashionai.MainApplication"
+84-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:16-47
+85        android:allowBackup="true"
+85-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:162-188
+86        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+86-->[androidx.core:core:1.16.0] /home/nhat/.gradle/caches/8.14.3/transforms/793b7d65489692786592b5333d3bd6ae/transformed/core-1.16.0/AndroidManifest.xml:28:18-86
+87        android:debuggable="true"
+88        android:enableOnBackInvokedCallback="false"
+88-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:248-291
+89        android:extractNativeLibs="false"
+90        android:icon="@mipmap/ic_launcher"
+90-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:81-115
+91        android:label="@string/app_name"
+91-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:48-80
+92        android:roundIcon="@mipmap/ic_launcher_round"
+92-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:116-161
+93        android:supportsRtl="true"
+93-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:221-247
+94        android:theme="@style/AppTheme"
+94-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:189-220
+95        android:usesCleartextTraffic="true" >
+95-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:17:292-327
+96        <meta-data
+96-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:18:5-91
+97            android:name="DEV_CLIENT_TRY_TO_LAUNCH_LAST_BUNDLE"
+97-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:18:16-67
+98            android:value="false" />
+98-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:18:68-89
+99        <meta-data
+99-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:19:5-95
+100            android:name="com.google.android.gms.wallet.api.enabled"
+100-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:19:16-72
+101            android:value="true" />
+101-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:19:73-93
+102        <meta-data
+102-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:20:5-83
+103            android:name="expo.modules.updates.ENABLED"
+103-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:20:16-59
+104            android:value="false" />
+104-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:20:60-81
+105        <meta-data
+105-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:21:5-105
+106            android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH"
+106-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:21:16-80
+107            android:value="ALWAYS" />
+107-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:21:81-103
+108        <meta-data
+108-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:22:5-99
+109            android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS"
+109-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:22:16-79
+110            android:value="0" />
+110-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:22:80-97
+111
+112        <activity
+112-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:5-35:16
+113            android:name="com.leminhnhat123.japanofashionai.MainActivity"
+113-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:15-43
+114            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
+114-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:44-134
+115            android:exported="true"
+115-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:256-279
+116            android:launchMode="singleTask"
+116-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:135-166
+117            android:screenOrientation="portrait"
+117-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:280-316
+118            android:theme="@style/Theme.App.SplashScreen"
+118-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:210-255
+119            android:windowSoftInputMode="adjustResize" >
+119-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:23:167-209
+120            <intent-filter>
+120-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:24:7-27:23
+121                <action android:name="android.intent.action.MAIN" />
+121-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:25:9-60
+121-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:25:17-58
+122
+123                <category android:name="android.intent.category.LAUNCHER" />
+123-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:26:9-68
+123-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:26:19-66
+124            </intent-filter>
+125            <intent-filter>
+125-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:28:7-34:23
+126                <action android:name="android.intent.action.VIEW" />
+126-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+126-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+127
+128                <category android:name="android.intent.category.DEFAULT" />
+128-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+128-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+129                <category android:name="android.intent.category.BROWSABLE" />
+129-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+129-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+130
+131                <data android:scheme="japano" />
+131-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+131-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+132                <data android:scheme="exp+japano-fashion-ai" />
+132-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+132-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+133            </intent-filter>
+134        </activity>
+135        <activity
+135-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-14:74
+136            android:name="com.reactnativestripesdk.CustomPaymentMethodActivity"
+136-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:13-80
+137            android:excludeFromRecents="true"
+137-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:10:13-46
+138            android:exported="false"
+138-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:11:13-37
+139            android:launchMode="singleTop"
+139-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:13-43
+140            android:noHistory="true"
+140-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:13:13-37
+141            android:theme="@style/Theme.StripeReactNative.Transparent" />
+141-->[:stripe_stripe-react-native] /home/nhat/Downloads/v37/node_modules/@stripe/stripe-react-native/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:14:13-71
+142        <activity
+142-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:9-16:75
+143            android:name="expo.modules.devlauncher.launcher.DevLauncherActivity"
+143-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:13:13-81
+144            android:exported="true"
+144-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:14:13-36
+145            android:launchMode="singleTask"
+145-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:15:13-44
+146            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+146-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:16:13-72
+147        <activity
+147-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:17:9-30:20
+148            android:name="expo.modules.devlauncher.compose.AuthActivity"
+148-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:18:13-73
+149            android:exported="true"
+149-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:19:13-36
+150            android:launchMode="singleTask"
+150-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:20:13-44
+151            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" >
+151-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:21:13-72
+152            <intent-filter>
+152-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:22:13-29:29
+153                <action android:name="android.intent.action.VIEW" />
+153-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+153-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+154
+155                <category android:name="android.intent.category.DEFAULT" />
+155-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+155-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+156                <category android:name="android.intent.category.BROWSABLE" />
+156-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+156-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+157
+158                <data android:scheme="expo-dev-launcher" />
+158-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+158-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+159            </intent-filter>
+160        </activity>
+161        <activity
+161-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:31:9-34:70
+162            android:name="expo.modules.devlauncher.launcher.errors.DevLauncherErrorActivity"
+162-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:32:13-93
+163            android:screenOrientation="portrait"
+163-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:33:13-49
+164            android:theme="@style/Theme.DevLauncher.ErrorActivity" />
+164-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:34:13-67
+165
+166        <meta-data
+166-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:36:9-38:42
+167            android:name="com.google.mlkit.vision.DEPENDENCIES"
+167-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:37:13-64
+168            android:value="barcode_ui" />
+168-->[:expo-dev-launcher] /home/nhat/Downloads/v37/node_modules/expo-dev-launcher/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:38:13-39
+169        <meta-data
+169-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:9-11:89
+170            android:name="org.unimodules.core.AppLoader#react-native-headless"
+170-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:10:13-79
+171            android:value="expo.modules.adapters.react.apploader.RNHeadlessAppLoader" />
+171-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:11:13-86
+172        <meta-data
+172-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:12:9-15:45
+173            android:name="com.facebook.soloader.enabled"
+173-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:13:13-57
+174            android:value="true" />
+174-->[:expo-modules-core] /home/nhat/Downloads/v37/node_modules/expo-modules-core/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:14:13-33
+175
+176        <activity
+176-->[com.facebook.react:react-android:0.81.5] /home/nhat/.gradle/caches/8.14.3/transforms/52fba397ee69a489802542663b2a7886/transformed/react-android-0.81.5-debug/AndroidManifest.xml:19:9-21:40
+177            android:name="com.facebook.react.devsupport.DevSettingsActivity"
+177-->[com.facebook.react:react-android:0.81.5] /home/nhat/.gradle/caches/8.14.3/transforms/52fba397ee69a489802542663b2a7886/transformed/react-android-0.81.5-debug/AndroidManifest.xml:20:13-77
+178            android:exported="false" />
+178-->[com.facebook.react:react-android:0.81.5] /home/nhat/.gradle/caches/8.14.3/transforms/52fba397ee69a489802542663b2a7886/transformed/react-android-0.81.5-debug/AndroidManifest.xml:21:13-37
+179
+180        <service
+180-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:28:9-40:19
+181            android:name="com.google.android.gms.metadata.ModuleDependencies"
+181-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:29:13-78
+182            android:enabled="false"
+182-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:30:13-36
+183            android:exported="false" >
+183-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:31:13-37
+184            <intent-filter>
+184-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:33:13-35:29
+185                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+185-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:34:17-94
+185-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:34:25-91
+186            </intent-filter>
+187
+188            <meta-data
+188-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:37:13-39:36
+189                android:name="photopicker_activity:0:required"
+189-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:38:17-63
+190                android:value="" />
+190-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:39:17-33
+191        </service>
+192
+193        <activity
+193-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:42:9-46:48
+194            android:name="expo.modules.imagepicker.ExpoCropImageActivity"
+194-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:43:13-74
+195            android:exported="false"
+195-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:44:13-37
+196            android:theme="@style/Base.Theme.AppCompat" /> <!-- https://developer.android.com/guide/topics/manifest/provider-element.html -->
+196-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:45:13-56
+197        <provider
+197-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:48:9-56:20
+198            android:name="expo.modules.imagepicker.fileprovider.ImagePickerFileProvider"
+198-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:49:13-89
+199            android:authorities="com.leminhnhat123.japanofashionai.ImagePickerFileProvider"
+199-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:50:13-75
+200            android:exported="false"
+200-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:51:13-37
+201            android:grantUriPermissions="true" >
+201-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:52:13-47
+202            <meta-data
+202-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:53:13-55:71
+203                android:name="android.support.FILE_PROVIDER_PATHS"
+203-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:54:17-67
+204                android:resource="@xml/image_picker_provider_paths" />
+204-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:55:17-68
+205        </provider>
+206        <provider
+206-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:21:9-29:20
+207            android:name="com.canhub.cropper.CropFileProvider"
+207-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:22:13-63
+208            android:authorities="com.leminhnhat123.japanofashionai.cropper.fileprovider"
+208-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:23:13-72
+209            android:exported="false"
+209-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:24:13-37
+210            android:grantUriPermissions="true" >
+210-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:25:13-47
+211            <meta-data
+211-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:53:13-55:71
+212                android:name="android.support.FILE_PROVIDER_PATHS"
+212-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:54:17-67
+213                android:resource="@xml/library_file_paths" />
+213-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:55:17-68
+214        </provider>
+215
+216        <activity
+216-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:31:9-33:39
+217            android:name="com.canhub.cropper.CropImageActivity"
+217-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:32:13-64
+218            android:exported="true" />
+218-->[com.vanniktech:android-image-cropper:4.6.0] /home/nhat/.gradle/caches/8.14.3/transforms/2014e291f2088d0bcdf3edea144ae22e/transformed/android-image-cropper-4.6.0/AndroidManifest.xml:33:13-36
+219        <activity
+219-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:21:9-65:20
+220            android:name="com.stripe.android.financialconnections.FinancialConnectionsSheetRedirectActivity"
+220-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:22:13-109
+221            android:exported="true"
+221-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:23:13-36
+222            android:launchMode="singleTask" >
+222-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:24:13-44
+223            <intent-filter>
+223-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:25:13-64:29
+224                <action android:name="android.intent.action.VIEW" />
+224-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+224-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+225
+226                <category android:name="android.intent.category.DEFAULT" />
+226-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+226-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+227                <category android:name="android.intent.category.BROWSABLE" />
+227-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+227-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+228
+229                <!-- Returning from app2app: return_url is triggered to reopen web AuthFlow and poll accounts. -->
+230                <data
+230-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+231                    android:host="link-accounts"
+232                    android:pathPrefix="/com.leminhnhat123.japanofashionai/authentication_return"
+233                    android:scheme="stripe-auth" />
+233-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+234
+235                <!-- Returning from app2app: return_url is triggered to reopen native AuthFlow and poll accounts. -->
+236                <data
+236-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+237                    android:host="link-native-accounts"
+238                    android:pathPrefix="/com.leminhnhat123.japanofashionai/authentication_return"
+239                    android:scheme="stripe-auth" />
+239-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+240
+241                <!-- End of web AuthFlow success and cancel URIs that begin with "stripe-auth://link-accounts/{app-id}/...” -->
+242                <data
+242-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+243                    android:host="link-accounts"
+244                    android:path="/com.leminhnhat123.japanofashionai/success"
+245                    android:scheme="stripe-auth" />
+245-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+246                <data
+246-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+247                    android:host="link-accounts"
+248                    android:path="/com.leminhnhat123.japanofashionai/cancel"
+249                    android:scheme="stripe-auth" />
+249-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+250
+251                <!-- Opening app2app: Web flow triggers stripe-auth://native-redirect/{app-id}/http://web-that-redirects-to-native -->
+252                <data
+252-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+253                    android:host="native-redirect"
+254                    android:pathPrefix="/com.leminhnhat123.japanofashionai"
+255                    android:scheme="stripe-auth" />
+255-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+256
+257                <!-- Accepts success/cancel/fail URIs that begin with "stripe://auth-redirect” -->
+258                <data
+258-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+259                    android:host="auth-redirect"
+260                    android:pathPrefix="/com.leminhnhat123.japanofashionai"
+261                    android:scheme="stripe" />
+261-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+262            </intent-filter>
+263        </activity>
+264        <activity
+264-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:66:9-69:77
+265            android:name="com.stripe.android.financialconnections.FinancialConnectionsSheetActivity"
+265-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:67:13-101
+266            android:exported="false"
+266-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:68:13-37
+267            android:theme="@style/StripeFinancialConnectionsDefaultTheme" />
+267-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:69:13-74
+268        <activity
+268-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:70:9-74:58
+269            android:name="com.stripe.android.financialconnections.ui.FinancialConnectionsSheetNativeActivity"
+269-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:71:13-110
+270            android:exported="false"
+270-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:72:13-37
+271            android:theme="@style/StripeFinancialConnectionsDefaultTheme"
+271-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:73:13-74
+272            android:windowSoftInputMode="adjustResize" />
+272-->[com.stripe:financial-connections:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/8ecff8ed3586c9e5ad2b267694f1e293/transformed/financial-connections-21.22.2/AndroidManifest.xml:74:13-55
+273
+274        <provider
+274-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:8:9-15:20
+275            android:name="expo.modules.clipboard.ClipboardFileProvider"
+275-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:9:13-72
+276            android:authorities="com.leminhnhat123.japanofashionai.ClipboardFileProvider"
+276-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:10:13-73
+277            android:exported="true" >
+277-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:11:13-36
+278            <meta-data
+278-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:12:13-14:68
+279                android:name="expo.modules.clipboard.CLIPBOARD_FILE_PROVIDER_PATHS"
+279-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:13:17-84
+280                android:resource="@xml/clipboard_provider_paths" />
+280-->[host.exp.exponent:expo.modules.clipboard:8.0.8] /home/nhat/.gradle/caches/8.14.3/transforms/5afb3c0e5eea37aeb6bc40ea296d3a26/transformed/expo.modules.clipboard-8.0.8/AndroidManifest.xml:14:17-65
+281        </provider>
+282
+283        <activity
+283-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:8:9-11:69
+284            android:name="com.stripe.android.paymentsheet.PaymentSheetActivity"
+284-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:9:13-80
+285            android:exported="false"
+285-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:10:13-37
+286            android:theme="@style/StripePaymentSheetDefaultTheme" />
+286-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:11:13-66
+287        <activity
+287-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:12:9-15:69
+288            android:name="com.stripe.android.paymentsheet.PaymentOptionsActivity"
+288-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:13:13-82
+289            android:exported="false"
+289-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:14:13-37
+290            android:theme="@style/StripePaymentSheetDefaultTheme" />
+290-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:15:13-66
+291        <activity
+291-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:16:9-19:69
+292            android:name="com.stripe.android.customersheet.CustomerSheetActivity"
+292-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:17:13-82
+293            android:exported="false"
+293-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:18:13-37
+294            android:theme="@style/StripePaymentSheetDefaultTheme" />
+294-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:19:13-66
+295        <activity
+295-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:20:9-23:69
+296            android:name="com.stripe.android.paymentsheet.addresselement.AddressElementActivity"
+296-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:21:13-97
+297            android:exported="false"
+297-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:22:13-37
+298            android:theme="@style/StripePaymentSheetDefaultTheme" />
+298-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:23:13-66
+299        <activity
+299-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:24:9-27:69
+300            android:name="com.stripe.android.paymentsheet.addresselement.AutocompleteActivity"
+300-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:25:13-95
+301            android:exported="false"
+301-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:26:13-37
+302            android:theme="@style/StripePaymentSheetDefaultTheme" />
+302-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:27:13-66
+303        <activity
+303-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:28:9-31:69
+304            android:name="com.stripe.android.paymentsheet.paymentdatacollection.bacs.BacsMandateConfirmationActivity"
+304-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:29:13-118
+305            android:exported="false"
+305-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:30:13-37
+306            android:theme="@style/StripePaymentSheetDefaultTheme" />
+306-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:31:13-66
+307        <activity
+307-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:32:9-35:69
+308            android:name="com.stripe.android.paymentsheet.paymentdatacollection.polling.PollingActivity"
+308-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:33:13-105
+309            android:exported="false"
+309-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:34:13-37
+310            android:theme="@style/StripePaymentSheetDefaultTheme" />
+310-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:35:13-66
+311        <activity
+311-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:36:9-39:69
+312            android:name="com.stripe.android.paymentsheet.ui.SepaMandateActivity"
+312-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:37:13-82
+313            android:exported="false"
+313-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:38:13-37
+314            android:theme="@style/StripePaymentSheetDefaultTheme" />
+314-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:39:13-66
+315        <activity
+315-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:40:9-43:68
+316            android:name="com.stripe.android.paymentsheet.ExternalPaymentMethodProxyActivity"
+316-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:41:13-94
+317            android:exported="false"
+317-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:42:13-37
+318            android:theme="@style/StripePayLauncherDefaultTheme" />
+318-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:43:13-65
+319        <activity
+319-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:44:9-47:68
+320            android:name="com.stripe.android.paymentelement.confirmation.cpms.CustomPaymentMethodProxyActivity"
+320-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:45:13-112
+321            android:exported="false"
+321-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:46:13-37
+322            android:theme="@style/StripePayLauncherDefaultTheme" />
+322-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:47:13-65
+323        <activity
+323-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:48:9-50:69
+324            android:name="com.stripe.android.paymentsheet.paymentdatacollection.cvcrecollection.CvcRecollectionActivity"
+324-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:49:13-121
+325            android:theme="@style/StripePaymentSheetDefaultTheme" />
+325-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:50:13-66
+326        <activity
+326-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:51:9-53:69
+327            android:name="com.stripe.android.paymentelement.embedded.form.FormActivity"
+327-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:52:13-88
+328            android:theme="@style/StripePaymentSheetDefaultTheme" />
+328-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:53:13-66
+329        <activity
+329-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:54:9-56:69
+330            android:name="com.stripe.android.paymentelement.embedded.manage.ManageActivity"
+330-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:55:13-92
+331            android:theme="@style/StripePaymentSheetDefaultTheme" />
+331-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:56:13-66
+332        <activity
+332-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:57:9-62:69
+333            android:name="com.stripe.android.link.LinkActivity"
+333-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:58:13-64
+334            android:autoRemoveFromRecents="true"
+334-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:59:13-49
+335            android:exported="false"
+335-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:60:13-37
+336            android:label="@string/stripe_link"
+336-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:61:13-48
+337            android:theme="@style/StripePaymentSheetDefaultTheme" />
+337-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:62:13-66
+338        <activity
+338-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:63:9-68:61
+339            android:name="com.stripe.android.link.LinkForegroundActivity"
+339-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:64:13-74
+340            android:autoRemoveFromRecents="true"
+340-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:65:13-49
+341            android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
+341-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:66:13-115
+342            android:launchMode="singleTop"
+342-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:67:13-43
+343            android:theme="@style/StripeTransparentTheme" />
+343-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:68:13-58
+344        <activity
+344-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:69:9-86:20
+345            android:name="com.stripe.android.link.LinkRedirectHandlerActivity"
+345-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:70:13-79
+346            android:autoRemoveFromRecents="true"
+346-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:71:13-49
+347            android:exported="true"
+347-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:72:13-36
+348            android:launchMode="singleInstance"
+348-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:73:13-48
+349            android:theme="@style/StripeTransparentTheme" >
+349-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:74:13-58
+350            <intent-filter>
+350-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:75:13-85:29
+351                <action android:name="android.intent.action.VIEW" />
+351-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+351-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+352
+353                <category android:name="android.intent.category.DEFAULT" />
+353-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+353-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+354                <category android:name="android.intent.category.BROWSABLE" />
+354-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+354-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+355
+356                <data
+356-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+357                    android:host="complete"
+358                    android:path="/com.leminhnhat123.japanofashionai"
+359                    android:scheme="link-popup" />
+359-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+360            </intent-filter>
+361        </activity>
+362        <activity
+362-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:87:9-89:69
+363            android:name="com.stripe.android.shoppay.ShopPayActivity"
+363-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:88:13-70
+364            android:theme="@style/StripePaymentSheetDefaultTheme" />
+364-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:89:13-66
+365        <activity
+365-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:90:9-92:69
+366            android:name="com.stripe.android.challenge.PassiveChallengeActivity"
+366-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:91:13-81
+367            android:theme="@style/StripePaymentSheetDefaultTheme" />
+367-->[com.stripe:paymentsheet:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/40b7d38eb4c24e3fd256e668baba50df/transformed/paymentsheet-21.22.2/AndroidManifest.xml:92:13-66
+368        <activity
+368-->[com.stripe:payments-ui-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/f3a3e0ef92781b61c9897eb7d75e5cbf/transformed/payments-ui-core-21.22.2/AndroidManifest.xml:8:9-11:69
+369            android:name="com.stripe.android.ui.core.cardscan.CardScanActivity"
+369-->[com.stripe:payments-ui-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/f3a3e0ef92781b61c9897eb7d75e5cbf/transformed/payments-ui-core-21.22.2/AndroidManifest.xml:9:13-80
+370            android:exported="false"
+370-->[com.stripe:payments-ui-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/f3a3e0ef92781b61c9897eb7d75e5cbf/transformed/payments-ui-core-21.22.2/AndroidManifest.xml:10:13-37
+371            android:theme="@style/StripePaymentSheetDefaultTheme" />
+371-->[com.stripe:payments-ui-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/f3a3e0ef92781b61c9897eb7d75e5cbf/transformed/payments-ui-core-21.22.2/AndroidManifest.xml:11:13-66
+372        <activity
+372-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:15:9-18:57
+373            android:name="com.stripe.android.view.PaymentAuthWebViewActivity"
+373-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:16:13-78
+374            android:exported="false"
+374-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:17:13-37
+375            android:theme="@style/StripeDefaultTheme" />
+375-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:18:13-54
+376        <activity
+376-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:19:9-22:61
+377            android:name="com.stripe.android.view.PaymentRelayActivity"
+377-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:20:13-72
+378            android:exported="false"
+378-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:21:13-37
+379            android:theme="@style/StripeTransparentTheme" />
+379-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:22:13-58
+380        <!--
+381        Set android:launchMode="singleTop" so that the StripeBrowserLauncherActivity instance that
+382        launched the browser Activity will also handle the return URL deep link.
+383        -->
+384        <activity
+384-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:28:9-32:61
+385            android:name="com.stripe.android.payments.StripeBrowserLauncherActivity"
+385-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:29:13-85
+386            android:exported="false"
+386-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:30:13-37
+387            android:launchMode="singleTask"
+387-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:31:13-44
+388            android:theme="@style/StripeTransparentTheme" />
+388-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:32:13-58
+389        <activity
+389-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:33:9-50:20
+390            android:name="com.stripe.android.payments.StripeBrowserProxyReturnActivity"
+390-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:34:13-88
+391            android:exported="true"
+391-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:35:13-36
+392            android:launchMode="singleTask"
+392-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:36:13-44
+393            android:theme="@style/StripeTransparentTheme" >
+393-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:37:13-58
+394            <intent-filter>
+394-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:38:13-49:29
+395                <action android:name="android.intent.action.VIEW" />
+395-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+395-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+396
+397                <category android:name="android.intent.category.DEFAULT" />
+397-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+397-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+398                <category android:name="android.intent.category.BROWSABLE" />
+398-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+398-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+399
+400                <!-- Must match `DefaultReturnUrl#value`. -->
+401                <data
+401-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+402                    android:host="payment_return_url"
+403                    android:path="/com.leminhnhat123.japanofashionai"
+404                    android:scheme="stripesdk" />
+404-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+405            </intent-filter>
+406        </activity>
+407        <activity
+407-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:51:9-54:57
+408            android:name="com.stripe.android.payments.core.authentication.threeds2.Stripe3ds2TransactionActivity"
+408-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:52:13-114
+409            android:exported="false"
+409-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:53:13-37
+410            android:theme="@style/StripeDefaultTheme" />
+410-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:54:13-54
+411        <activity
+411-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:55:9-58:66
+412            android:name="com.stripe.android.googlepaylauncher.GooglePayLauncherActivity"
+412-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:56:13-90
+413            android:exported="false"
+413-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:57:13-37
+414            android:theme="@style/StripeGooglePayDefaultTheme" />
+414-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:58:13-63
+415        <activity
+415-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:59:9-62:66
+416            android:name="com.stripe.android.googlepaylauncher.GooglePayPaymentMethodLauncherActivity"
+416-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:60:13-103
+417            android:exported="false"
+417-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:61:13-37
+418            android:theme="@style/StripeGooglePayDefaultTheme" />
+418-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:62:13-63
+419        <activity
+419-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:63:9-66:68
+420            android:name="com.stripe.android.payments.paymentlauncher.PaymentLauncherConfirmationActivity"
+420-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:64:13-107
+421            android:exported="false"
+421-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:65:13-37
+422            android:theme="@style/StripePayLauncherDefaultTheme" />
+422-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:66:13-65
+423        <activity
+423-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:67:9-70:61
+424            android:name="com.stripe.android.payments.bankaccount.ui.CollectBankAccountActivity"
+424-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:68:13-97
+425            android:exported="false"
+425-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:69:13-37
+426            android:theme="@style/StripeTransparentTheme" />
+426-->[com.stripe:payments-core:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/080bff54d285309a4fd9cbfbf9243f7e/transformed/payments-core-21.22.2/AndroidManifest.xml:70:13-58
+427        <activity
+427-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:8:9-23:20
+428            android:name="com.stripe.android.financialconnections.lite.FinancialConnectionsSheetLiteRedirectActivity"
+428-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:9:13-118
+429            android:exported="true"
+429-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:10:13-36
+430            android:launchMode="singleTask" >
+430-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:11:13-44
+431            <intent-filter>
+431-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:12:13-22:29
+432                <action android:name="android.intent.action.VIEW" />
+432-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:7-58
+432-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:12:15-56
+433
+434                <category android:name="android.intent.category.DEFAULT" />
+434-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:9-67
+434-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:30:19-65
+435                <category android:name="android.intent.category.BROWSABLE" />
+435-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:7-67
+435-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:13:17-65
+436
+437                <data
+437-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:7-37
+438                    android:host="financial-connections-lite"
+439                    android:pathPrefix="/com.leminhnhat123.japanofashionai/auth_redirect"
+440                    android:scheme="stripe" />
+440-->/home/nhat/Downloads/v37/android/app/src/main/AndroidManifest.xml:14:13-35
+441            </intent-filter>
+442        </activity>
+443        <activity
+443-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:24:9-26:69
+444            android:name="com.stripe.android.financialconnections.lite.FinancialConnectionsSheetLiteActivity"
+444-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:25:13-110
+445            android:theme="@style/StripeBottomSheetActivityTheme" />
+445-->[com.stripe:financial-connections-lite:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/6f04af174d53f0865a5f7d9f869d8144/transformed/financial-connections-lite-21.22.2/AndroidManifest.xml:26:13-66
+446        <activity
+446-->[com.stripe:stripe-3ds2-android:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/72274c9fdecbc404ae2037a3da22f56a/transformed/stripe-3ds2-android-21.22.2/AndroidManifest.xml:8:9-12:54
+447            android:name="com.stripe.android.stripe3ds2.views.ChallengeActivity"
+447-->[com.stripe:stripe-3ds2-android:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/72274c9fdecbc404ae2037a3da22f56a/transformed/stripe-3ds2-android-21.22.2/AndroidManifest.xml:9:13-81
+448            android:configChanges="orientation|screenSize"
+448-->[com.stripe:stripe-3ds2-android:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/72274c9fdecbc404ae2037a3da22f56a/transformed/stripe-3ds2-android-21.22.2/AndroidManifest.xml:10:13-59
+449            android:exported="false"
+449-->[com.stripe:stripe-3ds2-android:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/72274c9fdecbc404ae2037a3da22f56a/transformed/stripe-3ds2-android-21.22.2/AndroidManifest.xml:11:13-37
+450            android:theme="@style/Stripe3DS2Theme" />
+450-->[com.stripe:stripe-3ds2-android:21.22.2] /home/nhat/.gradle/caches/8.14.3/transforms/72274c9fdecbc404ae2037a3da22f56a/transformed/stripe-3ds2-android-21.22.2/AndroidManifest.xml:12:13-51
+451
+452        <uses-library
+452-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:29:9-31:40
+453            android:name="androidx.camera.extensions.impl"
+453-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:30:13-59
+454            android:required="false" />
+454-->[androidx.camera:camera-extensions:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/614e0406d7e2624d0492cf126f1f8d0b/transformed/camera-extensions-1.5.0-rc01/AndroidManifest.xml:31:13-37
+455
+456        <service
+456-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:24:9-33:19
+457            android:name="androidx.camera.core.impl.MetadataHolderService"
+457-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:25:13-75
+458            android:enabled="false"
+458-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:26:13-36
+459            android:exported="false" >
+459-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:27:13-37
+460            <meta-data
+460-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:30:13-32:89
+461                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+461-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:31:17-103
+462                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+462-->[androidx.camera:camera-camera2:1.5.0-rc01] /home/nhat/.gradle/caches/8.14.3/transforms/e698046f160c4a93db303c519b3e47db/transformed/camera-camera2-1.5.0-rc01/AndroidManifest.xml:32:17-86
+463        </service>
+464        <!--
+465        This activity is an invisible delegate activity to start scanner activity
+466        and receive result, so it's unnecessary to support screen orientation and
+467        we can avoid any side effect from activity recreation in any case.
+468        -->
+469        <activity
+469-->[com.google.android.gms:play-services-code-scanner:16.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/1abc370378da1cd0d036136ab2b7a693/transformed/play-services-code-scanner-16.1.0/AndroidManifest.xml:15:9-20:20
+470            android:name="com.google.mlkit.vision.codescanner.internal.GmsBarcodeScanningDelegateActivity"
+470-->[com.google.android.gms:play-services-code-scanner:16.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/1abc370378da1cd0d036136ab2b7a693/transformed/play-services-code-scanner-16.1.0/AndroidManifest.xml:16:13-107
+471            android:exported="false"
+471-->[com.google.android.gms:play-services-code-scanner:16.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/1abc370378da1cd0d036136ab2b7a693/transformed/play-services-code-scanner-16.1.0/AndroidManifest.xml:17:13-37
+472            android:screenOrientation="portrait" >
+472-->[com.google.android.gms:play-services-code-scanner:16.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/1abc370378da1cd0d036136ab2b7a693/transformed/play-services-code-scanner-16.1.0/AndroidManifest.xml:18:13-49
+473        </activity>
+474
+475        <service
+475-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:9:9-15:19
+476            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+476-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:10:13-91
+477            android:directBootAware="true"
+477-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:17:13-43
+478            android:exported="false" >
+478-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:11:13-37
+479            <meta-data
+479-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:12:13-14:85
+480                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"
+480-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:13:17-120
+481                android:value="com.google.firebase.components.ComponentRegistrar" />
+481-->[com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1] /home/nhat/.gradle/caches/8.14.3/transforms/d615ed5e8915fd018c66391906e64b5b/transformed/play-services-mlkit-barcode-scanning-18.3.1/AndroidManifest.xml:14:17-82
+482            <meta-data
+482-->[com.google.mlkit:vision-common:17.3.0] /home/nhat/.gradle/caches/8.14.3/transforms/db4dd9a752351e5eef56115c5b6a5c14/transformed/vision-common-17.3.0/AndroidManifest.xml:12:13-14:85
+483                android:name="com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar"
+483-->[com.google.mlkit:vision-common:17.3.0] /home/nhat/.gradle/caches/8.14.3/transforms/db4dd9a752351e5eef56115c5b6a5c14/transformed/vision-common-17.3.0/AndroidManifest.xml:13:17-124
+484                android:value="com.google.firebase.components.ComponentRegistrar" />
+484-->[com.google.mlkit:vision-common:17.3.0] /home/nhat/.gradle/caches/8.14.3/transforms/db4dd9a752351e5eef56115c5b6a5c14/transformed/vision-common-17.3.0/AndroidManifest.xml:14:17-82
+485            <meta-data
+485-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:20:13-22:85
+486                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+486-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:21:17-120
+487                android:value="com.google.firebase.components.ComponentRegistrar" />
+487-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:22:17-82
+488        </service>
+489
+490        <provider
+490-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:9:9-13:38
+491            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+491-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:10:13-78
+492            android:authorities="com.leminhnhat123.japanofashionai.mlkitinitprovider"
+492-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:11:13-69
+493            android:exported="false"
+493-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:12:13-37
+494            android:initOrder="99" />
+494-->[com.google.mlkit:common:18.11.0] /home/nhat/.gradle/caches/8.14.3/transforms/f0d37f411d20484a27dca8b13142d8fc/transformed/common-18.11.0/AndroidManifest.xml:13:13-35
+495        <provider
+495-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:21:9-30:20
+496            android:name="expo.modules.filesystem.FileSystemFileProvider"
+496-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:22:13-74
+497            android:authorities="com.leminhnhat123.japanofashionai.FileSystemFileProvider"
+497-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:23:13-74
+498            android:exported="false"
+498-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:24:13-37
+499            android:grantUriPermissions="true" >
+499-->[host.exp.exponent:expo.modules.filesystem:19.0.23] /home/nhat/.gradle/caches/8.14.3/transforms/9961f1ab9c4e02d3a0db2525039acd24/transformed/expo.modules.filesystem-19.0.23/AndroidManifest.xml:25:13-47
+500            <meta-data
+500-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:53:13-55:71
+501                android:name="android.support.FILE_PROVIDER_PATHS"
+501-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:54:17-67
+502                android:resource="@xml/file_system_provider_paths" />
+502-->[host.exp.exponent:expo.modules.imagepicker:17.0.11] /home/nhat/.gradle/caches/8.14.3/transforms/e7b64330c095187039fe7a83aa1e1c55/transformed/expo.modules.imagepicker-17.0.11/AndroidManifest.xml:55:17-68
+503        </provider>
+504
+505        <activity
+505-->[androidx.compose.ui:ui-tooling-android:1.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/60854b2b102bc715761483680cd43aab/transformed/ui-tooling/AndroidManifest.xml:23:9-25:39
+506            android:name="androidx.compose.ui.tooling.PreviewActivity"
+506-->[androidx.compose.ui:ui-tooling-android:1.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/60854b2b102bc715761483680cd43aab/transformed/ui-tooling/AndroidManifest.xml:24:13-71
+507            android:exported="true" /> <!-- Needs to be explicitly declared on P+ -->
+507-->[androidx.compose.ui:ui-tooling-android:1.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/60854b2b102bc715761483680cd43aab/transformed/ui-tooling/AndroidManifest.xml:25:13-36
+508        <uses-library
+508-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:39:9-41:40
+509            android:name="org.apache.http.legacy"
+509-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:40:13-50
+510            android:required="false" />
+510-->[com.google.android.gms:play-services-maps:18.0.2] /home/nhat/.gradle/caches/8.14.3/transforms/85b3a1de1f5a594dfd38c58803440898/transformed/play-services-maps-18.0.2/AndroidManifest.xml:41:13-37
+511
+512        <activity
+512-->[com.google.android.gms:play-services-base:18.5.0] /home/nhat/.gradle/caches/8.14.3/transforms/f743f0c97a8bdcff7b23bb62f84825a6/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+513            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+513-->[com.google.android.gms:play-services-base:18.5.0] /home/nhat/.gradle/caches/8.14.3/transforms/f743f0c97a8bdcff7b23bb62f84825a6/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+514            android:exported="false"
+514-->[com.google.android.gms:play-services-base:18.5.0] /home/nhat/.gradle/caches/8.14.3/transforms/f743f0c97a8bdcff7b23bb62f84825a6/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+515            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+515-->[com.google.android.gms:play-services-base:18.5.0] /home/nhat/.gradle/caches/8.14.3/transforms/f743f0c97a8bdcff7b23bb62f84825a6/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+516
+517        <provider
+517-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
+518            android:name="androidx.startup.InitializationProvider"
+518-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
+519            android:authorities="com.leminhnhat123.japanofashionai.androidx-startup"
+519-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
+520            android:exported="false" >
+520-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
+521            <meta-data
+521-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+522                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+522-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+523                android:value="androidx.startup" />
+523-->[androidx.emoji2:emoji2:1.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/98b67c6469e873c9515f8ff935d8c99f/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+524            <meta-data
+524-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/510d426804e1119e39a99085c5dac9b2/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:29:13-31:52
+525                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+525-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/510d426804e1119e39a99085c5dac9b2/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:30:17-78
+526                android:value="androidx.startup" />
+526-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/nhat/.gradle/caches/8.14.3/transforms/510d426804e1119e39a99085c5dac9b2/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:31:17-49
+527            <meta-data
+527-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:29:13-31:52
+528                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+528-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:30:17-85
+529                android:value="androidx.startup" />
+529-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:31:17-49
+530        </provider>
+531
+532        <meta-data
+532-->[com.google.android.gms:play-services-basement:18.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/540a991ad54776a3f9fb1ba8033e0742/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
+533            android:name="com.google.android.gms.version"
+533-->[com.google.android.gms:play-services-basement:18.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/540a991ad54776a3f9fb1ba8033e0742/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
+534            android:value="@integer/google_play_services_version" />
+534-->[com.google.android.gms:play-services-basement:18.4.0] /home/nhat/.gradle/caches/8.14.3/transforms/540a991ad54776a3f9fb1ba8033e0742/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
+535
+536        <receiver
+536-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:34:9-52:20
+537            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+537-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:35:13-76
+538            android:directBootAware="false"
+538-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:36:13-44
+539            android:enabled="true"
+539-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:37:13-35
+540            android:exported="true"
+540-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:38:13-36
+541            android:permission="android.permission.DUMP" >
+541-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:39:13-57
+542            <intent-filter>
+542-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:40:13-42:29
+543                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+543-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:17-91
+543-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:25-88
+544            </intent-filter>
+545            <intent-filter>
+545-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:43:13-45:29
+546                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+546-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:17-85
+546-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:25-82
+547            </intent-filter>
+548            <intent-filter>
+548-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:46:13-48:29
+549                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+549-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:17-88
+549-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:25-85
+550            </intent-filter>
+551            <intent-filter>
+551-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:49:13-51:29
+552                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+552-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:17-95
+552-->[androidx.profileinstaller:profileinstaller:1.4.1] /home/nhat/.gradle/caches/8.14.3/transforms/a7b1d96d68337e11a45cac43496f7153/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:25-92
+553            </intent-filter>
+554        </receiver>
+555
+556        <service
+556-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:29:9-35:19
+557            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+557-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:30:13-103
+558            android:exported="false" >
+558-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:31:13-37
+559            <meta-data
+559-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:32:13-34:39
+560                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+560-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:33:17-94
+561                android:value="cct" />
+561-->[com.google.android.datatransport:transport-backend-cct:2.3.3] /home/nhat/.gradle/caches/8.14.3/transforms/57beea533f29ca4c4fd7a4b7e8f76f64/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:34:17-36
+562        </service>
+563        <service
+563-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:26:9-30:19
+564            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+564-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:27:13-117
+565            android:exported="false"
+565-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:28:13-37
+566            android:permission="android.permission.BIND_JOB_SERVICE" >
+566-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:29:13-69
+567        </service>
+568
+569        <receiver
+569-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:32:9-34:40
+570            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+570-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:33:13-132
+571            android:exported="false" />
+571-->[com.google.android.datatransport:transport-runtime:2.2.6] /home/nhat/.gradle/caches/8.14.3/transforms/79ec0fa94e4d48c794ad8980e3ed767d/transformed/transport-runtime-2.2.6/AndroidManifest.xml:34:13-37
+572
+573        <meta-data
+573-->[com.google.android.instantapps:instantapps:1.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/103c81e443946b786edd08021bfceec5/transformed/instantapps-1.1.0/AndroidManifest.xml:10:9-12:33
+574            android:name="aia-compat-api-min-version"
+574-->[com.google.android.instantapps:instantapps:1.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/103c81e443946b786edd08021bfceec5/transformed/instantapps-1.1.0/AndroidManifest.xml:11:13-54
+575            android:value="1" /> <!-- The activities will be merged into the manifest of the hosting app. -->
+575-->[com.google.android.instantapps:instantapps:1.1.0] /home/nhat/.gradle/caches/8.14.3/transforms/103c81e443946b786edd08021bfceec5/transformed/instantapps-1.1.0/AndroidManifest.xml:12:13-30
+576        <activity
+576-->[com.google.android.play:core-common:2.0.4] /home/nhat/.gradle/caches/8.14.3/transforms/24d76c0301c18c1c9ff1381a4d0115ed/transformed/core-common-2.0.4/AndroidManifest.xml:14:9-18:65
+577            android:name="com.google.android.play.core.common.PlayCoreDialogWrapperActivity"
+577-->[com.google.android.play:core-common:2.0.4] /home/nhat/.gradle/caches/8.14.3/transforms/24d76c0301c18c1c9ff1381a4d0115ed/transformed/core-common-2.0.4/AndroidManifest.xml:15:13-93
+578            android:exported="false"
+578-->[com.google.android.play:core-common:2.0.4] /home/nhat/.gradle/caches/8.14.3/transforms/24d76c0301c18c1c9ff1381a4d0115ed/transformed/core-common-2.0.4/AndroidManifest.xml:16:13-37
+579            android:stateNotNeeded="true"
+579-->[com.google.android.play:core-common:2.0.4] /home/nhat/.gradle/caches/8.14.3/transforms/24d76c0301c18c1c9ff1381a4d0115ed/transformed/core-common-2.0.4/AndroidManifest.xml:17:13-42
+580            android:theme="@style/Theme.PlayCore.Transparent" />
+580-->[com.google.android.play:core-common:2.0.4] /home/nhat/.gradle/caches/8.14.3/transforms/24d76c0301c18c1c9ff1381a4d0115ed/transformed/core-common-2.0.4/AndroidManifest.xml:18:13-62
+581    </application>
+582
+583</manifest>

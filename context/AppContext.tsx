@@ -6,6 +6,7 @@ import { useStripe } from '../lib/stripe';
 import { JapanoTheme, builtInThemes, defaultTheme } from '../data/themes';
 import { Product, products as localProducts } from '../data/catalog';
 import { api } from '../lib/api';
+import { toastCart, toastSuccess, toastWishlistOff, toastWishlistOn } from '../lib/toast';
 
 export type GeneratedImage = { id: string; url: string; prompt: string; createdAt: number };
 export type User = { id: string; name: string; email: string; phone?: string; address?: string; avatar?: string; coins?: number; birthday?: string; specialDates?: Array<{ name: string; date: string; productIds?: string[] }>; membership?: { tier?: string; price?: number; currency?: string; upgradedAt?: string; expiresAt?: string }; vip?: boolean; vipUntil?: string; tryOnUsed?: number; tryOnLimit?: number; tryOnRemaining?: number | null; role?: 'customer' | 'admin'; permissions?: string[]; status?: string; isAdmin?: boolean } | null;
@@ -22,6 +23,7 @@ type AppState = {
   generatedImages: GeneratedImage[];
   orders: Order[];
   searchHistory: string[];
+  recentlyViewed: string[];
   login: (email: string, password: string) => Promise<void>;
   register: (payload: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -32,20 +34,21 @@ type AppState = {
   setTheme: (theme: JapanoTheme) => void;
   updateTheme: (patch: Partial<JapanoTheme>) => void;
   importTheme: (theme: Partial<JapanoTheme>) => void;
-  addToCart: (p: Product) => boolean;
+  addToCart: (p: Product, qty?: number) => boolean;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   checkout: (paymentMethod: string, extra?: Partial<Order>) => Promise<void>;
   toggleWishlist: (p: Product) => void;
   addGeneratedImage: (image: GeneratedImage) => void;
   addSearchTerm: (term: string) => void;
+  recordView: (productId: string) => void;
   requireLogin: (message?: string) => boolean;
   formatCurrency: (value: number) => string;
 };
 
 const AppContext = createContext<AppState | null>(null);
 const KEYS = {
-  user: 'japano.user', theme: 'japano.theme', themes: 'japano.themes', cart: 'japano.cart', wishlist: 'japano.wishlist', images: 'japano.generatedImages', orders: 'japano.orders', search: 'japano.searchHistory'
+  user: 'japano.user', theme: 'japano.theme', themes: 'japano.themes', cart: 'japano.cart', wishlist: 'japano.wishlist', images: 'japano.generatedImages', orders: 'japano.orders', search: 'japano.searchHistory', recentViewed: 'japano.recentViewed'
 };
 
 function normalizeTheme(next: Partial<JapanoTheme> = {}): JapanoTheme {
@@ -75,12 +78,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const sessionRef = useRef(0);
 
   useEffect(() => {
     (async () => {
       const values = await Promise.all(Object.values(KEYS).map((key) => AsyncStorage.getItem(key)));
-      const [savedUser, savedTheme, savedThemes, savedCart, savedWishlist, savedImages, savedOrders, savedSearch] = values;
+      const [savedUser, savedTheme, savedThemes, savedCart, savedWishlist, savedImages, savedOrders, savedSearch, savedRecent] = values;
       if (savedUser) setUser(JSON.parse(savedUser));
       if (savedTheme) {
         const parsedTheme = JSON.parse(savedTheme);
@@ -92,6 +96,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedImages) setGeneratedImages(JSON.parse(savedImages));
       if (savedOrders) setOrders(JSON.parse(savedOrders));
       if (savedSearch) setSearchHistory(JSON.parse(savedSearch));
+      if (savedRecent) setRecentlyViewed(JSON.parse(savedRecent));
     })().finally(() => setReady(true));
   }, []);
 
@@ -286,10 +291,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setThemes(nextThemes); persist(KEYS.themes, nextThemes).catch(() => null); setTheme(next);
   };
 
-  const addToCart = (p: Product) => {
+  const addToCart = (p: Product, qty: number = 1) => {
     if (!requireLogin()) return false;
-    const next = [...cart, p]; setCart(next); persist(KEYS.cart, next).catch(() => null);
+    const copies = Array.from({ length: Math.max(1, Math.floor(qty)) }, () => p);
+    const next = [...cart, ...copies]; setCart(next); persist(KEYS.cart, next).catch(() => null);
     if (user?.id) api.saveCart(user.id, next).catch(() => null);
+    toastCart(qty > 1 ? `${p?.name || 'Sản phẩm'} × ${qty}` : (p?.name || 'Sản phẩm'));
     return true;
   };
 
@@ -336,12 +343,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setOrders(nextOrders);
       await persist(KEYS.orders, nextOrders);
       clearCart();
+      toastSuccess('Thanh toán thành công 🎉', `Đơn ${formatCurrency(total)} đã được ghi nhận.`);
       return;
     }
 
     const order = { userId: user!.id, items: cart, total, status: extra.status || 'pending_cod', paymentMethod: (extra as any).paymentMethod || paymentMethod, shippingAddress: extra.shippingAddress || user?.address || '', checkoutMeta: extra };
     const saved = await api.createOrder(order).catch(() => ({ ...order, id: String(Date.now()), createdAt: Date.now() }));
     const nextOrders = [saved, ...orders]; setOrders(nextOrders); await persist(KEYS.orders, nextOrders); clearCart();
+    toastSuccess('Đặt hàng thành công 🎉', `Đơn COD ${formatCurrency(total)} đã được tạo.`);
   };
 
   const toggleWishlist = (p: Product) => {
@@ -350,6 +359,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const next = exists ? wishlist.filter((item) => item.id !== p.id) : [...wishlist, p];
     setWishlist(next); persist(KEYS.wishlist, next).catch(() => null);
     if (user?.id) api.saveWishlist(user.id, next).catch(() => null);
+    if (exists) toastWishlistOff(p?.name || 'Sản phẩm'); else toastWishlistOn(p?.name || 'Sản phẩm');
   };
 
   const addGeneratedImage = (image: GeneratedImage) => { const next = [image, ...generatedImages].slice(0, 80); setGeneratedImages(next); persist(KEYS.images, next).catch(() => null); if (user?.id) api.saveGeneratedImage({ userId: user.id, ...image }).catch(() => null); };
@@ -361,12 +371,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) api.addSearch({ userId: user.id, term: normalized }).catch(() => null);
   };
 
+  const recordView = (productId: string) => {
+    const id = String(productId || ''); if (!id) return;
+    setRecentlyViewed((old) => {
+      const next = [id, ...old.filter((x) => x !== id)].slice(0, 40);
+      persist(KEYS.recentViewed, next).catch(() => null);
+      return next;
+    });
+  };
+
   const value = useMemo<AppState>(() => ({
-    ready, user, isLoggedIn: Boolean(user?.id), theme, themes, cart, wishlist, generatedImages, orders, searchHistory,
+    ready, user, isLoggedIn: Boolean(user?.id), theme, themes, cart, wishlist, generatedImages, orders, searchHistory, recentlyViewed,
     login, register, forgotPassword, logout, updateProfile, upgradeToVip, payStripeCheckout, setTheme, updateTheme, importTheme,
-    addToCart, removeFromCart, clearCart, checkout, toggleWishlist, addGeneratedImage, addSearchTerm, requireLogin,
+    addToCart, removeFromCart, clearCart, checkout, toggleWishlist, addGeneratedImage, addSearchTerm, recordView, requireLogin,
     formatCurrency: (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value),
-  }), [ready, user, theme, themes, cart, wishlist, generatedImages, orders, searchHistory]);
+  }), [ready, user, theme, themes, cart, wishlist, generatedImages, orders, searchHistory, recentlyViewed]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

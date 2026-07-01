@@ -14,6 +14,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useApp } from "../context/AppContext";
 import { fontFamily, radius, scaleFont, shadow } from "../lib/styles";
+import AddressPicker from "../components/AddressPicker";
+import { api } from "../lib/api";
+import AppButton from "../components/AppButton";
 import { SafeImage } from "../components/SafeImage";
 import { StableTextInput } from "../components/StableTextInput";
 
@@ -122,6 +125,7 @@ export default function CheckoutScreen() {
   const [address, setAddress] = useState(user?.address || "");
   const [city, setCity] = useState("");
   const [ward, setWard] = useState("");
+  const [district, setDistrict] = useState("");
   const [note, setNote] = useState("");
   const [promo, setPromo] = useState("");
   const [giftWrap, setGiftWrap] = useState(false);
@@ -130,26 +134,55 @@ export default function CheckoutScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [stripeOpening, setStripeOpening] = useState(false);
   const [stripePaymentIntentId, setStripePaymentIntentId] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState('');
+  const [promoMsg, setPromoMsg] = useState('');
+  const [promoChecking, setPromoChecking] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const autoDiscount = subtotal >= 1500000 ? 80000 : 0;
-  const promoDiscount = promo.trim().toUpperCase() === "JAPANO" ? 50000 : 0;
+  const promoDiscount = appliedDiscount > 0
+    ? appliedDiscount
+    : (promo.trim().toUpperCase() === "JAPANO" ? 50000 : 0);
   const giftFee = giftWrap ? 25000 : 0;
   const total = Math.max(
     0,
     subtotal + shipping.fee + giftFee - autoDiscount - promoDiscount,
   );
+  async function applyPromo() {
+    const code = promo.trim();
+    if (!code) { setAppliedDiscount(0); setAppliedCode(''); setPromoMsg('Hãy nhập mã giảm giá.'); return; }
+    try {
+      setPromoChecking(true);
+      const r = await api.validateDiscount({ code, subtotal });
+      if (r?.valid) {
+        setAppliedDiscount(Number(r.discount || 0));
+        setAppliedCode(String(r.code || code).toUpperCase());
+        setPromoMsg(r.message || 'Đã áp mã giảm giá.');
+      } else if (code.toUpperCase() === 'JAPANO') {
+        setAppliedDiscount(50000); setAppliedCode('JAPANO'); setPromoMsg('Đã áp mã JAPANO: giảm 50.000đ.');
+      } else {
+        setAppliedDiscount(0); setAppliedCode(''); setPromoMsg(r?.message || 'Mã không hợp lệ.');
+      }
+    } catch (e) {
+      if (code.toUpperCase() === 'JAPANO') { setAppliedDiscount(50000); setAppliedCode('JAPANO'); setPromoMsg('Đã áp mã JAPANO: giảm 50.000đ.'); }
+      else { setAppliedDiscount(0); setAppliedCode(''); setPromoMsg('Không kiểm tra được mã (cần chạy backend). Thử lại sau.'); }
+    } finally {
+      setPromoChecking(false);
+    }
+  }
+
   const stepIndex = steps.findIndex((item) => item.id === step);
-  const missingAddress = !fullName.trim() || !phone.trim() || !address.trim();
+  const missingAddress = !fullName.trim() || !phone.trim() || !city.trim();
 
   const canContinue = useMemo(() => {
     if (step === "address") return !missingAddress;
     if (step === "payment") return Boolean(payment?.id);
-    return true;  
+    return true;
   }, [step, missingAddress, payment?.id]);
 
   const checkoutMeta = () => ({
-    customer: { fullName, phone, address, ward, city },
+    customer: { fullName, phone, address, ward, district, city },
     shipping,
     payment,
     promo,
@@ -166,7 +199,7 @@ export default function CheckoutScreen() {
     },
   });
 
-  const shippingAddressText = () => [address, ward, city].filter(Boolean).join(", " );
+  const shippingAddressText = () => [address, ward, district, city].filter(Boolean).join(", ");
 
   const openStripeCardNow = async (paymentId = payment.id) => {
     if (paymentId === "COD") return true;
@@ -303,28 +336,10 @@ export default function CheckoutScreen() {
             icon="phone"
             keyboardType="phone-pad"
           />
-          <Field
-            label="Địa chỉ cụ thể"
-            value={address}
-            setValue={setAddress}
-            icon="home"
+          <AddressPicker
+            value={{ house: address, ward, district, province: city }}
+            onChange={(p) => { setAddress(p.house || ""); setWard(p.ward || ""); setDistrict(p.district || ""); setCity(p.province || ""); }}
           />
-          <View style={styles.twoCols}>
-            <Field
-              label="Phường/xã"
-              value={ward}
-              setValue={setWard}
-              icon="map"
-              compact
-            />
-            <Field
-              label="Tỉnh/thành"
-              value={city}
-              setValue={setCity}
-              icon="navigation"
-              compact
-            />
-          </View>
           <Field
             label="Ghi chú giao hàng"
             value={note}
@@ -521,9 +536,9 @@ export default function CheckoutScreen() {
                       : "Bấm vào Stripe hoặc Tiếp tục để mở form nhập thẻ ngay."}
                 </Text>
               </View>
-              <Pressable disabled={stripeOpening} onPress={() => openStripeCardNow()} style={[styles.miniPayBtn, { backgroundColor: theme.primary, opacity: stripeOpening ? 0.65 : 1 }]}> 
-                <Text style={[styles.miniPayText, { color: theme.background }]}>{stripePaymentIntentId ? "Đổi thẻ" : "Nhập thẻ"}</Text>
-              </Pressable>
+              <View style={{ minWidth: 120 }}>
+                <AppButton title={stripePaymentIntentId ? "Đổi thẻ" : "Nhập thẻ"} icon="credit-card" loading={stripeOpening} full={false} onPress={() => openStripeCardNow()} />
+              </View>
             </View>
           ) : null}
           <View
@@ -588,9 +603,13 @@ export default function CheckoutScreen() {
         <Field
           label="Mã giảm giá"
           value={promo}
-          setValue={setPromo}
+          setValue={(v: string) => { setPromo(v); if (appliedCode) { setAppliedDiscount(0); setAppliedCode(''); setPromoMsg(''); } }}
           icon="tag"
         />
+        <View style={{ marginTop: -4, marginBottom: 6, gap: 6 }}>
+          <AppButton title={promoChecking ? 'Đang kiểm tra...' : 'Áp dụng mã'} icon="check" variant="outline" loading={promoChecking} onPress={applyPromo} />
+          {promoMsg ? <Text style={{ color: appliedDiscount > 0 ? theme.primary : theme.muted, fontWeight: '800', fontSize: scaleFont(theme, 12) }}>{promoMsg}</Text> : null}
+        </View>
         <View
           style={[
             styles.summary,
@@ -614,7 +633,7 @@ export default function CheckoutScreen() {
           ) : null}
           {promoDiscount ? (
             <SummaryRow
-              label="Mã JAPANO"
+              label={`Mã ${appliedCode || 'giảm giá'}`}
               value={`- ${formatCurrency(promoDiscount)}`}
             />
           ) : null}
@@ -806,26 +825,15 @@ export default function CheckoutScreen() {
             {cart.length} sản phẩm · {shipping.eta}
           </Text>
         </View>
-        <Pressable
-          disabled={!canContinue || submitting || stripeOpening}
-          onPress={goNext}
-          style={[
-            styles.checkoutBtn,
-            {
-              backgroundColor: canContinue ? theme.primary : theme.border,
-              opacity: submitting || stripeOpening ? 0.7 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.checkoutText, { color: theme.background }]}>
-            {stripeOpening ? "Đang mở thẻ" : step === "review" ? "Đặt hàng" : "Tiếp tục"}
-          </Text>
-          <Feather
-            name={step === "review" ? "check" : "chevron-right"}
-            size={18}
-            color={theme.background}
+        <View style={{ minWidth: 150 }}>
+          <AppButton
+            title={stripeOpening ? "Đang mở thẻ" : step === "review" ? "Đặt hàng" : "Tiếp tục"}
+            icon={step === "review" ? "check" : "chevron-right"}
+            loading={submitting || stripeOpening}
+            disabled={!canContinue}
+            onPress={goNext}
           />
-        </Pressable>
+        </View>
       </View>
     </View>
   );

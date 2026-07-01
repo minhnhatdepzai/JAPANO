@@ -27,9 +27,7 @@ export function getTextKind(size?: number): 'small' | 'normal' | 'large' {
 }
 
 export function fontFamilyForText(theme: Partial<JapanoTheme>, size?: number): TextStyle['fontFamily'] {
-  const kind = getTextKind(size);
-  if (kind === 'small') return fontFamilyFromChoice(theme.smallFontFamily || theme.fontFamily || 'system');
-  if (kind === 'large') return fontFamilyFromChoice(theme.largeFontFamily || theme.fontFamily || 'system');
+  // Đồng nhất phông chữ: mọi cỡ chữ, mọi trang (app + web admin) dùng CHUNG một font theo theme.
   return fontFamily(theme);
 }
 
@@ -137,5 +135,118 @@ export function createThemedStyles(theme: JapanoTheme) {
     heading: textHeading(theme, 28),
     text: textBase(theme, 15),
     muted: textMuted(theme, 13),
+  };
+}
+
+/* =============================================================
+ * JAPANO UNIFIED CONTROLS
+ * Mọi nút (đăng nhập, thanh toán, mua, yêu thích, thử đồ...) phải:
+ *  - cùng màu (theme.primary), chữ trên nền primary = theme.background
+ *  - cùng kiểu chữ (fontFamily theo theme), cùng độ đậm (900)
+ *  - KHÔNG bo góc (radius 0)
+ * Dùng các helper này hoặc <AppButton> để giữ đồng bộ toàn app + admin.
+ * ============================================================= */
+
+export const control = { height: 50, smallHeight: 42, padH: 18, gap: 8 };
+
+export function onPrimary(theme: Partial<JapanoTheme>): string {
+  return theme.background || '#FFFFFF';
+}
+
+export function buttonPrimary(theme: JapanoTheme): ViewStyle {
+  return {
+    minHeight: control.height,
+    backgroundColor: theme.primary,
+    borderRadius: 0,
+    borderWidth: 0,
+    paddingHorizontal: control.padH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: control.gap,
+  };
+}
+
+export function buttonPrimaryText(theme: JapanoTheme): TextStyle {
+  return {
+    color: onPrimary(theme),
+    fontFamily: fontFamily(theme),
+    fontWeight: '900',
+    fontSize: scaleFont(theme, 15),
+    letterSpacing: 0.3,
+  };
+}
+
+export function buttonOutline(theme: JapanoTheme): ViewStyle {
+  return {
+    minHeight: control.height,
+    backgroundColor: theme.card,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: theme.primary,
+    paddingHorizontal: control.padH,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: control.gap,
+  };
+}
+
+export function buttonOutlineText(theme: JapanoTheme): TextStyle {
+  return {
+    color: theme.primary,
+    fontFamily: fontFamily(theme),
+    fontWeight: '900',
+    fontSize: scaleFont(theme, 15),
+    letterSpacing: 0.3,
+  };
+}
+
+export function iconButton(theme: JapanoTheme): ViewStyle {
+  return {
+    width: 44,
+    height: 44,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+}
+
+export function inputStyle(theme: JapanoTheme): ViewStyle & TextStyle {
+  return {
+    minHeight: control.height,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.background,
+    paddingHorizontal: 14,
+    color: theme.text,
+    fontFamily: fontFamily(theme),
+    fontSize: scaleFont(theme, 15),
+  };
+}
+
+export function pill(theme: JapanoTheme, active = false): ViewStyle {
+  return {
+    minHeight: control.smallHeight,
+    paddingHorizontal: 16,
+    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: active ? theme.primary : theme.border,
+    backgroundColor: active ? theme.primary : theme.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+}
+
+export function pillText(theme: JapanoTheme, active = false): TextStyle {
+  return {
+    color: active ? onPrimary(theme) : theme.text,
+    fontFamily: fontFamily(theme),
+    fontWeight: '900',
+    fontSize: scaleFont(theme, 13),
   };
 }

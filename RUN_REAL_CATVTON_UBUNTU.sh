@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-ROOT="/home/rd/Downloads/v37"
-AI="/home/rd/jp/ai"
+ROOT="/home/nhat/Downloads/v37"
+AI="/home/nhat/jp/ai"
 CAT="$AI/CatVTON"
 
 echo "=== 1) Cài gói hệ thống ==="

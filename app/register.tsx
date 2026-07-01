@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { StableTextInput } from '../components/StableTextInput';
 import { fontFamily, radius, scaleFont, shadow } from '../lib/styles';
+import AppButton from '../components/AppButton';
 
 const AuthInput = memo(function AuthInput({ theme, label, ...props }: any) {
   return (
@@ -56,9 +57,7 @@ export default function RegisterScreen() {
         <AuthInput theme={theme} label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" />
         <AuthInput theme={theme} label="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" />
         <AuthInput theme={theme} label="Mật khẩu" value={password} onChangeText={setPassword} secureTextEntry textContentType="newPassword" autoComplete="password-new" />
-        <Pressable disabled={loading} onPress={submit} style={[styles.btn, { backgroundColor: theme.primary, opacity: loading ? 0.7 : 1 }]}> 
-          <Text style={[styles.btnText, { color: theme.background }]}>{loading ? 'Đang tạo...' : 'Tạo tài khoản'}</Text>
-        </Pressable>
+        <AppButton title="Tạo tài khoản" icon="user-plus" loading={loading} onPress={submit} />
         <Pressable onPress={() => router.replace('/login')}>
           <Text style={[styles.link, { color: theme.primary }]}>Đã có tài khoản? Đăng nhập</Text>
         </Pressable>

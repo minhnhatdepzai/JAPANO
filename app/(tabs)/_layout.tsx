@@ -25,12 +25,12 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: scaleFont(theme, 11), fontWeight: '800', marginTop: 2 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <Feather name="home" size={23} color={color} /> }} />
-      <Tabs.Screen name="shop" options={{ title: 'Shop', tabBarIcon: ({ color }) => <Feather name="shopping-bag" size={23} color={color} /> }} />
-      <Tabs.Screen name="chat" options={{ title: 'Chat', tabBarIcon: ({ color }) => <Feather name="message-circle" size={23} color={color} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Trang chủ', tabBarIcon: ({ color }) => <Feather name="home" size={23} color={color} /> }} />
+      <Tabs.Screen name="shop" options={{ title: 'Cửa hàng', tabBarIcon: ({ color }) => <Feather name="shopping-bag" size={23} color={color} /> }} />
+      <Tabs.Screen name="chat" options={{ title: 'Trò chuyện', tabBarIcon: ({ color }) => <Feather name="message-circle" size={23} color={color} /> }} />
       <Tabs.Screen name="entertainment" options={{ title: 'Giải trí', tabBarIcon: ({ color }) => <Feather name="play-circle" size={23} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <Feather name="user" size={23} color={color} /> }} />
-      <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: ({ color }) => <Feather name="settings" size={23} color={color} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Cá nhân', tabBarIcon: ({ color }) => <Feather name="user" size={23} color={color} /> }} />
+      <Tabs.Screen name="settings" options={{ title: 'Cài đặt', tabBarIcon: ({ color }) => <Feather name="settings" size={23} color={color} /> }} />
     </Tabs>
   );
 }
