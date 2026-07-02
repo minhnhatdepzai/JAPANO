@@ -1,0 +1,3 @@
+# Giọng nói thành văn bản đã được gỡ khỏi JAPANO.
+# Cài Vision AI bằng file riêng:
+# pip install -r server/vision-requirements.txt
