@@ -1,6 +1,0 @@
-/home/nhat/Android/Sdk/cmake/3.22.1/bin/ninja \
-  -C \
-  /home/nhat/Downloads/v37/android/app/.cxx/Debug/5o2c36x2/x86_64 \
-  appmodules \
-  react_codegen_rnscreens \
-  react_codegen_safeareacontext

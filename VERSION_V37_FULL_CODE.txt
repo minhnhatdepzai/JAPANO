@@ -1,3 +1,0 @@
-JAPANO Fashion AI V37 Full Code
-Created by merging full V35 + V36 Stripe patch + V37 Cloudinary patch.
-Run from this folder, not from parent folder.

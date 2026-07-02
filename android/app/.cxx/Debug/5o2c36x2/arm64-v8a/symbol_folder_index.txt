@@ -1,1 +1,0 @@
-/home/nhat/Downloads/v37/android/app/build/intermediates/cxx/Debug/5o2c36x2/obj/arm64-v8a

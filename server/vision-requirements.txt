@@ -1,6 +1,0 @@
-opencv-python-headless>=4.8.0
-numpy>=1.24.0
-# Dùng để chạy emotion_fulltrain_best_model.tflite/.h5 và DeepFace age model.
-# Nếu máy không cài được tensorflow do Python quá mới, hãy dùng Python 3.10 hoặc 3.11.
-tensorflow>=2.15.0
-deepface>=0.0.92
