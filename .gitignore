@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+*.log
+.DS_Store
+backend/data/db.json
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+backend/output/
+backend/tmp/
+mobile/.expo/
+mobile/web-build/
