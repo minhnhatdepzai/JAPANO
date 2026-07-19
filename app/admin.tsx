@@ -29,6 +29,7 @@ type AdminUser = {
   status?: string;
   coins?: number;
   vip?: boolean;
+  address?: string;
   createdAt?: string | null;
   isProtectedAdmin?: boolean;
 };
@@ -55,12 +56,13 @@ type AdminProduct = {
   colors?: string[];
   fit?: string;
   sku?: string;
+  stock?: number;
   stockQuantity?: number;
   visualTags?: string[];
   styleUseCase?: string;
 };
 
-type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games";
+type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games" | "accessories" | "tryon2d" | "model3d" | "botchat" | "moderation" | "system";
 
 type NavItem = { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap; group: string; badge?: string };
 
@@ -1476,6 +1478,10 @@ export default function AdminScreen() {
   const addBanned = async () => {
     const w = bannedInput.trim();
     if (!w) return;
+    if (!user?.id) {
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
+      return;
+    }
     try {
       await api.addBannedWord(user.id, w);
       setBannedInput("");
@@ -1485,6 +1491,10 @@ export default function AdminScreen() {
     }
   };
   const removeBanned = async (id: string) => {
+    if (!user?.id) {
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
+      return;
+    }
     try {
       await api.deleteBannedWord(user.id, id);
       await load();
@@ -1605,7 +1615,7 @@ export default function AdminScreen() {
 
   const renderTryon2d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý thử đồ AI 2D (CatVTON)" subtitle="Theo dõi số lượt, tỉ lệ lỗi và cấu hình model. Bấm \"Kiểm tra lại\" ở tab Trạng thái để cập nhật." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lượt</Text>} />
+      <SectionHeader title="Quản lý thử đồ AI 2D (CatVTON)" subtitle={'Theo dõi số lượt, tỉ lệ lỗi và cấu hình model. Bấm "Kiểm tra lại" ở tab Trạng thái để cập nhật.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lượt</Text>} />
       <View style={styles.statsGrid}>
         <StatCard label="Tổng lượt thử đồ" value={formatNumber(kpis.tryon2d || 0)} change="tất cả thời gian" icon="camera" accent={ADMIN_GREEN} />
         <StatCard label="Thành công" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="ước tính" icon="check-circle" accent={ADMIN_BLUE} />
@@ -1694,6 +1704,10 @@ export default function AdminScreen() {
   );
 }
 
+const textBase = { fontFamily: "System" };
+const textHeading = { ...textBase, color: ADMIN_TEXT, fontWeight: "800" };
+const textBody = { ...textBase, color: ADMIN_MUTED, fontWeight: "600" };
+
 const styles = StyleSheet.create({
   appShell: { flex: 1, flexDirection: "row", backgroundColor: ADMIN_BG },
   sidebar: { width: 238, backgroundColor: ADMIN_DARK, padding: 20, paddingBottom: 16 },
@@ -1742,8 +1756,8 @@ const styles = StyleSheet.create({
   card: { flexGrow: 1, flexBasis: 300, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, gap: 15, ...ADMIN_CARD_SHADOW },
   bigChartCard: { flexBasis: 560 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  sectionTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "900" },
-  sectionSub: { color: ADMIN_MUTED, fontSize: 13, marginTop: 3, fontWeight: "700" },
+  sectionTitle: { ...textHeading, fontSize: 17 },
+  sectionSub: { ...textBody, fontSize: 12, marginTop: 3 },
   segment: { flexDirection: "row", backgroundColor: "#F1F4F6", borderRadius: 0, padding: 4, gap: 3 },
   segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 0, fontSize: 12, fontWeight: "900", overflow: "hidden" },
   segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "900" },
@@ -1772,25 +1786,25 @@ const styles = StyleSheet.create({
   rateText: { fontSize: 12, fontWeight: "900" },
   activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   activityIcon: { width: 34, height: 34, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  activityTitle: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  activityMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  emptyText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "700", lineHeight: 20 },
+  activityTitle: { ...textHeading, fontSize: 13 },
+  activityMeta: { ...textBody, fontSize: 12, marginTop: 2 },
+  emptyText: { ...textBody, fontSize: 12, lineHeight: 20 },
   analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   featureChip: { color: ADMIN_TEXT, backgroundColor: "#F1F4F6", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0, overflow: "hidden", fontSize: 12, fontWeight: "900" },
   predictionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   predictionImage: { width: 64, height: 64, borderRadius: 0, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  predictionTitle: { color: ADMIN_TEXT, fontSize: 15, fontWeight: "900" },
-  predictionMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  predictionSuggestion: { color: ADMIN_TEXT, fontSize: 12, marginTop: 6, fontWeight: "700", lineHeight: 18 },
-  predictionSmall: { color: ADMIN_MUTED, fontSize: 11, marginTop: 4, fontWeight: "800" },
+  predictionTitle: { ...textHeading, fontSize: 14 },
+  predictionMeta: { ...textBody, fontSize: 12, marginTop: 2 },
+  predictionSuggestion: { ...textBody, fontSize: 12, marginTop: 6, lineHeight: 18 },
+  predictionSmall: { ...textBody, fontSize: 11, marginTop: 4 },
   scoreBox: { width: 60, height: 60, borderRadius: 0, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
   scoreText: { color: ADMIN_GREEN, fontSize: 19, fontWeight: "900" },
   scoreLabel: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
   productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
   formCard: { flexBasis: 650 },
-  formTitle: { color: ADMIN_TEXT, fontSize: 17, fontWeight: "900" },
+  formTitle: { ...textHeading, fontSize: 16 },
   formGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   formGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   inputWrap: { flex: 1, minWidth: 170, gap: 6 },
@@ -1821,11 +1835,11 @@ const styles = StyleSheet.create({
   previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0 },
   previewDiscountText: { color: "#fff", fontSize: 12, fontWeight: "900" },
   previewBody: { padding: 18, gap: 11 },
-  previewTitle: { color: "#000", fontSize: 25, fontWeight: "900" },
+  previewTitle: { ...textHeading, fontSize: 22 },
   previewPriceLine: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  previewSalePrice: { color: "#111", fontSize: 24, fontWeight: "600" },
-  previewOldPrice: { color: "#777", fontSize: 22, textDecorationLine: "line-through" },
-  previewMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
+  previewSalePrice: { ...textHeading, fontSize: 20 },
+  previewOldPrice: { ...textBody, fontSize: 18, textDecorationLine: "line-through" },
+  previewMeta: { ...textBody, fontSize: 12 },
   messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 },
   messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 0, paddingHorizontal: 12, paddingVertical: 9, fontWeight: "700" },
   sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 0, paddingHorizontal: 14, paddingVertical: 9 },
@@ -1834,8 +1848,8 @@ const styles = StyleSheet.create({
   productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
   productTop: { flexDirection: "row", gap: 12 },
   productImage: { width: 78, height: 78, borderRadius: 0, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  productTitle: { color: ADMIN_TEXT, fontSize: 16, fontWeight: "900" },
-  productMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800", marginTop: 3 },
+  productTitle: { ...textHeading, fontSize: 15 },
+  productMeta: { ...textBody, fontSize: 12, marginTop: 3 },
   productPriceLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 },
   productPrice: { color: ADMIN_GREEN, fontSize: 16, fontWeight: "900" },
   productOldPrice: { color: ADMIN_MUTED, fontSize: 14, textDecorationLine: "line-through", fontWeight: "800" },
@@ -1856,8 +1870,8 @@ const styles = StyleSheet.create({
   listGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
   voucherIcon: { width: 36, height: 36, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  voucherCode: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  voucherMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
+  voucherCode: { ...textHeading, fontSize: 14 },
+  voucherMeta: { ...textBody, fontSize: 12, marginTop: 2 },
   statusPill: { borderRadius: 0, paddingHorizontal: 10, paddingVertical: 6 },
   statusOn: { backgroundColor: "#E9F8F1" },
   statusOff: { backgroundColor: "#EEF1F3" },
@@ -1868,9 +1882,9 @@ const styles = StyleSheet.create({
   userRow: { padding: 14, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
   userAvatar: { width: 42, height: 42, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
   userAvatarAdmin: { backgroundColor: ADMIN_GREEN },
-  userName: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  userEmail: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  userMeta: { color: ADMIN_MUTED, fontSize: 11, marginTop: 3, fontWeight: "700" },
+  userName: { ...textHeading, fontSize: 14 },
+  userEmail: { ...textBody, fontSize: 12, marginTop: 2 },
+  userMeta: { ...textBody, fontSize: 12, marginTop: 3 },
   rolePill: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#fff" },
   roleAdmin: { backgroundColor: ADMIN_GREEN, borderColor: ADMIN_GREEN },
   rolePillText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
@@ -1878,8 +1892,8 @@ const styles = StyleSheet.create({
   userActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   paymentRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
   paymentIcon: { width: 38, height: 38, borderRadius: 0, backgroundColor: "#F1F8FF", alignItems: "center", justifyContent: "center" },
-  paymentTitle: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  paymentMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
+  paymentTitle: { ...textHeading, fontSize: 14 },
+  paymentMeta: { ...textBody, fontSize: 12, marginTop: 2 },
   loadingCard: { minHeight: 220, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center", gap: 12 },
   authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
   authCard: { width: "100%", maxWidth: 420, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
