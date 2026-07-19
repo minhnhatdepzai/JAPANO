@@ -55,18 +55,18 @@ export default function PaymentResult(){
   const icon=paid?'checkmark':cancelled?'close':refunded?'return-down-back':'alert';
   const title=paid?'Thanh toán thành công':cancelled?'Đã hủy thanh toán':refunded?'Giao dịch đã hoàn tiền':failed?'Thanh toán thất bại':'Đang xác nhận Stripe';
   const description=paid
-    ? 'Stripe đã xác nhận giao dịch thử nghiệm và JAPANO đã lưu giao dịch vào cơ sở dữ liệu.'
+    ? 'Stripe đã xác nhận giao dịch nhập trực tiếp trong ứng dụng và JAPANO đã lưu mã đối soát.'
     : cancelled?'Stripe không trừ tiền. Giỏ hàng của bạn vẫn được giữ lại.'
-    : refunded?'Khoản hoàn tiền thử nghiệm đã được gửi tới Stripe và đồng bộ về trang quản trị.'
+    : refunded?'Khoản hoàn tiền đã được gửi tới Stripe và đồng bộ về trang quản trị.'
     : failed?'Stripe chưa hoàn tất giao dịch. Bạn có thể quay lại trang thanh toán để thử lại.'
-    :'Hệ thống đang đối chiếu phiên thanh toán với Stripe. Vui lòng chờ trong giây lát.';
+    :'Hệ thống đang đối chiếu PaymentIntent với Stripe. Vui lòng chờ trong giây lát.';
 
   return <Screen>
     <View style={st.wrap}>
       <View style={[st.icon,{backgroundColor:paid?'#E4F5E9':refunded?'#EFE9FF':'#FCE8E8'}]}>
         {loading?<ActivityIndicator size="large" color={C.shu}/>:<Ionicons name={icon as any} size={45} color={paid?'#15803D':refunded?'#6D28D9':C.danger}/>} 
       </View>
-      <View style={st.mode}><Text style={st.modeT}>STRIPE · CHẾ ĐỘ THỬ NGHIỆM</Text></View>
+      <View style={st.mode}><Ionicons name="shield-checkmark" size={12} color="#fff"/><Text style={st.modeT}>THANH TOÁN THẺ · BẢO MẬT BỞI STRIPE</Text></View>
       <Text style={st.title}>{title}</Text>
       <Text style={st.desc}>{description}</Text>
       {!!error&&<Text style={st.error}>{error}</Text>}
@@ -76,7 +76,7 @@ export default function PaymentResult(){
         <Row label="Mã thanh toán" value={payment?.code||'—'} mono />
         <Row label="Mã giao dịch Stripe" value={payment?.transactionCode||payment?.paymentIntentId||'Đang chờ Stripe'} mono />
         <Row label="Số tiền" value={money(payment?.amount||order?.total||0)} />
-        {!!payment?.card?.last4&&<Row label="Thẻ thử nghiệm" value={`${String(payment.card.brand||'thẻ').toUpperCase()} •••• ${payment.card.last4}`} />}
+        {!!payment?.card?.last4&&<Row label="Thẻ thanh toán" value={`${String(payment.card.brand||'thẻ').toUpperCase()} •••• ${payment.card.last4}`} />}
         {!!payment?.refundedAmount&&<Row label="Đã hoàn" value={money(payment.refundedAmount)} />}
       </View>}
 
@@ -96,7 +96,7 @@ function Row({label,value,mono}:{label:string;value:string;mono?:boolean}){
 const st=StyleSheet.create({
   wrap:{flex:1,alignItems:'center',justifyContent:'center',paddingHorizontal:22},
   icon:{width:110,height:110,borderRadius:55,alignItems:'center',justifyContent:'center'},
-  mode:{backgroundColor:'#635BFF',borderRadius:999,paddingHorizontal:12,paddingVertical:6,marginTop:18},
+  mode:{flexDirection:'row',alignItems:'center',gap:5,backgroundColor:'#15803D',borderRadius:999,paddingHorizontal:12,paddingVertical:6,marginTop:18},
   modeT:{fontFamily:F.bodyX,fontSize:9,color:'#fff',letterSpacing:1},
   title:{fontFamily:F.display,fontSize:24,color:C.sumi,textAlign:'center',marginTop:12},
   desc:{fontFamily:F.body,fontSize:13,lineHeight:20,color:C.muted,textAlign:'center',maxWidth:330,marginTop:8},

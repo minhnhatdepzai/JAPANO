@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, Linking, Alert } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TextInput, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { CardForm, CardFormView, ConfirmPaymentResult, PaymentIntent, StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { Screen, Header, Btn, money } from '../components/ui';
 import { PRODUCTS } from '../lib/catalog';
 import { useStore } from '../lib/store';
-import { createOrder, createStripeCheckoutSession, getProvinces, getWards, VietnamLocation, voucherDiscountFor } from '../lib/api';
+import { confirmStripePaymentIntent, createOrder, createStripePaymentIntent, getProvinces, getStripeConfig, getWards, StripeConfig, VietnamLocation, voucherDiscountFor } from '../lib/api';
 import { VoucherField } from '../components/VoucherPicker';
 import { C, F } from '../theme/tokens';
 import { emitBotEvent } from '../lib/botEvents';
@@ -24,12 +25,50 @@ const Field = ({ label, value, onChangeText, placeholder, keyboardType }:{label:
     <TextInput style={st.input} value={value} onChangeText={onChangeText} placeholder={placeholder} keyboardType={keyboardType} placeholderTextColor={C.muted} />
   </View>
 );
+
+type ConfirmCardPayment = (
+  clientSecret:string,
+  data?:PaymentIntent.ConfirmParams,
+  options?:PaymentIntent.ConfirmOptions,
+) => Promise<ConfirmPaymentResult>;
+
 export default function Checkout() {
+  const [stripeConfig,setStripeConfig]=useState<StripeConfig|null>(null);
+  const [configLoaded,setConfigLoaded]=useState(false);
+  const [configError,setConfigError]=useState('');
+
+  useEffect(()=>{
+    let live=true;
+    getStripeConfig()
+      .then(config=>{if(live){setStripeConfig(config);setConfigError(config.enabled?'':'Thanh toán thẻ hiện chưa được cấu hình.');}})
+      .catch((error:any)=>{if(live)setConfigError(error?.message||'Chưa kết nối được Stripe.');})
+      .finally(()=>{if(live)setConfigLoaded(true);});
+    return()=>{live=false;};
+  },[]);
+
+  if(!configLoaded){
+    return <Screen><Header title="Thanh toán" /><View style={st.configLoading}><ActivityIndicator color={C.shu}/><Text style={st.configLoadingText}>Đang chuẩn bị thanh toán an toàn…</Text></View></Screen>;
+  }
+  if(stripeConfig?.enabled&&stripeConfig.publishableKey){
+    return <StripeProvider publishableKey={stripeConfig.publishableKey} urlScheme="japano">
+      <StripeCheckoutForm />
+    </StripeProvider>;
+  }
+  return <CheckoutForm stripeAvailable={false} stripeSetupError={configError}/>;
+}
+
+function StripeCheckoutForm(){
+  const {confirmPayment}=useStripe();
+  return <CheckoutForm stripeAvailable confirmCardPayment={confirmPayment}/>;
+}
+
+function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError=''}:{stripeAvailable:boolean;confirmCardPayment?:ConfirmCardPayment;stripeSetupError?:string}) {
   const router = useRouter();
   const params = useLocalSearchParams<{ pay?: string }>();
   const { cart, cartSubtotal, voucher, setVoucher, clearVoucher, clearCart } = useStore();
   const { user } = useAuth();
   const [name,setName]=useState(user?.name||'');
+  const [cardholderName,setCardholderName]=useState(user?.name||'');
   const [phone,setPhone]=useState('');
   const [street,setStreet]=useState('');
   const [provinces,setProvinces]=useState<VietnamLocation[]>([]);
@@ -41,7 +80,9 @@ export default function Checkout() {
   const [wardQuery,setWardQuery]=useState('');
   const [wardOpen,setWardOpen]=useState(false);
   const [locationLoading,setLocationLoading]=useState(false);
-  const [pay, setPay] = useState<'cod'|'card'>('cod');
+  const [pay, setPay] = useState<'cod'|'card'>(stripeAvailable?'card':'cod');
+  const [cardComplete,setCardComplete]=useState(false);
+  const cardFormRef=useRef<CardFormView.Methods|null>(null);
   const [sending, setSending] = useState(false);
   const [orderError, setOrderError] = useState('');
   const voucherDisc = voucher ? voucherDiscountFor(cartSubtotal, voucher) : 0;
@@ -50,11 +91,11 @@ export default function Checkout() {
   const grand = cartSubtotal - disc + SHIP;
 
   useEffect(() => {
-    if (params.pay === 'cod') {
-      setPay('cod');
+    if (params.pay === 'cod' || (params.pay === 'card' && stripeAvailable)) {
+      setPay(params.pay);
       setOrderError('');
     }
-  }, [params.pay]);
+  }, [params.pay,stripeAvailable]);
 
   useEffect(()=>{let live=true;getProvinces().then(items=>{if(live)setProvinces(items);}).catch(()=>setOrderError('Chưa tải được danh mục tỉnh/thành.'));return()=>{live=false;};},[]);
   useEffect(()=>{if(!province){setWards([]);return;}let live=true;const timer=setTimeout(()=>{setLocationLoading(true);getWards(province.code,wardQuery,200).then(data=>{if(live)setWards(data.items);}).catch(()=>{if(live)setOrderError('Chưa tải được phường/xã.');}).finally(()=>{if(live)setLocationLoading(false);});},250);return()=>{live=false;clearTimeout(timer);};},[province?.code,wardQuery]);
@@ -80,6 +121,10 @@ export default function Checkout() {
     if(!province){showCheckoutError('Vui lòng chọn tỉnh hoặc thành phố.');return;}
     if(!ward){showCheckoutError('Vui lòng chọn phường, xã hoặc đặc khu.');return;}
     if(!street.trim()){showCheckoutError('Vui lòng nhập số nhà và tên đường.');return;}
+    if(pay==='card'&&!stripeAvailable){showCheckoutError(stripeSetupError||'Thanh toán thẻ hiện chưa sẵn sàng.');return;}
+    if(pay==='card'&&!cardholderName.trim()){showCheckoutError('Vui lòng nhập tên in trên thẻ.');return;}
+    if(pay==='card'&&!cardComplete){showCheckoutError('Vui lòng nhập đầy đủ và kiểm tra lại thông tin thẻ.');return;}
+    if(pay==='card'&&!confirmCardPayment){showCheckoutError('Stripe SDK chưa sẵn sàng trên thiết bị.');return;}
     setOrderError('');
     setSending(true);
     const items = cart.map(c => {
@@ -97,11 +142,42 @@ export default function Checkout() {
     let eligibility:any = null;
     try {
       if (pay === 'card') {
-        const stripe = await createStripeCheckoutSession(payload);
-        if (!stripe.url) throw new Error('Stripe chưa trả đường dẫn thanh toán.');
-        const supported = await Linking.canOpenURL(stripe.url);
-        if (!supported) throw new Error('Thiết bị chưa có trình duyệt để mở trang nhập thẻ Stripe.');
-        await Linking.openURL(stripe.url);
+        const stripe = await createStripePaymentIntent(payload);
+        order = stripe.order;
+        eligibility = stripe.flagcardEligibility;
+        if(stripe.payment.status==='paid'){
+          clearCart();
+          router.replace({pathname:'/payment-result',params:{orderId:order.id,status:'paid'}} as any);
+          return;
+        }
+        if(!stripe.clientSecret)throw new Error('Stripe chưa trả mã xác nhận thanh toán.');
+        if(stripe.intentStatus==='processing'){
+          router.replace({pathname:'/payment-result',params:{orderId:order.id,status:'pending'}} as any);
+          return;
+        }
+        const confirmation=await confirmCardPayment!(stripe.clientSecret,{
+          paymentMethodType:'Card',
+          paymentMethodData:{
+            billingDetails:{
+              name:cardholderName.trim(),
+              email:user?.email||undefined,
+              phone:phone.trim(),
+              address:{line1:street.trim(),city:ward.name,state:province.name,country:'VN'},
+            },
+          },
+        });
+        if(confirmation.error)throw new Error(confirmation.error.localizedMessage||confirmation.error.message||'Stripe từ chối thanh toán.');
+        if(!confirmation.paymentIntent)throw new Error('Stripe chưa trả kết quả xác nhận thanh toán.');
+        const nativeStatus=confirmation.paymentIntent.status;
+        if(!['Succeeded','Processing'].includes(nativeStatus))throw new Error(`Thanh toán chưa hoàn tất (${nativeStatus}).`);
+        try{
+          await confirmStripePaymentIntent(confirmation.paymentIntent.id,order.id);
+        }catch(syncError){
+          // Stripe has already accepted the card. The result screen polls the
+          // backend and safely reconciles this PaymentIntent instead of charging again.
+        }
+        if(nativeStatus==='Succeeded')clearCart();
+        router.replace({pathname:'/payment-result',params:{orderId:order.id,status:nativeStatus==='Succeeded'?'paid':'pending'}} as any);
         setSending(false);
         return;
       }
@@ -131,8 +207,8 @@ export default function Checkout() {
   return (
     <Screen>
       <Header title="Thanh toán" />
-      <View style={st.steps}><Step n={1} label="Địa chỉ" on /><Step n={2} label="Giao hàng" on /><Step n={3} label="Thanh toán" /><Step n={4} label="Xong" /></View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal:18, paddingBottom:100 }}>
+      <View style={st.steps}><Step n={1} label="Địa chỉ" on /><Step n={2} label="Giao hàng" on /><Step n={3} label="Thanh toán" on /><Step n={4} label="Xong" /></View>
+      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingHorizontal:18, paddingBottom:100 }}>
         <Text style={st.grp}>NGƯỜI NHẬN</Text>
         <Field label="Họ tên" value={name} onChangeText={setName} placeholder="Nhập họ tên người nhận" />
         <Field label="Số điện thoại" value={phone} onChangeText={setPhone} placeholder="Nhập số điện thoại" keyboardType="phone-pad" />
@@ -160,22 +236,44 @@ export default function Checkout() {
           <View style={[st.radio, pay==='cod'&&st.radioOn]} />
           <Text style={{ flex:1, fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thanh toán khi nhận hàng</Text><Text>💵</Text>
         </Pressable>
-        <Pressable style={[st.pay, pay==='card'&&{ borderColor:C.shu }]} onPress={()=>setPay('card')}>
+        <Pressable style={[st.pay, pay==='card'&&{ borderColor:C.shu },!stripeAvailable&&{opacity:.62}]} onPress={()=>{if(stripeAvailable){setCardholderName(value=>value||name);setPay('card');setOrderError('');}else showCheckoutError(stripeSetupError||'Thanh toán thẻ hiện chưa sẵn sàng.');}}>
           <View style={[st.radio, pay==='card'&&st.radioOn]} />
-          <View style={{flex:1}}><Text style={{ fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thanh toán trực tuyến Stripe</Text><Text style={st.stripeOffer}>Chế độ thử nghiệm · giảm thêm 10%</Text></View><Text>💳</Text>
+          <View style={{flex:1}}><Text style={{ fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thẻ tín dụng hoặc ghi nợ</Text><Text style={st.stripeOffer}>{stripeAvailable?'Visa, Mastercard, JCB · giảm thêm 10%':'Thanh toán thẻ hiện chưa sẵn sàng'}</Text></View><Ionicons name="card-outline" size={22} color={C.shu}/>
         </Pressable>
 
         {pay==='card' && (
           <View style={st.cardBox}>
-            <View style={st.stripeTitle}><View style={st.stripeMark}><Text style={st.stripeMarkT}>S</Text></View><View style={{flex:1}}><Text style={st.stripeHead}>Thanh toán trên trang Stripe</Text><Text style={st.stripeSub}>Chế độ thử nghiệm · không trừ tiền thật</Text></View><Ionicons name="open-outline" size={20} color={C.shu} /></View>
-            <View style={st.offerBox}><Ionicons name="pricetag" size={17} color="#15803D" /><Text style={st.offerText}>Đã áp dụng STRIPE10 · tiết kiệm {money(stripeDisc)}</Text></View>
-            <Text style={st.cardHint}>Khi bấm đặt hàng, ứng dụng mở trang thanh toán bảo mật của Stripe. JAPANO không đọc hoặc lưu số thẻ.</Text>
-            <View style={st.testCard}>
-              <Text style={st.testLabel}>THẺ THỬ NGHIỆM THANH TOÁN THÀNH CÔNG</Text>
-              <Text selectable style={st.testNumber}>4242 4242 4242 4242</Text>
-              <Text style={st.testMeta}>Ngày hết hạn bất kỳ trong tương lai · mã bảo mật gồm 3 số bất kỳ</Text>
+            <View style={st.paymentHeader}>
+              <View style={st.paymentIcon}><Ionicons name="card" size={21} color="#fff"/></View>
+              <View style={{flex:1}}><Text style={st.paymentHead}>Thông tin thanh toán</Text><Text style={st.paymentSub}>Nhập trực tiếp và xác nhận ngay trong ứng dụng</Text></View>
+              <View style={st.securityBadge}><Ionicons name="lock-closed" size={11} color="#15803D"/><Text style={st.securityBadgeText}>Bảo mật</Text></View>
             </View>
-            <Text style={st.cardHint}>Sau khi Stripe xác nhận, mã giao dịch được lưu vào cơ sở dữ liệu và hiện ở trang quản trị. Quản trị viên có thể hoàn tiền thử nghiệm qua Stripe.</Text>
+            <View style={st.offerBox}><Ionicons name="pricetag" size={17} color="#15803D" /><Text style={st.offerText}>Đã áp dụng STRIPE10 · tiết kiệm {money(stripeDisc)}</Text></View>
+            <Text style={st.cardFieldLabel}>TÊN IN TRÊN THẺ</Text>
+            <TextInput
+              value={cardholderName}
+              onChangeText={setCardholderName}
+              style={st.cardholderInput}
+              placeholder="NGUYEN VAN A"
+              placeholderTextColor="#9A9188"
+              autoCapitalize="characters"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={()=>cardFormRef.current?.focus()}
+            />
+            <Text style={st.cardFieldLabel}>CHI TIẾT THẺ</Text>
+            <View style={[st.cardFormShell,cardComplete&&st.cardFieldComplete]}>
+              <CardForm
+                ref={cardFormRef}
+                disabled={sending}
+                defaultValues={{countryCode:'VN'}}
+                placeholders={{number:'Số thẻ',expiration:'MM / YY',cvc:'CVC',postalCode:'Mã bưu chính'}}
+                cardStyle={{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#D8D0C4',borderRadius:12,textColor:C.ink,placeholderColor:'#8E867D',textErrorColor:C.danger,cursorColor:C.shu,fontSize:15}}
+                style={st.cardForm}
+                onFormComplete={(details)=>setCardComplete(details.complete)}
+              />
+            </View>
+            <View style={st.secureHint}><Ionicons name="shield-checkmark" size={14} color="#15803D"/><Text style={st.secureHintText}>Số thẻ và CVC được mã hóa bởi Stripe. JAPANO không lưu thông tin thẻ trên hệ thống.</Text></View>
           </View>
         )}
 
@@ -197,8 +295,7 @@ export default function Checkout() {
       </ScrollView>
       <View style={st.sticky}>
         {!!orderError&&<View style={st.stickyError}><Ionicons name="alert-circle" size={16} color={C.danger}/><Text style={st.stickyErrorText}>{orderError}</Text></View>}
-        {pay==='card'&&!orderError&&<Text style={st.stickyStripeHint}>Thẻ thử: 4242 4242 4242 4242 · ngày tương lai · mã bảo mật 3 số</Text>}
-        <Btn label={sending ? (pay==='card'?'Đang mở trang nhập thẻ…':'Đang đặt hàng…') : `${pay==='card'?'Mở trang nhập thẻ Stripe':'Đặt hàng'} · ${money(grand)}`} onPress={placeOrder} />
+        <Btn label={sending ? (pay==='card'?'Đang xác nhận thẻ…':'Đang đặt hàng…') : `${pay==='card'?'Thanh toán bằng thẻ':'Đặt hàng'} · ${money(grand)}`} onPress={placeOrder} />
       </View>
     </Screen>
   );
@@ -207,6 +304,8 @@ const Row = ({ k, v, shu }:{k:string;v:string;shu?:boolean}) => (
   <View style={{ flexDirection:'row', justifyContent:'space-between', marginBottom:6 }}><Text style={{ fontFamily:F.body, fontSize:13, color:C.muted }}>{k}</Text><Text style={{ fontFamily:F.bodyM, fontSize:13, color:shu?C.shu:C.ink }}>{v}</Text></View>
 );
 const st = StyleSheet.create({
+  configLoading:{flex:1,alignItems:'center',justifyContent:'center',gap:10,padding:24},
+  configLoadingText:{fontFamily:F.bodyM,fontSize:12.5,color:C.muted},
   steps:{ flexDirection:'row', paddingHorizontal:12, paddingVertical:12 },
   stepN:{ width:30, height:30, borderRadius:15, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:14, marginBottom:8 },
@@ -222,26 +321,28 @@ const st = StyleSheet.create({
   pay:{ flexDirection:'row', alignItems:'center', gap:10, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, backgroundColor:'#fff', marginBottom:10 },
   radio:{ width:18, height:18, borderRadius:9, borderWidth:1.5, borderColor:C.line },
   radioOn:{ borderWidth:5, borderColor:C.shu },
-  cardBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:16, padding:14, marginBottom:14 },
-  stripeTitle:{ flexDirection:'row',alignItems:'center',gap:10,marginBottom:10 },
-  stripeMark:{ width:38,height:38,borderRadius:10,backgroundColor:'#635BFF',alignItems:'center',justifyContent:'center' },
-  stripeMarkT:{ color:'#fff',fontFamily:F.bodyX,fontSize:20 },
-  stripeHead:{ fontFamily:F.bodyB,fontSize:13,color:C.ink },
-  stripeSub:{ fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2 },
+  cardBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#332A22',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
+  paymentHeader:{ flexDirection:'row',alignItems:'center',gap:10,marginBottom:12 },
+  paymentIcon:{ width:40,height:40,borderRadius:12,backgroundColor:C.shu,alignItems:'center',justifyContent:'center' },
+  paymentHead:{ fontFamily:F.bodyB,fontSize:13.5,color:C.ink },
+  paymentSub:{ fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2 },
+  securityBadge:{flexDirection:'row',alignItems:'center',gap:3,backgroundColor:'#E8F6EC',borderRadius:999,paddingHorizontal:7,paddingVertical:5},
+  securityBadgeText:{fontFamily:F.bodyB,fontSize:8.5,color:'#166534'},
   stripeOffer:{ fontFamily:F.bodyB,fontSize:10.5,color:'#15803D',marginTop:2 },
-  offerBox:{ flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginBottom:2 },
+  offerBox:{ flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginBottom:1 },
   offerText:{ flex:1,fontFamily:F.bodyB,fontSize:11.5,color:'#166534' },
-  testCard:{ backgroundColor:'#F2F0FF',borderWidth:1,borderColor:'#D8D3FF',borderRadius:12,padding:12,marginTop:12 },
-  testLabel:{ fontFamily:F.bodyX,fontSize:9,color:'#5046C8',letterSpacing:.8 },
-  testNumber:{ fontFamily:F.bodyB,fontSize:17,color:C.ink,letterSpacing:1.4,marginTop:6 },
-  testMeta:{ fontFamily:F.body,fontSize:10.5,color:C.muted,lineHeight:15,marginTop:5 },
-  cardHint:{ fontFamily:F.body, fontSize:10.5, color:C.muted, marginTop:10, lineHeight:15 },
+  cardFieldLabel:{fontFamily:F.bodyX,fontSize:9,color:C.muted,letterSpacing:.9,marginTop:13,marginBottom:6},
+  cardholderInput:{height:52,borderWidth:1,borderColor:'#D8D0C4',borderRadius:12,backgroundColor:'#fff',paddingHorizontal:14,fontFamily:F.bodyM,fontSize:14,color:C.ink,letterSpacing:.25},
+  cardFormShell:{height:200,borderWidth:1,borderColor:'transparent',borderRadius:13,backgroundColor:'#fff',overflow:'hidden'},
+  cardFieldComplete:{borderColor:'#49A766'},
+  cardForm:{width:'100%',height:200},
+  secureHint:{flexDirection:'row',alignItems:'flex-start',gap:6,marginTop:8},
+  secureHintText:{flex:1,fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted},
   voucherErr:{ fontFamily:F.body, fontSize:11.5, color:C.danger, marginTop:6 },
   orderError:{ flexDirection:'row', gap:8, alignItems:'center', backgroundColor:'#FDEBEC', borderWidth:1, borderColor:'#E8B6BA', borderRadius:12, padding:11, marginTop:10 },
   orderErrorText:{ flex:1, fontFamily:F.bodyM, fontSize:11.5, lineHeight:16, color:C.danger },
   stickyError:{flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#FDEBEC',borderWidth:1,borderColor:'#E8B6BA',borderRadius:10,paddingHorizontal:10,paddingVertical:8,marginBottom:8},
   stickyErrorText:{flex:1,fontFamily:F.bodyB,fontSize:10.5,lineHeight:14,color:C.danger},
-  stickyStripeHint:{fontFamily:F.bodyB,fontSize:10,color:'#5046C8',textAlign:'center',marginBottom:7},
   sum:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:6 },
   sticky:{ position:'absolute', left:0, right:0, bottom:0, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
 });

@@ -152,8 +152,14 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     if (['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
       await finalizeStripeCheckout(event.data.object.id);
     }
+    if (event.type === 'payment_intent.succeeded') {
+      await finalizeStripePaymentIntent(event.data.object.id);
+    }
     if (event.type === 'checkout.session.async_payment_failed') {
       markStripeCheckoutFailed(event.data.object.id, 'async_payment_failed');
+    }
+    if (event.type === 'payment_intent.payment_failed') {
+      markStripePaymentIntentFailed(event.data.object.id, event.data.object.last_payment_error?.code || 'payment_failed');
     }
     if (['refund.updated', 'refund.failed'].includes(event.type)) {
       applyStripeRefundToState(event.data.object);
@@ -1719,6 +1725,95 @@ async function finalizeStripeCheckout(sessionId) {
   return { ...result, collection: flagcardCollectionView(state, result.order.userId) };
 }
 
+async function finalizeStripePaymentIntent(paymentIntentId) {
+  if (!stripeEnabled()) throw httpError(503, 'Chế độ thử nghiệm Stripe chưa sẵn sàng.');
+  const intent = typeof paymentIntentId === 'object'
+    ? paymentIntentId
+    : await stripe.paymentIntents.retrieve(String(paymentIntentId || ''), { expand: ['latest_charge'] });
+  if (String(intent.status) !== 'succeeded') {
+    throw httpError(402, `Stripe chưa xác nhận thanh toán. Trạng thái: ${intent.status}.`);
+  }
+
+  const snapshot = read();
+  const existingPayment = findPayment(snapshot, intent.id) || findPayment(snapshot, intent.metadata?.orderId);
+  const existingOrder = existingPayment
+    ? snapshot.orders.find((item) => item.id === existingPayment.orderId)
+    : snapshot.orders.find((item) => item.id === intent.metadata?.orderId);
+  if (!existingPayment || !existingOrder) throw httpError(404, 'Không tìm thấy đơn hàng gắn với Stripe PaymentIntent.');
+  if (String(intent.metadata?.orderId || '') !== String(existingOrder.id)) {
+    throw httpError(409, 'PaymentIntent không khớp đơn hàng JAPANO.');
+  }
+  if (Number(intent.amount) !== stripeAmount(existingOrder.total, intent.currency)
+    || String(intent.currency || '').toLowerCase() !== String(existingPayment.currency || STRIPE_CURRENCY).toLowerCase()) {
+    throw httpError(409, 'Số tiền PaymentIntent không khớp đơn hàng JAPANO.');
+  }
+
+  const charge = intent.latest_charge && typeof intent.latest_charge === 'object' ? intent.latest_charge : null;
+  let result = null;
+  const state = update((next) => {
+    const payment = findPayment(next, intent.id) || findPayment(next, intent.metadata?.orderId);
+    const order = payment ? next.orders.find((item) => item.id === payment.orderId) : null;
+    if (!payment || !order) return next;
+    const now = Date.now();
+    const card = charge?.payment_method_details?.card;
+    const billing = charge?.billing_details;
+    payment.status = 'paid';
+    payment.intentStatus = String(intent.status);
+    payment.paymentIntentId = intent.id;
+    payment.transactionCode = intent.id;
+    payment.amount = localStripeAmount(intent.amount_received || intent.amount, intent.currency);
+    payment.currency = String(intent.currency || STRIPE_CURRENCY);
+    payment.paidAt ||= now;
+    payment.updatedAt = now;
+    payment.refundable = true;
+    payment.chargeId = String(charge?.id || '');
+    payment.receiptUrl = String(charge?.receipt_url || '');
+    payment.paymentMethodType = String(charge?.payment_method_details?.type || 'card');
+    payment.customer = {
+      name: String(billing?.name || order.customer?.name || ''),
+      email: String(billing?.email || order.customer?.email || ''),
+      phone: String(billing?.phone || order.customer?.phone || ''),
+      address: billing?.address || null,
+    };
+    payment.card = card ? { brand: card.brand, last4: card.last4, funding: card.funding } : payment.card;
+    order.payment = {
+      ...order.payment,
+      method: 'Stripe', provider: 'stripe', status: 'paid', txn: intent.id,
+      currency: payment.currency, paymentIntentId: intent.id, paymentId: payment.id,
+      card: payment.card,
+    };
+    if (['pending_payment', 'pending'].includes(order.status)) order.status = 'confirmed';
+    order.history ||= [];
+    if (!order.history.some((item) => item.s === 'paid' && item.txn === intent.id)) {
+      order.history.push({ s: 'paid', at: now, txn: intent.id });
+    }
+    reconcileFlagRewards(next);
+    result = { order, payment };
+    return next;
+  });
+  if (!result) throw httpError(404, 'Không tìm thấy giao dịch PaymentIntent để cập nhật.');
+  return { ...result, collection: flagcardCollectionView(state, result.order.userId) };
+}
+
+function markStripePaymentIntentFailed(paymentIntentId, reason = 'payment_failed') {
+  let result = null;
+  update((state) => {
+    const payment = findPayment(state, paymentIntentId);
+    const order = payment ? state.orders.find((item) => item.id === payment.orderId) : null;
+    if (!payment || !order || payment.status === 'paid' || payment.status === 'refunded') return state;
+    payment.status = 'failed';
+    payment.intentStatus = 'requires_payment_method';
+    payment.failureReason = String(reason || 'payment_failed');
+    payment.updatedAt = Date.now();
+    order.payment.status = 'failed';
+    order.history ||= [];
+    order.history.push({ s: 'payment_failed', at: Date.now(), reason: payment.failureReason });
+    result = { payment, order };
+    return state;
+  });
+  return result;
+}
+
 function stripeLandingPage({ ok, title, message, orderId = '', status = 'failed' }) {
   const deepLink = `japano://payment-result?orderId=${encodeURIComponent(orderId)}&status=${encodeURIComponent(status)}`;
   const androidIntent = `intent://payment-result?orderId=${encodeURIComponent(orderId)}&status=${encodeURIComponent(status)}#Intent;scheme=japano;package=vn.japano.app;end`;
@@ -1750,6 +1845,9 @@ api.get('/stripe/config', (req, res) => {
     ok: true,
     enabled: stripeEnabled(),
     mode: stripeEnabled() ? 'test' : 'disabled',
+    // Publishable keys are intentionally safe to expose to the mobile SDK.
+    // The Stripe secret key remains server-only in .env.server.
+    publishableKey: stripeEnabled() ? STRIPE_PUBLISHABLE_KEY : '',
     currency: STRIPE_CURRENCY,
     merchantDisplayName: STRIPE_MERCHANT_DISPLAY_NAME,
     dashboardUrl: 'https://dashboard.stripe.com/test/payments',
@@ -1779,6 +1877,134 @@ function checkoutItemsKey(items = []) {
     qty: Number(item.qty || 0),
   })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))));
 }
+
+function reusableStripeOrder(state, body = {}) {
+  const requestedUserId = String(body?.userId || body?.customer?.id || '');
+  const requestedAddress = String(body?.address || '').trim();
+  const requestedItemsKey = checkoutItemsKey(body?.items || []);
+  return [...(state.orders || [])].reverse().find((item) =>
+    item.status === 'pending_payment'
+    && String(item.userId || '') === requestedUserId
+    && String(item.address || '').trim() === requestedAddress
+    && checkoutItemsKey(item.items || []) === requestedItemsKey
+    && Date.now() - Number(item.createdAt || 0) < 30 * 60 * 1000);
+}
+
+// Native card flow: the mobile app collects card data inside Stripe CardField.
+// This endpoint creates only the PaymentIntent and never receives card numbers/CVC.
+api.post('/stripe/payment-intent', async (req, res) => {
+  if (!stripeEnabled()) return res.status(503).json({ ok: false, message: 'Chế độ thử nghiệm Stripe chưa được cấu hình.' });
+  try {
+    const state = read();
+    let order = reusableStripeOrder(state, req.body || {});
+    let payment = order ? findPayment(state, order.id) : null;
+
+    if (payment?.paymentIntentId && ['pending', 'failed'].includes(String(payment.status))) {
+      const previousIntent = await stripe.paymentIntents.retrieve(payment.paymentIntentId);
+      if (previousIntent.status === 'succeeded') {
+        const finalized = await finalizeStripePaymentIntent(previousIntent.id);
+        return res.json({
+          ok: true, reused: true, clientSecret: '', intentStatus: previousIntent.status,
+          order: finalized.order, payment: finalized.payment, mode: 'test',
+        });
+      }
+      if (['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing'].includes(previousIntent.status)) {
+        payment.status = 'pending';
+        payment.intentStatus = previousIntent.status;
+        payment.failureReason = '';
+        payment.updatedAt = Date.now();
+        order.payment.status = 'pending';
+        write(state);
+        return res.json({
+          ok: true, reused: true, clientSecret: previousIntent.client_secret,
+          intentStatus: previousIntent.status, order, payment, mode: 'test',
+        });
+      }
+    }
+
+    let result = null;
+    if (!order) {
+      result = createOrderInState(state, req.body || {}, {
+        paymentMethod: 'Stripe', paymentStatus: 'pending', orderStatus: 'pending_payment',
+      });
+      order = result.order;
+    }
+    if (order.total <= 0) throw httpError(400, 'Tổng tiền thanh toán phải lớn hơn 0.');
+
+    const now = Date.now();
+    payment ||= {
+      id: `pay-${now}`,
+      code: `PAY-${order.code}-${String(now).slice(-6)}`,
+      orderId: order.id,
+      orderCode: order.code,
+      userId: order.userId,
+      provider: 'stripe',
+      method: 'Stripe',
+      status: 'pending',
+      amount: order.total,
+      originalAmount: order.subtotal + order.ship,
+      discount: order.discount,
+      voucherDiscount: order.voucherDiscount,
+      paymentDiscount: order.paymentDiscount,
+      promotionCode: 'STRIPE10',
+      currency: STRIPE_CURRENCY,
+      transactionCode: '',
+      paymentIntentId: '',
+      checkoutSessionId: '',
+      refundable: false,
+      refunds: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nativeAttempt = Number(payment.nativeAttempt || 0) + 1;
+    const customerEmail = String(req.body?.customer?.email || '').trim();
+    const intent = await stripe.paymentIntents.create({
+      amount: stripeAmount(order.total),
+      currency: STRIPE_CURRENCY,
+      payment_method_types: ['card'],
+      description: `Thanh toán trong ứng dụng JAPANO #${order.code}`,
+      ...(customerEmail ? { receipt_email: customerEmail } : {}),
+      metadata: {
+        orderId: order.id, orderCode: order.code, userId: order.userId, paymentId: payment.id,
+        paymentCode: payment.code, promotion: 'STRIPE10', discount: String(order.discount), channel: 'mobile-native',
+      },
+    }, { idempotencyKey: `japano-native-payment-${order.id}-${nativeAttempt}` });
+    if (!intent.client_secret) throw httpError(502, 'Stripe chưa trả client secret cho ứng dụng.');
+
+    payment.status = 'pending';
+    payment.intentStatus = intent.status;
+    payment.paymentIntentId = intent.id;
+    payment.transactionCode = intent.id;
+    payment.nativeAttempt = nativeAttempt;
+    payment.updatedAt = Date.now();
+    order.payment = {
+      ...order.payment, status: 'pending', paymentIntentId: intent.id, paymentId: payment.id,
+    };
+    state.payments ||= [];
+    if (!state.payments.some((item) => item.id === payment.id)) state.payments.push(payment);
+    write(state);
+    res.json({
+      ok: true, clientSecret: intent.client_secret, paymentIntentId: intent.id, intentStatus: intent.status,
+      order, payment, mode: 'test', flagcardEligibility: result?.flagcardEligibility,
+    });
+  } catch (error) {
+    res.status(error.status || error.statusCode || 500).json({ ok: false, message: error.message || 'Không tạo được Stripe PaymentIntent.' });
+  }
+});
+
+api.post('/stripe/payment-intent/confirm', async (req, res) => {
+  try {
+    const payment = findPayment(read(), req.body?.paymentIntentId || req.body?.orderId);
+    if (!payment?.paymentIntentId) throw httpError(404, 'Không tìm thấy PaymentIntent của đơn hàng.');
+    if (req.body?.orderId && String(payment.orderId) !== String(req.body.orderId)) {
+      throw httpError(409, 'PaymentIntent không khớp đơn hàng cần xác nhận.');
+    }
+    const result = await finalizeStripePaymentIntent(payment.paymentIntentId);
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    res.status(error.status || error.statusCode || 500).json({ ok: false, message: error.message || 'Không xác nhận được Stripe PaymentIntent.' });
+  }
+});
 
 api.post('/stripe/checkout-session', async (req, res) => {
   if (!stripeEnabled()) return res.status(503).json({ ok: false, message: 'Chế độ thử nghiệm Stripe chưa được cấu hình.' });
@@ -1942,10 +2168,22 @@ api.get('/stripe/checkout/cancel', (req, res) => {
   }));
 });
 
-api.get('/payments/:id', (req, res) => {
-  const state = read();
-  const payment = findPayment(state, req.params.id);
+api.get('/payments/:id', async (req, res) => {
+  let state = read();
+  let payment = findPayment(state, req.params.id);
   if (!payment) return res.status(404).json({ ok: false, message: 'Không tìm thấy giao dịch.' });
+  // Recover automatically if the app confirmed the card but briefly lost its
+  // connection before the native confirmation callback reached this backend.
+  if (stripeEnabled() && ['pending', 'failed'].includes(String(payment.status)) && payment.paymentIntentId) {
+    try {
+      const intent = await stripe.paymentIntents.retrieve(payment.paymentIntentId);
+      if (intent.status === 'succeeded') await finalizeStripePaymentIntent(intent.id);
+    } catch {
+      // Status reads should remain available even while Stripe is unreachable.
+    }
+    state = read();
+    payment = findPayment(state, req.params.id);
+  }
   const order = state.orders.find((item) => item.id === payment.orderId) || null;
   res.json({ ok: true, payment, order });
 });
@@ -1955,7 +2193,7 @@ api.post('/stripe/reconcile', async (req, res) => {
   const snapshot = read();
   const candidates = (snapshot.payments || [])
     .filter((payment) => payment.provider === 'stripe' && (
-      (payment.status === 'pending' && payment.checkoutSessionId)
+      (payment.status === 'pending' && (payment.checkoutSessionId || payment.paymentIntentId))
       || payment.status === 'refund_pending'
     ))
     .slice(0, 30);
@@ -1970,6 +2208,15 @@ api.post('/stripe/reconcile', async (req, res) => {
         } else if (session.status === 'expired') {
           const failed = markStripeCheckoutFailed(session.id, 'checkout_expired');
           results.push({ paymentId: payment.id, status: failed?.payment?.status || 'failed' });
+        }
+      }
+      if (payment.status === 'pending' && payment.paymentIntentId && !payment.checkoutSessionId) {
+        const intent = await stripe.paymentIntents.retrieve(payment.paymentIntentId);
+        if (intent.status === 'succeeded') {
+          const finalized = await finalizeStripePaymentIntent(intent.id);
+          results.push({ paymentId: payment.id, status: finalized.payment.status });
+        } else {
+          results.push({ paymentId: payment.id, status: intent.status });
         }
       }
       if (payment.status === 'refund_pending' && payment.paymentIntentId) {

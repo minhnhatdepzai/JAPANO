@@ -354,6 +354,29 @@ export function createStripeCheckoutSession(payload:any):Promise<StripeCheckoutR
   return jsonPost('/api/stripe/checkout-session',{userId:USER_ID,...payload},30000);
 }
 
+export type StripeConfig = {
+  ok:boolean; enabled:boolean; mode:'test'|'disabled'; publishableKey:string;
+  currency:string; merchantDisplayName:string;
+};
+
+export type StripePaymentIntentResult = {
+  ok:boolean; reused?:boolean; clientSecret:string; paymentIntentId?:string; intentStatus:string; mode:'test';
+  order:ApiOrder; payment:StripePaymentRecord;
+  flagcardEligibility?:{qualifiesByAmount:boolean;threshold:number;awarded:boolean};
+};
+
+export function getStripeConfig():Promise<StripeConfig>{
+  return requestJson('/api/stripe/config',{timeoutMs:10000});
+}
+
+export function createStripePaymentIntent(payload:any):Promise<StripePaymentIntentResult>{
+  return jsonPost('/api/stripe/payment-intent',{userId:USER_ID,...payload},30000);
+}
+
+export function confirmStripePaymentIntent(paymentIntentId:string,orderId:string):Promise<{ok:boolean;payment:StripePaymentRecord;order:ApiOrder}>{
+  return jsonPost('/api/stripe/payment-intent/confirm',{paymentIntentId,orderId},30000);
+}
+
 export function getPaymentStatus(id:string):Promise<{ok:boolean;payment:StripePaymentRecord;order:ApiOrder}>{
   return requestJson(`/api/payments/${encodeURIComponent(id)}`,{timeoutMs:10000});
 }

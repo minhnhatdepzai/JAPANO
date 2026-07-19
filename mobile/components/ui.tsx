@@ -16,9 +16,10 @@ export const Screen = ({ children, bg=C.washi, wave=true, edges=['top'] as any }
 
 export const Header = ({ title, onBack, right }:{ title?:string; onBack?:()=>void; right?:React.ReactNode }) => {
   const router = useRouter();
+  const goBack = onBack || (()=>router.canGoBack()?router.back():router.replace('/(tabs)'));
   return (
     <View style={s.header}>
-      <Pressable accessibilityLabel="Quay lại" onPress={onBack || (()=>router.back())} style={s.backBtn} hitSlop={12}>
+      <Pressable accessibilityLabel="Quay lại" onPress={goBack} style={s.backBtn} hitSlop={12}>
         <Ionicons name="arrow-back" size={23} color="#fff" />
       </Pressable>
       {!!title && <Text style={s.headerTitle} numberOfLines={1}>{title}</Text>}

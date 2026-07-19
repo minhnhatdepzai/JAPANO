@@ -5107,6 +5107,77 @@
         }
       ],
       "source": "mobile"
+    },
+    {
+      "id": "o1784265344904",
+      "code": "JP240744",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909999999",
+        "id": "demo-minh"
+      },
+      "address": "123, Phường An Đông, Thành phố Hồ Chí Minh",
+      "addressDetails": {
+        "street": "123",
+        "wardCode": "27316",
+        "ward": "Phường An Đông",
+        "provinceCode": "79",
+        "province": "Thành phố Hồ Chí Minh"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1290000
+        }
+      ],
+      "subtotal": 1290000,
+      "discount": 129000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 129000,
+      "paymentPromotion": {
+        "code": "STRIPE10",
+        "label": "Ưu đãi thanh toán thẻ Stripe 10%",
+        "percent": 10
+      },
+      "discountCode": "STRIPE10",
+      "total": 1191000,
+      "ship": 30000,
+      "payment": {
+        "method": "Stripe",
+        "provider": "stripe",
+        "status": "paid",
+        "txn": "pi_3Tu47h46LydUHMTH0y0QFB34",
+        "currency": "vnd",
+        "paymentIntentId": "pi_3Tu47h46LydUHMTH0y0QFB34",
+        "paymentId": "pay-1784265344904",
+        "card": {
+          "brand": "visa",
+          "last4": "4242",
+          "funding": "credit"
+        }
+      },
+      "status": "confirmed",
+      "createdAt": 1784265344904,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784265344904
+        },
+        {
+          "s": "paid",
+          "at": 1784267003258,
+          "txn": "pi_3Tu47h46LydUHMTH0y0QFB34"
+        }
+      ],
+      "source": "mobile"
     }
   ],
   "payments": [
@@ -5657,6 +5728,55 @@
       "refunds": [],
       "createdAt": 1784207985812,
       "updatedAt": 1784207986514
+    },
+    {
+      "id": "pay-1784265344904",
+      "code": "PAY-JP240744-344904",
+      "orderId": "o1784265344904",
+      "orderCode": "JP240744",
+      "userId": "demo-minh",
+      "provider": "stripe",
+      "method": "Stripe",
+      "status": "paid",
+      "amount": 1191000,
+      "originalAmount": 1320000,
+      "discount": 129000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 129000,
+      "promotionCode": "STRIPE10",
+      "currency": "vnd",
+      "transactionCode": "pi_3Tu47h46LydUHMTH0y0QFB34",
+      "paymentIntentId": "pi_3Tu47h46LydUHMTH0y0QFB34",
+      "checkoutSessionId": "",
+      "refundable": true,
+      "refunds": [],
+      "createdAt": 1784265344904,
+      "updatedAt": 1784267003258,
+      "intentStatus": "succeeded",
+      "nativeAttempt": 1,
+      "failureReason": "",
+      "paidAt": 1784267003258,
+      "chargeId": "ch_3Tu47h46LydUHMTH0AzZmYm7",
+      "receiptUrl": "https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKPuB59IGMgaWPYKMyb06LBbnVvJNcZNIBDILo9B6_izYenYvIa7wbqKeS_1uuyBlq9JeeFhrhxfUrDj7",
+      "paymentMethodType": "card",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0707199999",
+        "address": {
+          "city": "Phường An Đông",
+          "country": "VN",
+          "line1": "123",
+          "line2": null,
+          "postal_code": null,
+          "state": "Thành phố Hồ Chí Minh"
+        }
+      },
+      "card": {
+        "brand": "visa",
+        "last4": "4242",
+        "funding": "credit"
+      }
     }
   ],
   "returnRequests": [
@@ -5712,16 +5832,7 @@
       "refundStatus": "succeeded"
     }
   ],
-  "carts": [
-    {
-      "userId": "ban@japano.vn",
-      "productId": "kimono-hong",
-      "color": "Mực",
-      "size": "M",
-      "quantity": 1,
-      "updatedAt": 1784207939227
-    }
-  ],
+  "carts": [],
   "reviews": [],
   "reviewReactions": [],
   "moderationSamples": [],
@@ -8161,6 +8272,39 @@
       },
       "createdAt": 1784207371325,
       "source": "mobile"
+    },
+    {
+      "id": "i1784263311689ey3l4",
+      "userId": "ban@japano.vn",
+      "productId": "khoac-nhat",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784263311689,
+      "source": "mobile"
+    },
+    {
+      "id": "i17842633706280tij7",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784263370628,
+      "source": "mobile"
+    },
+    {
+      "id": "i17842633776995bo1k",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784263377699,
+      "source": "mobile"
     }
   ],
   "profiles": [
@@ -8255,12 +8399,12 @@
     {
       "userId": "demo-minh",
       "preferredStyles": [
-        "truyền thống",
-        "nhật",
-        "lễ hội"
+        "tối giản",
+        "nhẹ nhàng",
+        "unisex"
       ],
       "heightCm": 165,
-      "updatedAt": 1784160923515
+      "updatedAt": 1784263317509
     }
   ],
   "chats": [
@@ -8651,18 +8795,17 @@
   "aiDescriptions": [
     {
       "productId": "yukata-xanh",
-      "generatedAt": 1784205582881,
+      "generatedAt": 1784263422321,
       "description": {
-        "headline": "Yukata xanh đen - Tinh hoa thời trang Nhật Bản cho mùa hè nhẹ nhàng",
-        "visualSummary": "Áo Yukata màu xanh đen với họa tiết hoa trắng và tím nổi bật, thắt lưng obi trắng có dây xanh dương và chuỗi lụa mềm mại. Phụ kiện tóc hoa tươi cùng quạt giấy truyền thống trong không gian phòng Nhật truyền thống tạo nên nét đẹp thanh lịch",
+        "headline": "Yukata vải bông xanh đen — một điểm nhấn Nhật dễ đưa vào tủ đồ",
+        "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
         "details": [
-          "Áo Yukata vải bông xanh đen theo phong cách thời trang Nhật Bản",
-          "Họa tiết hoa trắng và tím trên nền xanh đậm tạo điểm nhấn thanh lịch",
-          "Thắt lưng obi trắng phối dây xanh dương với chuỗi lụa mềm mại",
-          "Phối hợp cùng phụ kiện tóc hoa tươi và quạt giấy truyền thống"
+          "Thiết kế thuộc nhóm trang phục truyền thống Nhật, bám đúng tên sản phẩm “Yukata vải bông xanh đen”.",
+          "Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
+          "Tông xanh tạo cá tính rõ mà vẫn dễ phối với màu trung tính."
         ],
-        "stylingTip": "Dùng quạt giấy làm phụ kiện tinh tế khi dạo phố hoặc tham dự tiệc trà, kết hợp giày sandal mộc để tôn lên vẻ dịu dàng",
-        "purchaseReason": "Thiết kế tối giản nhưng đầy nét đẹp truyền thống, phù hợp cho mọi dịp từ công sở đến lễ hội mùa hè",
+        "stylingTip": "Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.",
+        "purchaseReason": "Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
         "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
         "engine": "catalog-grounded-fallback"
       }
@@ -8754,7 +8897,7 @@
         "stylingTip": "Phối cùng áo sơ mi đơn giản hoặc váy truyền thống để tạo phong cách lễ hội độc đáo, phù hợp cho các dịp đặc biệt.",
         "purchaseReason": "Thiết kế đậm chất Nhật Bản với màu đỏ rực rỡ và họa tiết tinh tế, dễ dàng kết hợp vào nhiều trang phục khác nhau.",
         "confidence": "95%",
-        "engine": "qwen3-vl:8b"
+        "engine": "thi-giac-san-pham"
       }
     },
     {
