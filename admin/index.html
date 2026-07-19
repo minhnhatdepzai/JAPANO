@@ -284,6 +284,19 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .section-title h2{font-size:15px;font-weight:700}
 .section-title .sub{color:var(--faint);font-size:12px}
 .hidden{display:none!important}
+/* collapsed sidebar */
+.app.collapsed .sidebar{width:64px}
+.app.collapsed .main{margin-left:64px}
+.app.collapsed .brand b,.app.collapsed .brand small{display:none}
+.app.collapsed .nav{padding:10px 6px}
+.app.collapsed .nav a{font-size:0;padding:10px 6px;justify-content:center}
+.app.collapsed .nav a .ic{font-size:15px}
+
+/* bulk action bar */
+.bulkbar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--sh);margin-bottom:12px}
+
+/* dark mode variables */
+body.dark{--bg:#0b1220;--panel:#0f1724;--panel2:#0b1220;--line:rgba(255,255,255,.04);--line2:rgba(255,255,255,.03);--ink:#E6EEF3;--ink2:#C7D2E1;--muted:#9AA8B5;--faint:#7B8792}
 </style>
 </head>
 <body>
@@ -325,6 +338,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
       </div>
       <div class="search"><span>🔍</span><input id="globalSearch" placeholder="Tìm đơn hàng, sản phẩm, người dùng…"></div>
       <div class="hspace"></div>
+        <button id="sidebarToggle" class="iconbtn" title="Thu/gọn sidebar">☰</button>
+        <button id="darkToggle" class="iconbtn" title="Chuyển sáng/tối">🌙</button>
       <button class="apibtn" id="apiToggle" title="Kiểm tra lại kết nối API"><span class="dot g" id="apiDot"></span><span id="apiText">API trực tuyến</span></button>
       <div class="hicon" id="bellBtn">🔔<span class="n"></span></div>
       <div class="who"><div class="av">A</div><div><div class="nm">Quản trị JAPANO</div><div class="rl">Quản trị viên</div></div></div>
@@ -332,6 +347,13 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 
     <div class="content">
       <div id="banner"></div>
+      <div id="bulkBar" class="bulkbar hidden" style="display:none">
+        <span id="bulkCount">0</span>
+        <div style="margin-left:12px;display:inline-flex;gap:8px">
+          <button id="bulkDelete" class="btn sm">Xóa</button>
+          <button id="bulkExport" class="btn sm">Xuất</button>
+        </div>
+      </div>
       <div id="content"></div>
     </div>
   </div>
@@ -409,6 +431,87 @@ function normalizeAnalyticsPayload(raw){
     models:Array.isArray(root.models)?root.models:[]
   };
 }
+// --- UI helpers: sidebar collapse, dark mode, search datalist, bulk actions ---
+function initUI(){
+  // restore preferences
+  const collapsed = localStorage.getItem('admin_sidebar_collapsed')==='true';
+  const dark = localStorage.getItem('admin_dark_mode')==='true';
+  if(collapsed) document.querySelector('.app').classList.add('collapsed');
+  if(dark) document.body.classList.add('dark');
+
+  // attach toggle buttons
+  document.getElementById('sidebarToggle').addEventListener('click', ()=>{
+    const app = document.querySelector('.app');
+    app.classList.toggle('collapsed');
+    localStorage.setItem('admin_sidebar_collapsed', app.classList.contains('collapsed'));
+  });
+  document.getElementById('darkToggle').addEventListener('click', ()=>{
+    document.body.classList.toggle('dark');
+    localStorage.setItem('admin_dark_mode', document.body.classList.contains('dark'));
+  });
+
+  // enhance search with datalist
+  const search = document.getElementById('globalSearch');
+  if(search){
+    const dl = document.createElement('datalist'); dl.id='searchList';
+    // populate from categories and sizes
+    (CATS||[]).forEach(c=>{ const o=document.createElement('option'); o.value=c.name; dl.appendChild(o); });
+    SIZES.forEach(s=>{ const o=document.createElement('option'); o.value=s; dl.appendChild(o); });
+    document.body.appendChild(dl);
+    search.setAttribute('list','searchList');
+    search.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); performSearch(search.value); } });
+  }
+
+  // bulk actions: inject checkboxes to any .tbl found
+  attachBulkCheckboxes();
+}
+
+function performSearch(query){
+  if(!query) return;
+  // simple client-side highlight: focus content and show toast
+  showToast(`Tìm: ${query}`,'info');
+  // default behaviour: navigate to API search if available
+  if(API) window.open(`${API}/products?search=${encodeURIComponent(query)}`,'_blank');
+}
+
+function attachBulkCheckboxes(){
+  const tables = Array.from(document.querySelectorAll('table.tbl'));
+  tables.forEach(tbl=>{
+    // skip if already has checkbox header
+    if(tbl.dataset.bulk==='1') return; tbl.dataset.bulk='1';
+    const thead = tbl.querySelector('thead');
+    const th0 = document.createElement('th');
+    th0.innerHTML = '<input type="checkbox" id="selectAllTbl">';
+    if(thead){ thead.rows[0].insertBefore(th0, thead.rows[0].firstChild); }
+    else { // try inserting into first row header cells
+      const firstRow = tbl.querySelector('tr'); if(firstRow) firstRow.insertBefore(th0, firstRow.firstChild);
+    }
+    const rows = Array.from(tbl.querySelectorAll('tbody tr'));
+    rows.forEach(r=>{ const td=document.createElement('td'); td.innerHTML='<input type="checkbox" class="rowSelect">'; r.insertBefore(td, r.firstChild); });
+
+    // events
+    tbl.querySelectorAll('.rowSelect').forEach(cb=>cb.addEventListener('change', updateBulkBar));
+    const selAll = tbl.querySelector('#selectAllTbl'); if(selAll) selAll.addEventListener('change', ()=>{ tbl.querySelectorAll('.rowSelect').forEach(cb=>cb.checked=selAll.checked); updateBulkBar(); });
+  });
+}
+
+function updateBulkBar(){
+  const total = document.querySelectorAll('.rowSelect:checked').length;
+  const bar = document.getElementById('bulkBar');
+  if(total>0){ bar.style.display='flex'; bar.classList.remove('hidden'); document.getElementById('bulkCount').textContent = `${total} được chọn`; }
+  else { bar.style.display='none'; bar.classList.add('hidden'); }
+}
+
+document.getElementById('bulkDelete').addEventListener('click', ()=>{ showToast('Bulk delete — thao tác mẫu','err'); });
+document.getElementById('bulkExport').addEventListener('click', ()=>{ showToast('Bulk export — thao tác mẫu','info'); });
+
+// expose a small toast helper (already used in file)
+function showToast(message, kind='info'){
+  const toasts = document.getElementById('toasts'); const t=document.createElement('div'); t.className=`toast ${kind}`; t.innerHTML=`<div class="ti"></div><div>${message}</div>`; toasts.appendChild(t); setTimeout(()=>t.remove(),3500);
+}
+
+// run UI init after DOM ready
+window.addEventListener('load', ()=>{ try{ initUI(); }catch(e){console.warn(e);} });
 async function requestJSON(path,ms=5000,options){
   const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),ms);
   try{const r=await fetch(API+path,{...(options||{}),signal:ctrl.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}
