@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "JAPANO",
+    "slug": "japano",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "japano",
+    "userInterfaceStyle": "light",
+    "splash": { "backgroundColor": "#F4EDE1" },
+    "assetBundlePatterns": ["**/*"],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "vn.japano.app" },
+    "android": {
+      "package": "vn.japano.app",
+      "permissions": ["CAMERA"]
+    },
+    "web": { "bundler": "metro" },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép JAPANO chọn ảnh để phân tích phong cách và thử đồ.",
+          "cameraPermission": "Cho phép JAPANO chụp ảnh để thử đồ trực tiếp.",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}
