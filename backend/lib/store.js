@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { emptyState, seededState } = require('../seed');
 
-const SERVER_MANAGED_FIELDS = Object.freeze(['orders', 'interactions', 'profiles', 'chats', 'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections', 'voucherRedemptions', 'payments', 'returnRequests', 'carts', 'reviews', 'reviewReactions', 'moderationSamples']);
+const SERVER_MANAGED_FIELDS = Object.freeze(['orders', 'interactions', 'profiles', 'chats', 'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections', 'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts', 'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists']);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -18,7 +18,7 @@ function normalizeState(input) {
     normalized[key] = Array.isArray(source[key]) ? source[key] : clone(defaults[key]);
   }
   normalized.flagcardConfig = { ...defaults.flagcardConfig, ...(source.flagcardConfig || {}) };
-  normalized.schemaVersion = Math.max(4, Number(source.schemaVersion || 0));
+  normalized.schemaVersion = Math.max(5, Number(source.schemaVersion || 0));
   normalized.seeded = Boolean(source.seeded || normalized.products.length);
   return normalized;
 }
@@ -88,7 +88,7 @@ function createStore(filePath) {
     // diện quản trị mở từ trước tuyệt đối không được ghi đè hay xoá đơn mới.
     merged.orders = current.orders;
     merged.flagcardConfig = { ...current.flagcardConfig, ...(incoming.flagcardConfig || {}) };
-    merged.schemaVersion = Math.max(4, Number(current.schemaVersion || 0), Number(incoming.schemaVersion || 0));
+    merged.schemaVersion = Math.max(5, Number(current.schemaVersion || 0), Number(incoming.schemaVersion || 0));
     return write(merged);
   }
 

@@ -10,9 +10,11 @@
     "test": "node --test"
   },
   "dependencies": {
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
+    "mongodb": "^7.5.0",
     "stripe": "^22.3.2"
   }
 }

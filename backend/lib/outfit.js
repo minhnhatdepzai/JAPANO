@@ -48,7 +48,11 @@ function colorHarmony(hexA, hexB) {
 }
 
 function publishedProducts(state) {
-  return (state.products || []).filter((p) => !['archived', 'hidden'].includes(String(p.status || '')));
+  return (state.products || []).filter((product) => {
+    if (['archived', 'hidden', 'draft', 'out'].includes(String(product.status || '').toLowerCase())) return false;
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    return !variants.length || variants.some((variant) => finiteNumber(variant.stock, 0) > 0);
+  });
 }
 
 function trendingScoreMap(state) {

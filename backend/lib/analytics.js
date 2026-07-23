@@ -606,15 +606,52 @@ function buildAnalytics(state, options = {}) {
     (order.items || []).forEach((item) => { const id = itemProductId(item); if (id) behaviorProducts.add(id); });
   });
   const usableSignals = Object.entries(behaviorCounts).filter(([type]) => ['view','search','wishlist','cart','tryon','chat','goal','purchase'].includes(type)).reduce((sum, [,count]) => sum + count, 0);
+  const recommendationPipeline = options.recommendationDiagnostics || null;
+  const stageById = new Map((recommendationPipeline?.stages || []).map((stage) => [stage.id, stage]));
+  const assistantChats = (state.chats || []).filter((row) => String(row.role || '').toLowerCase() === 'assistant');
+  const tracedChats = assistantChats.filter((row) => row.modelTrace || row.engine);
+  const fallbackChats = tracedChats.filter((row) => String(row.intent || '') === 'fallback');
+  const llmChats = tracedChats.filter((row) => /ollama/i.test(String(row.engine || '')));
+  const confidences = tracedChats.map((row) => finiteNumber(row.confidence, NaN)).filter(Number.isFinite);
+  const latencies = tracedChats.map((row) => finiteNumber(row.latencyMs, NaN)).filter(Number.isFinite);
+  const intentCounts = {};
+  tracedChats.forEach((row) => {
+    const intent = String(row.intent || 'unknown');
+    intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+  });
+  const botIntelligence = {
+    status: tracedChats.length ? 'active' : 'waiting-for-telemetry',
+    engine: 'hybrid-post-transformer',
+    grounded: true,
+    requests: tracedChats.length,
+    llmResponses: llmChats.length,
+    localResponses: tracedChats.length - llmChats.length,
+    fallbackResponses: fallbackChats.length,
+    fallbackRate: tracedChats.length ? fallbackChats.length / tracedChats.length : 0,
+    averageConfidence: confidences.length ? confidences.reduce((sum, value) => sum + value, 0) / confidences.length : null,
+    averageLatencyMs: latencies.length ? latencies.reduce((sum, value) => sum + value, 0) / latencies.length : null,
+    intentCounts,
+    models: ['mlstm-style-matrix-memory', 'semantic-hashing-expert', 'sparse-moe-router', 'catalog-retrieval', 'ollama-optional'],
+  };
   const recommendationHealth = {
-    active: usableSignals > 0,
-    interactions: usableSignals,
-    users: behaviorUsers.size,
-    products: behaviorProducts.size,
+    active: recommendationPipeline ? recommendationPipeline.status === 'active' : usableSignals > 0,
+    interactions: recommendationPipeline?.events ?? usableSignals,
+    users: recommendationPipeline?.users ?? behaviorUsers.size,
+    products: recommendationPipeline?.products ?? behaviorProducts.size,
     typeCounts: behaviorCounts,
     lastInteractionAt: Math.max(0, ...(state.interactions || []).map((row) => finiteNumber(row.createdAt, 0))),
     matrixFactorizationActive: behaviorUsers.size >= 2 && usableSignals >= 4,
-    algorithm: 'Tổ hợp Matrix Factorization SGD + lọc cộng tác theo sản phẩm + nội dung sản phẩm/hồ sơ + luật mua kèm + xu hướng có suy giảm theo thời gian',
+    selectiveSsmActive: stageById.get('selective-ssm-sequence')?.active ?? usableSignals > 0,
+    lightGcnActive: stageById.get('lightgcn-user-item')?.active ?? usableSignals > 0,
+    autoregressiveNextItemActive: stageById.get('autoregressive-next-item')?.active ?? false,
+    pairwiseRankerActive: stageById.get('pairwise-logistic-ranker')?.active ?? false,
+    graphEdges: recommendationPipeline?.graphEdges ?? 0,
+    graphDensity: recommendationPipeline?.graphDensity ?? 0,
+    transitionCount: recommendationPipeline?.transitionCount ?? 0,
+    trainingPairs: recommendationPipeline?.trainingPairs ?? 0,
+    itemCoverage: recommendationPipeline?.itemCoverage ?? 0,
+    negativeFeedbackEvents: recommendationPipeline?.negativeFeedbackEvents ?? 0,
+    algorithm: 'Selective SSM chuỗi hành vi + LightGCN user-item + pairwise ranker, blend với Matrix Factorization/Item-CF/content/luật mua kèm/trending',
     weights: { purchase: 6, cart: 4, tryon: 3.5, wishlist: 3, chat: 2.5, search: 2, view: 1 },
   };
   const models = [
@@ -625,7 +662,8 @@ function buildAnalytics(state, options = {}) {
     { name: 'Điểm nhu cầu sản phẩm', type: 'DemandScore + 30-day momentum', metric: `${demand.predictions.length} sản phẩm` },
     { name: 'Xu hướng danh mục', type: 'Bán ×3 + wishlist ×2 + giỏ + lượt xem', metric: `${demand.categoryTrends.length} danh mục` },
     { name: 'Market Basket', type: 'Association Rules (support/confidence/lift)', metric: `${marketBasketRules.length} luật phối/mua kèm` },
-    { name: 'Gợi ý cá nhân hoá đa tín hiệu', type: 'Matrix Factorization SGD + Item-CF + Content + Time Decay', metric: `${recommendationHealth.interactions} hành vi · ${recommendationHealth.users} khách · ${recommendationHealth.matrixFactorizationActive ? 'MF đang hoạt động' : 'MF chờ thêm dữ liệu'}` },
+    { name: 'Gợi ý cá nhân hoá MoE', type: 'Selective SSM + LightGCN-style + autoregressive next-item + pairwise ranker', metric: `${recommendationHealth.interactions} hành vi · ${recommendationHealth.graphEdges} cạnh · ${recommendationHealth.trainingPairs} training pair` },
+    { name: 'Ori semantic router', type: 'mLSTM-style matrix memory + sparse Mixture-of-Experts', metric: `${botIntelligence.requests} lượt có telemetry · ${botIntelligence.averageConfidence == null ? 'chưa có confidence' : `confidence TB ${Math.round(botIntelligence.averageConfidence * 100)}%`}` },
     { name: 'Product Vision', type: 'Qwen3-VL 8B + catalog grounding', metric: `${(state.aiDescriptions || []).length} sản phẩm đã phân tích ảnh` },
     { name: 'Shopping & Wellness Coach', type: 'Qwen2.5 7B + SMART/if-then safety rules', metric: `${(state.goals || []).length} lộ trình đang lưu` },
   ];
@@ -643,6 +681,8 @@ function buildAnalytics(state, options = {}) {
     marketBasketRules,
     models,
     recommendationHealth,
+    recommendationPipeline,
+    botIntelligence,
   };
 }
 

@@ -1,6 +1,6 @@
 {
   "seeded": true,
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "shop": {
     "name": "JAPANO Store",
     "hotline": "1900 6868",
@@ -9,6 +9,7 @@
     "shipFee": 30000,
     "cod": true,
     "stripe": true,
+    "vnpay": true,
     "logo": null
   },
   "integrations": {
@@ -4515,7 +4516,15 @@
           "at": 1784163337272
         }
       ],
-      "source": "mobile"
+      "source": "mobile",
+      "flagcardAward": {
+        "cardId": "fushimi-inari",
+        "orderId": "o1784162249095",
+        "orderCode": "JP240736",
+        "orderTotal": 5484000,
+        "awardedAt": 1784540414640,
+        "source": "qualifying-order"
+      }
     },
     {
       "id": "o1784162785835",
@@ -5031,7 +5040,7 @@
       "payment": {
         "method": "Stripe",
         "provider": "stripe",
-        "status": "pending",
+        "status": "failed",
         "txn": "—",
         "currency": "vnd",
         "checkoutSessionId": "cs_test_a1uu56gEHL5otNR80WV6spg26agnmuac875MfOjjNiwCGhGorVNDsZV6fY",
@@ -5043,6 +5052,10 @@
         {
           "s": "pending_payment",
           "at": 1784207395309
+        },
+        {
+          "s": "payment_failed",
+          "at": 1784648129410
         }
       ],
       "source": "mobile"
@@ -5092,7 +5105,7 @@
       "payment": {
         "method": "Stripe",
         "provider": "stripe",
-        "status": "pending",
+        "status": "failed",
         "txn": "—",
         "currency": "vnd",
         "checkoutSessionId": "cs_test_a1DT7KUjAiN1aLJpR6MQp1OeSZ94eM2EbFH205SXkfQiMoNloFTis6APEn",
@@ -5104,6 +5117,10 @@
         {
           "s": "pending_payment",
           "at": 1784207985812
+        },
+        {
+          "s": "payment_failed",
+          "at": 1784648129714
         }
       ],
       "source": "mobile"
@@ -5178,6 +5195,496 @@
         }
       ],
       "source": "mobile"
+    },
+    {
+      "id": "o1784539452366",
+      "code": "JP240745",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0908232358",
+        "id": "demo-minh"
+      },
+      "address": "124, Phường An Bình, Thành phố Cần Thơ",
+      "addressDetails": {
+        "street": "124",
+        "wardCode": "31150",
+        "ward": "Phường An Bình",
+        "provinceCode": "92",
+        "province": "Thành phố Cần Thơ"
+      },
+      "items": [
+        {
+          "productId": "cardigan-dai",
+          "slug": "cardigan-dai",
+          "name": "Áo len khoác dáng dài",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 890000
+        }
+      ],
+      "subtotal": 890000,
+      "discount": 89000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 89000,
+      "paymentPromotion": {
+        "code": "STRIPE10",
+        "label": "Ưu đãi thanh toán thẻ Stripe 10%",
+        "percent": 10
+      },
+      "discountCode": "STRIPE10",
+      "total": 831000,
+      "ship": 30000,
+      "payment": {
+        "method": "Stripe",
+        "provider": "stripe",
+        "status": "paid",
+        "txn": "pi_3TvDQm46LydUHMTH1O5YAysw",
+        "currency": "vnd",
+        "paymentIntentId": "pi_3TvDQm46LydUHMTH1O5YAysw",
+        "paymentId": "pay-1784539452366",
+        "card": {
+          "brand": "visa",
+          "last4": "4242",
+          "funding": "credit"
+        }
+      },
+      "status": "confirmed",
+      "createdAt": 1784539452366,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784539452366
+        },
+        {
+          "s": "paid",
+          "at": 1784539454896,
+          "txn": "pi_3TvDQm46LydUHMTH1O5YAysw"
+        }
+      ],
+      "source": "mobile"
+    },
+    {
+      "id": "o1784623762896",
+      "code": "JP240746",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909060686",
+        "id": "demo-minh"
+      },
+      "address": "123, Phường An Bình, Thành phố Cần Thơ",
+      "addressDetails": {
+        "street": "123",
+        "wardCode": "31150",
+        "ward": "Phường An Bình",
+        "provinceCode": "92",
+        "province": "Thành phố Cần Thơ"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1290000
+        }
+      ],
+      "subtotal": 1290000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "paymentPromotion": {
+        "code": "VNPAY5",
+        "label": "Ưu đãi thanh toán qua VNPay 5%",
+        "percent": 5
+      },
+      "discountCode": "VNPAY5",
+      "total": 1255500,
+      "ship": 30000,
+      "payment": {
+        "method": "VNPay",
+        "provider": "vnpay",
+        "status": "paid",
+        "txn": "JP240746",
+        "currency": "VND",
+        "paymentId": "pay-1784623762896",
+        "bank": {
+          "code": "NCB",
+          "type": "ATM"
+        }
+      },
+      "status": "confirmed",
+      "createdAt": 1784623762896,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784623762896
+        },
+        {
+          "s": "paid",
+          "at": 1784625548234,
+          "txn": "JP240746"
+        }
+      ],
+      "source": "mobile"
+    },
+    {
+      "id": "o1784625155471",
+      "code": "JP240747",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909090906",
+        "id": "demo-minh"
+      },
+      "address": "123, Phường Bình Thuỷ, Thành phố Cần Thơ",
+      "addressDetails": {
+        "street": "123",
+        "wardCode": "31168",
+        "ward": "Phường Bình Thuỷ",
+        "provinceCode": "92",
+        "province": "Thành phố Cần Thơ"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1290000
+        }
+      ],
+      "subtotal": 1290000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "paymentPromotion": {
+        "code": "VNPAY5",
+        "label": "Ưu đãi thanh toán qua VNPay 5%",
+        "percent": 5
+      },
+      "discountCode": "VNPAY5",
+      "total": 1255500,
+      "ship": 30000,
+      "payment": {
+        "method": "VNPay",
+        "provider": "vnpay",
+        "status": "pending",
+        "txn": "JP240747",
+        "currency": "VND",
+        "paymentId": "pay-1784625155471"
+      },
+      "status": "pending_payment",
+      "createdAt": 1784625155471,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784625155471
+        }
+      ],
+      "source": "mobile"
+    },
+    {
+      "id": "o1784625616396",
+      "code": "JP240748",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0908980986",
+        "id": "demo-minh"
+      },
+      "address": "122, Phường Bình Thuỷ, Thành phố Cần Thơ",
+      "addressDetails": {
+        "street": "122",
+        "wardCode": "31168",
+        "ward": "Phường Bình Thuỷ",
+        "provinceCode": "92",
+        "province": "Thành phố Cần Thơ"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1290000
+        }
+      ],
+      "subtotal": 1290000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "paymentPromotion": {
+        "code": "VNPAY5",
+        "label": "Ưu đãi thanh toán qua VNPay 5%",
+        "percent": 5
+      },
+      "discountCode": "VNPAY5",
+      "total": 1255500,
+      "ship": 30000,
+      "payment": {
+        "method": "VNPay",
+        "provider": "vnpay",
+        "status": "pending",
+        "txn": "JP240748",
+        "currency": "VND",
+        "paymentId": "pay-1784625616396"
+      },
+      "status": "pending_payment",
+      "createdAt": 1784625616396,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784625616396
+        }
+      ],
+      "source": "mobile"
+    },
+    {
+      "id": "o1784631853615",
+      "code": "JP240749",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Lê Minh Nhật",
+        "email": "ban@japano.vn",
+        "phone": "0909090909",
+        "id": "demo-minh"
+      },
+      "address": "45, Phường Thới An, Thành phố Hồ Chí Minh",
+      "addressDetails": {
+        "street": "45",
+        "wardCode": "26773",
+        "ward": "Phường Thới An",
+        "provinceCode": "79",
+        "province": "Thành phố Hồ Chí Minh"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 2,
+          "price": 1290000
+        },
+        {
+          "productId": "kimono-hong",
+          "slug": "kimono-hong",
+          "name": "Kimono truyền thống Hồng",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1890000
+        }
+      ],
+      "subtotal": 4470000,
+      "discount": 30000,
+      "voucherDiscount": 30000,
+      "paymentDiscount": 0,
+      "paymentPromotion": null,
+      "discountCode": "FREESHIP",
+      "total": 4470000,
+      "ship": 30000,
+      "payment": {
+        "method": "COD",
+        "provider": "cod",
+        "status": "unpaid",
+        "txn": "—",
+        "currency": "vnd"
+      },
+      "status": "pending",
+      "createdAt": 1784631853615,
+      "history": [
+        {
+          "s": "pending",
+          "at": 1784631853615
+        }
+      ],
+      "source": "mobile",
+      "voucherRedemption": {
+        "id": "redeem-o1784631853615",
+        "code": "FREESHIP",
+        "userId": "demo-minh",
+        "orderId": "o1784631853615",
+        "discount": 30000,
+        "redeemedAt": 1784631853615
+      }
+    },
+    {
+      "id": "o1784712524868",
+      "code": "JP240750",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909090909",
+        "id": "demo-minh"
+      },
+      "address": "45 Phường Thới An, Phường Thới An, Thành phố Hồ Chí Minh",
+      "addressDetails": {
+        "street": "45 Phường Thới An",
+        "wardCode": "26773",
+        "ward": "Phường Thới An",
+        "provinceCode": "79",
+        "province": "Thành phố Hồ Chí Minh"
+      },
+      "items": [
+        {
+          "productId": "yukata-xanh",
+          "slug": "yukata-xanh",
+          "name": "Yukata vải bông xanh đen",
+          "colorName": "Chàm",
+          "colorHex": "#1A1410",
+          "size": "S",
+          "qty": 1,
+          "price": 1290000
+        }
+      ],
+      "subtotal": 1290000,
+      "discount": 322500,
+      "voucherDiscount": 258000,
+      "paymentDiscount": 64500,
+      "paymentPromotion": {
+        "code": "VNPAY5",
+        "label": "Ưu đãi thanh toán qua VNPay 5%",
+        "percent": 5
+      },
+      "discountCode": "THU20",
+      "total": 997500,
+      "ship": 30000,
+      "payment": {
+        "method": "VNPay",
+        "provider": "vnpay",
+        "status": "paid",
+        "txn": "JP240750",
+        "currency": "VND",
+        "paymentId": "pay-1784712524872",
+        "bank": {
+          "code": "NCB",
+          "type": "ATM"
+        }
+      },
+      "status": "confirmed",
+      "createdAt": 1784712524868,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784712524868
+        },
+        {
+          "s": "paid",
+          "at": 1784712655927,
+          "txn": "JP240750"
+        }
+      ],
+      "source": "mobile",
+      "voucherRedemption": {
+        "id": "redeem-o1784712524868",
+        "code": "THU20",
+        "userId": "demo-minh",
+        "orderId": "o1784712524868",
+        "discount": 322500,
+        "redeemedAt": 1784712524868
+      }
+    },
+    {
+      "id": "o1784712720613",
+      "code": "JP240751",
+      "userId": "demo-minh",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909090909",
+        "id": "demo-minh"
+      },
+      "address": "45 Phường Thới An, Phường Thới An, Thành phố Hồ Chí Minh",
+      "addressDetails": {
+        "street": "45 Phường Thới An",
+        "wardCode": "26773",
+        "ward": "Phường Thới An",
+        "provinceCode": "79",
+        "province": "Thành phố Hồ Chí Minh"
+      },
+      "items": [
+        {
+          "productId": "kimono-hong",
+          "slug": "kimono-hong",
+          "name": "Kimono truyền thống Hồng",
+          "colorName": "Mực",
+          "colorHex": "#1A1410",
+          "size": "M",
+          "qty": 1,
+          "price": 1890000
+        }
+      ],
+      "subtotal": 1890000,
+      "discount": 189000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 189000,
+      "paymentPromotion": {
+        "code": "STRIPE10",
+        "label": "Ưu đãi thanh toán thẻ Stripe 10%",
+        "percent": 10
+      },
+      "discountCode": "STRIPE10",
+      "total": 1731000,
+      "ship": 30000,
+      "payment": {
+        "method": "Stripe",
+        "provider": "stripe",
+        "status": "paid",
+        "txn": "pi_3TvwVQ46LydUHMTH059F5cic",
+        "currency": "vnd",
+        "paymentIntentId": "pi_3TvwVQ46LydUHMTH059F5cic",
+        "paymentId": "pay-1784712720614",
+        "card": {
+          "brand": "visa",
+          "last4": "4242",
+          "funding": "credit"
+        }
+      },
+      "status": "completed",
+      "createdAt": 1784712720613,
+      "history": [
+        {
+          "s": "pending_payment",
+          "at": 1784712720613
+        },
+        {
+          "s": "paid",
+          "at": 1784712723186,
+          "txn": "pi_3TvwVQ46LydUHMTH059F5cic"
+        },
+        {
+          "s": "shipping",
+          "at": 1784715444100
+        },
+        {
+          "s": "completed",
+          "at": 1784715445292
+        }
+      ],
+      "source": "mobile",
+      "completedAt": 1784715445292
     }
   ],
   "payments": [
@@ -5689,7 +6196,7 @@
       "userId": "demo-minh",
       "provider": "stripe",
       "method": "Stripe",
-      "status": "pending",
+      "status": "failed",
       "amount": 1731000,
       "originalAmount": 1920000,
       "discount": 189000,
@@ -5703,7 +6210,8 @@
       "refundable": false,
       "refunds": [],
       "createdAt": 1784207395309,
-      "updatedAt": 1784207396043
+      "updatedAt": 1784648129410,
+      "failureReason": "checkout_expired"
     },
     {
       "id": "pay-1784207985812",
@@ -5713,7 +6221,7 @@
       "userId": "demo-minh",
       "provider": "stripe",
       "method": "Stripe",
-      "status": "pending",
+      "status": "failed",
       "amount": 1731000,
       "originalAmount": 1920000,
       "discount": 189000,
@@ -5727,7 +6235,8 @@
       "refundable": false,
       "refunds": [],
       "createdAt": 1784207985812,
-      "updatedAt": 1784207986514
+      "updatedAt": 1784648129714,
+      "failureReason": "checkout_expired"
     },
     {
       "id": "pay-1784265344904",
@@ -5767,6 +6276,206 @@
           "city": "Phường An Đông",
           "country": "VN",
           "line1": "123",
+          "line2": null,
+          "postal_code": null,
+          "state": "Thành phố Hồ Chí Minh"
+        }
+      },
+      "card": {
+        "brand": "visa",
+        "last4": "4242",
+        "funding": "credit"
+      }
+    },
+    {
+      "id": "pay-1784539452366",
+      "code": "PAY-JP240745-452366",
+      "orderId": "o1784539452366",
+      "orderCode": "JP240745",
+      "userId": "demo-minh",
+      "provider": "stripe",
+      "method": "Stripe",
+      "status": "paid",
+      "amount": 831000,
+      "originalAmount": 920000,
+      "discount": 89000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 89000,
+      "promotionCode": "STRIPE10",
+      "currency": "vnd",
+      "transactionCode": "pi_3TvDQm46LydUHMTH1O5YAysw",
+      "paymentIntentId": "pi_3TvDQm46LydUHMTH1O5YAysw",
+      "checkoutSessionId": "",
+      "refundable": true,
+      "refunds": [],
+      "createdAt": 1784539452366,
+      "updatedAt": 1784539454896,
+      "intentStatus": "succeeded",
+      "nativeAttempt": 1,
+      "paidAt": 1784539454896,
+      "chargeId": "ch_3TvDQm46LydUHMTH1yWxTmLU",
+      "receiptUrl": "https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKL7S99IGMgZXo_o1uIo6LBYtZN6_XA0FCrpC652slIxxXgBHN-PLLzH_i4tPUOXPO4OJsjPjqSAOKeeW",
+      "paymentMethodType": "card",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0908232358",
+        "address": {
+          "city": "Phường An Bình",
+          "country": "VN",
+          "line1": "124",
+          "line2": null,
+          "postal_code": null,
+          "state": "Thành phố Cần Thơ"
+        }
+      },
+      "card": {
+        "brand": "visa",
+        "last4": "4242",
+        "funding": "credit"
+      }
+    },
+    {
+      "id": "pay-1784623762896",
+      "code": "PAY-JP240746-762896",
+      "orderId": "o1784623762896",
+      "orderCode": "JP240746",
+      "userId": "demo-minh",
+      "provider": "vnpay",
+      "method": "VNPay",
+      "status": "paid",
+      "amount": 1255500,
+      "originalAmount": 1320000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "promotionCode": "VNPAY5",
+      "currency": "VND",
+      "transactionCode": "JP240746",
+      "refundable": true,
+      "refunds": [],
+      "createdAt": 1784623762896,
+      "updatedAt": 1784625548234,
+      "vnpCreateDate": "20260721161748",
+      "vnpTransactionNo": "15629596",
+      "vnpBankCode": "NCB",
+      "vnpCardType": "ATM",
+      "vnpPayDate": "20260721161859",
+      "paidAt": 1784625548234,
+      "paymentMethodType": "ATM"
+    },
+    {
+      "id": "pay-1784625155471",
+      "code": "PAY-JP240747-155471",
+      "orderId": "o1784625155471",
+      "orderCode": "JP240747",
+      "userId": "demo-minh",
+      "provider": "vnpay",
+      "method": "VNPay",
+      "status": "pending",
+      "amount": 1255500,
+      "originalAmount": 1320000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "promotionCode": "VNPAY5",
+      "currency": "VND",
+      "transactionCode": "JP240747",
+      "refundable": false,
+      "refunds": [],
+      "createdAt": 1784625155471,
+      "updatedAt": 1784625437554,
+      "vnpCreateDate": "20260721161717"
+    },
+    {
+      "id": "pay-1784625616396",
+      "code": "PAY-JP240748-616396",
+      "orderId": "o1784625616396",
+      "orderCode": "JP240748",
+      "userId": "demo-minh",
+      "provider": "vnpay",
+      "method": "VNPay",
+      "status": "pending",
+      "amount": 1255500,
+      "originalAmount": 1320000,
+      "discount": 64500,
+      "voucherDiscount": 0,
+      "paymentDiscount": 64500,
+      "promotionCode": "VNPAY5",
+      "currency": "VND",
+      "transactionCode": "JP240748",
+      "refundable": false,
+      "refunds": [],
+      "createdAt": 1784625616396,
+      "updatedAt": 1784625616397,
+      "vnpCreateDate": "20260721162016"
+    },
+    {
+      "id": "pay-1784712524872",
+      "code": "PAY-JP240750-524872",
+      "orderId": "o1784712524868",
+      "orderCode": "JP240750",
+      "userId": "demo-minh",
+      "provider": "vnpay",
+      "method": "VNPay",
+      "status": "paid",
+      "amount": 997500,
+      "originalAmount": 1320000,
+      "discount": 322500,
+      "voucherDiscount": 258000,
+      "paymentDiscount": 64500,
+      "promotionCode": "VNPAY5",
+      "currency": "VND",
+      "transactionCode": "JP240750",
+      "refundable": true,
+      "refunds": [],
+      "createdAt": 1784712524872,
+      "updatedAt": 1784712655927,
+      "vnpCreateDate": "20260722162844",
+      "vnpTransactionNo": "15631363",
+      "vnpBankCode": "NCB",
+      "vnpCardType": "ATM",
+      "vnpPayDate": "20260722163045",
+      "paidAt": 1784712655927,
+      "paymentMethodType": "ATM"
+    },
+    {
+      "id": "pay-1784712720614",
+      "code": "PAY-JP240751-720614",
+      "orderId": "o1784712720613",
+      "orderCode": "JP240751",
+      "userId": "demo-minh",
+      "provider": "stripe",
+      "method": "Stripe",
+      "status": "paid",
+      "amount": 1731000,
+      "originalAmount": 1920000,
+      "discount": 189000,
+      "voucherDiscount": 0,
+      "paymentDiscount": 189000,
+      "promotionCode": "STRIPE10",
+      "currency": "vnd",
+      "transactionCode": "pi_3TvwVQ46LydUHMTH059F5cic",
+      "paymentIntentId": "pi_3TvwVQ46LydUHMTH059F5cic",
+      "checkoutSessionId": "",
+      "refundable": true,
+      "refunds": [],
+      "createdAt": 1784712720614,
+      "updatedAt": 1784712723186,
+      "intentStatus": "succeeded",
+      "nativeAttempt": 1,
+      "paidAt": 1784712723186,
+      "chargeId": "ch_3TvwVQ46LydUHMTH0Ee5cXQJ",
+      "receiptUrl": "https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKJKcgtMGMganI4NdQSo6LBY4DDot4AYcQz1DgDDGXLHOYZCNIZuwaJm-AVygo8vjjlTc7kso1aU1MIWb",
+      "paymentMethodType": "card",
+      "customer": {
+        "name": "Trần Minh",
+        "email": "ban@japano.vn",
+        "phone": "0909090909",
+        "address": {
+          "city": "Phường Thới An",
+          "country": "VN",
+          "line1": "45 Phường Thới An",
           "line2": null,
           "postal_code": null,
           "state": "Thành phố Hồ Chí Minh"
@@ -5833,9 +6542,935 @@
     }
   ],
   "carts": [],
-  "reviews": [],
-  "reviewReactions": [],
-  "moderationSamples": [],
+  "reviews": [
+    {
+      "id": "review-seed-kimono-hong-u5",
+      "productId": "kimono-hong",
+      "userId": "u5",
+      "userName": "Hoàng Anh Tú",
+      "orderId": "o15",
+      "orderCode": "JP240714",
+      "rating": 5,
+      "comment": "Vải mềm, lên dáng chuẩn, hoa văn đẹp đúng như hình. Mặc đi lễ hội ai cũng khen.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1774323372477
+      },
+      "createdAt": 1774323372477,
+      "updatedAt": 1784715524685,
+      "adminNote": "",
+      "moderatedAt": 1784715524685
+    },
+    {
+      "id": "review-seed-kimono-hong-demo-minh",
+      "productId": "kimono-hong",
+      "userId": "demo-minh",
+      "userName": "Trần Minh",
+      "orderId": "o1784162249095",
+      "orderCode": "JP240736",
+      "rating": 4,
+      "comment": "Kimono đẹp, màu hồng nhã. Trừ 1 sao vì phần eo hơi rộng so với mình, nên chọn kỹ size.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1784710424057
+      },
+      "createdAt": 1784710424057,
+      "updatedAt": 1784715517728,
+      "adminNote": "",
+      "moderatedAt": 1784715517728
+    },
+    {
+      "id": "review-seed-yukata-xanh-u10",
+      "productId": "yukata-xanh",
+      "userId": "u10",
+      "userName": "Lý Cẩm Tú",
+      "orderId": "o20",
+      "orderCode": "JP240719",
+      "rating": 5,
+      "comment": "Yukata cotton mát, xanh đen rất sang. Đóng gói cẩn thận, giao đúng hẹn.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1770849372477
+      },
+      "createdAt": 1770849372477,
+      "updatedAt": 1784715523613,
+      "adminNote": "",
+      "moderatedAt": 1784715523613
+    },
+    {
+      "id": "review-seed-yukata-xanh-demo-minh",
+      "productId": "yukata-xanh",
+      "userId": "demo-minh",
+      "userName": "Trần Minh",
+      "orderId": "o1784162249095",
+      "orderCode": "JP240736",
+      "rating": 4,
+      "comment": "Chất ổn trong tầm giá, đường may gọn gàng. Giao chậm hơn dự kiến một hôm nhưng shop báo trước nên vẫn ok.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1784507849095
+      },
+      "createdAt": 1784507849095,
+      "updatedAt": 1784715513934,
+      "adminNote": "",
+      "moderatedAt": 1784715513934
+    },
+    {
+      "id": "review-seed-haori-dang-dai-u1",
+      "productId": "haori-dang-dai",
+      "userId": "u1",
+      "userName": "Trần Minh",
+      "orderId": "o1",
+      "orderCode": "JP240700",
+      "rating": 5,
+      "comment": "Haori dáng dài khoác ngoài cực chất, phối với áo trơn là đẹp. Rất đáng tiền.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1784180172477
+      },
+      "createdAt": 1784180172477,
+      "updatedAt": 1784180172477
+    },
+    {
+      "id": "review-seed-haori-dang-dai-u5",
+      "productId": "haori-dang-dai",
+      "userId": "u5",
+      "userName": "Hoàng Anh Tú",
+      "orderId": "o25",
+      "orderCode": "JP240724",
+      "rating": 4,
+      "comment": "Form dài thanh thoát, vải dày dặn. Màu ngoài thực tế trầm hơn hình một chút.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1767418572477
+      },
+      "createdAt": 1767418572477,
+      "updatedAt": 1784715520898,
+      "adminNote": "",
+      "moderatedAt": 1784715520898
+    },
+    {
+      "id": "review-seed-cardigan-dai-u7",
+      "productId": "cardigan-dai",
+      "userId": "u7",
+      "userName": "Vũ Hải Nam",
+      "orderId": "o7",
+      "orderCode": "JP240706",
+      "rating": 5,
+      "comment": "Áo len mềm, ấm, dáng dài che được nhiều khuyết điểm. Đi làm hay dạo phố đều hợp.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1780011372477
+      },
+      "createdAt": 1780011372477,
+      "updatedAt": 1780011372477
+    },
+    {
+      "id": "review-seed-cardigan-dai-u1",
+      "productId": "cardigan-dai",
+      "userId": "u1",
+      "userName": "Trần Minh",
+      "orderId": "o31",
+      "orderCode": "JP240730",
+      "rating": 3,
+      "comment": "Cardigan đẹp và dễ phối, nhưng chất hơi xù nhẹ sau lần giặt đầu. Nên giặt tay cho bền.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1763595372477
+      },
+      "createdAt": 1763595372477,
+      "updatedAt": 1784715522212,
+      "adminNote": "",
+      "moderatedAt": 1784715522212
+    },
+    {
+      "id": "review-seed-so-mi-trang-u7",
+      "productId": "so-mi-trang",
+      "userId": "u7",
+      "userName": "Vũ Hải Nam",
+      "orderId": "o7",
+      "orderCode": "JP240706",
+      "rating": 5,
+      "comment": "Sơ mi trắng basic mà form đẹp, vải không bị mỏng lộ. Sẽ ủng hộ thêm.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1779752172477
+      },
+      "createdAt": 1779752172477,
+      "updatedAt": 1779752172477
+    },
+    {
+      "id": "review-seed-blazer-kaki-u1",
+      "productId": "blazer-kaki",
+      "userId": "u1",
+      "userName": "Trần Minh",
+      "orderId": "o11",
+      "orderCode": "JP240710",
+      "rating": 5,
+      "comment": "Blazer kaki lịch sự, cổ đứng tôn dáng. Mặc đi làm được đồng nghiệp khen nhiều.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1777232172477
+      },
+      "createdAt": 1777232172477,
+      "updatedAt": 1777232172477
+    },
+    {
+      "id": "review-seed-ao-len-co-lo-u1",
+      "productId": "ao-len-co-lo",
+      "userId": "u1",
+      "userName": "Trần Minh",
+      "orderId": "o1",
+      "orderCode": "JP240700",
+      "rating": 4,
+      "comment": "Áo cổ lọ ấm, ôm vừa người. Mùa đông mặc trong áo khoác rất hợp, màu be dễ phối.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1784266572477
+      },
+      "createdAt": 1784266572477,
+      "updatedAt": 1784715514868,
+      "adminNote": "",
+      "moderatedAt": 1784715514868
+    },
+    {
+      "id": "review-seed-guoc-geta-u9",
+      "productId": "guoc-geta",
+      "userId": "u9",
+      "userName": "Đỗ Gia Huy",
+      "orderId": "o9",
+      "orderCode": "JP240708",
+      "rating": 5,
+      "comment": "Guốc gỗ chắc chắn, đi êm hơn mình nghĩ. Chụp ảnh cùng yukata rất lên hình.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1778708172477
+      },
+      "createdAt": 1778708172477,
+      "updatedAt": 1778708172477
+    },
+    {
+      "id": "review-seed-mu-nhat-u3",
+      "productId": "mu-nhat",
+      "userId": "u3",
+      "userName": "Lê Quốc Bảo",
+      "orderId": "o3",
+      "orderCode": "JP240702",
+      "rating": 4,
+      "comment": "Mũ bo đội vừa đầu, form giữ tốt. Chất lượng ổn so với giá.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1782790572477
+      },
+      "createdAt": 1782790572477,
+      "updatedAt": 1782790572477
+    },
+    {
+      "id": "review-seed-du-nhat-u8",
+      "productId": "du-nhat",
+      "userId": "u8",
+      "userName": "Bùi Ngọc Ánh",
+      "orderId": "o8",
+      "orderCode": "JP240707",
+      "rating": 5,
+      "comment": "Dù đẹp, khung chắc, che nắng che mưa đều tốt. Cầm đi chụp ảnh rất xịn.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1779316572477
+      },
+      "createdAt": 1779316572477,
+      "updatedAt": 1779316572477
+    },
+    {
+      "id": "review-seed-gang-tay-u3",
+      "productId": "gang-tay",
+      "userId": "u3",
+      "userName": "Lê Quốc Bảo",
+      "orderId": "o13",
+      "orderCode": "JP240712",
+      "rating": 5,
+      "comment": "Găng len ấm, co giãn tốt, dùng điện thoại vẫn cảm ứng được. Rất đáng mua.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1775626572477
+      },
+      "createdAt": 1775626572477,
+      "updatedAt": 1775626572477
+    },
+    {
+      "id": "review-seed-yumeko-u5",
+      "productId": "yumeko",
+      "userId": "u5",
+      "userName": "Hoàng Anh Tú",
+      "orderId": "o5",
+      "orderCode": "JP240704",
+      "rating": 5,
+      "comment": "Bộ cosplay Yumeko chi tiết đẹp, may kỹ. Đi sự kiện được nhiều người xin chụp ảnh.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1781141772477
+      },
+      "createdAt": 1781141772477,
+      "updatedAt": 1781141772477
+    },
+    {
+      "id": "review-seed-furina-u9",
+      "productId": "furina",
+      "userId": "u9",
+      "userName": "Đỗ Gia Huy",
+      "orderId": "o19",
+      "orderCode": "JP240718",
+      "rating": 4,
+      "comment": "Cosplay Furina màu chuẩn, phụ kiện đầy đủ. Váy hơi dày nên mặc lâu hơi nóng nhưng nhìn rất đẹp.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1771630572477
+      },
+      "createdAt": 1771630572477,
+      "updatedAt": 1784715524126,
+      "adminNote": "",
+      "moderatedAt": 1784715524126
+    },
+    {
+      "id": "review-seed-kiem-go-u4",
+      "productId": "kiem-go",
+      "userId": "u4",
+      "userName": "Phạm Mỹ Linh",
+      "orderId": "o14",
+      "orderCode": "JP240713",
+      "rating": 5,
+      "comment": "Kiếm gỗ làm đạo cụ chắc tay, đường vân gỗ đẹp. Giao nhanh, đóng gói kỹ.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1775018172477
+      },
+      "createdAt": 1775018172477,
+      "updatedAt": 1775018172477
+    },
+    {
+      "id": "review-seed-kep-no-u3",
+      "productId": "kep-no",
+      "userId": "u3",
+      "userName": "Lê Quốc Bảo",
+      "orderId": "o23",
+      "orderCode": "JP240722",
+      "rating": 5,
+      "comment": "Kẹp nơ xinh, giữ tóc chắc. Nhỏ gọn mà tạo điểm nhấn dễ thương.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1768764972477
+      },
+      "createdAt": 1768764972477,
+      "updatedAt": 1784715523095,
+      "adminNote": "",
+      "moderatedAt": 1784715523095
+    },
+    {
+      "id": "review-seed-yae-miko-u3",
+      "productId": "yae-miko",
+      "userId": "u3",
+      "userName": "Lê Quốc Bảo",
+      "orderId": "o13",
+      "orderCode": "JP240712",
+      "rating": 4,
+      "comment": "Trang phục Yae Miko đẹp, lên đồ chuẩn nhân vật. Cần là ủi nhẹ trước khi mặc cho phẳng.",
+      "media": null,
+      "status": "approved",
+      "moderation": {
+        "decision": "approved",
+        "score": 0,
+        "engine": "bộ lọc chống lách luật",
+        "reason": "Không phát hiện công kích hoặc nội dung nhạy cảm.",
+        "checkedAt": 1775626572477
+      },
+      "createdAt": 1775626572477,
+      "updatedAt": 1775626572477
+    }
+  ],
+  "reviewReactions": [
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-u5-0",
+      "reviewId": "review-seed-kimono-hong-u5",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1774326972477
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-u5-1",
+      "reviewId": "review-seed-kimono-hong-u5",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1774326972477
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-u5-nh",
+      "reviewId": "review-seed-kimono-hong-u5",
+      "userId": "u3",
+      "value": "not_helpful",
+      "updatedAt": 1774326972477
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-0",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-1",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-2",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-3",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-4",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-kimono-hong-demo-minh-5",
+      "reviewId": "review-seed-kimono-hong-demo-minh",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1784714024057
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-0",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-1",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-2",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-3",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-4",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-u10-5",
+      "reviewId": "review-seed-yukata-xanh-u10",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1770852972477
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-0",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-1",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-2",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-3",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-4",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-yukata-xanh-demo-minh-5",
+      "reviewId": "review-seed-yukata-xanh-demo-minh",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1784511449095
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u1-0",
+      "reviewId": "review-seed-haori-dang-dai-u1",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1784183772477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u1-1",
+      "reviewId": "review-seed-haori-dang-dai-u1",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1784183772477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u1-2",
+      "reviewId": "review-seed-haori-dang-dai-u1",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1784183772477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u1-3",
+      "reviewId": "review-seed-haori-dang-dai-u1",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1784183772477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-0",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-1",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-2",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-3",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-4",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-haori-dang-dai-u5-5",
+      "reviewId": "review-seed-haori-dang-dai-u5",
+      "userId": "u7",
+      "value": "helpful",
+      "updatedAt": 1767422172477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-0",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-1",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-2",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-3",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-4",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u7-5",
+      "reviewId": "review-seed-cardigan-dai-u7",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1780014972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u1-0",
+      "reviewId": "review-seed-cardigan-dai-u1",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1763598972477
+    },
+    {
+      "id": "reaction-seed-review-seed-cardigan-dai-u1-1",
+      "reviewId": "review-seed-cardigan-dai-u1",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1763598972477
+    },
+    {
+      "id": "reaction-seed-review-seed-so-mi-trang-u7-0",
+      "reviewId": "review-seed-so-mi-trang-u7",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1779755772477
+    },
+    {
+      "id": "reaction-seed-review-seed-so-mi-trang-u7-1",
+      "reviewId": "review-seed-so-mi-trang-u7",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1779755772477
+    },
+    {
+      "id": "reaction-seed-review-seed-so-mi-trang-u7-2",
+      "reviewId": "review-seed-so-mi-trang-u7",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1779755772477
+    },
+    {
+      "id": "reaction-seed-review-seed-blazer-kaki-u1-0",
+      "reviewId": "review-seed-blazer-kaki-u1",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1777235772477
+    },
+    {
+      "id": "reaction-seed-review-seed-blazer-kaki-u1-1",
+      "reviewId": "review-seed-blazer-kaki-u1",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1777235772477
+    },
+    {
+      "id": "reaction-seed-review-seed-ao-len-co-lo-u1-0",
+      "reviewId": "review-seed-ao-len-co-lo-u1",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1784270172477
+    },
+    {
+      "id": "reaction-seed-review-seed-ao-len-co-lo-u1-1",
+      "reviewId": "review-seed-ao-len-co-lo-u1",
+      "userId": "u3",
+      "value": "helpful",
+      "updatedAt": 1784270172477
+    },
+    {
+      "id": "reaction-seed-review-seed-ao-len-co-lo-u1-2",
+      "reviewId": "review-seed-ao-len-co-lo-u1",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1784270172477
+    },
+    {
+      "id": "reaction-seed-review-seed-ao-len-co-lo-u1-3",
+      "reviewId": "review-seed-ao-len-co-lo-u1",
+      "userId": "u5",
+      "value": "helpful",
+      "updatedAt": 1784270172477
+    },
+    {
+      "id": "reaction-seed-review-seed-ao-len-co-lo-u1-4",
+      "reviewId": "review-seed-ao-len-co-lo-u1",
+      "userId": "u6",
+      "value": "helpful",
+      "updatedAt": 1784270172477
+    },
+    {
+      "id": "reaction-seed-review-seed-guoc-geta-u9-0",
+      "reviewId": "review-seed-guoc-geta-u9",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1778711772477
+    },
+    {
+      "id": "reaction-seed-review-seed-guoc-geta-u9-1",
+      "reviewId": "review-seed-guoc-geta-u9",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1778711772477
+    },
+    {
+      "id": "reaction-seed-review-seed-mu-nhat-u3-0",
+      "reviewId": "review-seed-mu-nhat-u3",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1782794172477
+    },
+    {
+      "id": "reaction-seed-review-seed-mu-nhat-u3-1",
+      "reviewId": "review-seed-mu-nhat-u3",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1782794172477
+    },
+    {
+      "id": "reaction-seed-review-seed-mu-nhat-u3-2",
+      "reviewId": "review-seed-mu-nhat-u3",
+      "userId": "u4",
+      "value": "helpful",
+      "updatedAt": 1782794172477
+    },
+    {
+      "id": "reaction-seed-review-seed-du-nhat-u8-0",
+      "reviewId": "review-seed-du-nhat-u8",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1779320172477
+    },
+    {
+      "id": "reaction-seed-review-seed-gang-tay-u3-0",
+      "reviewId": "review-seed-gang-tay-u3",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1775630172477
+    },
+    {
+      "id": "reaction-seed-review-seed-gang-tay-u3-nh",
+      "reviewId": "review-seed-gang-tay-u3",
+      "userId": "u2",
+      "value": "not_helpful",
+      "updatedAt": 1775630172477
+    },
+    {
+      "id": "reaction-seed-review-seed-yumeko-u5-0",
+      "reviewId": "review-seed-yumeko-u5",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1781145372477
+    },
+    {
+      "id": "reaction-seed-review-seed-furina-u9-0",
+      "reviewId": "review-seed-furina-u9",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1771634172477
+    },
+    {
+      "id": "reaction-seed-review-seed-furina-u9-1",
+      "reviewId": "review-seed-furina-u9",
+      "userId": "u2",
+      "value": "helpful",
+      "updatedAt": 1771634172477
+    },
+    {
+      "id": "reaction-seed-review-seed-furina-u9-nh",
+      "reviewId": "review-seed-furina-u9",
+      "userId": "u3",
+      "value": "not_helpful",
+      "updatedAt": 1771634172477
+    },
+    {
+      "id": "reaction-seed-review-seed-yae-miko-u3-0",
+      "reviewId": "review-seed-yae-miko-u3",
+      "userId": "u1",
+      "value": "helpful",
+      "updatedAt": 1775630172477
+    },
+    {
+      "id": "reaction-seed-review-seed-yae-miko-u3-nh",
+      "reviewId": "review-seed-yae-miko-u3",
+      "userId": "u2",
+      "value": "not_helpful",
+      "updatedAt": 1775630172477
+    }
+  ],
+  "moderationSamples": [
+    {
+      "id": "sample-1784710774139-x6c",
+      "reviewId": null,
+      "label": "rejected",
+      "normalizedText": "shop lua dao vcl dume",
+      "learnedPhrases": [
+        "shop lua dao vcl dume"
+      ],
+      "source": "auto-community",
+      "updatedAt": 1784710774139
+    },
+    {
+      "id": "sample-1784710774168-0l7",
+      "reviewId": null,
+      "label": "rejected",
+      "normalizedText": "nen them quan c c an hai",
+      "learnedPhrases": [
+        "nen them quan c c an hai"
+      ],
+      "source": "auto-community",
+      "updatedAt": 1784710774168
+    },
+    {
+      "id": "sample-1784713835901-vnu",
+      "reviewId": null,
+      "label": "rejected",
+      "normalizedText": "ditconmemay cai shop",
+      "learnedPhrases": [
+        "ditconmemay cai shop"
+      ],
+      "source": "auto-community",
+      "updatedAt": 1784713835901
+    },
+    {
+      "id": "sample-1784780821852-fms",
+      "reviewId": null,
+      "label": "rejected",
+      "normalizedText": "shop lua dao vcl dume",
+      "learnedPhrases": [
+        "shop lua dao vcl dume"
+      ],
+      "source": "auto-community",
+      "updatedAt": 1784780821852
+    }
+  ],
   "users": [
     {
       "id": "u1",
@@ -5844,10 +7479,34 @@
       "role": "admin",
       "status": "active",
       "orders": 4,
-      "spent": 5640000,
+      "spent": 5520000,
       "tryons": 0,
-      "vip": "Mới",
-      "joinedAt": 1781588172477
+      "vip": "Thành viên",
+      "joinedAt": 1781588172477,
+      "vipMembership": {
+        "userId": "u1",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 1940000,
+          "threshold": 5000000,
+          "remaining": 3060000,
+          "progressPercent": 39
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u2",
@@ -5856,10 +7515,34 @@
       "role": "staff",
       "status": "active",
       "orders": 3,
-      "spent": 2200000,
+      "spent": 2140000,
       "tryons": 1,
-      "vip": "Mới",
-      "joinedAt": 1779255372477
+      "vip": "Thành viên",
+      "joinedAt": 1779255372477,
+      "vipMembership": {
+        "userId": "u2",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 1440000,
+          "threshold": 5000000,
+          "remaining": 3560000,
+          "progressPercent": 29
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u3",
@@ -5868,10 +7551,34 @@
       "role": "staff",
       "status": "active",
       "orders": 4,
-      "spent": 2170000,
+      "spent": 2050000,
       "tryons": 2,
-      "vip": "Mới",
-      "joinedAt": 1776922572477
+      "vip": "Thành viên",
+      "joinedAt": 1776922572477,
+      "vipMembership": {
+        "userId": "u3",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u4",
@@ -5880,10 +7587,34 @@
       "role": "customer",
       "status": "active",
       "orders": 3,
-      "spent": 670000,
+      "spent": 640000,
       "tryons": 3,
       "vip": "Thành viên",
-      "joinedAt": 1774589772477
+      "joinedAt": 1774589772477,
+      "vipMembership": {
+        "userId": "u4",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u5",
@@ -5892,10 +7623,34 @@
       "role": "customer",
       "status": "active",
       "orders": 4,
-      "spent": 5930000,
+      "spent": 5810000,
       "tryons": 4,
       "vip": "Thành viên",
-      "joinedAt": 1772256972477
+      "joinedAt": 1772256972477,
+      "vipMembership": {
+        "userId": "u5",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u6",
@@ -5904,10 +7659,34 @@
       "role": "customer",
       "status": "active",
       "orders": 2,
-      "spent": 1470000,
+      "spent": 1440000,
       "tryons": 0,
       "vip": "Thành viên",
-      "joinedAt": 1769924172477
+      "joinedAt": 1769924172477,
+      "vipMembership": {
+        "userId": "u6",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u7",
@@ -5916,10 +7695,34 @@
       "role": "customer",
       "status": "locked",
       "orders": 3,
-      "spent": 2300000,
+      "spent": 2210000,
       "tryons": 1,
       "vip": "Thành viên",
-      "joinedAt": 1767591372477
+      "joinedAt": 1767591372477,
+      "vipMembership": {
+        "userId": "u7",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u8",
@@ -5928,10 +7731,34 @@
       "role": "customer",
       "status": "active",
       "orders": 2,
-      "spent": 730000,
+      "spent": 700000,
       "tryons": 2,
-      "vip": "VIP",
-      "joinedAt": 1765258572477
+      "vip": "Thành viên",
+      "joinedAt": 1765258572477,
+      "vipMembership": {
+        "userId": "u8",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u9",
@@ -5940,10 +7767,34 @@
       "role": "customer",
       "status": "active",
       "orders": 3,
-      "spent": 2570000,
+      "spent": 2480000,
       "tryons": 3,
-      "vip": "VIP",
-      "joinedAt": 1762925772477
+      "vip": "Thành viên",
+      "joinedAt": 1762925772477,
+      "vipMembership": {
+        "userId": "u9",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u10",
@@ -5952,10 +7803,111 @@
       "role": "customer",
       "status": "active",
       "orders": 2,
-      "spent": 2610000,
+      "spent": 2580000,
       "tryons": 4,
+      "vip": "Thành viên",
+      "joinedAt": 1760592972477,
+      "vipMembership": {
+        "userId": "u10",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
+    },
+    {
+      "id": "demo-minh",
+      "name": "Test",
+      "email": "t@test.com",
+      "role": "customer",
+      "status": "active",
+      "orders": 13,
+      "spent": 11805000,
+      "tryons": 0,
       "vip": "VIP",
-      "joinedAt": 1760592972477
+      "joinedAt": 1784162249095,
+      "vipMembership": {
+        "userId": "demo-minh",
+        "isVip": true,
+        "tier": "VIP",
+        "membership": {
+          "id": "vip-demo-minh-2026-07",
+          "userId": "demo-minh",
+          "qualifyingPeriod": "2026-07",
+          "qualifyingOrderIds": [
+            "o1784206566598"
+          ],
+          "qualifiedSpend": 5949000,
+          "threshold": 5000000,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "startedAt": 1784206908261,
+          "expiresAt": 1786798908261,
+          "status": "active",
+          "createdAt": 1784206908261,
+          "updatedAt": 1784780839030
+        },
+        "startedAt": 1784206908261,
+        "expiresAt": 1786798908261,
+        "daysRemaining": 24,
+        "currentMonth": {
+          "key": "2026-07",
+          "startsAt": 1782838800000,
+          "endsAt": 1785517200000,
+          "spend": 11805000,
+          "threshold": 5000000,
+          "remaining": 0,
+          "progressPercent": 100
+        },
+        "benefit": {
+          "available": true,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
+    }
+  ],
+  "addresses": [
+    {
+      "id": "addr-1784708663358-wekq",
+      "userId": "demo-minh",
+      "title": "Nhà riêng",
+      "name": "Trần Minh",
+      "phone": "0909090909",
+      "street": "45 Phường Thới An",
+      "wardCode": "26773",
+      "ward": "Phường Thới An",
+      "provinceCode": "79",
+      "province": "Thành phố Hồ Chí Minh",
+      "isDefault": true,
+      "createdAt": 1784708663358,
+      "updatedAt": 1784708663358
+    }
+  ],
+  "wishlists": [
+    {
+      "id": "wish-1784711943730-kpj7",
+      "userId": "ban@japano.vn",
+      "productSlug": "vo-tat",
+      "createdAt": 1784711943730
     }
   ],
   "notifications": [
@@ -5993,7 +7945,7 @@
       "min": 500000,
       "expiry": "2027-12-31",
       "limit": 500,
-      "used": 132,
+      "used": 133,
       "active": true
     },
     {
@@ -6003,7 +7955,7 @@
       "min": 0,
       "expiry": "2027-11-30",
       "limit": 1000,
-      "used": 410,
+      "used": 411,
       "active": true
     },
     {
@@ -6375,7 +8327,8 @@
       "id": "flags-demo-minh",
       "userId": "demo-minh",
       "cardIds": [
-        "kiyomizu-dera"
+        "kiyomizu-dera",
+        "fushimi-inari"
       ],
       "awards": [
         {
@@ -6385,10 +8338,37 @@
           "orderTotal": 5979000,
           "awardedAt": 1784206908261,
           "source": "qualifying-order"
+        },
+        {
+          "cardId": "fushimi-inari",
+          "orderId": "o1784162249095",
+          "orderCode": "JP240736",
+          "orderTotal": 5484000,
+          "awardedAt": 1784540414640,
+          "source": "qualifying-order"
         }
       ],
       "createdAt": 1784206908261,
-      "updatedAt": 1784206908261
+      "updatedAt": 1784540414640
+    }
+  ],
+  "vipMemberships": [
+    {
+      "id": "vip-demo-minh-2026-07",
+      "userId": "demo-minh",
+      "qualifyingPeriod": "2026-07",
+      "qualifyingOrderIds": [
+        "o1784206566598"
+      ],
+      "qualifiedSpend": 5949000,
+      "threshold": 5000000,
+      "discountPercent": 10,
+      "discountedUnitsPerOrder": 1,
+      "startedAt": 1784206908261,
+      "expiresAt": 1786798908261,
+      "status": "active",
+      "createdAt": 1784206908261,
+      "updatedAt": 1784780839030
     }
   ],
   "flagcardConfig": {
@@ -6399,7 +8379,24 @@
     "rewardVoucherMinOrder": 0,
     "rewardValidityDays": 90
   },
-  "voucherRedemptions": [],
+  "voucherRedemptions": [
+    {
+      "id": "redeem-o1784631853615",
+      "code": "FREESHIP",
+      "userId": "demo-minh",
+      "orderId": "o1784631853615",
+      "discount": 30000,
+      "redeemedAt": 1784631853615
+    },
+    {
+      "id": "redeem-o1784712524868",
+      "code": "THU20",
+      "userId": "demo-minh",
+      "orderId": "o1784712524868",
+      "discount": 322500,
+      "redeemedAt": 1784712524868
+    }
+  ],
   "banners": [
     {
       "id": "b1",
@@ -6422,7 +8419,7 @@
       "title": "Cosplay Fest",
       "img": "#6D28D9",
       "link": "/category/cosplay",
-      "active": false,
+      "active": true,
       "order": 3
     }
   ],
@@ -8305,6 +10302,981 @@
       },
       "createdAt": 1784263377699,
       "source": "mobile"
+    },
+    {
+      "id": "i17845393735260n14b",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784539373526,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784539377007h493o",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784539377007,
+      "source": "mobile"
+    },
+    {
+      "id": "i17845393882086z96i",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784539388208,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539549020-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539549020,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539549020-1",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539549020,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539549020-2",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539549020,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539558463-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539558463,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539558463-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539558463,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539558463-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539558463,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539558463-3",
+      "userId": "demo-minh",
+      "productId": "ao-len-cardigan",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539558463,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539563146-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539563146,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539563146-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539563146,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539563146-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539563146,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539563146-3",
+      "userId": "demo-minh",
+      "productId": "ao-len-co-lo",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539563146,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539824648-0",
+      "userId": "guest",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539824648,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539881181-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539881181,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539881181-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539881181,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539881181-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539881181,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539886834-0",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539886834,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539886834-1",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539886834,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539886834-2",
+      "userId": "demo-minh",
+      "productId": "guoc-geta",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539886834,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539895194-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539895194,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539895194-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539895194,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539895194-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539895194,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784539895194-3",
+      "userId": "demo-minh",
+      "productId": "haori-dang-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784539895194,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784539972858duoov",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784539972858,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784539974473ddbxt",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784539974473,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784542876742tik8m",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784542876742,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784543038770",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784543038770,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784543197325r43n9",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784543197325,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784543345384",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784543345384,
+      "source": "mobile"
+    },
+    {
+      "id": "i178454413248816ul4",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784544132488,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784544252320",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784544252320,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784545163353z1z00",
+      "userId": "ban@japano.vn",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784545163353,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784545278299",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784545278299,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784550081133",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784550081133,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784552301757ysgjc",
+      "userId": "verify-user",
+      "productId": "haori-dang-dai",
+      "type": "wishlist",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784552301757,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784552301793-0",
+      "userId": "verify-user",
+      "productId": "yukata-xanh",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784552301793,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784625590457yxdxh",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784625590457,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784625594983m0joz",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784625594983,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846260539231oipj",
+      "userId": "ban@japano.vn",
+      "productId": "giay-dep",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784626053923,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784626492008nri5d",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784626492008,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784626798861",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784626798861,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846293739747jegz",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784629373974,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784629626209",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784629626209,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784630440872ogw1v",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "search",
+      "value": 1,
+      "metadata": {
+        "query": "Ki",
+        "rank": 1,
+        "resultCount": 5
+      },
+      "createdAt": 1784630440872,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784630440921bgtso",
+      "userId": "ban@japano.vn",
+      "productId": "blazer-kaki",
+      "type": "search",
+      "value": 1,
+      "metadata": {
+        "query": "Ki",
+        "rank": 2,
+        "resultCount": 5
+      },
+      "createdAt": 1784630440921,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846304410014rsqp",
+      "userId": "ban@japano.vn",
+      "productId": "ao-len-cardigan",
+      "type": "search",
+      "value": 1,
+      "metadata": {
+        "query": "Ki",
+        "rank": 3,
+        "resultCount": 5
+      },
+      "createdAt": 1784630441001,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784630953600lxi7z",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784630953600,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784630955375sbtam",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784630955375,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631014734d98ge",
+      "userId": "ban@japano.vn",
+      "productId": "haori-dang-dai",
+      "type": "wishlist",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784631014734,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631783901bbdjd",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784631783901,
+      "source": "mobile"
+    },
+    {
+      "id": "i178463178562042gap",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 2,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631785620,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631790907dtfuy",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 2,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631790907,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846317929199kg7c",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631792919,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631793713sg4k6",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631793713,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846317955370xtuc",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631795537,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631797096wt9qq",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631797096,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631797531m2lze",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631797531,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631797894rdqmt",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631797894,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846318281964wz9s",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631828196,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631828504q0r8c",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631828504,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784631828507ga1wt",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784631828507,
+      "source": "mobile"
+    },
+    {
+      "id": "goal-i-1784632482421",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "goal",
+      "value": 1,
+      "createdAt": 1784632482421,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846504766851fhy2",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784650476685,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784651461100y8nou",
+      "userId": "ban@japano.vn",
+      "productId": "khoac-nhat",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784651461100,
+      "source": "mobile"
+    },
+    {
+      "id": "i17846514708272hwp6",
+      "userId": "ban@japano.vn",
+      "productId": "blazer-kaki",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784651470827,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784711666831eezne",
+      "userId": "ban@japano.vn",
+      "productId": "furina",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784711666831,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784711668375dcjhc",
+      "userId": "ban@japano.vn",
+      "productId": "furina",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784711668375,
+      "source": "mobile"
+    },
+    {
+      "id": "goal-i-1784711737653",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "goal",
+      "value": 1,
+      "createdAt": 1784711737653,
+      "source": "mobile"
+    },
+    {
+      "id": "goal-i-1784711770961",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "goal",
+      "value": 1,
+      "createdAt": 1784711770961,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711903988-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711903988,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711903988-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711903988,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711903988-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711903988,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711936224-0",
+      "userId": "demo-minh",
+      "productId": "vo-tat",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711936224,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784711942839ltrvp",
+      "userId": "ban@japano.vn",
+      "productId": "vo-tat",
+      "type": "wishlist",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784711942839,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711946807-0",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711946807,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711946807-1",
+      "userId": "demo-minh",
+      "productId": "so-mi-trang",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711946807,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711946807-2",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711946807,
+      "source": "mobile"
+    },
+    {
+      "id": "chat-i-1784711946807-3",
+      "userId": "demo-minh",
+      "productId": "blazer-kaki",
+      "type": "chat",
+      "value": 1,
+      "createdAt": 1784711946807,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712062731fsrjm",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784712062731,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1784712474221",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1784712474221,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712492631q420w",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712492631,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712669031wy62v",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712669031,
+      "source": "mobile"
+    },
+    {
+      "id": "i178471267233646cdm",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 2,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712672336,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712672685wje7v",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 3,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712672685,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712673517aehhj",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 4,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712673517,
+      "source": "mobile"
+    },
+    {
+      "id": "i17847126742177tadh",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 3,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712674217,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712675641tfq6d",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 2,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712675641,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712676762dum8c",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712676762,
+      "source": "mobile"
+    },
+    {
+      "id": "i1784712677692qbfsa",
+      "userId": "ban@japano.vn",
+      "productId": "yukata-xanh",
+      "type": "cart",
+      "value": 0,
+      "metadata": {
+        "color": "Chàm",
+        "size": "S"
+      },
+      "createdAt": 1784712677692,
+      "source": "mobile"
+    },
+    {
+      "id": "i17847126820170kdy6",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1784712682017,
+      "source": "mobile"
+    },
+    {
+      "id": "i17847126833166dgzx",
+      "userId": "ban@japano.vn",
+      "productId": "kimono-hong",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Mực",
+        "size": "M"
+      },
+      "createdAt": 1784712683316,
+      "source": "mobile"
     }
   ],
   "profiles": [
@@ -8399,12 +11371,23 @@
     {
       "userId": "demo-minh",
       "preferredStyles": [
+        "truyền thống",
+        "nhật",
+        "lễ hội"
+      ],
+      "heightCm": 165,
+      "updatedAt": 1784630227904
+    },
+    {
+      "userId": "verify-user",
+      "preferredStyles": [
         "tối giản",
         "nhẹ nhàng",
         "unisex"
       ],
-      "heightCm": 165,
-      "updatedAt": 1784263317509
+      "occasion": "Đi làm",
+      "budget": 1500000,
+      "updatedAt": 1784552301777
     }
   ],
   "chats": [
@@ -8499,6 +11482,288 @@
         "mu-nhat"
       ],
       "createdAt": 1783937766726
+    },
+    {
+      "id": "chat-1784539549020",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Hi",
+      "createdAt": 1784539549020
+    },
+    {
+      "id": "chat-1784539549020-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Hôm nay bạn thế nào? Mình là Ori 織. Bạn kể mình nghe tâm trạng hoặc dịp sắp tới, mình sẽ gợi ý món phù hợp trong shop — bạn có thể thêm giỏ và mua ngay trong botchat.",
+      "productIds": [
+        "cardigan-dai",
+        "kimono-hong",
+        "so-mi-trang"
+      ],
+      "createdAt": 1784539549021
+    },
+    {
+      "id": "chat-1784539558463",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Tôi tên gì",
+      "createdAt": 1784539558463
+    },
+    {
+      "id": "chat-1784539558463-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Ori chưa chắc hiểu ý bạn lắm, nhưng đây là vài gợi ý có thể bạn sẽ thích — hoặc bạn thử hỏi rõ hơn về giá, size, phối đồ, khuyến mãi nhé:",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong",
+        "ao-len-cardigan"
+      ],
+      "createdAt": 1784539558464
+    },
+    {
+      "id": "chat-1784539563146",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Hôm nay vui vẻ",
+      "createdAt": 1784539563146
+    },
+    {
+      "id": "chat-1784539563146-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Ori chưa chắc hiểu ý bạn lắm, nhưng đây là vài gợi ý có thể bạn sẽ thích — hoặc bạn thử hỏi rõ hơn về giá, size, phối đồ, khuyến mãi nhé:",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong",
+        "ao-len-co-lo"
+      ],
+      "createdAt": 1784539563147
+    },
+    {
+      "id": "chat-1784539824648",
+      "userId": "guest",
+      "role": "user",
+      "message": "Kimono mặc khi nào?",
+      "createdAt": 1784539824648
+    },
+    {
+      "id": "chat-1784539824648-ai",
+      "userId": "guest",
+      "role": "assistant",
+      "message": "Kimono là trang phục truyền thống dáng chữ T, quấn thân trái phủ lên phải và cố định bằng obi. Kimono thường dùng trong lễ cưới, trà đạo, lễ trưởng thành và dịp trang trọng; chỉ mặc vạt phải phủ trái cho người đã mất. Khi phối hiện đại, bạn có thể khoác kimono hoặc haori ngoài áo trơn, giữ phụ kiện tối giản để họa tiết nổi bật.",
+      "productIds": [
+        "kimono-hong"
+      ],
+      "createdAt": 1784539824649
+    },
+    {
+      "id": "chat-1784539824680",
+      "userId": "guest",
+      "role": "user",
+      "message": "Đi Kyoto 3 ngày có gì?",
+      "createdAt": 1784539824680
+    },
+    {
+      "id": "chat-1784539824680-ai",
+      "userId": "guest",
+      "role": "assistant",
+      "message": "Kyoto nổi tiếng với Fushimi Inari, Kiyomizu-dera, Arashiyama, Kinkaku-ji và khu Gion. Hãy đi sớm để bớt đông, chia lịch theo phía đông/tây thành phố và giữ yên lặng tại đền chùa. Nếu thuê kimono, nên chọn dép dễ đi vì nhiều đường dốc và lát đá.",
+      "productIds": [],
+      "createdAt": 1784539824681
+    },
+    {
+      "id": "chat-1784539824710",
+      "userId": "guest",
+      "role": "user",
+      "message": "Ori có phải chatbot không?",
+      "createdAt": 1784539824710
+    },
+    {
+      "id": "chat-1784539824710-ai",
+      "userId": "guest",
+      "role": "assistant",
+      "message": "Mình là Ori, chatbot của JAPANO. Mình có thể tư vấn sản phẩm thật trong shop, giá, size, phối đồ, thử đồ, ưu đãi và đơn hàng; ngoài ra còn giải đáp về trang phục truyền thống, thời trang đường phố, văn hóa, ẩm thực, di chuyển và địa điểm du lịch Nhật Bản. Bạn cứ hỏi tự nhiên, ví dụ “đi Kyoto 3 ngày nên mặc gì?”.",
+      "productIds": [],
+      "createdAt": 1784539824711
+    },
+    {
+      "id": "chat-1784539881181",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Hi",
+      "createdAt": 1784539881181
+    },
+    {
+      "id": "chat-1784539881181-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Hôm nay bạn thế nào? Mình là Ori 織. Bạn kể mình nghe tâm trạng hoặc dịp sắp tới, mình sẽ gợi ý món phù hợp trong shop — bạn có thể thêm giỏ và mua ngay trong botchat.",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong"
+      ],
+      "createdAt": 1784539881182
+    },
+    {
+      "id": "chat-1784539886834",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Phối đồ đi làm",
+      "createdAt": 1784539886834
+    },
+    {
+      "id": "chat-1784539886834-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Bộ đồ phối cùng Sơ mi trắng tay ngắn — tổng khoảng 1.860.000₫. Đây là gợi ý phối đồ theo màu và chủ đề hợp nhau:",
+      "productIds": [
+        "so-mi-trang",
+        "cardigan-dai",
+        "guoc-geta"
+      ],
+      "createdAt": 1784539886835
+    },
+    {
+      "id": "chat-1784539895194",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Tôi tên gì",
+      "createdAt": 1784539895194
+    },
+    {
+      "id": "chat-1784539895194-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Mình chưa có đủ dữ kiện để trả lời chính xác câu này. Bạn có thể hỏi lại theo chủ đề cụ thể hơn — ví dụ tên trang phục Nhật, thành phố muốn đến, mùa du lịch, cách di chuyển, món ăn, văn hóa, hoặc nhu cầu phối đồ. Trong lúc đó, đây là vài món hợp gu của bạn:",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong",
+        "haori-dang-dai"
+      ],
+      "createdAt": 1784539895195
+    },
+    {
+      "id": "chat-1784539915406",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Tokyo thì nên dồ gì",
+      "createdAt": 1784539915406
+    },
+    {
+      "id": "chat-1784539915406-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Tokyo hợp cho chuyến đi kết hợp hiện đại và truyền thống: Asakusa–Sensō-ji, Ueno, Meiji Jingū, Shibuya, Shinjuku và các khu mua sắm như Ginza hoặc Harajuku. Nên gom điểm theo khu vì thành phố rất rộng; dùng thẻ IC cho tàu nội đô và tránh giờ cao điểm nếu mang hành lý lớn.",
+      "productIds": [],
+      "createdAt": 1784539915407
+    },
+    {
+      "id": "chat-1784539936936",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Giá vé Việt Nam Tokyo",
+      "createdAt": 1784539936936
+    },
+    {
+      "id": "chat-1784539936936-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Bạn muốn hỏi giá sản phẩm nào? Cho mình tên hoặc loại đồ (vd: kimono, haori, phụ kiện) nhé.",
+      "productIds": [],
+      "createdAt": 1784539936937
+    },
+    {
+      "id": "chat-1784539948520",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Giá vé du lịch",
+      "createdAt": 1784539948520
+    },
+    {
+      "id": "chat-1784539948520-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Bạn muốn hỏi giá sản phẩm nào? Cho mình tên hoặc loại đồ (vd: kimono, haori, phụ kiện) nhé.",
+      "productIds": [],
+      "createdAt": 1784539948521
+    },
+    {
+      "id": "chat-1784552301793",
+      "userId": "verify-user",
+      "role": "user",
+      "message": "Gợi ý đồ tối giản để đi làm",
+      "createdAt": 1784552301793
+    },
+    {
+      "id": "chat-1784552301793-ai",
+      "userId": "verify-user",
+      "role": "assistant",
+      "message": "Mình tìm được 1 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:",
+      "productIds": [
+        "yukata-xanh"
+      ],
+      "createdAt": 1784552301794
+    },
+    {
+      "id": "chat-1784711903988",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Hello",
+      "createdAt": 1784711903988
+    },
+    {
+      "id": "chat-1784711903988-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Hôm nay bạn thế nào? Mình là Ori 織. Bạn kể mình nghe tâm trạng hoặc dịp sắp tới, mình sẽ gợi ý món phù hợp trong shop — bạn có thể thêm giỏ và mua ngay trong botchat.",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong"
+      ],
+      "createdAt": 1784711903989
+    },
+    {
+      "id": "chat-1784711936224",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Tôi nặng 50kg cao 1?6 thì mặc đồ gì hợp để đi Tokyo",
+      "createdAt": 1784711936224
+    },
+    {
+      "id": "chat-1784711936224-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Tokyo hợp cho chuyến đi kết hợp hiện đại và truyền thống: Asakusa–Sensō-ji, Ueno, Meiji Jingū, Shibuya, Shinjuku và các khu mua sắm như Ginza hoặc Harajuku. Nên gom điểm theo khu vì thành phố rất rộng; dùng thẻ IC cho tàu nội đô và tránh giờ cao điểm nếu mang hành lý lớn.",
+      "productIds": [
+        "vo-tat"
+      ],
+      "createdAt": 1784711936225
+    },
+    {
+      "id": "chat-1784711946807",
+      "userId": "demo-minh",
+      "role": "user",
+      "message": "Cần đổi mood",
+      "createdAt": 1784711946807
+    },
+    {
+      "id": "chat-1784711946807-ai",
+      "userId": "demo-minh",
+      "role": "assistant",
+      "message": "Mình chưa có đủ dữ kiện để trả lời chính xác câu này. Bạn có thể hỏi lại theo chủ đề cụ thể hơn — ví dụ tên trang phục Nhật, thành phố muốn đến, mùa du lịch, cách di chuyển, món ăn, văn hóa, hoặc nhu cầu phối đồ. Trong lúc đó, đây là vài món hợp gu của bạn:",
+      "productIds": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "kimono-hong",
+        "blazer-kaki"
+      ],
+      "createdAt": 1784711946808
     }
   ],
   "tryonHistory": [
@@ -8675,6 +11940,70 @@
       "accessoryIds": [],
       "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+secondary-person-lock",
       "createdAt": 1784162536119
+    },
+    {
+      "id": "tryon-1784543038770",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784543038770
+    },
+    {
+      "id": "tryon-1784543345384",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784543345384
+    },
+    {
+      "id": "tryon-1784544252320",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784544252320
+    },
+    {
+      "id": "tryon-1784545278299",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784545278299
+    },
+    {
+      "id": "tryon-1784550081133",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784550081133
+    },
+    {
+      "id": "tryon-1784626798861",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784626798861
+    },
+    {
+      "id": "tryon-1784629626209",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784629626209
+    },
+    {
+      "id": "tryon-1784712474221",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1784712474221
     }
   ],
   "goals": [
@@ -8763,21 +12092,21 @@
           ]
         },
         "coaching": {
-          "motivation": "Tôi muốn sở hữu kimono truyền thống Hồng để tăng cường thói quen lành mạnh và tiết kiệm tiền, đồng thời cải thiện vóc dáng của mình.",
-          "identityStatement": "Tôi là một người trưởng thành có trách nhiệm với bản thân và tương lai, sẵn lòng xây dựng thói quen tốt và quản lý tài chính hiệu quả.",
+          "motivation": "Mục tiêu không phải ép mình thay đổi thật nhanh, mà là xây thói quen đủ bền để bạn tự tin mặc Kimono truyền thống Hồng và vẫn giữ ngân sách an toàn.",
+          "identityStatement": "Tôi là người chăm sóc cơ thể bằng lựa chọn nhỏ, đồng thời chi tiêu có kế hoạch.",
           "implementationIntentions": [
-            "Nếu tôi nhận được thu nhập hàng tháng, thì sẽ tách tự động 480.000 VND vào quỹ 'Kimono truyền thống Hồng'.",
-            "Nếu tôi cảm thấy muốn chi tiêu bốc đồng, thì sẽ ghi lại khoản tiền đó và chuyển đúng số đó vào quỹ.",
-            "Nếu tôi đang cân nhắc ăn ít hơn để giảm cân nhanh chóng, thì sẽ nhớ rằng việc giữ bữa ăn đều đặn là quan trọng nhất."
+            "Nếu vừa nhận thu nhập, tôi sẽ chuyển tiền vào quỹ mua sắm trước khi mở ứng dụng giải trí.",
+            "Nếu bỏ lỡ một buổi vận động, tôi sẽ quay lại bằng 10 phút đi bộ trong ngày kế tiếp.",
+            "Nếu muốn mua bốc đồng, tôi sẽ chờ 24 giờ và kiểm tra lại quỹ mục tiêu."
           ],
           "obstaclePlans": [
-            "Trong trường hợp gặp khó khăn về tài chính, tôi sẽ tập trung vào những mục tiêu nhỏ hơn và thực hiện các kế hoạch tiết kiệm hàng tuần.",
-            "Nếu cảm thấy mệt mỏi hoặc bận rộn, tôi sẽ ưu tiên cho hoạt động thể chất nhẹ nhàng như đi bộ để không làm gián đoạn thói quen.",
-            "Khi gặp khó khăn trong việc duy trì chế độ ăn uống lành mạnh, tôi sẽ tự nhắc nhở bản thân rằng mục tiêu là cải thiện sức khỏe lâu dài, không phải giảm cân nhanh chóng."
+            "Tuần bận: giảm thời lượng mỗi buổi nhưng giữ nhịp xuất hiện.",
+            "Chi phí bất ngờ: ưu tiên quỹ khẩn cấp và kéo dài hạn mua thay vì vay để mua đồ.",
+            "Tâm trạng xuống: chọn một hành động nhỏ có thể làm trong 5 phút, không tự trách."
           ],
-          "weeklyFocus": "Tuần này, tôi tập trung vào việc thực hiện các hoạt động thể chất đều đặn và ghi chép lại những khoản chi tiêu bốc đồng để chuyển tiền vào quỹ.",
-          "reflectionQuestion": "Trong tuần qua, tôi đã làm tốt như thế nào trong việc thực hiện kế hoạch tiết kiệm và cải thiện sức khỏe? Có điều gì cần thay đổi không?",
-          "engine": "qwen2.5:7b + safety-rules"
+          "weeklyFocus": "Mỗi tuần chỉ nâng một thói quen: vận động, bữa ăn đều, ngủ hoặc tiết kiệm.",
+          "reflectionQuestion": "Tuần này hành động nhỏ nào giúp bạn vừa khoẻ hơn vừa gần mục tiêu mua sắm hơn?",
+          "engine": "SMART + implementation-intentions + habit-stacking"
         },
         "methodology": [
           "SMART goals",
@@ -8789,80 +12118,195 @@
         "disclaimer": "Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."
       },
       "createdAt": 1784162335805,
-      "updatedAt": 1784162335805
+      "updatedAt": 1784632482421
+    },
+    {
+      "id": "goal-demo-minh-yukata-xanh",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "product": {
+        "slug": "yukata-xanh",
+        "name": "Yukata vải bông xanh đen",
+        "price": 1290000,
+        "image": "/assets/products/yukata-xanh_1.jpg"
+      },
+      "input": {
+        "age": 25,
+        "heightCm": 165,
+        "currentWeightKg": 65,
+        "targetWeightKg": 60,
+        "monthlyIncome": 15000000,
+        "fixedExpenses": 11000000,
+        "currentSavings": 200000,
+        "targetMonths": 6
+      },
+      "plan": {
+        "saving": {
+          "productId": "yukata-xanh",
+          "productName": "Yukata vải bông xanh đen",
+          "targetPrice": 1290000,
+          "currentSavings": 200000,
+          "gap": 1090000,
+          "progressPercent": 15.5,
+          "disposableIncome": 4000000,
+          "monthlySaving": 480000,
+          "weeklySaving": 110855,
+          "requestedMonths": 6,
+          "estimatedMonths": 3,
+          "feasibleByRequestedDate": true,
+          "milestones": [
+            {
+              "milestone": 25,
+              "amount": 322500,
+              "reached": false
+            },
+            {
+              "milestone": 50,
+              "amount": 645000,
+              "reached": false
+            },
+            {
+              "milestone": 75,
+              "amount": 967500,
+              "reached": false
+            },
+            {
+              "milestone": 100,
+              "amount": 1290000,
+              "reached": false
+            }
+          ],
+          "actions": [
+            "Tách tự động 480.000₫ ngay sau ngày nhận thu nhập.",
+            "Giới hạn khoảng 110.855₫ mỗi tuần cho quỹ “Yukata vải bông xanh đen”.",
+            "Mỗi cuối tuần ghi lại một khoản đã tránh chi tiêu bốc đồng và chuyển đúng số đó vào quỹ."
+          ]
+        },
+        "wellness": {
+          "status": "gradual-loss",
+          "currentBmi": 23.9,
+          "targetBmi": 22,
+          "targetWeightKg": 60,
+          "lossKg": 5,
+          "weeklyRateKg": 0.5,
+          "estimatedWeeks": 10,
+          "activityMinutesPerWeek": 150,
+          "strengthDaysPerWeek": 2,
+          "safetyMessage": "Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.",
+          "habits": [
+            "Bắt đầu bằng 20–30 phút đi bộ nhanh, 5 ngày/tuần; tăng dần theo thể lực.",
+            "Tập sức mạnh toàn thân 2 ngày/tuần, có ngày nghỉ xen kẽ.",
+            "Giữ bữa ăn đều đặn, ưu tiên rau, đạm phù hợp và nước; không nhịn ăn để “bù”.",
+            "Theo dõi giấc ngủ, năng lượng và mức vận động; cân tối đa 1 lần/tuần nếu việc cân không gây căng thẳng."
+          ],
+          "sources": [
+            "https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html",
+            "https://www.who.int/initiatives/behealthy/physical-activity"
+          ]
+        },
+        "coaching": {
+          "motivation": "Mục tiêu không phải ép mình thay đổi thật nhanh, mà là xây thói quen đủ bền để bạn tự tin mặc Yukata vải bông xanh đen và vẫn giữ ngân sách an toàn.",
+          "identityStatement": "Tôi là người chăm sóc cơ thể bằng lựa chọn nhỏ, đồng thời chi tiêu có kế hoạch.",
+          "implementationIntentions": [
+            "Nếu vừa nhận thu nhập, tôi sẽ chuyển tiền vào quỹ mua sắm trước khi mở ứng dụng giải trí.",
+            "Nếu bỏ lỡ một buổi vận động, tôi sẽ quay lại bằng 10 phút đi bộ trong ngày kế tiếp.",
+            "Nếu muốn mua bốc đồng, tôi sẽ chờ 24 giờ và kiểm tra lại quỹ mục tiêu."
+          ],
+          "obstaclePlans": [
+            "Tuần bận: giảm thời lượng mỗi buổi nhưng giữ nhịp xuất hiện.",
+            "Chi phí bất ngờ: ưu tiên quỹ khẩn cấp và kéo dài hạn mua thay vì vay để mua đồ.",
+            "Tâm trạng xuống: chọn một hành động nhỏ có thể làm trong 5 phút, không tự trách."
+          ],
+          "weeklyFocus": "Mỗi tuần chỉ nâng một thói quen: vận động, bữa ăn đều, ngủ hoặc tiết kiệm.",
+          "reflectionQuestion": "Tuần này hành động nhỏ nào giúp bạn vừa khoẻ hơn vừa gần mục tiêu mua sắm hơn?",
+          "engine": "SMART + implementation-intentions + habit-stacking"
+        },
+        "methodology": [
+          "SMART goals",
+          "Implementation intentions",
+          "Habit stacking",
+          "Self-compassion",
+          "Progress milestones"
+        ],
+        "disclaimer": "Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."
+      },
+      "createdAt": 1784711737653,
+      "updatedAt": 1784711770961
     }
   ],
   "aiDescriptions": [
     {
       "productId": "yukata-xanh",
-      "generatedAt": 1784263422321,
+      "generatedAt": 1784712090031,
       "description": {
-        "headline": "Yukata vải bông xanh đen — một điểm nhấn Nhật dễ đưa vào tủ đồ",
+        "headline": "Yukata xanh đen tinh tế - Phong cách Nhật Bản thuần khiết cho mùa hè",
         "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
         "details": [
-          "Thiết kế thuộc nhóm trang phục truyền thống Nhật, bám đúng tên sản phẩm “Yukata vải bông xanh đen”.",
-          "Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
-          "Tông xanh tạo cá tính rõ mà vẫn dễ phối với màu trung tính."
+          "Chất liệu vải bông mềm mại, màu xanh đen sang trọng",
+          "Họa tiết hoa trắng và tím nhạt tinh tế",
+          "Tông xanh tạo cá tính rõ mà vẫn dễ phối với màu trung tính.",
+          "Thiết kế tối giản theo phong cách Nhật Bản",
+          "Dễ phối với nhiều trang phục cho các dịp khác nhau"
         ],
-        "stylingTip": "Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.",
-        "purchaseReason": "Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
-        "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
-        "engine": "catalog-grounded-fallback"
+        "stylingTip": "Kết hợp cùng dép gỗ hoặc giày thấp để tôn lên vẻ thanh lịch truyền thống",
+        "purchaseReason": "Thiết kế đơn giản nhưng đầy nét Nhật Bản, dễ dàng kết hợp với trang phục khác cho mọi dịp trong mùa hè",
+        "confidence": "95%",
+        "engine": "thi-giac-san-pham"
       }
     },
     {
       "productId": "kimono-hong",
-      "generatedAt": 1783923443792,
+      "generatedAt": 1784712720117,
       "description": {
-        "headline": "Kimono Truyền Thống Hồng - Tinh Hoa Thời Trang Nhật Bản",
-        "visualSummary": "Áo kimono màu hồng pastel với họa tiết hoa sen, đào và mây trời rực rỡ. Vạt obi tím đậm trang trí họa tiết cầu vồng và dây thắt đỏ nổi bật. Tay áo phồng kết hợp sắc hồng nhạt và xanh lam nhẹ nhàng.",
+        "headline": "Kimono truyền thống Hồng - Tinh hoa thời trang Nhật Bản dành cho mọi khoảnh khắc đặc biệt",
+        "visualSummary": "Áo kimono màu hồng pastel rực rỡ với họa tiết hoa hồng, cúc họa mi và những đám mây mềm mại. Dải obi tím đậm điểm xuyến họa tiết truyền thống, thắt bằng dây đỏ tạo điểm nhấn tinh tế. Tổng thể hài hòa giữa nét đẹp cổ điển và sự trẻ trung",
         "details": [
-          "Chất liệu vải mềm mại với họa tiết hoa đa dạng: sen, đào, cúc, hoa anh đào",
-          "Vạt obi tím đậm thắt dây đỏ truyền thống, trang trí họa tiết cầu vồng và hoa văn nhỏ",
-          "Cổ áo viền đỏ tạo điểm nhấn thanh lịch",
-          "Tay áo phồng với họa tiết mây trời và sắc hồng nhạt chuyển tiếp sang xanh lam",
-          "Phù hợp cho các dịp lễ hội và sự kiện trang trọng"
+          "Họa tiết hoa hồng và cúc họa mi đa dạng sắc độ trên nền hồng pastel",
+          "Dải obi tím đậm với họa tiết truyền thống, thắt bằng dây đỏ",
+          "Màu sắc chủ đạo là hồng phấn, xanh nhạt và trắng tạo cảm giác nhẹ nhàng",
+          "Phù hợp cho các dịp lễ hội, sự kiện gia đình hoặc những buổi tiệc sang trọng"
         ],
-        "stylingTip": "Kết hợp cùng phụ kiện truyền thống như bông hoa cài tóc hoặc vòng tay đơn giản để tôn lên vẻ thanh lịch. Dùng với váy ngắn hiện đại cho những buổi tiệc tối sang trọng.",
-        "purchaseReason": "Thiết kế tinh tế theo phong cách Nhật Bản, dễ phối đồ và phù hợp nhiều dịp đặc biệt như lễ hội truyền thống hoặc sự kiện quan trọng.",
-        "confidence": "95",
+        "stylingTip": "Kết hợp với phụ kiện tóc đơn giản hoặc giày dép truyền thống để tôn lên vẻ thanh lịch cho mọi dịp lễ hội",
+        "purchaseReason": "Sự kết hợp hoàn hảo giữa nét đẹp truyền thống và phong cách hiện đại, phù hợp cho những buổi tiệc gia đình hay lễ hội mùa xuân",
+        "confidence": "95%",
         "engine": "thi-giac-san-pham"
       }
     },
     {
       "productId": "cardigan-dai",
-      "generatedAt": 1783930354409,
+      "generatedAt": 1784545184208,
       "description": {
-        "headline": "Cardigan len dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ",
-        "visualSummary": "Dựa trên tiêu đề, danh mục và ảnh catalog, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng layer rõ ràng.",
+        "headline": "Áo len khoác dáng dài - Phong cách Nhật Bản cho mọi phong cách",
+        "visualSummary": "Áo len màu hồng pastel dáng dài, cổ chữ V rộng rãi, tay dài ôm nhẹ. Chất liệu mềm mại với đường viền gân dọc tinh tế. Kết hợp cùng áo thun trắng in chữ và chân váy đen, tạo vẻ thanh lịch nhưng vẫn năng động trong không gian công sở",
         "details": [
-          "Thiết kế thuộc nhóm áo khoác và trang phục layer, bám đúng tên sản phẩm “Cardigan len dáng dài”.",
-          "Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng layer rõ ràng.",
-          "Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu."
+          "Dáng dài ôm vừa vặn, phù hợp mọi dáng người",
+          "Màu hồng pastel dịu mắt, dễ phối đồ",
+          "Thiết kế đơn giản nhưng tinh tế theo phong cách Nhật Bản",
+          "Phù hợp cho cả công việc và dạo phố"
         ],
-        "stylingTip": "Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.",
-        "purchaseReason": "Phù hợp nếu bạn muốn một món áo khoác và trang phục layer có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
-        "confidence": "Mô tả nền từ dữ liệu catalog; không suy đoán chất liệu không có trong dữ liệu.",
-        "engine": "catalog-grounded-fallback"
+        "stylingTip": "Chọn áo thun trắng đơn giản kết hợp với chân váy ngắn hoặc quần jeans ống loe để tạo vẻ ngoài trẻ trung. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc túi xách tay để tăng điểm nhấn",
+        "purchaseReason": "Áo len khoác dáng dài này là lựa chọn hoàn hảo cho những ai yêu thích sự đơn giản nhưng vẫn muốn nổi bật. Thiết kế dễ phối đồ và phù hợp với nhiều dịp, từ công sở đến các buổi gặp gỡ bạn bè",
+        "confidence": "Cao",
+        "engine": "thi-giac-san-pham"
       }
     },
     {
       "productId": "furina",
-      "generatedAt": 1783930516299,
+      "generatedAt": 1784711770803,
       "description": {
-        "headline": "Cosplay Furina: Blue & Gold Elegance for Events",
-        "visualSummary": "Hình ảnh hai người mẫu mặc trang phục cosplay màu xanh đậm và vàng kim với mũ vương miện bằng kim loại, găng tay trắng, phụ kiện trang sức lấp lánh. Chi tiết cận cảnh mũ vương miện, trang sức kim loại và mi giả nguyên bản được hiển thị rõ ràng. Thương hiệu '喵屋' xuất hiện ở góc dưới phải.",
+        "headline": "Trang phục Furina - Tinh hoa thời trang Nhật Bản dành cho những khoảnh khắc tỏa sáng",
+        "visualSummary": "Hình ảnh trưng bày hai người mẫu diện bộ trang phục chủ đạo màu xanh đậm kết hợp vàng sang trọng. Mũ vương miện kim loại đầy đặn, phụ kiện trang sức lấp lánh và mi giả nguyên bản được nhấn mạnh qua các hình ảnh nhỏ ở góc trên.",
         "details": [
-          "Mũ vương miện bằng kim loại toàn bộ",
-          "Phụ kiện trang sức kim loại lấp lánh",
-          "Mi giả nguyên bản đi kèm",
-          "Tông màu xanh đậm kết hợp vàng kim",
-          "Thiết kế theo phong cách thời trang Nhật Bản"
+          "Mũ vương miện kim loại đầy đặn với chi tiết hoàng gia",
+          "Phụ kiện trang sức kim loại lấp lánh trên bộ trang phục",
+          "Tặng kèm mi giả nguyên bản theo phong cách cổ điển",
+          "Thiết kế dễ phối đồ cho các sự kiện đặc biệt",
+          "Họa tiết xanh đậm kết hợp vàng sang trọng"
         ],
-        "stylingTip": "Kết hợp với phụ kiện đơn giản để tạo điểm nhấn cho các sự kiện đặc biệt, hoặc phối cùng trang phục tối giản để tôn lên vẻ sang trọng của bộ trang phục.",
-        "purchaseReason": "Thiết kế tinh tế theo phong cách Nhật Bản, màu sắc nổi bật và tính ứng dụng cao cho nhiều dịp khác nhau.",
-        "confidence": "High",
-        "engine": "qwen3-vl:8b"
+        "stylingTip": "Kết hợp với tất trắng hoặc phụ kiện đồng bộ để tôn lên vẻ sang trọng",
+        "purchaseReason": "Phù hợp cho mọi dịp từ lễ hội đến sự kiện, mang đến phong cách độc đáo và tinh tế",
+        "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
+        "engine": "thi-giac-san-pham"
       }
     },
     {
@@ -8884,18 +12328,18 @@
     },
     {
       "productId": "khoac-nhat",
-      "generatedAt": 1783934303795,
+      "generatedAt": 1784651504430,
       "description": {
-        "headline": "Áo Haori Nhật Bản Mùa - Tinh Hoa Lễ Hội Trên Vải Đỏ Rực Rỡ",
-        "visualSummary": "Áo khoác haori màu đỏ tươi với họa tiết trang trí truyền thống Nhật Bản. Điểm nhấn là chữ '祭' (sai) lớn ở ngực, kết hợp các vòng tròn xoáy, hình tam giác và họa tiết mây trắng.",
+        "headline": "Áo khoác Nhật Bản mùa - Tinh hoa lễ hội trên nền đỏ rực",
+        "visualSummary": "Áo khoác haori truyền thống Nhật Bản với nền vải đỏ tươi nổi bật, điểm nhấn là chữ '祭' (lễ hội) lớn trang trí giữa ngực. Xung quanh là họa tiết tròn xoáy, hoa văn hình học và đường viền sóng trắng tinh tế, tạo nên vẻ đẹp cổ điển nhưng trẻ trung.",
         "details": [
-          "Chữ '祭' (sai) đen nổi bật ở vị trí trung tâm ngực",
-          "Ba loại họa tiết tròn: hoa văn ba lá, xoắn ốc, và vòng xoáy trên vai và thân áo",
-          "Dải hình thoi trắng chạy ngang giữa áo",
-          "Họa tiết mây trắng uốn lượn ở phần dưới"
+          "Màu đỏ rực rỡ làm nền cho các họa tiết trắng nổi bật",
+          "Chữ '祭' (lễ hội) lớn ở vị trí trung tâm ngực",
+          "Họa tiết tròn xoáy và hình học được bố trí cân đối trên thân áo",
+          "Đường viền sóng trắng chạy dọc phần dưới tạo điểm nhấn đặc trưng"
         ],
-        "stylingTip": "Phối cùng áo sơ mi đơn giản hoặc váy truyền thống để tạo phong cách lễ hội độc đáo, phù hợp cho các dịp đặc biệt.",
-        "purchaseReason": "Thiết kế đậm chất Nhật Bản với màu đỏ rực rỡ và họa tiết tinh tế, dễ dàng kết hợp vào nhiều trang phục khác nhau.",
+        "stylingTip": "Dùng làm layer thêm vào bộ đồ thường ngày, kết hợp với quần jeans hoặc váy ngắn để tạo phong cách trẻ trung. Hoặc phối cùng trang phục truyền thống Nhật Bản cho dịp lễ hội.",
+        "purchaseReason": "Áo khoác này mang đến vẻ đẹp tinh tế của văn hóa Nhật Bản, dễ dàng phối đồ và phù hợp cho nhiều dịp từ công sở đến dạo phố.",
         "confidence": "95%",
         "engine": "thi-giac-san-pham"
       }
@@ -8933,6 +12377,55 @@
         "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
         "engine": "catalog-grounded-fallback"
       }
+    },
+    {
+      "productId": "giay-dep",
+      "generatedAt": 1784626104154,
+      "description": {
+        "headline": "Dép quai Nhật — một điểm nhấn Nhật dễ đưa vào tủ đồ",
+        "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.",
+        "details": [
+          "Thiết kế thuộc nhóm phụ kiện hoàn thiện bộ trang phục, bám đúng tên sản phẩm “Dép quai Nhật”.",
+          "Điểm nhìn chính là tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.",
+          "Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu."
+        ],
+        "stylingTip": "Dùng làm điểm nhấn cuối cùng cho bộ trang phục tối giản; giữ các món còn lại cùng một bảng màu.",
+        "purchaseReason": "Phù hợp nếu bạn muốn một món phụ kiện hoàn thiện bộ trang phục có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
+        "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
+        "engine": "catalog-grounded-fallback"
+      }
+    },
+    {
+      "productId": "blazer-kaki",
+      "generatedAt": 1784651509055,
+      "description": {
+        "headline": "Áo khoác kaki dáng dài - Tinh tế từ phong cách Nhật Bản",
+        "visualSummary": "Áo khoác màu be dịu nhẹ với cổ áo đứng thanh lịch, thiết kế 2 hàng nút tròn chắc chắn. Tay áo có viền kẻ sọc trắng đen khi cuộn lên, chất liệu mềm mại phù hợp công sở. Phối cùng áo trắng và quần jeans tạo vẻ năng động, tinh tế.",
+        "details": [
+          "Màu be trung tính dễ phối đồ",
+          "Cổ áo đứng tôn dáng chuẩn phong cách Nhật Bản",
+          "2 hàng nút tròn đồng bộ tạo điểm nhấn sang trọng",
+          "Tay áo có viền kẻ sọc trắng đen khi cuộn lên",
+          "Chất liệu mềm mại, phù hợp công sở và dạo phố"
+        ],
+        "stylingTip": "Kết hợp với áo trắng đơn giản và quần jeans ống rộng để tạo vẻ thanh lịch, năng động. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc đồng hồ để tăng điểm nhấn.",
+        "purchaseReason": "Dễ phối đồ với nhiều phong cách từ công sở đến dạo phố, mang đến sự tự tin mỗi ngày",
+        "confidence": "95%",
+        "engine": "thi-giac-san-pham"
+      }
     }
-  ]
+  ],
+  "japanSpotReviews": [
+    {
+      "id": "jspot-review-1784644821964-ss6t2",
+      "place": "Kênh Otaru",
+      "prefecture": "Hokkaido",
+      "userId": "demo-minh",
+      "userName": "Trần Minh",
+      "rating": 5,
+      "comment": "Rất đẹp, đèn vàng tuyệt vời",
+      "createdAt": 1784644821964
+    }
+  ],
+  "japanSpotSuggestions": []
 }

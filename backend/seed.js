@@ -85,8 +85,8 @@ function makeVariants(slug, productIndex) {
 function emptyState() {
   return {
     seeded: false,
-    schemaVersion: 4,
-    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, logo: null },
+    schemaVersion: 5,
+    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, vnpay: true, logo: null },
     integrations: { mongo: false, cloudinary: false, ai: false },
     categories: JSON.parse(JSON.stringify(CATS)),
     products: [],
@@ -98,10 +98,13 @@ function emptyState() {
     reviewReactions: [],
     moderationSamples: [],
     users: [],
+    addresses: [],
+    wishlists: [],
     notifications: [],
     vouchers: [],
     flagcards: JSON.parse(JSON.stringify(FLAGCARDS)),
     flagcardCollections: [],
+    vipMemberships: [],
     flagcardConfig: { ...DEFAULT_FLAGCARD_CONFIG },
     voucherRedemptions: [],
     banners: [],
@@ -111,6 +114,8 @@ function emptyState() {
     tryonHistory: [],
     goals: [],
     aiDescriptions: [],
+    japanSpotReviews: [],
+    japanSpotSuggestions: [],
   };
 }
 

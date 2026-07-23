@@ -40,6 +40,11 @@ FASHN_PYTHON="${JAPANO_FASHN_PYTHON:-$FASHN_DIR/.venv/bin/python}"
 FASHN_LOG="${JAPANO_FASHN_LOG:-/tmp/japano-fashn-7862.log}"
 FASHN_PID=""
 export JAPANO_FASHN_URL="${JAPANO_FASHN_URL:-http://127.0.0.1:7862}"
+MOTION_DIR="${JAPANO_ONE_TO_ALL_HOME:-$HOME/jp/ai/One-to-All-Animation}"
+MOTION_PYTHON="${JAPANO_ONE_TO_ALL_PYTHON:-$MOTION_DIR/.venv/bin/python}"
+MOTION_LOG="${JAPANO_MOTION_LOG:-/tmp/japano-motion-7864.log}"
+MOTION_PID=""
+export JAPANO_MOTION_URL="${JAPANO_MOTION_URL:-http://127.0.0.1:7864}"
 CATVTON_DIR="${JAPANO_CATVTON_DIR:-$HOME/jp/ai/CatVTON}"
 CATVTON_PYTHON="${JAPANO_CATVTON_PYTHON:-$CATVTON_DIR/.venv/bin/python}"
 CATVTON_LOG="${JAPANO_CATVTON_LOG:-/tmp/japano-catvton-7861.log}"
@@ -65,6 +70,11 @@ cleanup() {
     kill "$FASHN_PID" 2>/dev/null || true
     wait "$FASHN_PID" 2>/dev/null || true
   fi
+  if [[ -n "$MOTION_PID" ]] && kill -0 "$MOTION_PID" 2>/dev/null; then
+    echo "→ Dừng One-to-All motion service (PID $MOTION_PID)…"
+    kill "$MOTION_PID" 2>/dev/null || true
+    wait "$MOTION_PID" 2>/dev/null || true
+  fi
   if [[ -n "$CATVTON_PID" ]] && kill -0 "$CATVTON_PID" 2>/dev/null; then
     echo "→ Dừng CatVTON (PID $CATVTON_PID)…"
     kill "$CATVTON_PID" 2>/dev/null || true
@@ -87,6 +97,13 @@ fashn_is_ready() {
   response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
     "${JAPANO_FASHN_URL%/}/health" 2>/dev/null)" || return 1
   [[ "$response" == *'"ok":true'* && "$response" == *'"modelReady":true'* && "$response" == *'"poseEditorReady":true'* ]]
+}
+
+motion_is_ready() {
+  local response
+  response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
+    "${JAPANO_MOTION_URL%/}/health" 2>/dev/null)" || return 1
+  [[ "$response" == *'"ok":true'* && "$response" == *'"one-to-all-animation-1.3b-v2"'* ]]
 }
 
 catvton_is_ready() {
@@ -144,6 +161,36 @@ else
   fi
   echo "✓ FASHN VTON đã sẵn sàng: $JAPANO_FASHN_URL"
   echo "  FASHN log: $FASHN_LOG"
+fi
+
+# One-to-All chỉ giữ một service nhẹ khi idle. Model video được nạp sau khi
+# người dùng chọn action, sau khi FASHN đã tạo xong ảnh và nhả GPU.
+if [[ "${JAPANO_SKIP_MOTION:-0}" == "1" ]]; then
+  echo "→ Bỏ qua motion (JAPANO_SKIP_MOTION=1)."
+elif motion_is_ready; then
+  echo "✓ Dùng One-to-All motion đang chạy tại $JAPANO_MOTION_URL"
+elif [[ ! -x "$MOTION_PYTHON" || ! -f "$ROOT_DIR/backend/motion_service.py" ]]; then
+  echo "· Không tìm thấy One-to-All local tại $MOTION_DIR — tính năng Ảnh sống sẽ tạm ẩn."
+else
+  echo "→ Khởi động One-to-All 1.3B-v2 CUDA + quality gate…"
+  (
+    JAPANO_ONE_TO_ALL_HOME="$MOTION_DIR" JAPANO_ONE_TO_ALL_PYTHON="$MOTION_PYTHON" \
+      "$MOTION_PYTHON" -u "$ROOT_DIR/backend/motion_service.py"
+  ) >"$MOTION_LOG" 2>&1 &
+  MOTION_PID=$!
+  for ((attempt = 1; attempt <= 60; attempt += 1)); do
+    if motion_is_ready; then break; fi
+    if ! kill -0 "$MOTION_PID" 2>/dev/null; then
+      echo "· One-to-All không khởi động được; app vẫn dùng thử đồ ảnh. Log: $MOTION_LOG"
+      MOTION_PID=""
+      break
+    fi
+    sleep 0.5
+  done
+  if [[ -n "$MOTION_PID" ]] && motion_is_ready; then
+    echo "✓ One-to-All sẵn sàng: $JAPANO_MOTION_URL"
+    echo "  Motion log: $MOTION_LOG"
+  fi
 fi
 
 # CatVTON là phương án dự phòng (fallback) khi FASHN lỗi/không đạt quality gate —
