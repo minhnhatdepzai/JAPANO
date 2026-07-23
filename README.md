@@ -127,8 +127,6 @@ view · search · wishlist · cart · try-on · chat · purchase
 ### Backend
 
 - REST API chia theo domain trong [`backend/routes`](backend/routes).
-- JSON store có ghi file nguyên tử và tự migration schema.
-- MongoDB và Cloudinary là tích hợp tùy chọn, không phải dependency bắt buộc.
 - Giá, voucher, payment promotion và VIP discount được tính lại phía server.
 - Log hành vi nuôi recommendation gồm view, search, wishlist, cart, try-on, chat, goal và purchase.
 - Cache recommendation tách theo state, TTL 60 giây và invalidation khi dữ liệu thay đổi.
@@ -547,9 +545,7 @@ Test suite hiện bao phủ recommendation provenance, cache isolation, next-ite
 ## Giới hạn hiện tại
 
 - Admin chưa có màn login; các mutation endpoint chưa có server-side authentication/authorization.
-- Mobile login/register hiện lưu local bằng AsyncStorage, chưa có JWT/session/password verification.
 - Một số wrapper mobile cho camera, try-on, goals, Japan community và return vẫn fallback về demo user; cần chuẩn hóa identity trước production.
-- JSON là source of truth mặc định; chưa có transaction database hoặc horizontal scaling.
 - Stripe chỉ nhận test keys và VNPay dùng sandbox/demo configuration.
 - Notification hiện là record trong shared state, chưa tích hợp FCM/APNs push.
 - AI checkpoints và Python environments không nằm trong repo và không được cài bởi npm.
@@ -557,19 +553,5 @@ Test suite hiện bao phủ recommendation provenance, cache isolation, next-ite
 - Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
 - Trước production cần thêm auth/RBAC, rate limiting, request validation, secret management, migrations, audit log, observability và CI/CD.
 
-## Trước khi push lên GitHub
 
-```bash
-npm run check
-git status
-git check-ignore .env.server
-```
-
-Đảm bảo:
-
-- `.env.server`, API keys, model weights, runtime output và customer data không được stage.
-- Chỉ `.env.example` được commit làm mẫu cấu hình.
-- `backend/data/db.json` không chứa dữ liệu người dùng thật.
-- Không commit virtual environments, `node_modules`, APK/build output hoặc video/ảnh runtime.
-- Kiểm tra lại staged files bằng `git diff --cached`.
 
