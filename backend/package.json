@@ -1,0 +1,20 @@
+{
+  "name": "japano-backend",
+  "version": "1.0.0",
+  "description": "JAPANO backend — API + phục vụ trang Admin",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "mongodb": "^7.5.0",
+    "stripe": "^22.3.2"
+  }
+}

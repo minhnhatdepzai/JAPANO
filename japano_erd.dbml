@@ -1,0 +1,577 @@
+// JAPANO — ERD v2 (đã chuẩn hoá) cho dbdiagram.io
+// Dán TOÀN BỘ nội dung file này vào ô soạn thảo BÊN TRÁI của dbdiagram.io.
+// Mỗi dòng "Ref:" là một dây nối từ khoá ngoại (FK) đến khoá chính (PK).
+
+Table currencies {
+  code varchar(10) [pk]
+  name varchar(60) [not null]
+  symbol varchar(10)
+  Note: 'Chuẩn hoá mã tiền tệ — hết cảnh lẫn "vnd"/"VND".'
+}
+
+Table categories {
+  id bigint [pk]
+  slug varchar(80) [unique, not null]
+  name varchar(150) [not null]
+  kanji varchar(40)
+  parent_id bigint
+  Note: 'Danh mục có phân cấp cha–con (parent_id tự trỏ).'
+}
+
+Table products {
+  id bigint [pk]
+  slug varchar(120) [unique, not null]
+  name varchar(190) [not null]
+  kanji varchar(40)
+  brand varchar(80)
+  base_price bigint [not null, note: 'giá niêm yết mặc định']
+  old_price bigint [note: 'giá gạch (khuyến mãi hiển thị)']
+  currency_code varchar(10) [not null]
+  status varchar(20) [not null, note: '\'draft\' | \'published\' | \'archived\'']
+  description text
+  story text
+  created_at datetime [not null]
+  updated_at datetime
+  Note: 'Bỏ rating/sold denormalized — tính từ reviews/order_items.'
+}
+
+Table product_categories {
+  product_id bigint [not null]
+  category_id bigint [not null]
+  indexes {
+    (product_id, category_id) [pk]
+  }
+  Note: 'N–N: 1 sản phẩm thuộc nhiều danh mục.'
+}
+
+Table product_images {
+  id bigint [pk]
+  product_id bigint [not null]
+  url varchar(500) [not null]
+  position int [not null]
+  Note: 'Ảnh sản phẩm (ảnh lưu Cloudinary, DB giữ URL).'
+}
+
+Table product_variants {
+  id bigint [pk]
+  product_id bigint [not null]
+  color_name varchar(60) [not null]
+  color_hex varchar(16)
+  size varchar(20) [not null]
+  sku varchar(60) [unique, not null]
+  price bigint [note: 'giá riêng của biến thể (NULL = dùng base_price)']
+  stock int [not null, note: 'tồn kho thực']
+  reserved int [not null, note: 'đã giữ chỗ cho đơn chưa hoàn tất']
+  Note: 'UNIQUE(product_id,color,size) + SKU UNIQUE — hết trùng biến thể.'
+}
+
+Table inventory_movements {
+  id bigint [pk]
+  variant_id bigint [not null]
+  delta int [not null, note: 'âm = giảm, dương = tăng']
+  reason varchar(30) [not null, note: '\'purchase\'|\'sale\'|\'cancel_restock\'|\'return_restock\'|\'adjust\'']
+  order_id bigint [note: 'đơn liên quan (nếu có)']
+  created_at datetime [not null]
+  Note: 'Sổ cái tồn kho: mọi lần +/- kho (nhập, bán, huỷ-hoàn, trả).'
+}
+
+Table users {
+  id bigint [pk]
+  name varchar(150) [not null]
+  email varchar(190) [unique]
+  phone varchar(40)
+  password_hash varchar(255)
+  role varchar(20) [not null, note: '\'admin\'|\'staff\'|\'customer\'']
+  status varchar(20) [not null, note: '\'active\'|\'locked\'']
+  created_at datetime [not null]
+  Note: 'Bỏ orders_count/spent/tryons denormalized — tính từ giao dịch.'
+}
+
+Table addresses {
+  id bigint [pk]
+  user_id bigint [not null]
+  recipient_name varchar(150) [not null]
+  phone varchar(40) [not null]
+  street varchar(255) [not null]
+  ward_code varchar(20)
+  ward varchar(120)
+  province_code varchar(20)
+  province varchar(120)
+  is_default boolean [not null]
+  created_at datetime [not null]
+  Note: 'SỔ ĐỊA CHỈ: khách lưu nhiều địa chỉ, chọn mặc định. (Không có quận/huyện theo cải cách 2025.)'
+}
+
+Table carts {
+  id bigint [pk]
+  user_id bigint [note: 'NULL nếu là khách chưa đăng nhập']
+  session_token varchar(64) [note: 'định danh giỏ của khách vãng lai']
+  updated_at datetime [not null]
+  Note: 'Giỏ hỗ trợ cả khách vãng lai (session_token) để merge khi đăng nhập.'
+}
+
+Table cart_items {
+  id bigint [pk]
+  cart_id bigint [not null]
+  variant_id bigint [not null]
+  quantity int [not null]
+  added_at datetime [not null]
+  Note: 'Trỏ thẳng biến thể — không còn màu/size dạng chữ tự do.'
+}
+
+Table wishlists {
+  id bigint [pk]
+  user_id bigint [not null]
+  product_id bigint [not null]
+  created_at datetime [not null]
+  Note: 'Thực thể riêng (không suy ra từ log) — thêm/bỏ tim sạch sẽ.'
+}
+
+Table vouchers {
+  id bigint [pk]
+  code varchar(40) [unique, not null]
+  type varchar(20) [not null, note: '\'percent\'|\'amount\'']
+  value int [not null]
+  min_order bigint [not null]
+  max_discount bigint [note: 'trần giảm cho loại percent']
+  usage_limit int [note: 'tổng lượt cho phép (NULL = không giới hạn)']
+  per_user_limit int [note: 'lượt tối đa mỗi khách']
+  used_count int [not null]
+  starts_at datetime
+  expires_at datetime
+  active boolean [not null]
+  Note: 'Mã giảm giá của SHOP — có giới hạn tổng & theo từng khách.'
+}
+
+Table payment_promotions {
+  code varchar(40) [pk]
+  provider varchar(20) [not null, note: '\'stripe\'|\'vnpay\'|\'cod\'']
+  type varchar(20) [not null, note: '\'percent\'|\'amount\'']
+  value int [not null]
+  active boolean [not null]
+  Note: 'Khuyến mãi của CỔNG THANH TOÁN (STRIPE10, VNPAY5, JAPANO10) — TÁCH khỏi voucher.'
+}
+
+Table orders {
+  id bigint [pk]
+  code varchar(40) [unique, not null]
+  user_id bigint [note: 'NULL nếu khách vãng lai']
+  status varchar(30) [not null, note: 'pending|confirmed|shipping|completed|cancelled|returned']
+  shipping_address_id bigint [note: 'tham chiếu sổ địa chỉ (có thể NULL sau này)']
+  ship_recipient varchar(150) [not null, note: 'SNAPSHOT — giữ nguyên kể cả khi sổ địa chỉ đổi']
+  ship_phone varchar(40) [not null]
+  ship_street varchar(255) [not null]
+  ship_ward_code varchar(20)
+  ship_ward varchar(120)
+  ship_province_code varchar(20)
+  ship_province varchar(120)
+  contact_email varchar(190)
+  subtotal bigint [not null]
+  discount_total bigint [not null]
+  shipping_fee bigint [not null]
+  grand_total bigint [not null]
+  currency_code varchar(10) [not null]
+  source varchar(30)
+  placed_at datetime [not null]
+  cancelled_at datetime
+  cancel_reason varchar(255)
+  Note: 'Bỏ hết field payment_* & discount trùng — địa chỉ giao được SNAPSHOT.'
+}
+
+Table order_items {
+  id bigint [pk]
+  order_id bigint [not null]
+  variant_id bigint [note: 'biến thể đã mua (RESTRICT: không cho xoá biến thể đã bán)']
+  product_id bigint
+  name_snapshot varchar(190) [not null]
+  color_snapshot varchar(60)
+  size_snapshot varchar(20)
+  unit_price bigint [not null]
+  quantity int [not null]
+  line_total bigint [not null]
+  Note: 'Nối biến thể (variant_id) + snapshot tên/giá — báo cáo theo biến thể được.'
+}
+
+Table order_discounts {
+  id bigint [pk]
+  order_id bigint [not null]
+  source_type varchar(20) [not null, note: '\'voucher\'|\'payment_promo\'']
+  voucher_id bigint
+  promotion_code varchar(40)
+  amount bigint [not null]
+  Note: 'Mỗi khoản giảm là 1 dòng — 1 đơn có thể áp NHIỀU giảm giá.'
+}
+
+Table order_status_history {
+  id bigint [pk]
+  order_id bigint [not null]
+  from_status varchar(30)
+  to_status varchar(30) [not null]
+  changed_by bigint [note: 'user gây ra thay đổi']
+  note varchar(255)
+  created_at datetime [not null]
+  Note: 'Nhật ký chuyển trạng thái có from→to + người đổi (kiểm soát state machine).'
+}
+
+Table payments {
+  id bigint [pk]
+  code varchar(60) [unique, not null]
+  order_id bigint [not null]
+  provider varchar(20) [not null, note: '\'stripe\'|\'vnpay\'|\'cod\'']
+  method varchar(40)
+  status varchar(20) [not null, note: 'pending|paid|failed|cancelled|refunded']
+  amount bigint [not null]
+  currency_code varchar(10) [not null]
+  transaction_code varchar(120)
+  paid_at datetime
+  created_at datetime [not null]
+  Note: 'NGUỒN SỰ THẬT thanh toán — 1 đơn có NHIỀU lần thử (retry).'
+}
+
+Table return_requests {
+  id bigint [pk]
+  code varchar(60) [unique, not null]
+  order_id bigint [not null]
+  user_id bigint
+  payment_id bigint
+  status varchar(30) [not null]
+  reason varchar(255)
+  note text
+  amount bigint [not null]
+  created_at datetime [not null]
+  Note: 'Yêu cầu trả hàng gắn đúng đơn + lần thanh toán.'
+}
+
+Table return_request_items {
+  id bigint [pk]
+  return_request_id bigint [not null]
+  order_item_id bigint [not null]
+  quantity int [not null]
+  Note: 'Nối đúng order_item — trả 1 trong 2 món cùng sản phẩm không còn mơ hồ.'
+}
+
+Table refunds {
+  id bigint [pk]
+  payment_id bigint [not null]
+  return_request_id bigint
+  amount bigint [not null]
+  status varchar(20) [not null]
+  reason varchar(120)
+  created_at datetime [not null]
+  Note: 'Hoàn tiền theo từng payment (app đảm bảo tổng hoàn ≤ số đã trả).'
+}
+
+Table voucher_redemptions {
+  id bigint [pk]
+  voucher_id bigint [not null]
+  user_id bigint
+  order_id bigint [not null]
+  discount_amount bigint [not null]
+  redeemed_at datetime [not null]
+  Note: 'Ghi nhận mỗi lần dùng voucher (1 voucher/đơn).'
+}
+
+Table reviews {
+  id bigint [pk]
+  product_id bigint [not null]
+  user_id bigint [not null]
+  order_id bigint [note: 'đơn đã mua để xác minh']
+  rating tinyint [not null]
+  comment text
+  media_url varchar(500)
+  media_kind varchar(10) [note: '\'video\'|\'audio\'']
+  status varchar(20) [not null, note: '\'pending\'|\'approved\'|\'rejected\'']
+  created_at datetime [not null]
+  Note: 'UNIQUE(user_id,product_id) — mỗi khách 1 đánh giá/sản phẩm; rating 1..5.'
+}
+
+Table review_reactions {
+  id bigint [pk]
+  review_id bigint [not null]
+  user_id bigint [not null]
+  value varchar(20) [not null, note: '\'helpful\'|\'not_helpful\'']
+  created_at datetime [not null]
+  Note: 'Hữu ích/không — mỗi khách 1 phản ứng/đánh giá.'
+}
+
+Table moderation_samples {
+  id bigint [pk]
+  review_id bigint
+  label varchar(30)
+  normalized_text text
+  source varchar(30)
+  created_at datetime [not null]
+  Note: 'Mẫu học kiểm duyệt bình luận.'
+}
+
+Table interactions {
+  id bigint [pk]
+  user_id bigint
+  product_id bigint
+  type varchar(30) [not null, note: '\'view\'|\'search\'|\'cart\'|\'purchase\'|\'tryon\'|\'chat\'|\'goal\'']
+  value int [not null]
+  created_at datetime [not null]
+  source varchar(30)
+  Note: 'Log hành vi thuần tuý cho AI gợi ý (wishlist/cart đã tách ra bảng riêng).'
+}
+
+Table chats {
+  id bigint [pk]
+  user_id bigint
+  role varchar(20) [not null, note: '\'user\'|\'assistant\'']
+  message text
+  created_at datetime [not null]
+  Note: 'Hội thoại trợ lý Ori.'
+}
+
+Table chat_product_refs {
+  id bigint [pk]
+  chat_id bigint [not null]
+  product_id bigint
+  Note: 'Sản phẩm Ori gợi ý trong 1 câu trả lời.'
+}
+
+Table tryon_history {
+  id bigint [pk]
+  user_id bigint
+  product_id bigint
+  engine varchar(190)
+  created_at datetime [not null]
+  Note: 'Lịch sử thử đồ ảo.'
+}
+
+Table tryon_accessories {
+  id bigint [pk]
+  tryon_id bigint [not null]
+  product_id bigint
+  Note: 'Phụ kiện dùng kèm trong 1 lần thử đồ.'
+}
+
+Table goals {
+  id bigint [pk]
+  user_id bigint [not null]
+  product_id bigint
+  monthly_income bigint
+  fixed_expenses bigint
+  current_savings bigint
+  target_months int
+  plan json
+  created_at datetime [not null]
+  updated_at datetime
+  Note: 'Mục tiêu mua sắm/sức khoẻ (plan chi tiết lưu JSON).'
+}
+
+Table ai_descriptions {
+  id bigint [pk]
+  product_id bigint [unique, not null]
+  headline varchar(255)
+  visual_summary text
+  styling_tip text
+  purchase_reason text
+  confidence varchar(10)
+  engine varchar(60)
+  generated_at datetime [not null]
+  Note: 'Mô tả sản phẩm do AI sinh (1 bản/sản phẩm).'
+}
+
+Table ai_description_details {
+  id bigint [pk]
+  ai_description_id bigint [not null]
+  detail varchar(500) [not null]
+  Note: 'Các gạch đầu dòng của mô tả AI.'
+}
+
+Table flagcards {
+  id bigint [pk]
+  slug varchar(80) [unique, not null]
+  sort_order int
+  title varchar(190) [not null]
+  japanese varchar(190)
+  region varchar(120)
+  summary text
+  active boolean [not null]
+  Note: 'Thẻ địa danh (sưu tầm đủ bộ nhận voucher).'
+}
+
+Table flagcard_facts {
+  id bigint [pk]
+  flagcard_id bigint [not null]
+  fact varchar(255) [not null]
+  Note: 'Fun-fact của thẻ.'
+}
+
+Table flagcard_checkins {
+  id bigint [pk]
+  flagcard_id bigint [not null]
+  name varchar(120) [not null]
+  tip varchar(255)
+  Note: 'Điểm check-in gợi ý của thẻ.'
+}
+
+Table flagcard_recommended_products {
+  id bigint [pk]
+  flagcard_id bigint [not null]
+  product_id bigint [not null]
+  Note: 'N–N thẻ ↔ sản phẩm gợi ý.'
+}
+
+Table flagcard_collections {
+  id bigint [pk]
+  user_id bigint [not null]
+  created_at datetime [not null]
+  updated_at datetime
+  Note: 'Bộ sưu tập thẻ của khách.'
+}
+
+Table flagcard_collection_awards {
+  id bigint [pk]
+  collection_id bigint [not null]
+  flagcard_id bigint
+  order_id bigint
+  awarded_at datetime [not null]
+  source varchar(40)
+  Note: 'Mỗi lần khách được tặng 1 thẻ (đơn đủ điều kiện).'
+}
+
+Table japan_spot_reviews {
+  id bigint [pk]
+  place varchar(190) [not null]
+  prefecture varchar(120) [not null]
+  user_id bigint
+  rating tinyint [not null]
+  comment text
+  media_url varchar(500)
+  media_kind varchar(10)
+  created_at datetime [not null]
+  Note: 'Đánh giá địa điểm trong "Khám phá Nhật Bản" (rating 1..5).'
+}
+
+Table japan_spot_suggestions {
+  id bigint [pk]
+  prefecture varchar(120) [not null]
+  user_id bigint
+  suggestion text
+  created_at datetime [not null]
+  Note: 'Khách đề xuất địa điểm mới cho hệ thống.'
+}
+
+Table notifications {
+  id bigint [pk]
+  title varchar(255)
+  body text
+  type varchar(60)
+  action varchar(120)
+  reach int
+  created_at datetime [not null]
+  Note: 'Thông báo đẩy cho khách.'
+}
+
+Table banners {
+  id bigint [pk]
+  title varchar(190)
+  image varchar(500)
+  link varchar(255)
+  active boolean [not null]
+  sort_order int
+  Note: 'Banner trang chủ.'
+}
+
+Table shop_settings {
+  id tinyint [pk]
+  name varchar(150)
+  hotline varchar(40)
+  email varchar(150)
+  address varchar(255)
+  ship_fee bigint
+  cod boolean
+  stripe boolean
+  vnpay boolean
+  logo_url varchar(500)
+  Note: 'Cấu hình cửa hàng (singleton id=1).'
+}
+
+Table flagcard_config {
+  id tinyint [pk]
+  active boolean
+  qualifying_order_min bigint
+  required_cards int
+  reward_percent int
+  reward_validity_days int
+  Note: 'Cấu hình chương trình Flagcard (singleton).'
+}
+
+Table integration_settings {
+  id tinyint [pk]
+  mongo boolean
+  cloudinary boolean
+  ai boolean
+  Note: 'Trạng thái tích hợp Mongo/Cloudinary/AI (singleton).'
+}
+
+// ---- Quan hệ (FK -> PK) ----
+Ref: categories.parent_id > categories.id
+Ref: products.currency_code > currencies.code
+Ref: product_categories.product_id > products.id
+Ref: product_categories.category_id > categories.id
+Ref: product_images.product_id > products.id
+Ref: product_variants.product_id > products.id
+Ref: inventory_movements.variant_id > product_variants.id
+Ref: inventory_movements.order_id > orders.id
+Ref: addresses.user_id > users.id
+Ref: carts.user_id > users.id
+Ref: cart_items.cart_id > carts.id
+Ref: cart_items.variant_id > product_variants.id
+Ref: wishlists.user_id > users.id
+Ref: wishlists.product_id > products.id
+Ref: orders.user_id > users.id
+Ref: orders.shipping_address_id > addresses.id
+Ref: orders.currency_code > currencies.code
+Ref: order_items.order_id > orders.id
+Ref: order_items.variant_id > product_variants.id
+Ref: order_items.product_id > products.id
+Ref: order_discounts.order_id > orders.id
+Ref: order_discounts.voucher_id > vouchers.id
+Ref: order_discounts.promotion_code > payment_promotions.code
+Ref: order_status_history.order_id > orders.id
+Ref: order_status_history.changed_by > users.id
+Ref: payments.order_id > orders.id
+Ref: payments.currency_code > currencies.code
+Ref: return_requests.order_id > orders.id
+Ref: return_requests.user_id > users.id
+Ref: return_requests.payment_id > payments.id
+Ref: return_request_items.return_request_id > return_requests.id
+Ref: return_request_items.order_item_id > order_items.id
+Ref: refunds.payment_id > payments.id
+Ref: refunds.return_request_id > return_requests.id
+Ref: voucher_redemptions.voucher_id > vouchers.id
+Ref: voucher_redemptions.user_id > users.id
+Ref: voucher_redemptions.order_id > orders.id
+Ref: reviews.product_id > products.id
+Ref: reviews.user_id > users.id
+Ref: reviews.order_id > orders.id
+Ref: review_reactions.review_id > reviews.id
+Ref: review_reactions.user_id > users.id
+Ref: moderation_samples.review_id > reviews.id
+Ref: interactions.user_id > users.id
+Ref: interactions.product_id > products.id
+Ref: chats.user_id > users.id
+Ref: chat_product_refs.chat_id > chats.id
+Ref: chat_product_refs.product_id > products.id
+Ref: tryon_history.user_id > users.id
+Ref: tryon_history.product_id > products.id
+Ref: tryon_accessories.tryon_id > tryon_history.id
+Ref: tryon_accessories.product_id > products.id
+Ref: goals.user_id > users.id
+Ref: goals.product_id > products.id
+Ref: ai_descriptions.product_id > products.id
+Ref: ai_description_details.ai_description_id > ai_descriptions.id
+Ref: flagcard_facts.flagcard_id > flagcards.id
+Ref: flagcard_checkins.flagcard_id > flagcards.id
+Ref: flagcard_recommended_products.flagcard_id > flagcards.id
+Ref: flagcard_recommended_products.product_id > products.id
+Ref: flagcard_collections.user_id > users.id
+Ref: flagcard_collection_awards.collection_id > flagcard_collections.id
+Ref: flagcard_collection_awards.flagcard_id > flagcards.id
+Ref: flagcard_collection_awards.order_id > orders.id
+Ref: japan_spot_reviews.user_id > users.id
+Ref: japan_spot_suggestions.user_id > users.id
