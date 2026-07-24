@@ -1,0 +1,20 @@
+Copy đè các file/thư mục sau vào project hiện tại:
+
+.env
+.env.server
+.env.example
+server/index.mjs
+server/index.js
+lib/api.ts
+app/admin.tsx
+app/(tabs)/profile.tsx
+PATCH_V37_CLOUDINARY_MEDIA_UPLOAD_NOTES.md
+FILES_TO_REPLACE_V37_CLOUDINARY.txt
+
+Sau đó chạy lại:
+
+npm run start-server
+npx expo start -c
+
+Test backend:
+http://localhost:4000/api/cloudinary/config

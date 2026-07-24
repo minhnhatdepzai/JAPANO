@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "JAPANO Fashion AI",
+    "slug": "japano-fashion-ai",
+    "version": "1.0.26",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "japano",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F1E7DA"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "JAPANO cần dùng camera để chụp ảnh thử đồ AI, phân tích outfit và gợi ý sản phẩm.",
+        "NSPhotoLibraryUsageDescription": "JAPANO cần truy cập thư viện ảnh/video để tải lên thử đồ AI và chatbot."
+      },
+      "bundleIdentifier": "com.leminhnhat123.japanofashionai"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#F1E7DA"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ],
+      "softwareKeyboardLayoutMode": "resize",
+      "package": "com.leminhnhat123.japanofashionai"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "launcher"
+        }
+      ],
+      "expo-font",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.leminhnhat123.japanofashionai",
+          "enableGooglePay": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cc4f52a3-95bb-4f09-bf14-36ff96e3a2ce"
+      }
+    },
+    "owner": "leminhnhat123"
+  }
+}

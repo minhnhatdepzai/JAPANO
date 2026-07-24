@@ -1,0 +1,244 @@
+// @ts-nocheck
+import React, { useMemo, useState } from 'react';
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { v44Post } from '../lib/japanoV44TryonApi';
+
+type Img = { uri: string; base64?: string };
+
+async function pickImage(setter: (v: Img) => void) {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 0.9,
+    base64: true,
+    allowsEditing: false,
+  });
+  if (r.canceled || !r.assets?.[0]) return;
+  const a = r.assets[0];
+  const mime = a.mimeType || 'image/jpeg';
+  setter({
+    uri: a.uri,
+    base64: `data:${mime};base64,${a.base64 || ''}`,
+  });
+}
+
+async function pickManyImages(setter: (v: Img[]) => void, current: Img[]) {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 0.9,
+    base64: true,
+    allowsEditing: false,
+    allowsMultipleSelection: true,
+    selectionLimit: 5,
+  });
+  if (r.canceled || !r.assets?.length) return;
+  const next = r.assets.map((a) => {
+    const mime = a.mimeType || 'image/jpeg';
+    return { uri: a.uri, base64: `data:${mime};base64,${a.base64 || ''}` };
+  });
+  setter([...(current || []), ...next].slice(0, 5));
+}
+
+export default function ThuDoAiV44Screen() {
+  const [person, setPerson] = useState<Img | null>(null);
+  const [garment, setGarment] = useState<Img | null>(null);
+  const [accessories, setAccessories] = useState<Img[]>([]);
+  const [personUrl, setPersonUrl] = useState('');
+  const [garmentUrl, setGarmentUrl] = useState('');
+  const [accessoryLinks, setAccessoryLinks] = useState('');
+  const [productName, setProductName] = useState('JAPANO outfit');
+  const [category, setCategory] = useState('fashion');
+  const [sizeInfo, setSizeInfo] = useState('Chiều cao 165, cân nặng 50, eo 66, hông 88, cổ tay nhỏ');
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [resultImg, setResultImg] = useState('');
+  const [message, setMessage] = useState('Chọn ảnh người, ảnh đồ và phụ kiện để thử đồ AI.');
+  const [styleTips, setStyleTips] = useState<any>(null);
+
+  const previewAccessories = useMemo(() => {
+    const textLinks = String(accessoryLinks || '')
+      .split(/\r?\n|,/)
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .map((uri) => ({ uri }));
+    return [...(accessories || []), ...textLinks].slice(0, 5);
+  }, [accessories, accessoryLinks]);
+
+  async function runSuggest() {
+    try {
+      setLoading(true);
+      const data = await v44Post('/api/v44/mobile/style-suggest', {
+        personImageBase64: person?.base64 || '',
+        personImageUrl: person ? '' : personUrl,
+        productName,
+        category,
+        sizeInfo,
+        accessoryImageUrls: String(accessoryLinks || '').split(/\r?\n|,/).map((x) => x.trim()).filter(Boolean),
+      });
+      setStyleTips(data);
+      setMessage('Đã tạo gợi ý style / size / phụ kiện.');
+    } catch (e: any) {
+      Alert.alert('Gợi ý thất bại', e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runTryOn() {
+    try {
+      if (!person && !personUrl.trim()) {
+        Alert.alert('Thiếu ảnh người', 'Hãy chọn ảnh người dùng hoặc dán link ảnh người dùng.');
+        return;
+      }
+      if (!garment && !garmentUrl.trim()) {
+        Alert.alert('Thiếu ảnh đồ', 'Hãy chọn ảnh sản phẩm hoặc dán link ảnh sản phẩm.');
+        return;
+      }
+      setLoading(true);
+      setResultImg('');
+      const data = await v44Post('/api/v44/mobile/tryon', {
+        personImageBase64: person?.base64 || '',
+        personImageUrl: person ? '' : personUrl,
+        garmentImageBase64: garment?.base64 || '',
+        garmentImageUrl: garment ? '' : garmentUrl,
+        accessoryImagesBase64: (accessories || []).map((x) => x.base64).filter(Boolean),
+        accessoryImageUrls: String(accessoryLinks || '').split(/\r?\n|,/).map((x) => x.trim()).filter(Boolean),
+        productName,
+        category,
+        sizeInfo,
+        adultConfirmed,
+        prompt: 'Use the person image as the main identity anchor. Put the product outfit on the uploaded person. Add accessories naturally. Preserve face and body identity. If outputs are inconsistent, use the first consistent output as final.',
+      });
+
+      const finalImg =
+        data?.finalImageBase64
+          ? (String(data.finalImageBase64).startsWith('data:') ? data.finalImageBase64 : `data:image/png;base64,${data.finalImageBase64}`)
+          : '';
+
+      setResultImg(finalImg);
+      setStyleTips(data?.styleSuggest || null);
+      setMessage(data?.message || 'Đã tạo thử đồ AI.');
+      if (!finalImg) {
+        Alert.alert('Đã chạy nhưng chưa có ảnh cuối', data?.message || 'Try-on runner chưa trả ảnh. Kiểm tra backend.');
+      }
+    } catch (e: any) {
+      Alert.alert('Thử đồ AI chưa chạy được', e.message || 'Lỗi không xác định');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ScrollView contentContainerStyle={s.container}>
+      <Text style={s.title}>Thử đồ AI V44</Text>
+      <Text style={s.sub}>
+        Ảnh người dùng sẽ là ảnh gốc. Đồ từ ảnh mẫu/sản phẩm sẽ được mặc lên người dùng. Có thể thêm phụ kiện như dây chuyền, đồng hồ, túi, kính, giày.
+      </Text>
+
+      <View style={s.card}>
+        <Text style={s.section}>Ảnh người dùng</Text>
+        <TouchableOpacity style={s.btnSec} onPress={() => pickImage(setPerson)}>
+          <Text style={s.btnSecText}>Chọn ảnh người dùng</Text>
+        </TouchableOpacity>
+        <TextInput style={s.input} placeholder="Hoặc dán link ảnh người dùng" value={personUrl} onChangeText={(t) => { setPersonUrl(t); if (t) setPerson(null); }} />
+        {(person?.uri || personUrl) ? <Image source={{ uri: person?.uri || personUrl }} style={s.preview} /> : null}
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.section}>Ảnh sản phẩm / đồ mẫu</Text>
+        <TouchableOpacity style={s.btnSec} onPress={() => pickImage(setGarment)}>
+          <Text style={s.btnSecText}>Chọn ảnh sản phẩm</Text>
+        </TouchableOpacity>
+        <TextInput style={s.input} placeholder="Hoặc dán link ảnh sản phẩm" value={garmentUrl} onChangeText={(t) => { setGarmentUrl(t); if (t) setGarment(null); }} />
+        {(garment?.uri || garmentUrl) ? <Image source={{ uri: garment?.uri || garmentUrl }} style={s.preview} /> : null}
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.section}>Phụ kiện bổ sung</Text>
+        <TouchableOpacity style={s.btnSec} onPress={() => pickManyImages(setAccessories, accessories)}>
+          <Text style={s.btnSecText}>Chọn ảnh phụ kiện (dây chuyền / đồng hồ / túi / kính / giày)</Text>
+        </TouchableOpacity>
+        <TextInput
+          style={[s.input, { minHeight: 92 }]}
+          multiline
+          placeholder={'Hoặc dán link phụ kiện, mỗi dòng 1 link\nhttps://...day-chuyen.jpg\nhttps://...dong-ho.jpg\nhttps://...tui-xach.jpg'}
+          value={accessoryLinks}
+          onChangeText={setAccessoryLinks}
+        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {previewAccessories.map((x, i) => (
+            <Image key={`${x.uri}-${i}`} source={{ uri: x.uri }} style={s.previewSmall} />
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.section}>Thông tin gợi ý</Text>
+        <TextInput style={s.input} placeholder="Tên sản phẩm" value={productName} onChangeText={setProductName} />
+        <TextInput style={s.input} placeholder="Danh mục: fashion / swimwear / accessories..." value={category} onChangeText={setCategory} />
+        <TextInput
+          style={[s.input, { minHeight: 92 }]}
+          multiline
+          placeholder="Thông tin size / vóc dáng: chiều cao, cân nặng, eo, hông, cổ tay..."
+          value={sizeInfo}
+          onChangeText={setSizeInfo}
+        />
+        <View style={s.row}>
+          <Text style={{ flex: 1, fontWeight: '700', color: '#9d174d' }}>Xác nhận adult fashion nếu là bikini / crop-top / đồ bơi</Text>
+          <Switch value={adultConfirmed} onValueChange={setAdultConfirmed} />
+        </View>
+      </View>
+
+      <View style={s.rowButtons}>
+        <TouchableOpacity style={s.btn} onPress={runSuggest} disabled={loading}>
+          <Text style={s.btnText}>{loading ? 'Đang chạy...' : 'Gợi ý style / size'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.btn, { backgroundColor: '#111827' }]} onPress={runTryOn} disabled={loading}>
+          <Text style={s.btnText}>{loading ? 'Đang tạo...' : 'Tạo thử đồ AI'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={s.card}>
+        <Text style={s.section}>Trạng thái</Text>
+        <Text style={s.note}>{message}</Text>
+      </View>
+
+      {styleTips ? (
+        <View style={s.card}>
+          <Text style={s.section}>Gợi ý AI</Text>
+          <Text style={s.note}>Phong cách: {(styleTips.styleTags || []).join(', ') || '—'}</Text>
+          <Text style={s.note}>Phụ kiện hợp: {(styleTips.accessoryAdvice || []).join(' | ') || '—'}</Text>
+          <Text style={s.note}>Gợi ý size: {(styleTips.sizeAdvice || []).join(' | ') || '—'}</Text>
+          <Text style={s.note}>Lưu ý phối đồ: {styleTips.summary || '—'}</Text>
+        </View>
+      ) : null}
+
+      {resultImg ? (
+        <View style={s.card}>
+          <Text style={s.section}>Kết quả cuối</Text>
+          <Image source={{ uri: resultImg }} style={s.result} />
+          <Text style={s.note}>Nếu server trả nhiều output không giống nhau, app sẽ ưu tiên ảnh đầu tiên làm final để giữ consistency.</Text>
+        </View>
+      ) : null}
+    </ScrollView>
+  );
+}
+
+const s = StyleSheet.create({
+  container: { padding: 16, gap: 14, backgroundColor: '#fff8fb' },
+  title: { fontSize: 30, fontWeight: '900', color: '#831843', marginTop: 12 },
+  sub: { color: '#6b7280', lineHeight: 20, marginBottom: 8 },
+  card: { backgroundColor: 'white', borderRadius: 18, padding: 14, borderWidth: 1, borderColor: '#fbcfe8', gap: 10 },
+  section: { fontSize: 20, fontWeight: '800', color: '#9d174d' },
+  input: { borderWidth: 1, borderColor: '#f9a8d4', borderRadius: 12, padding: 12, backgroundColor: '#fff' },
+  btn: { flex: 1, backgroundColor: '#ec4899', borderRadius: 14, padding: 14, alignItems: 'center' },
+  btnText: { color: 'white', fontWeight: '800' },
+  btnSec: { backgroundColor: '#fdf2f8', borderRadius: 12, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#f9a8d4' },
+  btnSecText: { color: '#be185d', fontWeight: '800' },
+  preview: { width: '100%', height: 260, borderRadius: 16, backgroundColor: '#f3f4f6' },
+  previewSmall: { width: 90, height: 110, borderRadius: 12, marginRight: 8, backgroundColor: '#f3f4f6' },
+  result: { width: '100%', height: 520, borderRadius: 16, backgroundColor: '#f3f4f6' },
+  note: { color: '#374151', lineHeight: 20 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowButtons: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+});
