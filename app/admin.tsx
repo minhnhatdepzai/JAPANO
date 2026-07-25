@@ -92,18 +92,18 @@ const ADMIN_FALLBACK_IMAGES = [
 
 const navItems: NavItem[] = [
   { key: "overview", label: "T?ng quan", icon: "grid", group: "T?NG QUAN" },
-  { key: "analytics", label: "Báo cáo & Phân tích", icon: "bar-chart-2", group: "T?NG QUAN" },
-  { key: "transactions", label: "Ðon hàng", icon: "shopping-bag", group: "BÁN HÀNG" },
-  { key: "products", label: "S?n ph?m", icon: "package", group: "BÁN HÀNG" },
-  { key: "accessories", label: "Danh m?c & Ph? ki?n", icon: "watch", group: "BÁN HÀNG" },
-  { key: "users", label: "Khách hàng", icon: "users", group: "BÁN HÀNG" },
-  { key: "promotions", label: "Khuy?n mãi", icon: "percent", group: "BÁN HÀNG" },
+  { key: "analytics", label: "Bï¿½o cï¿½o & Phï¿½n tï¿½ch", icon: "bar-chart-2", group: "T?NG QUAN" },
+  { key: "transactions", label: "ï¿½on hï¿½ng", icon: "shopping-bag", group: "Bï¿½N Hï¿½NG" },
+  { key: "products", label: "S?n ph?m", icon: "package", group: "Bï¿½N Hï¿½NG" },
+  { key: "accessories", label: "Danh m?c & Ph? ki?n", icon: "watch", group: "Bï¿½N Hï¿½NG" },
+  { key: "users", label: "Khï¿½ch hï¿½ng", icon: "users", group: "Bï¿½N Hï¿½NG" },
+  { key: "promotions", label: "Khuy?n mï¿½i", icon: "percent", group: "Bï¿½N Hï¿½NG" },
   { key: "tryon2d", label: "Th? d? AI 2D", icon: "camera", group: "AI & 3D" },
   { key: "model3d", label: "T?o m?u 3D", icon: "box", group: "AI & 3D" },
-  { key: "botchat", label: "Bot chat & G?i ý", icon: "message-circle", group: "AI & 3D" },
+  { key: "botchat", label: "Bot chat & G?i ï¿½", icon: "message-circle", group: "AI & 3D" },
   { key: "moderation", label: "T? c?m", icon: "shield", group: "N?I DUNG" },
-  { key: "games", label: "Trò choi", icon: "zap", group: "N?I DUNG" },
-  { key: "system", label: "Tr?ng thái & Nh?t ký", icon: "activity", group: "H? TH?NG" },
+  { key: "games", label: "Trï¿½ choi", icon: "zap", group: "N?I DUNG" },
+  { key: "system", label: "Tr?ng thï¿½i & Nh?t kï¿½", icon: "activity", group: "H? TH?NG" },
 ];
 
 const emptyProductForm = {
@@ -127,7 +127,7 @@ const emptyProductForm = {
   styleUseCase: "",
   sizes: "S, M, L, XL",
   dimensions: "",
-  colors: "Ðen, Tr?ng, Kem",
+  colors: "ï¿½en, Tr?ng, Kem",
   fit: "Regular fit",
 };
 
@@ -236,7 +236,7 @@ function toProductForm(product: AdminProduct) {
     styleUseCase: product.styleUseCase || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "S, M, L, XL",
     dimensions: product.dimensions || "",
-    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "Ðen, Tr?ng, Kem",
+    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "ï¿½en, Tr?ng, Kem",
     fit: product.fit || "Regular fit",
   };
 }
@@ -317,7 +317,7 @@ function fmtVnd(n: any) {
 }
 
 function ForecastChart({ forecast }: any) {
-  if (!forecast) return <Text style={styles.emptyText}>Chua có d? li?u d? báo.</Text>;
+  if (!forecast) return <Text style={styles.emptyText}>Chua cï¿½ d? li?u d? bï¿½o.</Text>;
   const hist = forecast.history || [];
   const fc = forecast.forecast || [];
   const all = [...hist.map((h: any) => ({ ...h, kind: 'hist' })), ...fc.map((f: any) => ({ ...f, kind: 'fc' }))];
@@ -325,9 +325,9 @@ function ForecastChart({ forecast }: any) {
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.forecastMetrics}>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}d</Text><Text style={styles.metricCap}>D? báo tháng t?i</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>R² {forecast.r2}</Text><Text style={styles.metricCap}>Ð? kh?p mô hình</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '?' : '?'} {fmtVnd(Math.abs(forecast.slope))}d</Text><Text style={styles.metricCap}>Xu hu?ng/tháng</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}d</Text><Text style={styles.metricCap}>D? bï¿½o thï¿½ng t?i</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>Rï¿½ {forecast.r2}</Text><Text style={styles.metricCap}>ï¿½? kh?p mï¿½ hï¿½nh</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '?' : '?'} {fmtVnd(Math.abs(forecast.slope))}d</Text><Text style={styles.metricCap}>Xu hu?ng/thï¿½ng</Text></View>
       </View>
       <View style={styles.forecastChart}>
         {all.map((a: any, i: number) => {
@@ -346,7 +346,7 @@ function ForecastChart({ forecast }: any) {
       </View>
       <View style={styles.legendRow}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Th?c t?</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>D? báo (OLS)</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>D? bï¿½o (OLS)</Text></View>
         {forecast.demo ? <Text style={styles.demoTag}>d? li?u minh ho?</Text> : null}
       </View>
     </View>
@@ -354,7 +354,7 @@ function ForecastChart({ forecast }: any) {
 }
 
 function SegmentsView({ segments }: any) {
-  if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chua d? khách hàng d? phân c?m.</Text>;
+  if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chua d? khï¿½ch hï¿½ng d? phï¿½n c?m.</Text>;
   const total = Math.max(1, segments.clusters.reduce((s: number, c: any) => s + c.size, 0));
   return (
     <View style={{ gap: 12 }}>
@@ -368,7 +368,7 @@ function SegmentsView({ segments }: any) {
           <View style={[styles.segDot, { backgroundColor: c.color }]} />
           <View style={{ flex: 1 }}>
             <Text style={styles.segName}>{c.name}</Text>
-            <Text style={styles.segMeta}>{c.size} KH • chi TB {fmtVnd(c.avgSpend)}d • {c.avgOrders} don • mua cách {c.avgRecency} ngày</Text>
+            <Text style={styles.segMeta}>{c.size} KH ï¿½ chi TB {fmtVnd(c.avgSpend)}d ï¿½ {c.avgOrders} don ï¿½ mua cï¿½ch {c.avgRecency} ngï¿½y</Text>
           </View>
           <Text style={styles.segPct}>{Math.round((c.size / total) * 100)}%</Text>
         </View>
@@ -382,7 +382,7 @@ function SegmentsView({ segments }: any) {
 function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
   const rows = Array.isArray(data) ? data : [];
   const max = Math.max(1, ...rows.map((x: any) => Number(x.value || 0)));
-  if (!rows.length) return <Text style={styles.emptyText}>Chua có d? li?u d? d? v? bi?u d?.</Text>;
+  if (!rows.length) return <Text style={styles.emptyText}>Chua cï¿½ d? li?u d? d? v? bi?u d?.</Text>;
   return (
     <View style={{ gap: 14 }}>
       {rows.map((item: any, index: number) => {
@@ -412,8 +412,8 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
   const rows = [
     { label: "Lu?t truy c?p", value: visitors, color: ADMIN_GREEN, pct: 100 },
     { label: "Ti?m nang", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
-    { label: "Khách hàng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
-    { label: "Ðã mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
+    { label: "Khï¿½ch hï¿½ng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
+    { label: "ï¿½ï¿½ mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
   ];
   return (
     <View style={{ gap: 13 }}>
@@ -430,7 +430,7 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
       ))}
       <View style={styles.funnelRates}>
         <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy c?p?Ti?m nang 24%</Text>
-        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Ti?m nang?Khách 37%</Text>
+        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Ti?m nang?Khï¿½ch 37%</Text>
         <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer?Paid 72%</Text>
       </View>
     </View>
@@ -459,17 +459,17 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
         ))}
       </View>
       <View style={styles.previewBody}>
-        <Text numberOfLines={2} style={styles.previewTitle}>{name || "Tên s?n ph?m"}</Text>
+        <Text numberOfLines={2} style={styles.previewTitle}>{name || "Tï¿½n s?n ph?m"}</Text>
         <View style={styles.previewPriceLine}>
           <Text style={styles.previewSalePrice}>{formatMoney(price)}</Text>
           {Number(originalPrice || 0) > Number(price || 0) ? <Text style={styles.previewOldPrice}>{formatMoney(originalPrice)}</Text> : null}
         </View>
-        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' • ') || 'S • M • L • XL'}</Text>
-        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(' • ') || 'Ðen • Tr?ng • Kem'}</Text>
-        {!!dimensions ? <Text style={styles.previewMeta}>Kích thu?c: {dimensions}</Text> : null}
+        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' ï¿½ ') || 'S ï¿½ M ï¿½ L ï¿½ XL'}</Text>
+        <Text style={styles.previewMeta}>Mï¿½u: {splitAdminList(colors).join(' ï¿½ ') || 'ï¿½en ï¿½ Tr?ng ï¿½ Kem'}</Text>
+        {!!dimensions ? <Text style={styles.previewMeta}>Kï¿½ch thu?c: {dimensions}</Text> : null}
         <View style={styles.messageBox}>
           <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
-          <Text style={styles.messageText}>M?t hàng này còn không?</Text>
+          <Text style={styles.messageText}>M?t hï¿½ng nï¿½y cï¿½n khï¿½ng?</Text>
           <View style={styles.sendPill}><Text style={styles.sendText}>G?i</Text></View>
         </View>
       </View>
@@ -555,13 +555,13 @@ export default function AdminScreen() {
   useEffect(() => {
     setLoading(true);
     load()
-      .catch((e: any) => Alert.alert("Không m? du?c admin", e?.message || "Ki?m tra backend/MongoDB."))
+      .catch((e: any) => Alert.alert("Khï¿½ng m? du?c admin", e?.message || "Ki?m tra backend/MongoDB."))
       .finally(() => setLoading(false));
   }, [load]);
 
   const refresh = async () => {
     setRefreshing(true);
-    await load().catch((e: any) => Alert.alert("Không t?i l?i du?c", e?.message || "Có l?i x?y ra."));
+    await load().catch((e: any) => Alert.alert("Khï¿½ng t?i l?i du?c", e?.message || "Cï¿½ l?i x?y ra."));
     setRefreshing(false);
   };
 
@@ -569,15 +569,15 @@ export default function AdminScreen() {
   const quickUpdateOrder = async (order: any, nextStatus: string) => {
     if (!user?.id) return;
     const orderId = String(order.id || order._id || "");
-    if (!orderId) return Alert.alert("Thi?u mã don", "Không tìm th?y ID don hàng.");
-    const labelMap: any = { paid: "Ðã thanh toán", shipping: "Ðang giao", delivered: "Ðã nh?n", completed: "Hoàn t?t", cancelled: "Ðã h?y", processing: "Ch? x? lý" };
+    if (!orderId) return Alert.alert("Thi?u mï¿½ don", "Khï¿½ng tï¿½m th?y ID don hï¿½ng.");
+    const labelMap: any = { paid: "ï¿½ï¿½ thanh toï¿½n", shipping: "ï¿½ang giao", delivered: "ï¿½ï¿½ nh?n", completed: "Hoï¿½n t?t", cancelled: "ï¿½ï¿½ h?y", processing: "Ch? x? lï¿½" };
     try {
       setActionId(`order-${nextStatus}-${orderId}`);
       const res = await api.updateAdminOrderStatus(user.id, orderId, nextStatus);
-      Alert.alert(labelMap[nextStatus] || "Ðã c?p nh?t", res?.message || "Ðã c?p nh?t don hàng.");
+      Alert.alert(labelMap[nextStatus] || "ï¿½ï¿½ c?p nh?t", res?.message || "ï¿½ï¿½ c?p nh?t don hï¿½ng.");
       await load();
     } catch (e: any) {
-      Alert.alert("Không c?p nh?t du?c don", e?.message || "Ki?m tra backend.");
+      Alert.alert("Khï¿½ng c?p nh?t du?c don", e?.message || "Ki?m tra backend.");
     } finally {
       setActionId(null);
     }
@@ -608,13 +608,13 @@ export default function AdminScreen() {
   const activeVouchers = vouchers.filter((v) => v.active !== false && (v.kind || "voucher") === "voucher").length;
   const activePromotions = vouchers.filter((v) => v.active !== false && v.kind === "promotion").length;
   const latestActivity = [
-    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `Ðon #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} • ${o.status || "pending"}` })),
-    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toán ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} • ${compactDate(p.createdAt)}` })),
+    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `ï¿½on #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} ï¿½ ${o.status || "pending"}` })),
+    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toï¿½n ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} ï¿½ ${compactDate(p.createdAt)}` })),
   ].slice(0, 6);
 
   const saveProduct = async () => {
     if (!user?.id) return;
-    if (!productForm.name.trim()) return Alert.alert("Thi?u tên", "Nh?p tên s?n ph?m tru?c khi luu.");
+    if (!productForm.name.trim()) return Alert.alert("Thi?u tï¿½n", "Nh?p tï¿½n s?n ph?m tru?c khi luu.");
     try {
       setActionId("product-save");
       const body = {
@@ -634,9 +634,9 @@ export default function AdminScreen() {
       setProductForm(emptyProductForm);
       setEditingProductId(null);
       await load();
-      Alert.alert("Ðã luu", "S?n ph?m dã du?c c?p nh?t.");
+      Alert.alert("ï¿½ï¿½ luu", "S?n ph?m dï¿½ du?c c?p nh?t.");
     } catch (e: any) {
-      Alert.alert("Không luu du?c", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng luu du?c", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -663,7 +663,7 @@ export default function AdminScreen() {
       });
       await load();
     } catch (e: any) {
-      Alert.alert("Không t?o gi?m giá", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng t?o gi?m giï¿½", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -676,7 +676,7 @@ export default function AdminScreen() {
       await api.changeAdminProductPrice(user.id, product.id, percent);
       await load();
     } catch (e: any) {
-      Alert.alert("Không ch?nh du?c giá", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng ch?nh du?c giï¿½", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -689,7 +689,7 @@ export default function AdminScreen() {
       await api.setAdminProductHidden(user.id, product.id, (product.status || "active") === "active");
       await load();
     } catch (e: any) {
-      Alert.alert("Không ?n/hi?n du?c", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng ?n/hi?n du?c", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -698,7 +698,7 @@ export default function AdminScreen() {
   const pickAndUploadAdminImage = async (target: "image" | "image2" | "image3" | "image4" | "bannerImage") => {
     if (!user?.id) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert("C?n quy?n ?nh", "Cho phép truy c?p thu vi?n d? upload ?nh lên Cloudinary.");
+    if (!permission.granted) return Alert.alert("C?n quy?n ?nh", "Cho phï¿½p truy c?p thu vi?n d? upload ?nh lï¿½n Cloudinary.");
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.86, allowsEditing: false });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
@@ -717,12 +717,12 @@ export default function AdminScreen() {
         user.id,
       );
       const url = data.secureUrl || data.url;
-      if (!url) throw new Error("Cloudinary không tr? v? URL ?nh.");
+      if (!url) throw new Error("Cloudinary khï¿½ng tr? v? URL ?nh.");
       if (target === "bannerImage") setPromotionForm((p) => ({ ...p, bannerImage: url }));
       else setProductForm((p) => ({ ...p, [target]: url }));
-      Alert.alert("Ðã upload", "?nh dã luu trên Cloudinary và URL dã du?c di?n vào form.");
+      Alert.alert("ï¿½ï¿½ upload", "?nh dï¿½ luu trï¿½n Cloudinary vï¿½ URL dï¿½ du?c di?n vï¿½o form.");
     } catch (e: any) {
-      Alert.alert("Upload Cloudinary l?i", e?.message || "Không upload du?c ?nh.");
+      Alert.alert("Upload Cloudinary l?i", e?.message || "Khï¿½ng upload du?c ?nh.");
     } finally {
       setUploadingMediaField(null);
     }
@@ -730,7 +730,7 @@ export default function AdminScreen() {
 
   const saveVoucher = async () => {
     if (!user?.id) return;
-    if (!voucherForm.code.trim()) return Alert.alert("Thi?u mã", "Nh?p mã voucher tru?c.");
+    if (!voucherForm.code.trim()) return Alert.alert("Thi?u mï¿½", "Nh?p mï¿½ voucher tru?c.");
     try {
       setActionId("voucher-save");
       await api.saveAdminVoucher(user.id, {
@@ -742,9 +742,9 @@ export default function AdminScreen() {
       });
       setVoucherForm(emptyVoucherForm);
       await load();
-      Alert.alert("Ðã t?o voucher", "Voucher dã s?n sàng cho ngu?i dùng.");
+      Alert.alert("ï¿½ï¿½ t?o voucher", "Voucher dï¿½ s?n sï¿½ng cho ngu?i dï¿½ng.");
     } catch (e: any) {
-      Alert.alert("Không luu voucher", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng luu voucher", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -752,7 +752,7 @@ export default function AdminScreen() {
 
   const savePromotion = async () => {
     if (!user?.id) return;
-    if (!promotionForm.code.trim()) return Alert.alert("Thi?u mã", "Nh?p mã khuy?n mãi tru?c.");
+    if (!promotionForm.code.trim()) return Alert.alert("Thi?u mï¿½", "Nh?p mï¿½ khuy?n mï¿½i tru?c.");
     try {
       setActionId("promotion-save");
       await api.saveAdminVoucher(user.id, {
@@ -764,9 +764,9 @@ export default function AdminScreen() {
       });
       setPromotionForm(emptyPromotionForm);
       await load();
-      Alert.alert("Ðã t?o khuy?n mãi", "Chi?n d?ch dã du?c luu trong DiscountCodes theo ERD.");
+      Alert.alert("ï¿½ï¿½ t?o khuy?n mï¿½i", "Chi?n d?ch dï¿½ du?c luu trong DiscountCodes theo ERD.");
     } catch (e: any) {
-      Alert.alert("Không luu khuy?n mãi", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng luu khuy?n mï¿½i", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -779,7 +779,7 @@ export default function AdminScreen() {
       await api.updateAdminVoucher(user.id, voucher.id, { active: !voucher.active });
       await load();
     } catch (e: any) {
-      Alert.alert("Không d?i tr?ng thái", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng d?i tr?ng thï¿½i", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -787,15 +787,15 @@ export default function AdminScreen() {
 
   const sendNotification = async () => {
     if (!user?.id) return;
-    if (!notificationForm.title.trim()) return Alert.alert("Thi?u tiêu d?", "Nh?p tiêu d? thông báo.");
+    if (!notificationForm.title.trim()) return Alert.alert("Thi?u tiï¿½u d?", "Nh?p tiï¿½u d? thï¿½ng bï¿½o.");
     try {
       setActionId("notification-send");
       const data = await api.sendAdminNotification(user.id, notificationForm);
       setNotificationForm(emptyNotificationForm);
       await load();
-      Alert.alert("Ðã g?i", data?.message || "Thông báo dã du?c g?i.");
+      Alert.alert("ï¿½ï¿½ g?i", data?.message || "Thï¿½ng bï¿½o dï¿½ du?c g?i.");
     } catch (e: any) {
-      Alert.alert("Không g?i du?c", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng g?i du?c", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -808,9 +808,9 @@ export default function AdminScreen() {
       const data = await api.setAdminUserRole(user.id, target.id, nextRole);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
       await load().catch(() => null);
-      Alert.alert("Ðã c?p nh?t", data?.message || "Ðã d?i quy?n tài kho?n.");
+      Alert.alert("ï¿½ï¿½ c?p nh?t", data?.message || "ï¿½ï¿½ d?i quy?n tï¿½i kho?n.");
     } catch (e: any) {
-      Alert.alert("Không d?i du?c quy?n", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng d?i du?c quy?n", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -823,7 +823,7 @@ export default function AdminScreen() {
       const data = await api.adjustAdminUserCoins(user.id, target.id, delta);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
     } catch (e: any) {
-      Alert.alert("Không ch?nh du?c xu", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng ch?nh du?c xu", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -831,7 +831,7 @@ export default function AdminScreen() {
 
   const saveGame = async () => {
     if (!user?.id) return;
-    if (!gameForm.name.trim()) return Alert.alert("Thi?u tên", "Nh?p tên game tru?c.");
+    if (!gameForm.name.trim()) return Alert.alert("Thi?u tï¿½n", "Nh?p tï¿½n game tru?c.");
     try {
       setActionId("game-save");
       const body = { ...gameForm, rewardCoins: Number(gameForm.rewardCoins || 0), active: true };
@@ -841,7 +841,7 @@ export default function AdminScreen() {
       setEditingGameId(null);
       await load();
     } catch (e: any) {
-      Alert.alert("Không luu game", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng luu game", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -859,7 +859,7 @@ export default function AdminScreen() {
       await api.deleteAdminGame(user.id, String(game._id || game.id));
       await load();
     } catch (e: any) {
-      Alert.alert("Không xoá game", e?.message || "Có l?i x?y ra.");
+      Alert.alert("Khï¿½ng xoï¿½ game", e?.message || "Cï¿½ l?i x?y ra.");
     } finally {
       setActionId(null);
     }
@@ -870,10 +870,10 @@ export default function AdminScreen() {
       <View style={styles.authPage}>
         <View style={styles.authCard}>
           <View style={styles.logoBox}><Feather name={isLoggedIn ? "lock" : "shield"} size={26} color="#fff" /></View>
-          <Text style={styles.authTitle}>{isLoggedIn ? "Không có quy?n admin" : "Ðang nh?p admin"}</Text>
-          <Text style={styles.authText}>{isLoggedIn ? `Email hi?n t?i: ${user?.email}. Hãy dùng tài kho?n admin.` : "Tài kho?n admin m?c d?nh: a@gmail.com / m?t kh?u 1."}</Text>
+          <Text style={styles.authTitle}>{isLoggedIn ? "Khï¿½ng cï¿½ quy?n admin" : "ï¿½ang nh?p admin"}</Text>
+          <Text style={styles.authText}>{isLoggedIn ? `Email hi?n t?i: ${user?.email}. Hï¿½y dï¿½ng tï¿½i kho?n admin.` : "Tï¿½i kho?n admin m?c d?nh: a@gmail.com / m?t kh?u 1."}</Text>
           <Pressable onPress={openAdminLogin} style={styles.authButton}>
-            <Text style={styles.authButtonText}>{isLoggedIn ? "Ð?i tài kho?n" : "Ðang nh?p"}</Text>
+            <Text style={styles.authButtonText}>{isLoggedIn ? "ï¿½?i tï¿½i kho?n" : "ï¿½ang nh?p"}</Text>
           </Pressable>
         </View>
       </View>
@@ -925,10 +925,10 @@ export default function AdminScreen() {
     <View style={styles.topbar}>
       <View style={styles.searchBox}>
         <Feather name="search" size={18} color={ADMIN_MUTED} />
-        <TextInput value={search} onChangeText={setSearch} placeholder="Tìm s?n ph?m, khách hàng, don hàng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
+        <TextInput value={search} onChangeText={setSearch} placeholder="Tï¿½m s?n ph?m, khï¿½ch hï¿½ng, don hï¿½ng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
       </View>
       <Pressable onPress={refresh} style={styles.topIconBtn}><Feather name="refresh-cw" size={18} color={ADMIN_TEXT} /></Pressable>
-      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm s?n ph?m</Text></Pressable>
+      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thï¿½m s?n ph?m</Text></Pressable>
     </View>
   );
 
@@ -942,27 +942,27 @@ export default function AdminScreen() {
     <View style={styles.pageGap}>
       <View style={styles.heroCard}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.heroTitle}>Chào tr? l?i, {user?.name || "Admin"}</Text>
-          <Text style={styles.heroSub}>Hôm nay có {formatNumber(orders.length)} don trong h? th?ng, {activeVouchers + activePromotions} chi?n d?ch dang ho?t d?ng.</Text>
+          <Text style={styles.heroTitle}>Chï¿½o tr? l?i, {user?.name || "Admin"}</Text>
+          <Text style={styles.heroSub}>Hï¿½m nay cï¿½ {formatNumber(orders.length)} don trong h? th?ng, {activeVouchers + activePromotions} chi?n d?ch dang ho?t d?ng.</Text>
         </View>
-        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem phân tích</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
+        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem phï¿½n tï¿½ch</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
       </View>
 
-      {loading ? <View style={[styles.card, { flexDirection: "row", gap: 10, alignItems: "center" }]}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.userMeta}>Ðang t?i d? li?u b?ng di?u khi?n...</Text></View> : null}
+      {loading ? <View style={[styles.card, { flexDirection: "row", gap: 10, alignItems: "center" }]}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.userMeta}>ï¿½ang t?i d? li?u b?ng di?u khi?n...</Text></View> : null}
 
-      {/* KPI hôm nay - d? li?u th?t */}
+      {/* KPI hï¿½m nay - d? li?u th?t */}
       <View style={styles.statsGrid}>
-        <StatCard label="Doanh thu hôm nay" value={formatCompactMoney(kpis.revenueToday)} change={`${formatNumber(kpis.ordersToday || 0)} don hôm nay`} icon="dollar-sign" accent={ADMIN_GREEN} />
-        <StatCard label="Ðon hàng" value={formatNumber(kpis.orders || orders.length)} change={`${formatNumber(kpis.ordersToday || 0)} hôm nay`} icon="shopping-bag" accent={ADMIN_BLUE} />
-        <StatCard label="Ngu?i dùng m?i" value={formatNumber(kpis.newUsersToday || 0)} change={`${formatNumber(kpis.users || users.length)} t?ng`} icon="user-plus" accent="#A33A2F" />
+        <StatCard label="Doanh thu hï¿½m nay" value={formatCompactMoney(kpis.revenueToday)} change={`${formatNumber(kpis.ordersToday || 0)} don hï¿½m nay`} icon="dollar-sign" accent={ADMIN_GREEN} />
+        <StatCard label="ï¿½on hï¿½ng" value={formatNumber(kpis.orders || orders.length)} change={`${formatNumber(kpis.ordersToday || 0)} hï¿½m nay`} icon="shopping-bag" accent={ADMIN_BLUE} />
+        <StatCard label="Ngu?i dï¿½ng m?i" value={formatNumber(kpis.newUsersToday || 0)} change={`${formatNumber(kpis.users || users.length)} t?ng`} icon="user-plus" accent="#A33A2F" />
         <StatCard label="Lu?t th? d? AI" value={formatNumber(kpis.tryon2d || 0)} change={`${formatNumber(kpis.tryon2dFail || 0)} l?i`} icon="camera" accent={ADMIN_ORANGE} />
         <StatCard label="Lu?t t?o 3D" value={formatNumber(kpis.tryon3d || 0)} change={`${formatNumber(kpis.tryon3dFail || 0)} l?i`} icon="box" accent={ADMIN_BLUE} />
       </View>
 
-      {/* Tr?ng thái server AI + l?i m?i nh?t */}
+      {/* Tr?ng thï¿½i server AI + l?i m?i nh?t */}
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Tình tr?ng server AI" subtitle="Ki?m tra nhanh các d?ch v?" right={<Pressable onPress={refreshStatus} style={styles.smallBtn}>{statusLoading ? <ActivityIndicator size="small" color={ADMIN_TEXT} /> : <Feather name="refresh-cw" size={13} color={ADMIN_TEXT} />}<Text style={styles.smallBtnText}>Ki?m tra l?i</Text></Pressable>} />
+          <SectionHeader title="Tï¿½nh tr?ng server AI" subtitle="Ki?m tra nhanh cï¿½c d?ch v?" right={<Pressable onPress={refreshStatus} style={styles.smallBtn}>{statusLoading ? <ActivityIndicator size="small" color={ADMIN_TEXT} /> : <Feather name="refresh-cw" size={13} color={ADMIN_TEXT} />}<Text style={styles.smallBtnText}>Ki?m tra l?i</Text></Pressable>} />
           {systemStatus?.services ? (
             <View style={{ gap: 8 }}>
               {systemStatus.services.map((s: any) => (
@@ -972,12 +972,12 @@ export default function AdminScreen() {
                   <Text style={[styles.statusVal, { color: s.online ? "#2E7D32" : ADMIN_RED }]}>{s.online ? "Online" : "Offline"}</Text>
                 </View>
               ))}
-              <Text style={styles.userMeta}>GPU: {systemStatus.gpu} • CUDA: {systemStatus.cuda} • Stripe: {systemStatus.stripe ? "dã c?u hình" : "chua c?u hình"}</Text>
+              <Text style={styles.userMeta}>GPU: {systemStatus.gpu} ï¿½ CUDA: {systemStatus.cuda} ï¿½ Stripe: {systemStatus.stripe ? "dï¿½ c?u hï¿½nh" : "chua c?u hï¿½nh"}</Text>
             </View>
-          ) : <Text style={styles.emptyText}>{statusLoading ? "Ðang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng thái. B?m \"Ki?m tra l?i\"."}</Text>}
+          ) : <Text style={styles.emptyText}>{statusLoading ? "ï¿½ang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng thï¿½i. B?m \"Ki?m tra l?i\"."}</Text>}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="L?i m?i nh?t" subtitle="Nh?t ký l?i AI/h? th?ng" />
+          <SectionHeader title="L?i m?i nh?t" subtitle="Nh?t kï¿½ l?i AI/h? th?ng" />
           {systemStatus?.errors?.length ? systemStatus.errors.slice(0, 6).map((e: any, i: number) => (
             <View key={i} style={styles.errRow}>
               <Feather name="alert-triangle" size={13} color={ADMIN_ORANGE} />
@@ -986,31 +986,31 @@ export default function AdminScreen() {
                 <Text numberOfLines={2} style={styles.errMsg}>{e.message}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua có l?i nào du?c ghi nh?n. ??</Text>}
+          )) : <Text style={styles.emptyText}>Chua cï¿½ l?i nï¿½o du?c ghi nh?n. ??</Text>}
         </View>
       </View>
 
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Tang tru?ng doanh thu" subtitle="Xu hu?ng theo tháng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
+          <SectionHeader title="Tang tru?ng doanh thu" subtitle="Xu hu?ng theo thï¿½ng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
           <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="S?n ph?m bán ch?y" subtitle="Top theo s? lu?ng bán" />
-          {topProducts.length ? <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} /> : <Text style={styles.emptyText}>Chua có d? li?u bán hàng.</Text>}
+          <SectionHeader title="S?n ph?m bï¿½n ch?y" subtitle="Top theo s? lu?ng bï¿½n" />
+          {topProducts.length ? <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} /> : <Text style={styles.emptyText}>Chua cï¿½ d? li?u bï¿½n hï¿½ng.</Text>}
         </View>
       </View>
 
       <View style={styles.dashboardGrid}>
         <View style={styles.card}>
-          <SectionHeader title="Ho?t d?ng g?n dây" subtitle="Ðon hàng và thanh toán" />
+          <SectionHeader title="Ho?t d?ng g?n dï¿½y" subtitle="ï¿½on hï¿½ng vï¿½ thanh toï¿½n" />
           <View style={{ gap: 13 }}>
             {latestActivity.length ? latestActivity.map((item, idx) => (
               <View key={`${item.title}-${idx}`} style={styles.activityRow}>
                 <View style={styles.activityIcon}><Feather name={item.icon as any} size={16} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}><Text style={styles.activityTitle}>{item.title}</Text><Text style={styles.activityMeta}>{item.meta}</Text></View>
               </View>
-            )) : <Text style={styles.emptyText}>Chua có ho?t d?ng g?n dây.</Text>}
+            )) : <Text style={styles.emptyText}>Chua cï¿½ ho?t d?ng g?n dï¿½y.</Text>}
           </View>
         </View>
       </View>
@@ -1019,37 +1019,37 @@ export default function AdminScreen() {
 
   const renderAnalytics = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Phân tích & H?c máy (ML)" subtitle="3 mô hình ch?y tr?c ti?p trên d? li?u don hàng / khách hàng / s?n ph?m, không c?n cài thêm thu vi?n." />
+      <SectionHeader title="Phï¿½n tï¿½ch & H?c mï¿½y (ML)" subtitle="3 mï¿½ hï¿½nh ch?y tr?c ti?p trï¿½n d? li?u don hï¿½ng / khï¿½ch hï¿½ng / s?n ph?m, khï¿½ng c?n cï¿½i thï¿½m thu vi?n." />
 
       <View style={styles.modelRow}>
-        {(mlModels.length ? mlModels : [{ name: 'Ðang t?i mô hình', type: '—', metric: '' }]).map((m: any, i: number) => (
+        {(mlModels.length ? mlModels : [{ name: 'ï¿½ang t?i mï¿½ hï¿½nh', type: 'ï¿½', metric: '' }]).map((m: any, i: number) => (
           <View key={i} style={styles.modelCard}>
             <View style={styles.modelTop}><Feather name="cpu" size={16} color={ADMIN_GREEN} /><Text style={styles.modelName}>{m.name}</Text></View>
             <Text style={styles.modelType}>{m.type}</Text>
-            <Text style={styles.modelMetric}>{m.metric}{m.demo ? ' · minh ho?' : ''}</Text>
+            <Text style={styles.modelMetric}>{m.metric}{m.demo ? ' ï¿½ minh ho?' : ''}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="D? báo doanh thu — H?i quy tuy?n tính (OLS)" subtitle={mlForecast?.algorithm || 'U?c lu?ng xu hu?ng và d? báo 3 tháng t?i.'} />
+          <SectionHeader title="D? bï¿½o doanh thu ï¿½ H?i quy tuy?n tï¿½nh (OLS)" subtitle={mlForecast?.algorithm || 'U?c lu?ng xu hu?ng vï¿½ d? bï¿½o 3 thï¿½ng t?i.'} />
           <ForecastChart forecast={mlForecast} />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Phân khúc khách hàng — K-Means" subtitle={mlSegments?.algorithm || 'Gom khách hàng theo hành vi mua.'} />
+          <SectionHeader title="Phï¿½n khï¿½c khï¿½ch hï¿½ng ï¿½ K-Means" subtitle={mlSegments?.algorithm || 'Gom khï¿½ch hï¿½ng theo hï¿½nh vi mua.'} />
           <SegmentsView segments={mlSegments} />
         </View>
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="S?n ph?m n?i b?t — G?i ý (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'L?c c?ng tác item-based + phân rã ma tr?n d? x?p h?ng s?n ph?m.'} />
+          <SectionHeader title="S?n ph?m n?i b?t ï¿½ G?i ï¿½ (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'L?c c?ng tï¿½c item-based + phï¿½n rï¿½ ma tr?n d? x?p h?ng s?n ph?m.'} />
           <HorizontalBars data={(mlRecommender?.featured || []).map((x: any) => ({ label: x.name, value: x.score }))} accent="#2F4A73" />
-          {mlRecommender?.demo ? <Text style={styles.demoTag}>d? li?u minh ho? — s? chính xác hon khi có nhi?u don/gi?/wishlist</Text> : null}
+          {mlRecommender?.demo ? <Text style={styles.demoTag}>d? li?u minh ho? ï¿½ s? chï¿½nh xï¿½c hon khi cï¿½ nhi?u don/gi?/wishlist</Text> : null}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Ði?m nhu c?u s?n ph?m (DemandScore)" subtitle="Bán ra, wishlist, gi?, dánh giá, d? m?i, nh?c trong AI chat." />
+          <SectionHeader title="ï¿½i?m nhu c?u s?n ph?m (DemandScore)" subtitle="Bï¿½n ra, wishlist, gi?, dï¿½nh giï¿½, d? m?i, nh?c trong AI chat." />
           <View style={styles.featureWrap}>{(dashboard?.ml?.features || ["unitsSold", "wishlist", "cart", "rating", "recency", "chatMention"]).map((f: string) => <Text key={f} style={styles.featureChip}>{f}</Text>)}</View>
           <HorizontalBars data={predictions.map((x: any) => ({ label: x.name, value: x.score }))} accent={ADMIN_GREEN} />
         </View>
@@ -1057,7 +1057,7 @@ export default function AdminScreen() {
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Xu hu?ng theo danh m?c" subtitle="T?ng h?p bán ra + wishlist + gi?" />
+          <SectionHeader title="Xu hu?ng theo danh m?c" subtitle="T?ng h?p bï¿½n ra + wishlist + gi?" />
           <HorizontalBars data={customerTrends.map((x: any) => ({ label: x.category, value: x.score }))} accent="#A33A2F" />
         </View>
       </View>
@@ -1068,9 +1068,9 @@ export default function AdminScreen() {
             {item.image ? <Image source={{ uri: item.image }} style={styles.predictionImage} /> : <View style={styles.predictionImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
             <View style={{ flex: 1 }}>
               <Text numberOfLines={1} style={styles.predictionTitle}>{item.name}</Text>
-              <Text style={styles.predictionMeta}>{item.category} • {formatMoney(item.price)}</Text>
-              <Text style={styles.predictionSuggestion}>{item.predictedDemand} — {item.suggestion}</Text>
-              <Text style={styles.predictionSmall}>Bán {item.features?.sold || 0} • Thích {item.features?.wishlist || 0} • Gi? {item.features?.cart || 0} • ? {item.features?.avgRating ?? '-'}</Text>
+              <Text style={styles.predictionMeta}>{item.category} ï¿½ {formatMoney(item.price)}</Text>
+              <Text style={styles.predictionSuggestion}>{item.predictedDemand} ï¿½ {item.suggestion}</Text>
+              <Text style={styles.predictionSmall}>Bï¿½n {item.features?.sold || 0} ï¿½ Thï¿½ch {item.features?.wishlist || 0} ï¿½ Gi? {item.features?.cart || 0} ï¿½ ? {item.features?.avgRating ?? '-'}</Text>
             </View>
             <View style={styles.scoreBox}><Text style={styles.scoreText}>{item.score}</Text><Text style={styles.scoreLabel}>di?m</Text></View>
           </View>
@@ -1081,23 +1081,23 @@ export default function AdminScreen() {
 
   const renderProducts = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n lý s?n ph?m" subtitle="Thêm, ?n, s?a 4 ?nh s?n ph?m, size/kích c?, kích thu?c, màu s?c, mô t?, giá và sale." right={<Text style={styles.counterPill}>{activeProducts} dang bán / {hiddenProducts} dang ?n</Text>} />
+      <SectionHeader title="Qu?n lï¿½ s?n ph?m" subtitle="Thï¿½m, ?n, s?a 4 ?nh s?n ph?m, size/kï¿½ch c?, kï¿½ch thu?c, mï¿½u s?c, mï¿½ t?, giï¿½ vï¿½ sale." right={<Text style={styles.counterPill}>{activeProducts} dang bï¿½n / {hiddenProducts} dang ?n</Text>} />
       <View style={styles.productManagerGrid}>
         <View style={[styles.card, styles.formCard]}>
-          <Text style={styles.formTitle}>{editingProductId ? `Ðang s?a: ${editingProductId}` : "Thêm s?n ph?m m?i"}</Text>
+          <Text style={styles.formTitle}>{editingProductId ? `ï¿½ang s?a: ${editingProductId}` : "Thï¿½m s?n ph?m m?i"}</Text>
           <View style={styles.formGrid2}>
-            <Input label="Mã s?n ph?m" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
+            <Input label="Mï¿½ s?n ph?m" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
             <Input label="SKU" value={productForm.sku} onChangeText={(sku: string) => setProductForm((p) => ({ ...p, sku }))} placeholder="JP-001" />
           </View>
-          <Input label="Tên s?n ph?m" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Ðàn guitar và giá d? dàn" />
+          <Input label="Tï¿½n s?n ph?m" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="ï¿½ï¿½n guitar vï¿½ giï¿½ d? dï¿½n" />
           <View style={styles.formGrid3}>
-            <Input label="Giá dang bán" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
-            <Input label="Giá g?c / giá g?ch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
+            <Input label="Giï¿½ dang bï¿½n" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
+            <Input label="Giï¿½ g?c / giï¿½ g?ch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
             <Input label="% gi?m" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Nhãn gi?m giá" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
-            <Input label="Nhãn" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GI?M 17%" />
+            <Input label="Nhï¿½n gi?m giï¿½" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
+            <Input label="Nhï¿½n" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GI?M 17%" />
           </View>
           <View style={styles.formGrid2}>
             <Input label="?nh l?n / ?nh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
@@ -1108,29 +1108,29 @@ export default function AdminScreen() {
             <Input label="?nh nh? 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
           </View>
           <View style={styles.mediaUploadBox}>
-            <Text style={styles.mediaUploadTitle}>Upload ?nh s?n ph?m lên Cloudinary</Text>
-            <Text style={styles.mediaUploadHint}>Ch?n ?nh t? máy, h? th?ng s? upload lên Cloudinary r?i t? di?n URL vào 4 ô ?nh.</Text>
+            <Text style={styles.mediaUploadTitle}>Upload ?nh s?n ph?m lï¿½n Cloudinary</Text>
+            <Text style={styles.mediaUploadHint}>Ch?n ?nh t? mï¿½y, h? th?ng s? upload lï¿½n Cloudinary r?i t? di?n URL vï¿½o 4 ï¿½ ?nh.</Text>
             <View style={styles.actionRow}>
               {(["image", "image2", "image3", "image4"] as const).map((field, index) => {
                 const key = `upload-${field}`;
                 return (
                   <Pressable key={field} disabled={uploadingMediaField === key} onPress={() => pickAndUploadAdminImage(field)} style={styles.smallBtn}>
-                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "Ðang upload..." : `Upload ?nh ${index + 1}`}</Text>
+                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "ï¿½ang upload..." : `Upload ?nh ${index + 1}`}</Text>
                   </Pressable>
                 );
               })}
             </View>
           </View>
-          <Input label="Mô t? s?n ph?m" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="Mô t? ng?n..." multiline />
+          <Input label="Mï¿½ t? s?n ph?m" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="Mï¿½ t? ng?n..." multiline />
           <View style={styles.formGrid3}>
             <Input label="Danh m?c" value={productForm.category} onChangeText={(category: string) => setProductForm((p) => ({ ...p, category }))} placeholder="fashion" />
             <Input label="Danh m?c con" value={productForm.subcategory} onChangeText={(subcategory: string) => setProductForm((p) => ({ ...p, subcategory }))} placeholder="streetwear" />
             <Input label="T?n kho" value={productForm.stockQuantity} keyboardType="numeric" onChangeText={(stockQuantity: string) => setProductForm((p) => ({ ...p, stockQuantity }))} placeholder="999" />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Size / kích c?" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
-            <Input label="Màu s?c" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Ðen, tr?ng, kem ho?c #000000, #FFFFFF" />
-            <Text style={[styles.userMeta, { marginTop: 6 }]}>B?ng màu nhanh (b?m d? thêm mã hex):</Text>
+            <Input label="Size / kï¿½ch c?" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
+            <Input label="Mï¿½u s?c" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="ï¿½en, tr?ng, kem ho?c #000000, #FFFFFF" />
+            <Text style={[styles.userMeta, { marginTop: 6 }]}>B?ng mï¿½u nhanh (b?m d? thï¿½m mï¿½ hex):</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
               {["#000000", "#FFFFFF", "#F5F5DC", "#A33A2F", "#1C140F", "#8B4513", "#2F4A73", "#2E7D32", "#B00020", "#D4AF37", "#808080", "#F28C28"].map((hex) => (
                 <Pressable key={hex} onPress={() => setProductForm((p) => { const arr = splitAdminList(p.colors || ""); return arr.map((x: string) => x.toLowerCase()).includes(hex.toLowerCase()) ? p : { ...p, colors: [...arr, hex].join(", ") }; })} style={[styles.swatch, { backgroundColor: hex, borderColor: ADMIN_BORDER }]}>
@@ -1140,14 +1140,14 @@ export default function AdminScreen() {
             </View>
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Kích thu?c" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dài 68cm, ngang vai 46cm..." />
+            <Input label="Kï¿½ch thu?c" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dï¿½i 68cm, ngang vai 46cm..." />
             <Input label="Form / ki?u v?a" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
           </View>
-          <Input label="Th? hình ?nh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
-          <Input label="Ki?u s? d?ng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Ði choi, ch?p ?nh, cosplay nh?" />
+          <Input label="Th? hï¿½nh ?nh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
+          <Input label="Ki?u s? d?ng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="ï¿½i choi, ch?p ?nh, cosplay nh?" />
           <View style={styles.actionRow}>
-            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Ðang luu..." : editingProductId ? "C?p nh?t s?n ph?m" : "Thêm s?n ph?m"}</Text></Pressable>
-            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
+            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "ï¿½ang luu..." : editingProductId ? "C?p nh?t s?n ph?m" : "Thï¿½m s?n ph?m"}</Text></Pressable>
+            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xï¿½a form</Text></Pressable>
           </View>
         </View>
         <ProductDiscountPreview name={productForm.name} price={Number(productForm.price || 0)} originalPrice={Number(productForm.originalPrice || 0)} discountPercent={Number(productForm.discountPercent || 0)} image={productForm.image} images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]} sizes={productForm.sizes} colors={productForm.colors} dimensions={productForm.dimensions} />
@@ -1166,21 +1166,21 @@ export default function AdminScreen() {
                 {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.productImage} /> : <View style={styles.productImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text numberOfLines={1} style={styles.productTitle}>{product.name || product.productName}</Text>
-                  <Text style={styles.productMeta}>{product.id} • {product.category || "general"}</Text>
+                  <Text style={styles.productMeta}>{product.id} ï¿½ {product.category || "general"}</Text>
                   <View style={styles.productPriceLine}>
                     <Text style={styles.productPrice}>{formatMoney(product.price)}</Text>
                     {Number(product.originalPrice || 0) > Number(product.price || 0) ? <Text style={styles.productOldPrice}>{formatMoney(product.originalPrice)}</Text> : null}
                     {discount > 0 ? <Text style={styles.discountBadge}>-{discount}%</Text> : null}
                   </View>
-                  <Text style={styles.productMeta}>Status: {product.status || "active"} • Stock: {product.stockQuantity || 0}</Text>
+                  <Text style={styles.productMeta}>Status: {product.status || "active"} ï¿½ Stock: {product.stockQuantity || 0}</Text>
                 </View>
               </View>
-              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chua có mô t?."}</Text>
+              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chua cï¿½ mï¿½ t?."}</Text>
               <View style={styles.adminThumbRow}>
                 {gallery.map((url, index) => <Image key={`${product.id}-thumb-${index}`} source={{ uri: url }} style={styles.adminThumb} />)}
               </View>
-              <Text style={styles.productMeta}>?nh: {gallery.length}/4 • Size: {sizes.join(' / ') || 'S / M / L / XL'} • Màu: {colors.join(' / ') || 'Ðen / Tr?ng / Kem'}</Text>
-              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kích thu?c: {product.dimensions || '--'} • Form: {product.fit || '--'}</Text> : null}
+              <Text style={styles.productMeta}>?nh: {gallery.length}/4 ï¿½ Size: {sizes.join(' / ') || 'S / M / L / XL'} ï¿½ Mï¿½u: {colors.join(' / ') || 'ï¿½en / Tr?ng / Kem'}</Text>
+              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kï¿½ch thu?c: {product.dimensions || '--'} ï¿½ Form: {product.fit || '--'}</Text> : null}
               <View style={styles.actionRow}>
                 <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>S?a</Text></Pressable>
                 <Pressable onPress={() => toggleProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{hidden ? "Hi?n" : "?n"}</Text></Pressable>
@@ -1200,94 +1200,94 @@ export default function AdminScreen() {
     const promotionRows = vouchers.filter((v) => v.kind === "promotion");
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Voucher & Khuy?n mãi" subtitle="T?o voucher, khuy?n mãi, flash sale và g?i thông báo chung cho ngu?i dùng." right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} chi?n d?ch</Text>} />
+        <SectionHeader title="Voucher & Khuy?n mï¿½i" subtitle="T?o voucher, khuy?n mï¿½i, flash sale vï¿½ g?i thï¿½ng bï¿½o chung cho ngu?i dï¿½ng." right={<Text style={styles.counterPill}>{activeVouchers} voucher ï¿½ {activePromotions} chi?n d?ch</Text>} />
         <View style={styles.promoGrid}>
           <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm voucher cho ngu?i dùng</Text>
+            <Text style={styles.formTitle}>Thï¿½m voucher cho ngu?i dï¿½ng</Text>
             <View style={styles.formGrid2}>
-              <Input label="Mã voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
-              <Input label="Tên voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Gi?m cho khách m?i" />
+              <Input label="Mï¿½ voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
+              <Input label="Tï¿½n voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Gi?m cho khï¿½ch m?i" />
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={voucherForm.discountType === "percent"} label="Theo %" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={voucherForm.discountType === "fixed"} label="Theo ti?n" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-              <Input label="Giá tr? gi?m" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 ho?c 50000" />
-              <Input label="Ðon t?i thi?u" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
+              <Input label="Giï¿½ tr? gi?m" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 ho?c 50000" />
+              <Input label="ï¿½on t?i thi?u" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
               <Input label="H?t h?n" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
             </View>
-            <Input label="Mô t?" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="Áp d?ng toàn shop..." multiline />
-            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "Ðang t?o..." : "T?o voucher"}</Text></Pressable>
+            <Input label="Mï¿½ t?" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="ï¿½p d?ng toï¿½n shop..." multiline />
+            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "ï¿½ang t?o..." : "T?o voucher"}</Text></Pressable>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm khuy?n mãi / chi?n d?ch</Text>
+            <Text style={styles.formTitle}>Thï¿½m khuy?n mï¿½i / chi?n d?ch</Text>
             <View style={styles.formGrid2}>
-              <Input label="Mã chi?n d?ch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
-              <Input label="Tên khuy?n mãi" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cu?i tu?n" />
+              <Input label="Mï¿½ chi?n d?ch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
+              <Input label="Tï¿½n khuy?n mï¿½i" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cu?i tu?n" />
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={promotionForm.discountType === "percent"} label="Gi?m %" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={promotionForm.discountType === "fixed"} label="Gi?m ti?n" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-              <Input label="Giá tr?" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
-              <Input label="Ðon t?i thi?u" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
-              <Input label="Ph?m vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:áo" />
+              <Input label="Giï¿½ tr?" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
+              <Input label="ï¿½on t?i thi?u" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
+              <Input label="Ph?m vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:ï¿½o" />
             </View>
             <View style={styles.formGrid2}>
               <Input label="B?t d?u" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
-              <Input label="K?t thúc" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
+              <Input label="K?t thï¿½c" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
             </View>
             <View style={styles.inputWrap}>
               <Input label="?nh banner (URL)" value={promotionForm.bannerImage} onChangeText={(bannerImage: string) => setPromotionForm((p) => ({ ...p, bannerImage }))} placeholder="https://..." />
               <Pressable disabled={uploadingMediaField === "upload-bannerImage"} onPress={() => pickAndUploadAdminImage("bannerImage")} style={styles.smallBtn}>
-                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "Ðang upload..." : "Upload banner Cloudinary"}</Text>
+                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "ï¿½ang upload..." : "Upload banner Cloudinary"}</Text>
               </Pressable>
             </View>
-            <Input label="Mô t? chi?n d?ch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Gi?m giá cu?i tu?n cho toàn b? s?n ph?m..." multiline />
-            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "Ðang t?o..." : "T?o khuy?n mãi"}</Text></Pressable>
+            <Input label="Mï¿½ t? chi?n d?ch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Gi?m giï¿½ cu?i tu?n cho toï¿½n b? s?n ph?m..." multiline />
+            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "ï¿½ang t?o..." : "T?o khuy?n mï¿½i"}</Text></Pressable>
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.formTitle}>Thông báo chung</Text>
+          <Text style={styles.formTitle}>Thï¿½ng bï¿½o chung</Text>
           <View style={styles.formGrid2}>
-            <Input label="Tiêu d?" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
-            <Input label="N?i dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="M? app nh?n voucher hôm nay..." />
+            <Input label="Tiï¿½u d?" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
+            <Input label="N?i dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="M? app nh?n voucher hï¿½m nay..." />
           </View>
-          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "Ðang g?i..." : "G?i thông báo cho t?t c? user"}</Text></Pressable>
+          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "ï¿½ang g?i..." : "G?i thï¿½ng bï¿½o cho t?t c? user"}</Text></Pressable>
         </View>
 
         <View style={styles.listGrid2}>
           <View style={styles.card}>
-            <SectionHeader title="Danh sách voucher" subtitle="B?t/t?t mã gi?m giá" />
+            <SectionHeader title="Danh sï¿½ch voucher" subtitle="B?t/t?t mï¿½ gi?m giï¿½" />
             {voucherRows.length ? voucherRows.map((voucher) => (
               <View key={voucher.id} style={styles.voucherRow}>
                 <View style={styles.voucherIcon}><Feather name="tag" size={17} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{voucher.code}</Text>
-                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} • HSD {compactDate(voucher.expiryDate)}</Text>
+                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} ï¿½ {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} ï¿½ HSD {compactDate(voucher.expiryDate)}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
-            )) : <Text style={styles.emptyText}>Chua có voucher.</Text>}
+            )) : <Text style={styles.emptyText}>Chua cï¿½ voucher.</Text>}
           </View>
 
           <View style={styles.card}>
-            <SectionHeader title="Danh sách khuy?n mãi" subtitle="Chi?n d?ch dang ch?y" />
+            <SectionHeader title="Danh sï¿½ch khuy?n mï¿½i" subtitle="Chi?n d?ch dang ch?y" />
             {promotionRows.length ? promotionRows.map((promo) => (
               <View key={promo.id} style={styles.promoRow}>
                 {promo.bannerImage ? <Image source={{ uri: promo.bannerImage }} style={styles.promoThumb} /> : <View style={styles.promoThumb}><Feather name="image" size={18} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{promo.title || promo.code}</Text>
-                  <Text style={styles.voucherMeta}>{promo.code} • {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} • {compactDate(promo.startsAt)} ? {compactDate(promo.expiryDate)}</Text>
-                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chi?n d?ch khuy?n mãi"}</Text>
+                  <Text style={styles.voucherMeta}>{promo.code} ï¿½ {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} ï¿½ {compactDate(promo.startsAt)} ? {compactDate(promo.expiryDate)}</Text>
+                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chi?n d?ch khuy?n mï¿½i"}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(promo)} style={[styles.statusPill, promo.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{promo.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
-            )) : <Text style={styles.emptyText}>Chua có khuy?n mãi.</Text>}
+            )) : <Text style={styles.emptyText}>Chua cï¿½ khuy?n mï¿½i.</Text>}
           </View>
         </View>
       </View>
@@ -1306,58 +1306,58 @@ export default function AdminScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={[styles.userAvatar, u.role === "admin" ? styles.userAvatarAdmin : null]}><Feather name={u.role === "admin" ? "shield" : "user"} size={20} color={u.role === "admin" ? "#fff" : ADMIN_GREEN} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khách JAPANO"}</Text>
-            <Text style={styles.userEmail}>{u.email} • {u.phone || "chua có SÐT"}</Text>
-            <Text style={styles.userMeta}>Ð?a ch?: {u.address || "chua có"} • Xu {formatNumber(u.coins)} {u.vip ? "• VIP" : ""}</Text>
+            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khï¿½ch JAPANO"}</Text>
+            <Text style={styles.userEmail}>{u.email} ï¿½ {u.phone || "chua cï¿½ Sï¿½T"}</Text>
+            <Text style={styles.userMeta}>ï¿½?a ch?: {u.address || "chua cï¿½"} ï¿½ Xu {formatNumber(u.coins)} {u.vip ? "ï¿½ VIP" : ""}</Text>
           </View>
-          <Pressable onPress={() => setSelectedUserId(null)} style={styles.smallBtn}><Feather name="x" size={14} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Ðóng</Text></Pressable>
+          <Pressable onPress={() => setSelectedUserId(null)} style={styles.smallBtn}><Feather name="x" size={14} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>ï¿½ï¿½ng</Text></Pressable>
         </View>
 
         <View style={styles.statMiniRow}>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userOrders.length}</Text><Text style={styles.statMiniCap}>Ðon hàng</Text></View>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatMoney(spend)}</Text><Text style={styles.statMiniCap}>T?ng chi tiêu</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userOrders.length}</Text><Text style={styles.statMiniCap}>ï¿½on hï¿½ng</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatMoney(spend)}</Text><Text style={styles.statMiniCap}>T?ng chi tiï¿½u</Text></View>
           <View style={styles.statMini}><Text style={styles.statMiniNum}>{userPayments.length}</Text><Text style={styles.statMiniCap}>Giao d?ch</Text></View>
         </View>
 
-        <Text style={styles.formTitle}>Ðon hàng & s?n ph?m dã mua</Text>
+        <Text style={styles.formTitle}>ï¿½on hï¿½ng & s?n ph?m dï¿½ mua</Text>
         {userOrders.length ? userOrders.map((o) => (
           <View key={o.id} style={styles.orderDetailCard}>
             <View style={styles.barLineTop}>
-              <Text style={styles.userName}>#{String(o.id).slice(-8)} • {formatMoney(o.total || o.totalAmount)}</Text>
+              <Text style={styles.userName}>#{String(o.id).slice(-8)} ï¿½ {formatMoney(o.total || o.totalAmount)}</Text>
               <View style={[styles.statusChip, o.status === "completed" ? styles.statusOk : o.status === "cancelled" ? styles.statusBad : styles.statusPend]}>
                 <Text style={styles.statusChipText}>{o.status || "pending"}</Text>
               </View>
             </View>
-            <Text style={styles.userMeta}>Thanh toán: {o.paymentMethod || "--"} • {o.paymentStatus || "pending"} • {compactDate(o.createdAt)}</Text>
-            {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao t?i: {o.shippingAddress} {o.phoneNumber ? `• ${o.phoneNumber}` : ""}</Text> : null}
+            <Text style={styles.userMeta}>Thanh toï¿½n: {o.paymentMethod || "--"} ï¿½ {o.paymentStatus || "pending"} ï¿½ {compactDate(o.createdAt)}</Text>
+            {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao t?i: {o.shippingAddress} {o.phoneNumber ? `ï¿½ ${o.phoneNumber}` : ""}</Text> : null}
             {(o.items || []).map((it: any, idx: number) => (
               <View key={idx} style={styles.orderItemRow}>
                 {it.image ? <Image source={{ uri: it.image }} style={styles.orderItemImg} /> : <View style={styles.orderItemImg}><Feather name="image" size={14} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text numberOfLines={1} style={styles.orderItemName}>{it.name}</Text>
-                  <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `• size ${it.size}` : ""} {it.color ? `• ${it.color}` : ""}</Text>
+                  <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `ï¿½ size ${it.size}` : ""} {it.color ? `ï¿½ ${it.color}` : ""}</Text>
                 </View>
                 <Text style={styles.orderItemPrice}>{formatMoney(it.unitPrice)}</Text>
               </View>
             ))}
             <View style={styles.userActions}>
-              <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Ðã thanh toán</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>Ðang giao</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>Ðã nh?n</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>ï¿½ï¿½ thanh toï¿½n</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>ï¿½ang giao</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>ï¿½ï¿½ nh?n</Text></Pressable>
               <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color="#fff" /><Text style={styles.dangerBtnText}>H?y</Text></Pressable>
             </View>
           </View>
-        )) : <Text style={styles.emptyText}>Khách này chua có don hàng.</Text>}
+        )) : <Text style={styles.emptyText}>Khï¿½ch nï¿½y chua cï¿½ don hï¿½ng.</Text>}
 
         {userPayments.length ? (
           <>
-            <Text style={styles.formTitle}>Thông tin thanh toán</Text>
+            <Text style={styles.formTitle}>Thï¿½ng tin thanh toï¿½n</Text>
             {userPayments.map((p) => (
               <View key={p.id} style={styles.paymentRow}>
                 <View style={styles.paymentIcon}><Feather name="credit-card" size={15} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.paymentTitle}>{formatMoney(p.amount)} • {p.status}</Text>
-                  <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} • Txn {p.transactionId || "--"} • {compactDate(p.createdAt)}</Text>
+                  <Text style={styles.paymentTitle}>{formatMoney(p.amount)} ï¿½ {p.status}</Text>
+                  <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} ï¿½ Txn {p.transactionId || "--"} ï¿½ {compactDate(p.createdAt)}</Text>
                 </View>
               </View>
             ))}
@@ -1369,7 +1369,7 @@ export default function AdminScreen() {
 
   const renderUsers = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Khách hàng & Phân quy?n" subtitle="B?m m?t khách d? xem don dã mua, s?n ph?m, thanh toán và d?i tr?ng thái giao hàng." right={<Text style={styles.counterPill}>{filteredUsers.length} khách</Text>} />
+      <SectionHeader title="Khï¿½ch hï¿½ng & Phï¿½n quy?n" subtitle="B?m m?t khï¿½ch d? xem don dï¿½ mua, s?n ph?m, thanh toï¿½n vï¿½ d?i tr?ng thï¿½i giao hï¿½ng." right={<Text style={styles.counterPill}>{filteredUsers.length} khï¿½ch</Text>} />
       {selectedUserId ? renderUserDetail() : null}
       <View style={styles.tableCard}>
         {filteredUsers.map((item) => {
@@ -1384,9 +1384,9 @@ export default function AdminScreen() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={styles.userName}>{item.name || item.fullName || "JAPANO Member"}</Text>
                 <Text numberOfLines={1} style={styles.userEmail}>{item.email}</Text>
-                <Text style={styles.userMeta}>Tr?ng thái {item.status || "active"} • Xu {formatNumber(item.coins)} • {ordersCount} don {item.vip ? "• VIP" : ""}</Text>
+                <Text style={styles.userMeta}>Tr?ng thï¿½i {item.status || "active"} ï¿½ Xu {formatNumber(item.coins)} ï¿½ {ordersCount} don {item.vip ? "ï¿½ VIP" : ""}</Text>
               </View>
-              <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "KHÁCH"}</Text></View>
+              <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "KHï¿½CH"}</Text></View>
               <View style={styles.userActions}>
                 <Pressable onPress={() => setSelectedUserId(String(item.id))} style={styles.saleBtn}><Feather name="eye" size={13} color="#fff" /><Text style={styles.saleBtnText}>Chi ti?t</Text></Pressable>
                 <Pressable onPress={() => adjustCoins(item, 100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+100 xu</Text></Pressable>
@@ -1403,33 +1403,33 @@ export default function AdminScreen() {
 
   const renderTransactions = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Ðon hàng / Thanh toán" subtitle="Theo dõi thông tin giao d?ch, don hàng và tr?ng thái thanh toán." />
+      <SectionHeader title="ï¿½on hï¿½ng / Thanh toï¿½n" subtitle="Theo dï¿½i thï¿½ng tin giao d?ch, don hï¿½ng vï¿½ tr?ng thï¿½i thanh toï¿½n." />
       <View style={styles.listGrid2}>
         <View style={styles.card}>
-          <SectionHeader title="Thanh toán" subtitle="Giao d?ch g?n dây" />
+          <SectionHeader title="Thanh toï¿½n" subtitle="Giao d?ch g?n dï¿½y" />
           {payments.length ? payments.map((payment) => (
             <View key={payment.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
-                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toán"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
+                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toï¿½n"} ï¿½ {payment.status} ï¿½ {compactDate(payment.createdAt)}</Text>
+                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} ï¿½ Txn: {payment.transactionId || "--"}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua có giao d?ch.</Text>}
+          )) : <Text style={styles.emptyText}>Chua cï¿½ giao d?ch.</Text>}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Ðon hàng g?n dây" subtitle="Ðon hàng m?i" />
+          <SectionHeader title="ï¿½on hï¿½ng g?n dï¿½y" subtitle="ï¿½on hï¿½ng m?i" />
           {orders.length ? orders.map((order) => (
             <View key={order.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
-                <Text style={styles.paymentMeta}>Status: {order.status} • Payment: {order.paymentStatus} • {compactDate(order.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} • {order.paymentMethod || "COD"}</Text>
+                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} ï¿½ {formatMoney(order.total || order.totalAmount)}</Text>
+                <Text style={styles.paymentMeta}>Status: {order.status} ï¿½ Payment: {order.paymentStatus} ï¿½ {compactDate(order.createdAt)}</Text>
+                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} ï¿½ {order.paymentMethod || "COD"}</Text>
                 <View style={styles.adminOrderQuickRow}>
                   <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
-                    <Text style={styles.successBtnText}>Xác nh?n thành công</Text>
+                    <Text style={styles.successBtnText}>Xï¿½c nh?n thï¿½nh cï¿½ng</Text>
                   </Pressable>
                   <Pressable disabled={actionId === `order-cancelled-${order.id}`} onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}>
                     <Text style={styles.dangerBtnText}>H?y nhanh</Text>
@@ -1437,7 +1437,7 @@ export default function AdminScreen() {
                 </View>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua có don hàng.</Text>}
+          )) : <Text style={styles.emptyText}>Chua cï¿½ don hï¿½ng.</Text>}
         </View>
       </View>
     </View>
@@ -1445,29 +1445,29 @@ export default function AdminScreen() {
 
   const renderGames = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n lý trò choi" subtitle="Thêm, s?a, xóa game và c?u hình thu?ng xu." />
+      <SectionHeader title="Qu?n lï¿½ trï¿½ choi" subtitle="Thï¿½m, s?a, xï¿½a game vï¿½ c?u hï¿½nh thu?ng xu." />
       <View style={styles.card}>
-        <Text style={styles.formTitle}>{editingGameId ? "S?a game" : "Thêm game"}</Text>
+        <Text style={styles.formTitle}>{editingGameId ? "S?a game" : "Thï¿½m game"}</Text>
         <View style={styles.formGrid2}>
           <Input label="Slug" value={gameForm.slug} onChangeText={(slug: string) => setGameForm((p) => ({ ...p, slug }))} placeholder="quiz-battle" />
-          <Input label="Tên game" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder="Quiz Battle" />
+          <Input label="Tï¿½n game" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder="Quiz Battle" />
         </View>
-        <Input label="Mô t?" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder="Tr? l?i nhanh nh?n xu" multiline />
+        <Input label="Mï¿½ t?" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder="Tr? l?i nhanh nh?n xu" multiline />
         <Input label="Thu?ng xu" value={gameForm.rewardCoins} keyboardType="numeric" onChangeText={(rewardCoins: string) => setGameForm((p) => ({ ...p, rewardCoins }))} placeholder="30" />
         <View style={styles.actionRow}>
-          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? "C?p nh?t game" : "Thêm game"}</Text></Pressable>
-          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
+          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? "C?p nh?t game" : "Thï¿½m game"}</Text></Pressable>
+          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xï¿½a form</Text></Pressable>
         </View>
       </View>
       <View style={styles.productListGrid}>
         {games.map((game) => (
           <View key={String(game._id || game.id)} style={styles.productCard}>
             <Text style={styles.productTitle}>{game.name}</Text>
-            <Text style={styles.productMeta}>{game.slug} • Thu?ng {formatNumber(game.rewardCoins)} xu</Text>
-            <Text style={styles.productDesc}>{game.description || "Chua có mô t?."}</Text>
+            <Text style={styles.productMeta}>{game.slug} ï¿½ Thu?ng {formatNumber(game.rewardCoins)} xu</Text>
+            <Text style={styles.productDesc}>{game.description || "Chua cï¿½ mï¿½ t?."}</Text>
             <View style={styles.actionRow}>
               <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>S?a</Text></Pressable>
-              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
+              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xï¿½a</Text></Pressable>
             </View>
           </View>
         ))}
@@ -1479,7 +1479,7 @@ export default function AdminScreen() {
     const w = bannedInput.trim();
     if (!w) return;
     if (!user?.id) {
-      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao tác này.");
+      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao tï¿½c nï¿½y.");
       return;
     }
     try {
@@ -1487,43 +1487,43 @@ export default function AdminScreen() {
       setBannedInput("");
       await load();
     } catch (e: any) {
-      Alert.alert("L?i", e?.message || "Không thêm du?c t? c?m.");
+      Alert.alert("L?i", e?.message || "Khï¿½ng thï¿½m du?c t? c?m.");
     }
   };
   const removeBanned = async (id: string) => {
     if (!user?.id) {
-      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao tác này.");
+      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao tï¿½c nï¿½y.");
       return;
     }
     try {
       await api.deleteBannedWord(user.id, id);
       await load();
     } catch (e: any) {
-      Alert.alert("L?i", e?.message || "Không xoá du?c.");
+      Alert.alert("L?i", e?.message || "Khï¿½ng xoï¿½ du?c.");
     }
   };
 
   const renderModeration = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="T? c?m khi bình lu?n / dánh giá" subtitle="Ðánh giá ch?a các t? này s? b? ch?n t? d?ng trên toàn app." right={<Text style={styles.counterPill}>{bannedWords.length} t?</Text>} />
+      <SectionHeader title="T? c?m khi bï¿½nh lu?n / dï¿½nh giï¿½" subtitle="ï¿½ï¿½nh giï¿½ ch?a cï¿½c t? nï¿½y s? b? ch?n t? d?ng trï¿½n toï¿½n app." right={<Text style={styles.counterPill}>{bannedWords.length} t?</Text>} />
       <View style={[styles.card, styles.formCard]}>
-        <Text style={styles.formTitle}>Thêm t? c?m</Text>
+        <Text style={styles.formTitle}>Thï¿½m t? c?m</Text>
         <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
           <View style={{ flex: 1 }}>
-            <Input label="T? / c?m t? c?m" value={bannedInput} onChangeText={setBannedInput} placeholder="ví d?: l?a d?o" />
+            <Input label="T? / c?m t? c?m" value={bannedInput} onChangeText={setBannedInput} placeholder="vï¿½ d?: l?a d?o" />
           </View>
-          <Pressable onPress={addBanned} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm</Text></Pressable>
+          <Pressable onPress={addBanned} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thï¿½m</Text></Pressable>
         </View>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh sách t? c?m" subtitle="B?m vào m?t t? d? xoá" />
+        <SectionHeader title="Danh sï¿½ch t? c?m" subtitle="B?m vï¿½o m?t t? d? xoï¿½" />
         <View style={styles.bannedWrap}>
           {bannedWords.length ? bannedWords.map((b: any) => (
             <Pressable key={b.id} onPress={() => removeBanned(b.id)} style={styles.bannedChip}>
               <Text style={styles.bannedChipText}>{b.word}</Text>
               <Feather name="x" size={13} color={ADMIN_RED} />
             </Pressable>
-          )) : <Text style={styles.emptyText}>Chua có t? c?m. H? th?ng t? seed danh sách m?c d?nh khi có dánh giá d?u tiên.</Text>}
+          )) : <Text style={styles.emptyText}>Chua cï¿½ t? c?m. H? th?ng t? seed danh sï¿½ch m?c d?nh khi cï¿½ dï¿½nh giï¿½ d?u tiï¿½n.</Text>}
         </View>
       </View>
     </View>
@@ -1531,7 +1531,7 @@ export default function AdminScreen() {
 
   const isAccessoryClient = (p: any) => {
     const hay = `${p?.category || ""} ${p?.subcategory || ""} ${(p?.visualTags || []).join(" ")} ${p?.name || ""}`.toLowerCase();
-    return /(phu kien|ph? ki?n|accessor|non|nón|mu |mu|kinh|kính|khan|khan|tui|túi|vong|vòng|dong ho|d?ng h?|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|bông tai|du |dù)/.test(hay);
+    return /(phu kien|ph? ki?n|accessor|non|nï¿½n|mu |mu|kinh|kï¿½nh|khan|khan|tui|tï¿½i|vong|vï¿½ng|dong ho|d?ng h?|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|bï¿½ng tai|du |dï¿½)/.test(hay);
   };
   const accessoryProducts = useMemo(() => products.filter(isAccessoryClient), [products]);
 
@@ -1543,11 +1543,11 @@ export default function AdminScreen() {
 
   const renderAccessories = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n lý ph? ki?n (danh m?c riêng)" subtitle="Nón, mu, vòng tay, túi, kính, khan, d?ng h?... Qu?n lý ?nh, màu, size, t?n kho, giá riêng cho nhóm ph? ki?n." right={<Text style={styles.counterPill}>{accessoryProducts.length} ph? ki?n</Text>} />
+      <SectionHeader title="Qu?n lï¿½ ph? ki?n (danh m?c riï¿½ng)" subtitle="Nï¿½n, mu, vï¿½ng tay, tï¿½i, kï¿½nh, khan, d?ng h?... Qu?n lï¿½ ?nh, mï¿½u, size, t?n kho, giï¿½ riï¿½ng cho nhï¿½m ph? ki?n." right={<Text style={styles.counterPill}>{accessoryProducts.length} ph? ki?n</Text>} />
       <View style={[styles.card, { gap: 10 }]}>
-        <Text style={styles.formTitle}>Thêm ph? ki?n m?i</Text>
-        <Text style={styles.userMeta}>M? form s?n ph?m v?i danh m?c dã d?t s?n là "phu-kien". B?n ch? c?n di?n tên, ?nh, màu, size, s? lu?ng và giá.</Text>
-        <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm ph? ki?n</Text></Pressable>
+        <Text style={styles.formTitle}>Thï¿½m ph? ki?n m?i</Text>
+        <Text style={styles.userMeta}>M? form s?n ph?m v?i danh m?c dï¿½ d?t s?n lï¿½ "phu-kien". B?n ch? c?n di?n tï¿½n, ?nh, mï¿½u, size, s? lu?ng vï¿½ giï¿½.</Text>
+        <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thï¿½m ph? ki?n</Text></Pressable>
       </View>
       <View style={styles.tableCard}>
         {accessoryProducts.length ? accessoryProducts.map((item) => (
@@ -1555,15 +1555,15 @@ export default function AdminScreen() {
             {item.image ? <Image source={{ uri: item.image }} style={styles.accThumb} /> : <View style={styles.accThumb}><Feather name="watch" size={18} color={ADMIN_MUTED} /></View>}
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={styles.userName}>{item.name}</Text>
-              <Text numberOfLines={1} style={styles.userEmail}>{item.category || "phu-kien"} • {formatMoney(item.price)}</Text>
-              <Text style={styles.userMeta}>T?n kho {formatNumber(item.stockQuantity || item.stock || 0)} • {(item.status || "active") === "active" ? "Ðang bán" : "Ðang ?n"} {Array.isArray(item.colors) && item.colors.length ? `• ${item.colors.length} màu` : ""} {Array.isArray(item.sizes) && item.sizes.length ? `• ${item.sizes.length} size` : ""}</Text>
+              <Text numberOfLines={1} style={styles.userEmail}>{item.category || "phu-kien"} ï¿½ {formatMoney(item.price)}</Text>
+              <Text style={styles.userMeta}>T?n kho {formatNumber(item.stockQuantity || item.stock || 0)} ï¿½ {(item.status || "active") === "active" ? "ï¿½ang bï¿½n" : "ï¿½ang ?n"} {Array.isArray(item.colors) && item.colors.length ? `ï¿½ ${item.colors.length} mï¿½u` : ""} {Array.isArray(item.sizes) && item.sizes.length ? `ï¿½ ${item.sizes.length} size` : ""}</Text>
             </View>
             <View style={styles.userActions}>
               <Pressable onPress={() => editProduct(item)} style={styles.saleBtn}><Feather name="edit-2" size={13} color="#fff" /><Text style={styles.saleBtnText}>S?a</Text></Pressable>
               <Pressable onPress={() => toggleProduct(item)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{(item.status || "active") === "active" ? "?n" : "Hi?n"}</Text></Pressable>
             </View>
           </View>
-        )) : <Text style={styles.emptyText}>Chua có ph? ki?n. B?m "Thêm ph? ki?n" d? t?o, ho?c d?t danh m?c s?n ph?m là "phu-kien".</Text>}
+        )) : <Text style={styles.emptyText}>Chua cï¿½ ph? ki?n. B?m "Thï¿½m ph? ki?n" d? t?o, ho?c d?t danh m?c s?n ph?m lï¿½ "phu-kien".</Text>}
       </View>
     </View>
   );
@@ -1572,7 +1572,7 @@ export default function AdminScreen() {
     const m = systemStatus?.metrics || kpis;
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Tr?ng thái h? th?ng AI" subtitle="Theo dõi CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo th?i gian th?c." right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}<Text style={styles.newOrderText}>Ki?m tra l?i</Text></Pressable>} />
+        <SectionHeader title="Tr?ng thï¿½i h? th?ng AI" subtitle="Theo dï¿½i CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo th?i gian th?c." right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}<Text style={styles.newOrderText}>Ki?m tra l?i</Text></Pressable>} />
         <View style={styles.tableCard}>
           {systemStatus?.services ? systemStatus.services.map((s: any) => (
             <View key={s.key} style={styles.userRow}>
@@ -1583,10 +1583,10 @@ export default function AdminScreen() {
               </View>
               <View style={[styles.statusChip, s.online ? styles.statusOk : styles.statusBad]}><Text style={styles.statusChipText}>{s.online ? "Online" : "Offline"}</Text></View>
             </View>
-          )) : <Text style={styles.emptyText}>{statusLoading ? "Ðang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng thái — b?m \"Ki?m tra l?i\". N?u backend chua ch?y, hãy kh?i d?ng server c?ng 4000."}</Text>}
+          )) : <Text style={styles.emptyText}>{statusLoading ? "ï¿½ang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng thï¿½i ï¿½ b?m \"Ki?m tra l?i\". N?u backend chua ch?y, hï¿½y kh?i d?ng server c?ng 4000."}</Text>}
           <View style={{ paddingTop: 10 }}>
-            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "NVIDIA RTX 5060 Ti"} • CUDA: {systemStatus?.cuda || "Available"}</Text>
-            <Text style={styles.userMeta}>Hu?ng d?n restart: ch?y l?i ti?n trình tuong ?ng (CatVTON :7861, Gateway :8001, Ollama :11434) r?i b?m Ki?m tra l?i.</Text>
+            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "NVIDIA RTX 5060 Ti"} ï¿½ CUDA: {systemStatus?.cuda || "Available"}</Text>
+            <Text style={styles.userMeta}>Hu?ng d?n restart: ch?y l?i ti?n trï¿½nh tuong ?ng (CatVTON :7861, Gateway :8001, Ollama :11434) r?i b?m Ki?m tra l?i.</Text>
           </View>
         </View>
 
@@ -1598,16 +1598,16 @@ export default function AdminScreen() {
         </View>
 
         <View style={styles.card}>
-          <SectionHeader title="Nh?t ký l?i g?n dây" subtitle="20 l?i m?i nh?t t? AI/h? th?ng" />
+          <SectionHeader title="Nh?t kï¿½ l?i g?n dï¿½y" subtitle="20 l?i m?i nh?t t? AI/h? th?ng" />
           {systemStatus?.errors?.length ? systemStatus.errors.map((e: any, i: number) => (
             <View key={i} style={styles.errRow}>
               <Feather name="alert-triangle" size={13} color={ADMIN_ORANGE} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.errScope}>{e.scope} • {String(e.at).slice(0, 19).replace("T", " ")}</Text>
+                <Text style={styles.errScope}>{e.scope} ï¿½ {String(e.at).slice(0, 19).replace("T", " ")}</Text>
                 <Text style={styles.errMsg}>{e.message}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua có l?i nào du?c ghi nh?n.</Text>}
+          )) : <Text style={styles.emptyText}>Chua cï¿½ l?i nï¿½o du?c ghi nh?n.</Text>}
         </View>
       </View>
     );
@@ -1615,61 +1615,61 @@ export default function AdminScreen() {
 
   const renderTryon2d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n lý th? d? AI 2D (CatVTON)" subtitle={'Theo dõi s? lu?t, t? l? l?i và c?u hình model. B?m "Ki?m tra l?i" ? tab Tr?ng thái d? c?p nh?t.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lu?t</Text>} />
+      <SectionHeader title="Qu?n lï¿½ th? d? AI 2D (CatVTON)" subtitle={'Theo dï¿½i s? lu?t, t? l? l?i vï¿½ c?u hï¿½nh model. B?m "Ki?m tra l?i" ? tab Tr?ng thï¿½i d? c?p nh?t.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lu?t</Text>} />
       <View style={styles.statsGrid}>
         <StatCard label="T?ng lu?t th? d?" value={formatNumber(kpis.tryon2d || 0)} change="t?t c? th?i gian" icon="camera" accent={ADMIN_GREEN} />
-        <StatCard label="Thành công" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="u?c tính" icon="check-circle" accent={ADMIN_BLUE} />
-        <StatCard label="L?i" value={formatNumber(kpis.tryon2dFail || 0)} change="xem nh?t ký" icon="alert-triangle" accent={ADMIN_RED} />
+        <StatCard label="Thï¿½nh cï¿½ng" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="u?c tï¿½nh" icon="check-circle" accent={ADMIN_BLUE} />
+        <StatCard label="L?i" value={formatNumber(kpis.tryon2dFail || 0)} change="xem nh?t kï¿½" icon="alert-triangle" accent={ADMIN_RED} />
       </View>
       <View style={styles.card}>
-        <SectionHeader title="C?u hình engine" subtitle="Chu?i uu tiên model m?nh" />
-        <Text style={styles.userMeta}>Uu tiên: CatVTON (JAPANO_CATVTON_URL:7861) ? AI Gateway (:8001, model=strong, steps=50, hd) ? ghép ?nh d? phòng (luôn ra k?t qu?).</Text>
-        <Text style={styles.userMeta}>L?y ?nh s?n ph?m: g?i c? gallery (t?i da 6 ?nh) cho model d? th? d? h?p lý hon.</Text>
+        <SectionHeader title="C?u hï¿½nh engine" subtitle="Chu?i uu tiï¿½n model m?nh" />
+        <Text style={styles.userMeta}>Uu tiï¿½n: CatVTON (JAPANO_CATVTON_URL:7861) ? AI Gateway (:8001, model=strong, steps=50, hd) ? ghï¿½p ?nh d? phï¿½ng (luï¿½n ra k?t qu?).</Text>
+        <Text style={styles.userMeta}>L?y ?nh s?n ph?m: g?i c? gallery (t?i da 6 ?nh) cho model d? th? d? h?p lï¿½ hon.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="L?ch s? th? d? (?nh vào / ?nh k?t qu?)" subtitle="C?n b?t luu l?ch s? ? backend" />
-        <Text style={styles.emptyText}>Chua b?t luu l?ch s? ?nh. Ð? hi?n danh sách ?nh ngu?i dùng / ?nh qu?n áo / ?nh k?t qu? kèm seed/steps/cfg và nút ch?y l?i, c?n thêm collection luu m?i lu?t th? d? ? backend (mình có th? làm ? vòng sau).</Text>
+        <SectionHeader title="L?ch s? th? d? (?nh vï¿½o / ?nh k?t qu?)" subtitle="C?n b?t luu l?ch s? ? backend" />
+        <Text style={styles.emptyText}>Chua b?t luu l?ch s? ?nh. ï¿½? hi?n danh sï¿½ch ?nh ngu?i dï¿½ng / ?nh qu?n ï¿½o / ?nh k?t qu? kï¿½m seed/steps/cfg vï¿½ nï¿½t ch?y l?i, c?n thï¿½m collection luu m?i lu?t th? d? ? backend (mï¿½nh cï¿½ th? lï¿½m ? vï¿½ng sau).</Text>
       </View>
     </View>
   );
 
   const renderModel3d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n lý m?u 3D" subtitle="S? lu?t d?ng 3D và tr?ng thái. GLB storage c?n backend luu file." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lu?t</Text>} />
+      <SectionHeader title="Qu?n lï¿½ m?u 3D" subtitle="S? lu?t d?ng 3D vï¿½ tr?ng thï¿½i. GLB storage c?n backend luu file." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lu?t</Text>} />
       <View style={styles.statsGrid}>
         <StatCard label="T?ng lu?t t?o 3D" value={formatNumber(kpis.tryon3d || 0)} change="t?t c? th?i gian" icon="box" accent={ADMIN_GREEN} />
-        <StatCard label="Thành công" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change="u?c tính" icon="check-circle" accent={ADMIN_BLUE} />
-        <StatCard label="L?i" value={formatNumber(kpis.tryon3dFail || 0)} change="xem nh?t ký" icon="alert-triangle" accent={ADMIN_RED} />
+        <StatCard label="Thï¿½nh cï¿½ng" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change="u?c tï¿½nh" icon="check-circle" accent={ADMIN_BLUE} />
+        <StatCard label="L?i" value={formatNumber(kpis.tryon3dFail || 0)} change="xem nh?t kï¿½" icon="alert-triangle" accent={ADMIN_RED} />
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh sách model .glb" subtitle="C?n b?t luu GLB ? backend" />
-        <Text style={styles.emptyText}>Hi?n 3D tr? v? khung hình nhi?u góc (turntable). Ð? có danh sách file .glb + ?nh d?u vào + nút xem/t?i/xóa + tr?ng thái TripoSR + th?i gian d?ng, c?n backend luu file GLB (TripoSR/SF3D) và metadata. Có th? b? sung ? vòng sau.</Text>
+        <SectionHeader title="Danh sï¿½ch model .glb" subtitle="C?n b?t luu GLB ? backend" />
+        <Text style={styles.emptyText}>Hi?n 3D tr? v? khung hï¿½nh nhi?u gï¿½c (turntable). ï¿½? cï¿½ danh sï¿½ch file .glb + ?nh d?u vï¿½o + nï¿½t xem/t?i/xï¿½a + tr?ng thï¿½i TripoSR + th?i gian d?ng, c?n backend luu file GLB (TripoSR/SF3D) vï¿½ metadata. Cï¿½ th? b? sung ? vï¿½ng sau.</Text>
       </View>
     </View>
   );
 
   const renderBotChat = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Bot chat & G?i ý th?i trang" subtitle="Model, embedding và ki?m duy?t." />
+      <SectionHeader title="Bot chat & G?i ï¿½ th?i trang" subtitle="Model, embedding vï¿½ ki?m duy?t." />
       <View style={styles.card}>
-        <SectionHeader title="C?u hình model" subtitle="Ðang dùng" />
-        <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) • Embedding: nomic-embed-text</Text>
-        <Text style={styles.userMeta}>Phong cách: tu v?n th?i trang thân thi?n, g?i ý outfit theo d?p và s?n ph?m trong shop.</Text>
+        <SectionHeader title="C?u hï¿½nh model" subtitle="ï¿½ang dï¿½ng" />
+        <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) ï¿½ Embedding: nomic-embed-text</Text>
+        <Text style={styles.userMeta}>Phong cï¿½ch: tu v?n th?i trang thï¿½n thi?n, g?i ï¿½ outfit theo d?p vï¿½ s?n ph?m trong shop.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh sách t? c?m" subtitle="Áp d?ng cho bình lu?n & chat" right={<Pressable onPress={() => setActiveTab("moderation")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Qu?n lý</Text></Pressable>} />
-        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} t? dang ch?n. Vào tab T? c?m d? thêm/xoá.</Text>
+        <SectionHeader title="Danh sï¿½ch t? c?m" subtitle="ï¿½p d?ng cho bï¿½nh lu?n & chat" right={<Pressable onPress={() => setActiveTab("moderation")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Qu?n lï¿½</Text></Pressable>} />
+        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} t? dang ch?n. Vï¿½o tab T? c?m d? thï¿½m/xoï¿½.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Prompt h? th?ng & l?ch s? h?i dáp" subtitle="C?n backend luu prompt/l?ch s?" />
-        <Text style={styles.emptyText}>Ð? ch?nh prompt h? th?ng tr?c ti?p và xem l?ch s? câu h?i/câu tr? l?i + dánh giá h?u ích, c?n thêm API luu prompt & h?i tho?i ? backend. Có th? b? sung ? vòng sau.</Text>
+        <SectionHeader title="Prompt h? th?ng & l?ch s? h?i dï¿½p" subtitle="C?n backend luu prompt/l?ch s?" />
+        <Text style={styles.emptyText}>ï¿½? ch?nh prompt h? th?ng tr?c ti?p vï¿½ xem l?ch s? cï¿½u h?i/cï¿½u tr? l?i + dï¿½nh giï¿½ h?u ï¿½ch, c?n thï¿½m API luu prompt & h?i tho?i ? backend. Cï¿½ th? b? sung ? vï¿½ng sau.</Text>
       </View>
     </View>
   );
 
   const renderActive = () => {
     if (loading) {
-      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>Ðang t?i d? li?u admin...</Text></View>;
+      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>ï¿½ang t?i d? li?u admin...</Text></View>;
     }
     if (activeTab === "overview") return renderOverview();
     if (activeTab === "analytics") return renderAnalytics();
@@ -1705,8 +1705,8 @@ export default function AdminScreen() {
 }
 
 const textBase = { fontFamily: "System" };
-const textHeading = { ...textBase, color: ADMIN_TEXT, fontWeight: "800" };
-const textBody = { ...textBase, color: ADMIN_MUTED, fontWeight: "600" };
+const textHeading = { ...textBase, color: ADMIN_TEXT, fontWeight: "700", fontSize: 16 };
+const textBody = { ...textBase, color: ADMIN_MUTED, fontWeight: "500", fontSize: 13 };
 
 const styles = StyleSheet.create({
   appShell: { flex: 1, flexDirection: "row", backgroundColor: ADMIN_BG },
@@ -1714,84 +1714,84 @@ const styles = StyleSheet.create({
   sidebarMobile: { width: "100%", padding: 12, paddingBottom: 10 },
   sidebarLogoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
   sidebarLogo: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarBrand: { color: "#fff", fontSize: 15, fontWeight: "900" },
-  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 10, fontWeight: "900", letterSpacing: 1.2, marginTop: 2 },
+  sidebarBrand: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 11, fontWeight: "600", letterSpacing: 1.2, marginTop: 2 },
   navContent: { gap: 4, paddingBottom: 20 },
   navContentMobile: { gap: 8, alignItems: "center" },
-  navGroup: { color: "#52605A", fontSize: 10, fontWeight: "900", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },
+  navGroup: { color: "#52605A", fontSize: 11, fontWeight: "700", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },
   navItem: { minHeight: 40, borderRadius: 16, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
   navItemActive: { backgroundColor: "#3A1410" },
-  navText: { color: ADMIN_MUTED_DARK, fontSize: 13, fontWeight: "800" },
+  navText: { color: ADMIN_MUTED_DARK, fontSize: 13, fontWeight: "600" },
   navTextActive: { color: ADMIN_GREEN },
-  navBadge: { marginLeft: "auto", backgroundColor: ADMIN_GREEN, color: "#fff", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 16, fontSize: 10, overflow: "hidden" },
+  navBadge: { marginLeft: "auto", backgroundColor: ADMIN_GREEN, color: "#fff", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 16, fontSize: 11, fontWeight: "600", overflow: "hidden" },
   sidebarUser: { marginTop: "auto", paddingTop: 14, borderTopWidth: 1, borderTopColor: "#13221B", flexDirection: "row", alignItems: "center", gap: 10 },
   sidebarAvatar: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarAvatarText: { color: "#fff", fontWeight: "900" },
-  sidebarUserName: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 11, marginTop: 2 },
+  sidebarAvatarText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  sidebarUserName: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 12, fontWeight: "500", marginTop: 2 },
   mainArea: { flex: 1, minWidth: 0 },
   topbar: { minHeight: 68, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", gap: 12 },
   searchBox: { flex: 1, maxWidth: 420, minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#FAFBFC", borderRadius: 16, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 9 },
-  searchInput: { flex: 1, fontSize: 14, color: ADMIN_TEXT },
+  searchInput: { flex: 1, fontSize: 14, fontWeight: "500", color: ADMIN_TEXT },
   topIconBtn: { width: 42, height: 42, borderRadius: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff" },
   newOrderBtn: { minHeight: 42, borderRadius: 16, backgroundColor: ADMIN_GREEN, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  newOrderText: { color: "#fff", fontWeight: "900", fontSize: 13 },
+  newOrderText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   content: { padding: 24, paddingBottom: 80 },
   pageGap: { gap: 18 },
   heroCard: { minHeight: 108, borderRadius: 16, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: "row", alignItems: "center", gap: 18, overflow: "hidden" },
-  heroTitle: { color: "#fff", fontSize: 28, fontWeight: "900" },
-  heroSub: { color: "#B9C8C0", fontSize: 14, marginTop: 6, fontWeight: "700" },
+  heroTitle: { color: "#fff", fontSize: 24, fontWeight: "800" },
+  heroSub: { color: "#B9C8C0", fontSize: 13, marginTop: 6, fontWeight: "500" },
   heroButton: { minHeight: 42, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
-  heroButtonText: { color: "#fff", fontWeight: "900" },
+  heroButtonText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   statCard: { flexGrow: 1, flexBasis: 220, minHeight: 150, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18 },
   statTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  statValue: { color: ADMIN_TEXT, fontSize: 25, fontWeight: "900", marginTop: 6 },
+  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
+  statValue: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "800", marginTop: 6 },
   statIcon: { width: 42, height: 42, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   statBottom: { flex: 1, marginTop: 13, flexDirection: "row", alignItems: "flex-end", gap: 10 },
-  statChange: { fontSize: 12, fontWeight: "900", minWidth: 70 },
+  statChange: { fontSize: 12, fontWeight: "700", minWidth: 70 },
   dashboardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   dashboardGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   card: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, gap: 15, ...ADMIN_CARD_SHADOW },
   bigChartCard: { flexBasis: 560 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  sectionTitle: { ...textHeading, fontSize: 17 },
+  sectionTitle: { ...textHeading, fontSize: 16 },
   sectionSub: { ...textBody, fontSize: 12, marginTop: 3 },
   segment: { flexDirection: "row", backgroundColor: "#F2F5F7", borderRadius: 16, padding: 4, gap: 3 },
-  segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, fontSize: 12, fontWeight: "900", overflow: "hidden" },
-  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "900" },
+  segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, fontSize: 12, fontWeight: "700", overflow: "hidden" },
+  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "600" },
   miniBars: { height: 220, flexDirection: "row", alignItems: "flex-end", gap: 10, paddingTop: 12 },
   miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },
   miniBarItem: { flex: 1, minWidth: 14, alignItems: "center", gap: 6 },
   miniBarTrack: { flex: 1, width: "100%", minHeight: 54, borderRadius: 16, backgroundColor: "#EEF3F6", overflow: "hidden", justifyContent: "flex-end" },
   miniBarFill: { width: "100%", borderTopLeftRadius: 6, borderTopRightRadius: 6, opacity: 0.92 },
-  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "800" },
-  chartValue: { color: ADMIN_TEXT, fontSize: 10, fontWeight: "900" },
+  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "500" },
+  chartValue: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
   goalCircle: { alignSelf: "center", width: 150, height: 150, borderRadius: 16, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center", marginTop: 10 },
-  goalNumber: { color: ADMIN_TEXT, fontSize: 30, fontWeight: "900" },
-  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "800", textAlign: "center" },
+  goalNumber: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "800" },
+  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
+  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "600", textAlign: "center" },
   barLineTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
+  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
+  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
   hTrack: { height: 9, backgroundColor: "#EEF3F6", borderRadius: 16, overflow: "hidden" },
   hFill: { height: "100%", borderRadius: 16 },
   funnelTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
+  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
+  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
   funnelTrack: { height: 10, borderRadius: 16, backgroundColor: "#EEF3F6", overflow: "hidden", marginTop: 6 },
   funnelFill: { height: "100%", borderRadius: 16 },
   funnelRates: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
-  rateText: { fontSize: 12, fontWeight: "900" },
+  rateText: { fontSize: 12, fontWeight: "700" },
   activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   activityIcon: { width: 34, height: 34, borderRadius: 16, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  activityTitle: { ...textHeading, fontSize: 13 },
+  activityTitle: { ...textHeading, fontSize: 13, fontWeight: "700" },
   activityMeta: { ...textBody, fontSize: 12, marginTop: 2 },
-  emptyText: { ...textBody, fontSize: 12, lineHeight: 20 },
+  emptyText: { ...textBody, fontSize: 13, lineHeight: 20 },
   analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  featureChip: { color: ADMIN_TEXT, backgroundColor: "#F2F5F7", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "900" },
+  featureChip: { color: ADMIN_TEXT, backgroundColor: "#F2F5F7", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
   predictionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   predictionImage: { width: 64, height: 64, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
@@ -1800,32 +1800,32 @@ const styles = StyleSheet.create({
   predictionSuggestion: { ...textBody, fontSize: 12, marginTop: 6, lineHeight: 18 },
   predictionSmall: { ...textBody, fontSize: 11, marginTop: 4 },
   scoreBox: { width: 60, height: 60, borderRadius: 16, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
-  scoreText: { color: ADMIN_GREEN, fontSize: 19, fontWeight: "900" },
-  scoreLabel: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
+  scoreText: { color: ADMIN_GREEN, fontSize: 18, fontWeight: "800" },
+  scoreLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
   productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
   formCard: { flexBasis: 650 },
   formTitle: { ...textHeading, fontSize: 16 },
   formGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   formGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   inputWrap: { flex: 1, minWidth: 170, gap: 6 },
-  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "700" },
+  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700" },
+  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "500" },
   inputMultiline: { minHeight: 88, textAlignVertical: "top" },
   mediaUploadBox: { borderWidth: 1, borderColor: "#D8F3E6", backgroundColor: "#F6E7E3", borderRadius: 16, padding: 12, gap: 8 },
-  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: "900" },
-  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700", lineHeight: 18 },
+  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: "700" },
+  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 18 },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 9, alignItems: "center" },
   primaryBtn: { minHeight: 44, borderRadius: 16, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "900" },
+  primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   secondaryBtn: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
   secondaryBtnWide: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: "#F6E7E3", paddingHorizontal: 16, alignItems: "center", justifyContent: "center", alignSelf: "flex-start" },
-  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
+  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
   smallBtn: { minHeight: 36, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
+  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "600" },
   saleBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF7E6", borderWidth: 1, borderColor: "#F3D38A", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "900" },
+  saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "600" },
   dangerBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "900" },
+  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "600" },
   marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
   previewTopIcons: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   previewImageBox: { height: 270, backgroundColor: "#EEF1F3", alignItems: "center", justifyContent: "center" },
@@ -1833,39 +1833,39 @@ const styles = StyleSheet.create({
   previewThumbRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#fff" },
   previewThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#EEF1F3" },
   previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16 },
-  previewDiscountText: { color: "#fff", fontSize: 12, fontWeight: "900" },
+  previewDiscountText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   previewBody: { padding: 18, gap: 11 },
-  previewTitle: { ...textHeading, fontSize: 22 },
+  previewTitle: { ...textHeading, fontSize: 20 },
   previewPriceLine: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  previewSalePrice: { ...textHeading, fontSize: 20 },
-  previewOldPrice: { ...textBody, fontSize: 18, textDecorationLine: "line-through" },
+  previewSalePrice: { ...textHeading, fontSize: 18, color: ADMIN_TEXT },
+  previewOldPrice: { ...textBody, fontSize: 14, textDecorationLine: "line-through" },
   previewMeta: { ...textBody, fontSize: 12 },
   messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, fontWeight: "700" },
+  messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, fontWeight: "500" },
   sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
-  sendText: { color: "#fff", fontWeight: "900" },
+  sendText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
   productTop: { flexDirection: "row", gap: 12 },
   productImage: { width: 78, height: 78, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
-  productTitle: { ...textHeading, fontSize: 15 },
+  productTitle: { ...textHeading, fontSize: 14 },
   productMeta: { ...textBody, fontSize: 12, marginTop: 3 },
   productPriceLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  productPrice: { color: ADMIN_GREEN, fontSize: 16, fontWeight: "900" },
-  productOldPrice: { color: ADMIN_MUTED, fontSize: 14, textDecorationLine: "line-through", fontWeight: "800" },
-  discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16, overflow: "hidden", fontSize: 11, fontWeight: "900" },
-  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "700" },
+  productPrice: { color: ADMIN_GREEN, fontSize: 15, fontWeight: "700" },
+  productOldPrice: { color: ADMIN_MUTED, fontSize: 13, textDecorationLine: "line-through", fontWeight: "500" },
+  discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16, overflow: "hidden", fontSize: 11, fontWeight: "700" },
+  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "500" },
   adminThumbRow: { flexDirection: "row", gap: 8 },
 
   adminOrderQuickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
   successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9 },
-  successBtnText: { color: "#fff", fontSize: 12, fontWeight: "900" },
+  successBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   adminThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#F2F5F7" },
-  counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "900" },
+  counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
   promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   selectChip: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#fff" },
   selectChipActive: { borderColor: ADMIN_GREEN, backgroundColor: "#E9F8F1" },
-  selectChipText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
+  selectChipText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "600" },
   selectChipTextActive: { color: ADMIN_GREEN },
   listGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
@@ -1875,7 +1875,7 @@ const styles = StyleSheet.create({
   statusPill: { borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
   statusOn: { backgroundColor: "#E9F8F1" },
   statusOff: { backgroundColor: "#EEF1F3" },
-  statusText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
+  statusText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
   promoRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
   promoThumb: { width: 54, height: 44, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
   tableCard: { borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
@@ -1887,7 +1887,7 @@ const styles = StyleSheet.create({
   userMeta: { ...textBody, fontSize: 12, marginTop: 3 },
   rolePill: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#fff" },
   roleAdmin: { backgroundColor: ADMIN_GREEN, borderColor: ADMIN_GREEN },
-  rolePillText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "900" },
+  rolePillText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
   rolePillTextAdmin: { color: "#fff" },
   userActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   paymentRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
@@ -1898,64 +1898,64 @@ const styles = StyleSheet.create({
   authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
   authCard: { width: "100%", maxWidth: 420, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
   logoBox: { width: 54, height: 54, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  authTitle: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "900", textAlign: "center" },
-  authText: { color: ADMIN_MUTED, fontSize: 14, fontWeight: "700", textAlign: "center", lineHeight: 21 },
+  authTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "800", textAlign: "center" },
+  authText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "500", textAlign: "center", lineHeight: 21 },
   authButton: { minHeight: 46, alignSelf: "stretch", backgroundColor: ADMIN_GREEN, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  authButtonText: { color: "#fff", fontSize: 14, fontWeight: "900" },
+  authButtonText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
   // ML visuals
   modelRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   modelCard: { flexGrow: 1, minWidth: 200, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 14, gap: 4 },
   modelTop: { flexDirection: "row", alignItems: "center", gap: 8 },
-  modelName: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 14 },
-  modelType: { color: ADMIN_GREEN, fontWeight: "900", fontSize: 12 },
-  modelMetric: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 12 },
+  modelName: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 14 },
+  modelType: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 12 },
+  modelMetric: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 12 },
   forecastMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 10, gap: 2 },
-  metricNum: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 17 },
-  metricCap: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 11 },
+  metricNum: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 16 },
+  metricCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
   forecastChart: { flexDirection: "row", alignItems: "flex-end", height: 180, gap: 6, paddingTop: 8 },
   forecastCol: { flex: 1, alignItems: "center", gap: 4 },
-  forecastVal: { color: ADMIN_MUTED, fontSize: 9, fontWeight: "800" },
+  forecastVal: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "600" },
   forecastTrack: { width: "100%", height: 130, backgroundColor: ADMIN_BG, justifyContent: "flex-end" },
   forecastFill: { width: "100%" },
-  forecastLbl: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
+  forecastLbl: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 16, flexWrap: "wrap" },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   legendDot: { width: 14, height: 14, borderRadius: 16 },
-  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: "900", textTransform: "uppercase" },
+  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500" },
+  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
   segBar: { flexDirection: "row", height: 22, width: "100%", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
   segRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   segDot: { width: 16, height: 16, borderRadius: 16 },
-  segName: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 13 },
-  segMeta: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 11 },
-  segPct: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 15 },
+  segName: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 13 },
+  segMeta: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
+  segPct: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 14 },
   bannedWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   bannedChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 16 },
-  bannedChipText: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 13 },
+  bannedChipText: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
   statMiniRow: { flexDirection: "row", gap: 10 },
   statMini: { flex: 1, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 10, gap: 2 },
-  statMiniNum: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 15 },
-  statMiniCap: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 11 },
+  statMiniNum: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 15 },
+  statMiniCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
   orderDetailCard: { borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, padding: 12, gap: 7 },
   statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 16 },
-  statusChipText: { color: "#fff", fontWeight: "900", fontSize: 10, textTransform: "uppercase" },
+  statusChipText: { color: "#fff", fontWeight: "700", fontSize: 11, textTransform: "uppercase" },
   statusOk: { backgroundColor: "#2E7D32" },
   statusBad: { backgroundColor: ADMIN_RED },
   statusPend: { backgroundColor: ADMIN_ORANGE },
   orderItemRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ADMIN_BORDER },
   orderItemImg: { width: 38, height: 38, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center" },
-  orderItemName: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 13 },
-  orderItemPrice: { color: ADMIN_GREEN, fontWeight: "900", fontSize: 13 },
+  orderItemName: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
+  orderItemPrice: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 13 },
   accThumb: { width: 48, height: 48, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center" },
   statusRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },
   statusDot: { width: 12, height: 12, borderRadius: 16 },
-  statusName: { flex: 1, color: ADMIN_TEXT, fontWeight: "800", fontSize: 14 },
-  statusVal: { fontWeight: "900", fontSize: 13 },
+  statusName: { flex: 1, color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
+  statusVal: { fontWeight: "700", fontSize: 13 },
   errRow: { flexDirection: "row", gap: 8, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },
-  errScope: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 12 },
-  errMsg: { color: ADMIN_MUTED, fontSize: 12, lineHeight: 17 },
+  errScope: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 12 },
+  errMsg: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 17 },
   swatch: { width: 34, height: 34, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontWeight: "700" },
+  hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontSize: 13, fontWeight: "600" },
 });
