@@ -1,31 +1,101 @@
-
+# =========================
 # Dependencies
+# =========================
 node_modules/
+.pnp/
+.pnp.js
 
-# Generated/build files
+# =========================
+# Python virtual environment
+# =========================
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Environment variables / secrets
+# Không upload API key, Mongo URI, Stripe key
+# =========================
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.server
+!.env.example
+
+# =========================
+# Expo / React Native
+# =========================
+.expo/
+.expo-shared/
 dist/
+web-build/
 build/
-.next/
-.nuxt/
-out/
-coverage/
-.cache/
 .vite/
-.parcel-cache/
+.next/
+.metro-cache/
 .turbo/
 
-# Logs and temporary files
+# =========================
+# EAS / Native build output
+# =========================
+.eas/
+*.apk
+*.aab
+*.ipa
+
+# =========================
+# Logs
+# =========================
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-tmp/
-temp/
-*.tmp
+expo-debug.log*
 
-# Editor and operating system files
-.vscode/
-.idea/
+# =========================
+# OS files
+# =========================
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Coverage / test output
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Local uploads / generated files
+# Nếu project có upload ảnh local thì không nên đẩy lên GitHub
+# =========================
+uploads/
+server/uploads/
+public/uploads/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+.cache/UPDATE_AI_CONFIG_WINDOWS.bat
