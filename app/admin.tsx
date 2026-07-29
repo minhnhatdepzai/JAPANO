@@ -1,4 +1,4 @@
-﻿import * as ImagePicker from "expo-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -31,6 +31,7 @@ type AdminUser = {
   vip?: boolean;
   createdAt?: string | null;
   isProtectedAdmin?: boolean;
+  address?: string;
 };
 
 type AdminProduct = {
@@ -48,6 +49,7 @@ type AdminProduct = {
   originalPrice?: number;
   discountPercent?: number;
   discountLabel?: string;
+  stock?: number;
   image?: string;
   images?: string[];
   sizes?: string[];
@@ -60,7 +62,7 @@ type AdminProduct = {
   styleUseCase?: string;
 };
 
-type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games";
+type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games" | "accessories" | "moderation" | "tryon2d" | "model3d" | "botchat" | "system";
 
 type NavItem = { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap; group: string; badge?: string };
 
@@ -89,7 +91,6 @@ const ADMIN_FALLBACK_IMAGES = [
 ];
 
 const navItems: NavItem[] = [
-<<<<<<< HEAD
   { key: "overview", label: "T?ng quan", icon: "grid", group: "T?NG QUAN" },
   { key: "analytics", label: "B�o c�o & Ph�n t�ch", icon: "bar-chart-2", group: "T?NG QUAN" },
   { key: "transactions", label: "�on h�ng", icon: "shopping-bag", group: "B�N H�NG" },
@@ -103,17 +104,6 @@ const navItems: NavItem[] = [
   { key: "moderation", label: "T? c?m", icon: "shield", group: "N?I DUNG" },
   { key: "games", label: "Tr� choi", icon: "zap", group: "N?I DUNG" },
   { key: "system", label: "Tr?ng th�i & Nh?t k�", icon: "activity", group: "H? TH?NG" },
-=======
-  { key: "overview", label: "Tổng quan", icon: "grid", group: "BẢNG ĐIỀU KHIỂN" },
-  { key: "analytics", label: "Phân tích / ML", icon: "bar-chart-2", group: "BẢNG ĐIỀU KHIỂN" },
-  { key: "products", label: "Sản phẩm", icon: "package", group: "BÁN HÀNG" },
-  { key: "accessories", label: "Phụ kiện", icon: "watch", group: "BÁN HÀNG" },
-  { key: "promotions", label: "Voucher & Khuyến mãi", icon: "percent", group: "BÁN HÀNG" },
-  { key: "users", label: "Khách hàng", icon: "users", group: "BÁN HÀNG" },
-  { key: "transactions", label: "Đơn hàng / Thanh toán", icon: "credit-card", group: "BÁN HÀNG" },
-  { key: "games", label: "Trò chơi", icon: "zap", group: "ỨNG DỤNG" },
-  { key: "moderation", label: "Từ cấm", icon: "shield", group: "ỨNG DỤNG" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
 ];
 
 const emptyProductForm = {
@@ -137,11 +127,7 @@ const emptyProductForm = {
   styleUseCase: "",
   sizes: "S, M, L, XL",
   dimensions: "",
-<<<<<<< HEAD
   colors: "�en, Tr?ng, Kem",
-=======
-  colors: "Đen, Trắng, Kem",
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   fit: "Regular fit",
 };
 
@@ -250,11 +236,7 @@ function toProductForm(product: AdminProduct) {
     styleUseCase: product.styleUseCase || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "S, M, L, XL",
     dimensions: product.dimensions || "",
-<<<<<<< HEAD
     colors: Array.isArray(product.colors) ? product.colors.join(", ") : "�en, Tr?ng, Kem",
-=======
-    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "Đen, Trắng, Kem",
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     fit: product.fit || "Regular fit",
   };
 }
@@ -335,11 +317,7 @@ function fmtVnd(n: any) {
 }
 
 function ForecastChart({ forecast }: any) {
-<<<<<<< HEAD
   if (!forecast) return <Text style={styles.emptyText}>Chua c� d? li?u d? b�o.</Text>;
-=======
-  if (!forecast) return <Text style={styles.emptyText}>Chưa có dữ liệu dự báo.</Text>;
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   const hist = forecast.history || [];
   const fc = forecast.forecast || [];
   const all = [...hist.map((h: any) => ({ ...h, kind: 'hist' })), ...fc.map((f: any) => ({ ...f, kind: 'fc' }))];
@@ -347,15 +325,9 @@ function ForecastChart({ forecast }: any) {
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.forecastMetrics}>
-<<<<<<< HEAD
         <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}d</Text><Text style={styles.metricCap}>D? b�o th�ng t?i</Text></View>
         <View style={styles.metricPill}><Text style={styles.metricNum}>R� {forecast.r2}</Text><Text style={styles.metricCap}>�? kh?p m� h�nh</Text></View>
         <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '?' : '?'} {fmtVnd(Math.abs(forecast.slope))}d</Text><Text style={styles.metricCap}>Xu hu?ng/th�ng</Text></View>
-=======
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}đ</Text><Text style={styles.metricCap}>Dự báo tháng tới</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>R² {forecast.r2}</Text><Text style={styles.metricCap}>Độ khớp mô hình</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tăng' ? '▲' : '▼'} {fmtVnd(Math.abs(forecast.slope))}đ</Text><Text style={styles.metricCap}>Xu hướng/tháng</Text></View>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
       <View style={styles.forecastChart}>
         {all.map((a: any, i: number) => {
@@ -373,26 +345,16 @@ function ForecastChart({ forecast }: any) {
         })}
       </View>
       <View style={styles.legendRow}>
-<<<<<<< HEAD
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Th?c t?</Text></View>
         <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>D? b�o (OLS)</Text></View>
         {forecast.demo ? <Text style={styles.demoTag}>d? li?u minh ho?</Text> : null}
-=======
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Thực tế</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>Dự báo (OLS)</Text></View>
-        {forecast.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ</Text> : null}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
     </View>
   );
 }
 
 function SegmentsView({ segments }: any) {
-<<<<<<< HEAD
   if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chua d? kh�ch h�ng d? ph�n c?m.</Text>;
-=======
-  if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chưa đủ khách hàng để phân cụm.</Text>;
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   const total = Math.max(1, segments.clusters.reduce((s: number, c: any) => s + c.size, 0));
   return (
     <View style={{ gap: 12 }}>
@@ -406,11 +368,7 @@ function SegmentsView({ segments }: any) {
           <View style={[styles.segDot, { backgroundColor: c.color }]} />
           <View style={{ flex: 1 }}>
             <Text style={styles.segName}>{c.name}</Text>
-<<<<<<< HEAD
             <Text style={styles.segMeta}>{c.size} KH � chi TB {fmtVnd(c.avgSpend)}d � {c.avgOrders} don � mua c�ch {c.avgRecency} ng�y</Text>
-=======
-            <Text style={styles.segMeta}>{c.size} KH • chi TB {fmtVnd(c.avgSpend)}đ • {c.avgOrders} đơn • mua cách {c.avgRecency} ngày</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
           <Text style={styles.segPct}>{Math.round((c.size / total) * 100)}%</Text>
         </View>
@@ -424,11 +382,7 @@ function SegmentsView({ segments }: any) {
 function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
   const rows = Array.isArray(data) ? data : [];
   const max = Math.max(1, ...rows.map((x: any) => Number(x.value || 0)));
-<<<<<<< HEAD
   if (!rows.length) return <Text style={styles.emptyText}>Chua c� d? li?u d? d? v? bi?u d?.</Text>;
-=======
-  if (!rows.length) return <Text style={styles.emptyText}>Chưa có dữ liệu đủ để vẽ biểu đồ.</Text>;
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   return (
     <View style={{ gap: 14 }}>
       {rows.map((item: any, index: number) => {
@@ -456,17 +410,10 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
   const customers = Math.max(users, Math.round(leads * 0.37));
   const paying = Math.max(orders, Math.round(customers * 0.72));
   const rows = [
-<<<<<<< HEAD
     { label: "Lu?t truy c?p", value: visitors, color: ADMIN_GREEN, pct: 100 },
     { label: "Ti?m nang", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
     { label: "Kh�ch h�ng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
     { label: "�� mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
-=======
-    { label: "Lượt truy cập", value: visitors, color: ADMIN_GREEN, pct: 100 },
-    { label: "Tiềm năng", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
-    { label: "Khách hàng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
-    { label: "Đã mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   ];
   return (
     <View style={{ gap: 13 }}>
@@ -482,15 +429,9 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
         </View>
       ))}
       <View style={styles.funnelRates}>
-<<<<<<< HEAD
         <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy c?p?Ti?m nang 24%</Text>
         <Text style={[styles.rateText, { color: "#A33A2F" }]}>Ti?m nang?Kh�ch 37%</Text>
         <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer?Paid 72%</Text>
-=======
-        <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy cập→Tiềm năng 24%</Text>
-        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Tiềm năng→Khách 37%</Text>
-        <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer→Paid 72%</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
     </View>
   );
@@ -518,16 +459,11 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
         ))}
       </View>
       <View style={styles.previewBody}>
-<<<<<<< HEAD
         <Text numberOfLines={2} style={styles.previewTitle}>{name || "T�n s?n ph?m"}</Text>
-=======
-        <Text numberOfLines={2} style={styles.previewTitle}>{name || "Tên sản phẩm"}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         <View style={styles.previewPriceLine}>
           <Text style={styles.previewSalePrice}>{formatMoney(price)}</Text>
           {Number(originalPrice || 0) > Number(price || 0) ? <Text style={styles.previewOldPrice}>{formatMoney(originalPrice)}</Text> : null}
         </View>
-<<<<<<< HEAD
         <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' � ') || 'S � M � L � XL'}</Text>
         <Text style={styles.previewMeta}>M�u: {splitAdminList(colors).join(' � ') || '�en � Tr?ng � Kem'}</Text>
         {!!dimensions ? <Text style={styles.previewMeta}>K�ch thu?c: {dimensions}</Text> : null}
@@ -535,15 +471,6 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
           <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
           <Text style={styles.messageText}>M?t h�ng n�y c�n kh�ng?</Text>
           <View style={styles.sendPill}><Text style={styles.sendText}>G?i</Text></View>
-=======
-        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' • ') || 'S • M • L • XL'}</Text>
-        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(' • ') || 'Đen • Trắng • Kem'}</Text>
-        {!!dimensions ? <Text style={styles.previewMeta}>Kích thước: {dimensions}</Text> : null}
-        <View style={styles.messageBox}>
-          <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
-          <Text style={styles.messageText}>Mặt hàng này còn không?</Text>
-          <View style={styles.sendPill}><Text style={styles.sendText}>Gửi</Text></View>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
       </View>
     </View>
@@ -572,6 +499,9 @@ export default function AdminScreen() {
   const desktop = width >= 920;
   const { user, isLoggedIn } = useApp();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const refreshStatus = async () => {}; // TODO: implement status refresh
   const [overview, setOverview] = useState<any>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -624,29 +554,20 @@ export default function AdminScreen() {
   useEffect(() => {
     setLoading(true);
     load()
-<<<<<<< HEAD
       .catch((e: any) => Alert.alert("Kh�ng m? du?c admin", e?.message || "Ki?m tra backend/MongoDB."))
-=======
-      .catch((e: any) => Alert.alert("Không mở được admin", e?.message || "Kiểm tra backend/MongoDB."))
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       .finally(() => setLoading(false));
   }, [load]);
 
   const refresh = async () => {
     setRefreshing(true);
-<<<<<<< HEAD
     await load().catch((e: any) => Alert.alert("Kh�ng t?i l?i du?c", e?.message || "C� l?i x?y ra."));
-=======
-    await load().catch((e: any) => Alert.alert("Không tải lại được", e?.message || "Có lỗi xảy ra."));
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     setRefreshing(false);
   };
 
 
-  const quickUpdateOrder = async (order: any, nextStatus: "completed" | "cancelled") => {
+  const quickUpdateOrder = async (order: any, nextStatus: string) => {
     if (!user?.id) return;
     const orderId = String(order.id || order._id || "");
-<<<<<<< HEAD
     if (!orderId) return Alert.alert("Thi?u m� don", "Kh�ng t�m th?y ID don h�ng.");
     const labelMap: any = { paid: "�� thanh to�n", shipping: "�ang giao", delivered: "�� nh?n", completed: "Ho�n t?t", cancelled: "�� h?y", processing: "Ch? x? l�" };
     try {
@@ -656,16 +577,6 @@ export default function AdminScreen() {
       await load();
     } catch (e: any) {
       Alert.alert("Kh�ng c?p nh?t du?c don", e?.message || "Ki?m tra backend.");
-=======
-    if (!orderId) return Alert.alert("Thiếu mã đơn", "Không tìm thấy ID đơn hàng.");
-    try {
-      setActionId(`order-${nextStatus}-${orderId}`);
-      const res = await api.updateAdminOrderStatus(user.id, orderId, nextStatus);
-      Alert.alert(nextStatus === "completed" ? "Đã xác nhận" : "Đã hủy", res?.message || "Đã cập nhật đơn hàng.");
-      await load();
-    } catch (e: any) {
-      Alert.alert("Không cập nhật được đơn", e?.message || "Kiểm tra backend.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -696,22 +607,13 @@ export default function AdminScreen() {
   const activeVouchers = vouchers.filter((v) => v.active !== false && (v.kind || "voucher") === "voucher").length;
   const activePromotions = vouchers.filter((v) => v.active !== false && v.kind === "promotion").length;
   const latestActivity = [
-<<<<<<< HEAD
     ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `�on #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} � ${o.status || "pending"}` })),
     ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh to�n ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} � ${compactDate(p.createdAt)}` })),
-=======
-    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `Đơn #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} • ${o.status || "pending"}` })),
-    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toán ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} • ${compactDate(p.createdAt)}` })),
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   ].slice(0, 6);
 
   const saveProduct = async () => {
     if (!user?.id) return;
-<<<<<<< HEAD
     if (!productForm.name.trim()) return Alert.alert("Thi?u t�n", "Nh?p t�n s?n ph?m tru?c khi luu.");
-=======
-    if (!productForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên sản phẩm trước khi lưu.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       setActionId("product-save");
       const body = {
@@ -731,15 +633,9 @@ export default function AdminScreen() {
       setProductForm(emptyProductForm);
       setEditingProductId(null);
       await load();
-<<<<<<< HEAD
       Alert.alert("�� luu", "S?n ph?m d� du?c c?p nh?t.");
     } catch (e: any) {
       Alert.alert("Kh�ng luu du?c", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Đã lưu", "Sản phẩm đã được cập nhật.");
-    } catch (e: any) {
-      Alert.alert("Không lưu được", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -766,11 +662,7 @@ export default function AdminScreen() {
       });
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng t?o gi?m gi�", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không tạo giảm giá", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -783,11 +675,7 @@ export default function AdminScreen() {
       await api.changeAdminProductPrice(user.id, product.id, percent);
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng ch?nh du?c gi�", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không chỉnh được giá", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -800,11 +688,7 @@ export default function AdminScreen() {
       await api.setAdminProductHidden(user.id, product.id, (product.status || "active") === "active");
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng ?n/hi?n du?c", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không ẩn/hiện được", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -813,11 +697,7 @@ export default function AdminScreen() {
   const pickAndUploadAdminImage = async (target: "image" | "image2" | "image3" | "image4" | "bannerImage") => {
     if (!user?.id) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-<<<<<<< HEAD
     if (!permission.granted) return Alert.alert("C?n quy?n ?nh", "Cho ph�p truy c?p thu vi?n d? upload ?nh l�n Cloudinary.");
-=======
-    if (!permission.granted) return Alert.alert("Cần quyền ảnh", "Cho phép truy cập thư viện để upload ảnh lên Cloudinary.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.86, allowsEditing: false });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
@@ -836,21 +716,12 @@ export default function AdminScreen() {
         user.id,
       );
       const url = data.secureUrl || data.url;
-<<<<<<< HEAD
       if (!url) throw new Error("Cloudinary kh�ng tr? v? URL ?nh.");
       if (target === "bannerImage") setPromotionForm((p) => ({ ...p, bannerImage: url }));
       else setProductForm((p) => ({ ...p, [target]: url }));
       Alert.alert("�� upload", "?nh d� luu tr�n Cloudinary v� URL d� du?c di?n v�o form.");
     } catch (e: any) {
       Alert.alert("Upload Cloudinary l?i", e?.message || "Kh�ng upload du?c ?nh.");
-=======
-      if (!url) throw new Error("Cloudinary không trả về URL ảnh.");
-      if (target === "bannerImage") setPromotionForm((p) => ({ ...p, bannerImage: url }));
-      else setProductForm((p) => ({ ...p, [target]: url }));
-      Alert.alert("Đã upload", "Ảnh đã lưu trên Cloudinary và URL đã được điền vào form.");
-    } catch (e: any) {
-      Alert.alert("Upload Cloudinary lỗi", e?.message || "Không upload được ảnh.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setUploadingMediaField(null);
     }
@@ -858,11 +729,7 @@ export default function AdminScreen() {
 
   const saveVoucher = async () => {
     if (!user?.id) return;
-<<<<<<< HEAD
     if (!voucherForm.code.trim()) return Alert.alert("Thi?u m�", "Nh?p m� voucher tru?c.");
-=======
-    if (!voucherForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã voucher trước.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       setActionId("voucher-save");
       await api.saveAdminVoucher(user.id, {
@@ -874,15 +741,9 @@ export default function AdminScreen() {
       });
       setVoucherForm(emptyVoucherForm);
       await load();
-<<<<<<< HEAD
       Alert.alert("�� t?o voucher", "Voucher d� s?n s�ng cho ngu?i d�ng.");
     } catch (e: any) {
       Alert.alert("Kh�ng luu voucher", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Đã tạo voucher", "Voucher đã sẵn sàng cho người dùng.");
-    } catch (e: any) {
-      Alert.alert("Không lưu voucher", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -890,11 +751,7 @@ export default function AdminScreen() {
 
   const savePromotion = async () => {
     if (!user?.id) return;
-<<<<<<< HEAD
     if (!promotionForm.code.trim()) return Alert.alert("Thi?u m�", "Nh?p m� khuy?n m�i tru?c.");
-=======
-    if (!promotionForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã khuyến mãi trước.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       setActionId("promotion-save");
       await api.saveAdminVoucher(user.id, {
@@ -906,15 +763,9 @@ export default function AdminScreen() {
       });
       setPromotionForm(emptyPromotionForm);
       await load();
-<<<<<<< HEAD
       Alert.alert("�� t?o khuy?n m�i", "Chi?n d?ch d� du?c luu trong DiscountCodes theo ERD.");
     } catch (e: any) {
       Alert.alert("Kh�ng luu khuy?n m�i", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Đã tạo khuyến mãi", "Chiến dịch đã được lưu trong DiscountCodes theo ERD.");
-    } catch (e: any) {
-      Alert.alert("Không lưu khuyến mãi", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -927,11 +778,7 @@ export default function AdminScreen() {
       await api.updateAdminVoucher(user.id, voucher.id, { active: !voucher.active });
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng d?i tr?ng th�i", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không đổi trạng thái", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -939,25 +786,15 @@ export default function AdminScreen() {
 
   const sendNotification = async () => {
     if (!user?.id) return;
-<<<<<<< HEAD
     if (!notificationForm.title.trim()) return Alert.alert("Thi?u ti�u d?", "Nh?p ti�u d? th�ng b�o.");
-=======
-    if (!notificationForm.title.trim()) return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề thông báo.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       setActionId("notification-send");
       const data = await api.sendAdminNotification(user.id, notificationForm);
       setNotificationForm(emptyNotificationForm);
       await load();
-<<<<<<< HEAD
       Alert.alert("�� g?i", data?.message || "Th�ng b�o d� du?c g?i.");
     } catch (e: any) {
       Alert.alert("Kh�ng g?i du?c", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Đã gửi", data?.message || "Thông báo đã được gửi.");
-    } catch (e: any) {
-      Alert.alert("Không gửi được", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -970,15 +807,9 @@ export default function AdminScreen() {
       const data = await api.setAdminUserRole(user.id, target.id, nextRole);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
       await load().catch(() => null);
-<<<<<<< HEAD
       Alert.alert("�� c?p nh?t", data?.message || "�� d?i quy?n t�i kho?n.");
     } catch (e: any) {
       Alert.alert("Kh�ng d?i du?c quy?n", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Đã cập nhật", data?.message || "Đã đổi quyền tài khoản.");
-    } catch (e: any) {
-      Alert.alert("Không đổi được quyền", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -991,11 +822,7 @@ export default function AdminScreen() {
       const data = await api.adjustAdminUserCoins(user.id, target.id, delta);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng ch?nh du?c xu", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không chỉnh được xu", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -1003,11 +830,7 @@ export default function AdminScreen() {
 
   const saveGame = async () => {
     if (!user?.id) return;
-<<<<<<< HEAD
     if (!gameForm.name.trim()) return Alert.alert("Thi?u t�n", "Nh?p t�n game tru?c.");
-=======
-    if (!gameForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên game trước.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       setActionId("game-save");
       const body = { ...gameForm, rewardCoins: Number(gameForm.rewardCoins || 0), active: true };
@@ -1017,11 +840,7 @@ export default function AdminScreen() {
       setEditingGameId(null);
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng luu game", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không lưu game", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -1039,11 +858,7 @@ export default function AdminScreen() {
       await api.deleteAdminGame(user.id, String(game._id || game.id));
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("Kh�ng xo� game", e?.message || "C� l?i x?y ra.");
-=======
-      Alert.alert("Không xoá game", e?.message || "Có lỗi xảy ra.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     } finally {
       setActionId(null);
     }
@@ -1054,17 +869,10 @@ export default function AdminScreen() {
       <View style={styles.authPage}>
         <View style={styles.authCard}>
           <View style={styles.logoBox}><Feather name={isLoggedIn ? "lock" : "shield"} size={26} color="#fff" /></View>
-<<<<<<< HEAD
           <Text style={styles.authTitle}>{isLoggedIn ? "Kh�ng c� quy?n admin" : "�ang nh?p admin"}</Text>
           <Text style={styles.authText}>{isLoggedIn ? `Email hi?n t?i: ${user?.email}. H�y d�ng t�i kho?n admin.` : "T�i kho?n admin m?c d?nh: a@gmail.com / m?t kh?u 1."}</Text>
           <Pressable onPress={openAdminLogin} style={styles.authButton}>
             <Text style={styles.authButtonText}>{isLoggedIn ? "�?i t�i kho?n" : "�ang nh?p"}</Text>
-=======
-          <Text style={styles.authTitle}>{isLoggedIn ? "Không có quyền admin" : "Đăng nhập admin"}</Text>
-          <Text style={styles.authText}>{isLoggedIn ? `Email hiện tại: ${user?.email}. Hãy dùng tài khoản admin.` : "Tài khoản admin mặc định: a@gmail.com / mật khẩu 1."}</Text>
-          <Pressable onPress={openAdminLogin} style={styles.authButton}>
-            <Text style={styles.authButtonText}>{isLoggedIn ? "Đổi tài khoản" : "Đăng nhập"}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </Pressable>
         </View>
       </View>
@@ -1116,17 +924,10 @@ export default function AdminScreen() {
     <View style={styles.topbar}>
       <View style={styles.searchBox}>
         <Feather name="search" size={18} color={ADMIN_MUTED} />
-<<<<<<< HEAD
         <TextInput value={search} onChangeText={setSearch} placeholder="T�m s?n ph?m, kh�ch h�ng, don h�ng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
       </View>
       <Pressable onPress={refresh} style={styles.topIconBtn}><Feather name="refresh-cw" size={18} color={ADMIN_TEXT} /></Pressable>
       <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Th�m s?n ph?m</Text></Pressable>
-=======
-        <TextInput value={search} onChangeText={setSearch} placeholder="Tìm sản phẩm, khách hàng, đơn hàng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
-      </View>
-      <Pressable onPress={refresh} style={styles.topIconBtn}><Feather name="refresh-cw" size={18} color={ADMIN_TEXT} /></Pressable>
-      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm sản phẩm</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     </View>
   );
 
@@ -1134,7 +935,6 @@ export default function AdminScreen() {
     <View style={styles.pageGap}>
       <View style={styles.heroCard}>
         <View style={{ flex: 1 }}>
-<<<<<<< HEAD
           <Text style={styles.heroTitle}>Ch�o tr? l?i, {user?.name || "Admin"}</Text>
           <Text style={styles.heroSub}>H�m nay c� {formatNumber(orders.length)} don trong h? th?ng, {activeVouchers + activePromotions} chi?n d?ch dang ho?t d?ng.</Text>
         </View>
@@ -1181,68 +981,29 @@ export default function AdminScreen() {
             </View>
           )) : <Text style={styles.emptyText}>Chua c� l?i n�o du?c ghi nh?n. ??</Text>}
         </View>
-=======
-          <Text style={styles.heroTitle}>Chào trở lại, {user?.name || "Admin"}</Text>
-          <Text style={styles.heroSub}>Hôm nay có {formatNumber(orders.length)} đơn trong hệ thống, {activeVouchers + activePromotions} chiến dịch đang hoạt động.</Text>
-        </View>
-        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem phân tích</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <StatCard label="Tổng doanh thu" value={formatCompactMoney(kpis.revenueTotal)} change="↗ +12.5%" icon="dollar-sign" accent={ADMIN_GREEN} trend={revenueByMonth} />
-        <StatCard label="Đơn hàng" value={formatNumber(kpis.orders || orders.length)} change="↗ +8.2%" icon="shopping-bag" accent={ADMIN_BLUE} />
-        <StatCard label="Khách hàng" value={formatNumber(kpis.users || users.length)} change="↗ +5.1%" icon="users" accent="#A33A2F" />
-        <StatCard label="Sản phẩm" value={formatNumber(kpis.products || products.length)} change={`${activeProducts} đang bán`} icon="package" accent={ADMIN_ORANGE} />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
 
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-<<<<<<< HEAD
           <SectionHeader title="Tang tru?ng doanh thu" subtitle="Xu hu?ng theo th�ng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
           <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
         </View>
         <View style={styles.card}>
           <SectionHeader title="S?n ph?m b�n ch?y" subtitle="Top theo s? lu?ng b�n" />
           {topProducts.length ? <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} /> : <Text style={styles.emptyText}>Chua c� d? li?u b�n h�ng.</Text>}
-=======
-          <SectionHeader title="Tăng trưởng doanh thu" subtitle="Xu hướng theo tháng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
-          <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Mục tiêu tháng" subtitle="Chỉ tiêu doanh thu" />
-          <View style={styles.goalCircle}><Text style={styles.goalNumber}>72%</Text><Text style={styles.goalText}>Goal</Text></View>
-          <Text style={styles.centerMuted}>{formatCompactMoney(kpis.monthRevenue)} of {formatCompactMoney(Number(kpis.monthRevenue || 0) / 0.72 || 0)}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
       </View>
 
       <View style={styles.dashboardGrid3}>
         <View style={styles.card}>
-<<<<<<< HEAD
-          <SectionHeader title="Ho?t d?ng g?n d�y" subtitle="�on h�ng v� thanh to�n" />
-=======
-          <SectionHeader title="Sản phẩm nổi bật" subtitle="Bán chạy nhất" />
-          <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} />
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Phễu chuyển đổi" subtitle="Tháng này" />
-          <Funnel orders={Number(kpis.orders || orders.length)} users={Number(kpis.users || users.length)} />
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Hoạt động gần đây" subtitle="Đơn hàng và thanh toán" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
+          <SectionHeader title="Ho?t d?ng g?n dy" subtitle="on hng v thanh ton" />
           <View style={{ gap: 13 }}>
             {latestActivity.length ? latestActivity.map((item, idx) => (
               <View key={`${item.title}-${idx}`} style={styles.activityRow}>
                 <View style={styles.activityIcon}><Feather name={item.icon as any} size={16} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}><Text style={styles.activityTitle}>{item.title}</Text><Text style={styles.activityMeta}>{item.meta}</Text></View>
               </View>
-<<<<<<< HEAD
-            )) : <Text style={styles.emptyText}>Chua c� ho?t d?ng g?n d�y.</Text>}
-=======
-            )) : <Text style={styles.emptyText}>Chưa có hoạt động gần đây.</Text>}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
+            )) : <Text style={styles.emptyText}>Chua c ho?t d?ng g?n dy.</Text>}
           </View>
         </View>
       </View>
@@ -1251,16 +1012,6 @@ export default function AdminScreen() {
 
   const renderAnalytics = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
-      <SectionHeader title="Ph�n t�ch & H?c m�y (ML)" subtitle="3 m� h�nh ch?y tr?c ti?p tr�n d? li?u don h�ng / kh�ch h�ng / s?n ph?m, kh�ng c?n c�i th�m thu vi?n." />
-
-      <View style={styles.modelRow}>
-        {(mlModels.length ? mlModels : [{ name: '�ang t?i m� h�nh', type: '�', metric: '' }]).map((m: any, i: number) => (
-          <View key={i} style={styles.modelCard}>
-            <View style={styles.modelTop}><Feather name="cpu" size={16} color={ADMIN_GREEN} /><Text style={styles.modelName}>{m.name}</Text></View>
-            <Text style={styles.modelType}>{m.type}</Text>
-            <Text style={styles.modelMetric}>{m.metric}{m.demo ? ' � minh ho?' : ''}</Text>
-=======
       <SectionHeader title="Phân tích & Học máy (ML)" subtitle="3 mô hình chạy trực tiếp trên dữ liệu đơn hàng / khách hàng / sản phẩm, không cần cài thêm thư viện." />
 
       <View style={styles.modelRow}>
@@ -1269,47 +1020,29 @@ export default function AdminScreen() {
             <View style={styles.modelTop}><Feather name="cpu" size={16} color={ADMIN_GREEN} /><Text style={styles.modelName}>{m.name}</Text></View>
             <Text style={styles.modelType}>{m.type}</Text>
             <Text style={styles.modelMetric}>{m.metric}{m.demo ? ' · minh hoạ' : ''}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
         ))}
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-<<<<<<< HEAD
           <SectionHeader title="D? b�o doanh thu � H?i quy tuy?n t�nh (OLS)" subtitle={mlForecast?.algorithm || 'U?c lu?ng xu hu?ng v� d? b�o 3 th�ng t?i.'} />
           <ForecastChart forecast={mlForecast} />
         </View>
         <View style={styles.card}>
           <SectionHeader title="Ph�n kh�c kh�ch h�ng � K-Means" subtitle={mlSegments?.algorithm || 'Gom kh�ch h�ng theo h�nh vi mua.'} />
-=======
-          <SectionHeader title="Dự báo doanh thu — Hồi quy tuyến tính (OLS)" subtitle={mlForecast?.algorithm || 'Ước lượng xu hướng và dự báo 3 tháng tới.'} />
-          <ForecastChart forecast={mlForecast} />
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Phân khúc khách hàng — K-Means" subtitle={mlSegments?.algorithm || 'Gom khách hàng theo hành vi mua.'} />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           <SegmentsView segments={mlSegments} />
         </View>
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-<<<<<<< HEAD
           <SectionHeader title="S?n ph?m n?i b?t � G?i � (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'L?c c?ng t�c item-based + ph�n r� ma tr?n d? x?p h?ng s?n ph?m.'} />
           <HorizontalBars data={(mlRecommender?.featured || []).map((x: any) => ({ label: x.name, value: x.score }))} accent="#2F4A73" />
           {mlRecommender?.demo ? <Text style={styles.demoTag}>d? li?u minh ho? � s? ch�nh x�c hon khi c� nhi?u don/gi?/wishlist</Text> : null}
         </View>
         <View style={styles.card}>
           <SectionHeader title="�i?m nhu c?u s?n ph?m (DemandScore)" subtitle="B�n ra, wishlist, gi?, d�nh gi�, d? m?i, nh?c trong AI chat." />
-=======
-          <SectionHeader title="Sản phẩm nổi bật — Gợi ý (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'Lọc cộng tác item-based + phân rã ma trận để xếp hạng sản phẩm.'} />
-          <HorizontalBars data={(mlRecommender?.featured || []).map((x: any) => ({ label: x.name, value: x.score }))} accent="#2F4A73" />
-          {mlRecommender?.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ — sẽ chính xác hơn khi có nhiều đơn/giỏ/wishlist</Text> : null}
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Điểm nhu cầu sản phẩm (DemandScore)" subtitle="Bán ra, wishlist, giỏ, đánh giá, độ mới, nhắc trong AI chat." />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           <View style={styles.featureWrap}>{(dashboard?.ml?.features || ["unitsSold", "wishlist", "cart", "rating", "recency", "chatMention"]).map((f: string) => <Text key={f} style={styles.featureChip}>{f}</Text>)}</View>
           <HorizontalBars data={predictions.map((x: any) => ({ label: x.name, value: x.score }))} accent={ADMIN_GREEN} />
         </View>
@@ -1317,11 +1050,7 @@ export default function AdminScreen() {
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-<<<<<<< HEAD
           <SectionHeader title="Xu hu?ng theo danh m?c" subtitle="T?ng h?p b�n ra + wishlist + gi?" />
-=======
-          <SectionHeader title="Xu hướng theo danh mục" subtitle="Tổng hợp bán ra + wishlist + giỏ" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           <HorizontalBars data={customerTrends.map((x: any) => ({ label: x.category, value: x.score }))} accent="#A33A2F" />
         </View>
       </View>
@@ -1332,15 +1061,9 @@ export default function AdminScreen() {
             {item.image ? <Image source={{ uri: item.image }} style={styles.predictionImage} /> : <View style={styles.predictionImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
             <View style={{ flex: 1 }}>
               <Text numberOfLines={1} style={styles.predictionTitle}>{item.name}</Text>
-<<<<<<< HEAD
               <Text style={styles.predictionMeta}>{item.category} � {formatMoney(item.price)}</Text>
               <Text style={styles.predictionSuggestion}>{item.predictedDemand} � {item.suggestion}</Text>
               <Text style={styles.predictionSmall}>B�n {item.features?.sold || 0} � Th�ch {item.features?.wishlist || 0} � Gi? {item.features?.cart || 0} � ? {item.features?.avgRating ?? '-'}</Text>
-=======
-              <Text style={styles.predictionMeta}>{item.category} • {formatMoney(item.price)}</Text>
-              <Text style={styles.predictionSuggestion}>{item.predictedDemand} — {item.suggestion}</Text>
-              <Text style={styles.predictionSmall}>Bán {item.features?.sold || 0} • Thích {item.features?.wishlist || 0} • Giỏ {item.features?.cart || 0} • ★ {item.features?.avgRating ?? '-'}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
             <View style={styles.scoreBox}><Text style={styles.scoreText}>{item.score}</Text><Text style={styles.scoreLabel}>điểm</Text></View>
           </View>
@@ -1351,7 +1074,6 @@ export default function AdminScreen() {
 
   const renderProducts = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
       <SectionHeader title="Qu?n l� s?n ph?m" subtitle="Th�m, ?n, s?a 4 ?nh s?n ph?m, size/k�ch c?, k�ch thu?c, m�u s?c, m� t?, gi� v� sale." right={<Text style={styles.counterPill}>{activeProducts} dang b�n / {hiddenProducts} dang ?n</Text>} />
       <View style={styles.productManagerGrid}>
         <View style={[styles.card, styles.formCard]}>
@@ -1369,25 +1091,6 @@ export default function AdminScreen() {
           <View style={styles.formGrid2}>
             <Input label="Nh�n gi?m gi�" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
             <Input label="Nh�n" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GI?M 17%" />
-=======
-      <SectionHeader title="Quản lý sản phẩm" subtitle="Thêm, ẩn, sửa 4 ảnh sản phẩm, size/kích cỡ, kích thước, màu sắc, mô tả, giá và sale." right={<Text style={styles.counterPill}>{activeProducts} đang bán / {hiddenProducts} đang ẩn</Text>} />
-      <View style={styles.productManagerGrid}>
-        <View style={[styles.card, styles.formCard]}>
-          <Text style={styles.formTitle}>{editingProductId ? `Đang sửa: ${editingProductId}` : "Thêm sản phẩm mới"}</Text>
-          <View style={styles.formGrid2}>
-            <Input label="Mã sản phẩm" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
-            <Input label="SKU" value={productForm.sku} onChangeText={(sku: string) => setProductForm((p) => ({ ...p, sku }))} placeholder="JP-001" />
-          </View>
-          <Input label="Tên sản phẩm" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Đàn guitar và giá đỡ đàn" />
-          <View style={styles.formGrid3}>
-            <Input label="Giá đang bán" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
-            <Input label="Giá gốc / giá gạch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
-            <Input label="% giảm" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
-          </View>
-          <View style={styles.formGrid2}>
-            <Input label="Nhãn giảm giá" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
-            <Input label="Nhãn" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GIẢM 17%" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
           <View style={styles.formGrid2}>
             <Input label="Ảnh lớn / ảnh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
@@ -1398,40 +1101,26 @@ export default function AdminScreen() {
             <Input label="Ảnh nhỏ 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
           </View>
           <View style={styles.mediaUploadBox}>
-<<<<<<< HEAD
             <Text style={styles.mediaUploadTitle}>Upload ?nh s?n ph?m l�n Cloudinary</Text>
             <Text style={styles.mediaUploadHint}>Ch?n ?nh t? m�y, h? th?ng s? upload l�n Cloudinary r?i t? di?n URL v�o 4 � ?nh.</Text>
-=======
-            <Text style={styles.mediaUploadTitle}>Upload ảnh sản phẩm lên Cloudinary</Text>
-            <Text style={styles.mediaUploadHint}>Chọn ảnh từ máy, hệ thống sẽ upload lên Cloudinary rồi tự điền URL vào 4 ô ảnh.</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             <View style={styles.actionRow}>
               {(["image", "image2", "image3", "image4"] as const).map((field, index) => {
                 const key = `upload-${field}`;
                 return (
                   <Pressable key={field} disabled={uploadingMediaField === key} onPress={() => pickAndUploadAdminImage(field)} style={styles.smallBtn}>
-<<<<<<< HEAD
                     <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "�ang upload..." : `Upload ?nh ${index + 1}`}</Text>
-=======
-                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "Đang upload..." : `Upload ảnh ${index + 1}`}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
                   </Pressable>
                 );
               })}
             </View>
           </View>
-<<<<<<< HEAD
           <Input label="M� t? s?n ph?m" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="M� t? ng?n..." multiline />
-=======
-          <Input label="Mô tả sản phẩm" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="Mô tả ngắn..." multiline />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           <View style={styles.formGrid3}>
             <Input label="Danh mục" value={productForm.category} onChangeText={(category: string) => setProductForm((p) => ({ ...p, category }))} placeholder="fashion" />
             <Input label="Danh mục con" value={productForm.subcategory} onChangeText={(subcategory: string) => setProductForm((p) => ({ ...p, subcategory }))} placeholder="streetwear" />
             <Input label="Tồn kho" value={productForm.stockQuantity} keyboardType="numeric" onChangeText={(stockQuantity: string) => setProductForm((p) => ({ ...p, stockQuantity }))} placeholder="999" />
           </View>
           <View style={styles.formGrid2}>
-<<<<<<< HEAD
             <Input label="Size / k�ch c?" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
             <Input label="M�u s?c" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="�en, tr?ng, kem ho?c #000000, #FFFFFF" />
             <Text style={[styles.userMeta, { marginTop: 6 }]}>B?ng m�u nhanh (b?m d? th�m m� hex):</Text>
@@ -1452,20 +1141,6 @@ export default function AdminScreen() {
           <View style={styles.actionRow}>
             <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "�ang luu..." : editingProductId ? "C?p nh?t s?n ph?m" : "Th�m s?n ph?m"}</Text></Pressable>
             <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>X�a form</Text></Pressable>
-=======
-            <Input label="Size / kích cỡ" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
-            <Input label="Màu sắc" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Đen, trắng, kem" />
-          </View>
-          <View style={styles.formGrid2}>
-            <Input label="Kích thước" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dài 68cm, ngang vai 46cm..." />
-            <Input label="Form / kiểu vừa" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
-          </View>
-          <Input label="Thẻ hình ảnh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
-          <Input label="Kiểu sử dụng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Đi chơi, chụp ảnh, cosplay nhẹ" />
-          <View style={styles.actionRow}>
-            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Đang lưu..." : editingProductId ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}</Text></Pressable>
-            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
         </View>
         <ProductDiscountPreview name={productForm.name} price={Number(productForm.price || 0)} originalPrice={Number(productForm.originalPrice || 0)} discountPercent={Number(productForm.discountPercent || 0)} image={productForm.image} images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]} sizes={productForm.sizes} colors={productForm.colors} dimensions={productForm.dimensions} />
@@ -1484,17 +1159,12 @@ export default function AdminScreen() {
                 {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.productImage} /> : <View style={styles.productImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text numberOfLines={1} style={styles.productTitle}>{product.name || product.productName}</Text>
-<<<<<<< HEAD
                   <Text style={styles.productMeta}>{product.id} � {product.category || "general"}</Text>
-=======
-                  <Text style={styles.productMeta}>{product.id} • {product.category || "general"}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
                   <View style={styles.productPriceLine}>
                     <Text style={styles.productPrice}>{formatMoney(product.price)}</Text>
                     {Number(product.originalPrice || 0) > Number(product.price || 0) ? <Text style={styles.productOldPrice}>{formatMoney(product.originalPrice)}</Text> : null}
                     {discount > 0 ? <Text style={styles.discountBadge}>-{discount}%</Text> : null}
                   </View>
-<<<<<<< HEAD
                   <Text style={styles.productMeta}>Status: {product.status || "active"} � Stock: {product.stockQuantity || 0}</Text>
                 </View>
               </View>
@@ -1504,17 +1174,6 @@ export default function AdminScreen() {
               </View>
               <Text style={styles.productMeta}>?nh: {gallery.length}/4 � Size: {sizes.join(' / ') || 'S / M / L / XL'} � M�u: {colors.join(' / ') || '�en / Tr?ng / Kem'}</Text>
               {product.dimensions || product.fit ? <Text style={styles.productMeta}>K�ch thu?c: {product.dimensions || '--'} � Form: {product.fit || '--'}</Text> : null}
-=======
-                  <Text style={styles.productMeta}>Status: {product.status || "active"} • Stock: {product.stockQuantity || 0}</Text>
-                </View>
-              </View>
-              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chưa có mô tả."}</Text>
-              <View style={styles.adminThumbRow}>
-                {gallery.map((url, index) => <Image key={`${product.id}-thumb-${index}`} source={{ uri: url }} style={styles.adminThumb} />)}
-              </View>
-              <Text style={styles.productMeta}>Ảnh: {gallery.length}/4 • Size: {sizes.join(' / ') || 'S / M / L / XL'} • Màu: {colors.join(' / ') || 'Đen / Trắng / Kem'}</Text>
-              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kích thước: {product.dimensions || '--'} • Form: {product.fit || '--'}</Text> : null}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
               <View style={styles.actionRow}>
                 <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
                 <Pressable onPress={() => toggleProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{hidden ? "Hiện" : "Ẩn"}</Text></Pressable>
@@ -1534,7 +1193,6 @@ export default function AdminScreen() {
     const promotionRows = vouchers.filter((v) => v.kind === "promotion");
     return (
       <View style={styles.pageGap}>
-<<<<<<< HEAD
         <SectionHeader title="Voucher & Khuy?n m�i" subtitle="T?o voucher, khuy?n m�i, flash sale v� g?i th�ng b�o chung cho ngu?i d�ng." right={<Text style={styles.counterPill}>{activeVouchers} voucher � {activePromotions} chi?n d?ch</Text>} />
         <View style={styles.promoGrid}>
           <View style={styles.card}>
@@ -1542,22 +1200,12 @@ export default function AdminScreen() {
             <View style={styles.formGrid2}>
               <Input label="M� voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
               <Input label="T�n voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Gi?m cho kh�ch m?i" />
-=======
-        <SectionHeader title="Voucher & Khuyến mãi" subtitle="Tạo voucher, khuyến mãi, flash sale và gửi thông báo chung cho người dùng." right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} chiến dịch</Text>} />
-        <View style={styles.promoGrid}>
-          <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm voucher cho người dùng</Text>
-            <View style={styles.formGrid2}>
-              <Input label="Mã voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
-              <Input label="Tên voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Giảm cho khách mới" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={voucherForm.discountType === "percent"} label="Theo %" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={voucherForm.discountType === "fixed"} label="Theo tiền" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-<<<<<<< HEAD
               <Input label="Gi� tr? gi?m" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 ho?c 50000" />
               <Input label="�on t?i thi?u" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
               <Input label="H?t h?n" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
@@ -1571,28 +1219,12 @@ export default function AdminScreen() {
             <View style={styles.formGrid2}>
               <Input label="M� chi?n d?ch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
               <Input label="T�n khuy?n m�i" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cu?i tu?n" />
-=======
-              <Input label="Giá trị giảm" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 hoặc 50000" />
-              <Input label="Đơn tối thiểu" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
-              <Input label="Hết hạn" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
-            </View>
-            <Input label="Mô tả" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="Áp dụng toàn shop..." multiline />
-            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "Đang tạo..." : "Tạo voucher"}</Text></Pressable>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm khuyến mãi / chiến dịch</Text>
-            <View style={styles.formGrid2}>
-              <Input label="Mã chiến dịch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
-              <Input label="Tên khuyến mãi" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cuối tuần" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={promotionForm.discountType === "percent"} label="Giảm %" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={promotionForm.discountType === "fixed"} label="Giảm tiền" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-<<<<<<< HEAD
               <Input label="Gi� tr?" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
               <Input label="�on t?i thi?u" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
               <Input label="Ph?m vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:�o" />
@@ -1600,66 +1232,35 @@ export default function AdminScreen() {
             <View style={styles.formGrid2}>
               <Input label="B?t d?u" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
               <Input label="K?t th�c" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
-=======
-              <Input label="Giá trị" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
-              <Input label="Đơn tối thiểu" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
-              <Input label="Phạm vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:áo" />
-            </View>
-            <View style={styles.formGrid2}>
-              <Input label="Bắt đầu" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
-              <Input label="Kết thúc" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
             <View style={styles.inputWrap}>
               <Input label="Ảnh banner (URL)" value={promotionForm.bannerImage} onChangeText={(bannerImage: string) => setPromotionForm((p) => ({ ...p, bannerImage }))} placeholder="https://..." />
               <Pressable disabled={uploadingMediaField === "upload-bannerImage"} onPress={() => pickAndUploadAdminImage("bannerImage")} style={styles.smallBtn}>
-<<<<<<< HEAD
                 <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "�ang upload..." : "Upload banner Cloudinary"}</Text>
               </Pressable>
             </View>
             <Input label="M� t? chi?n d?ch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Gi?m gi� cu?i tu?n cho to�n b? s?n ph?m..." multiline />
             <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "�ang t?o..." : "T?o khuy?n m�i"}</Text></Pressable>
-=======
-                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "Đang upload..." : "Upload banner Cloudinary"}</Text>
-              </Pressable>
-            </View>
-            <Input label="Mô tả chiến dịch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Giảm giá cuối tuần cho toàn bộ sản phẩm..." multiline />
-            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "Đang tạo..." : "Tạo khuyến mãi"}</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
         </View>
 
         <View style={styles.card}>
-<<<<<<< HEAD
           <Text style={styles.formTitle}>Th�ng b�o chung</Text>
           <View style={styles.formGrid2}>
             <Input label="Ti�u d?" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
             <Input label="N?i dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="M? app nh?n voucher h�m nay..." />
           </View>
           <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "�ang g?i..." : "G?i th�ng b�o cho t?t c? user"}</Text></Pressable>
-=======
-          <Text style={styles.formTitle}>Thông báo chung</Text>
-          <View style={styles.formGrid2}>
-            <Input label="Tiêu đề" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
-            <Input label="Nội dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="Mở app nhận voucher hôm nay..." />
-          </View>
-          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "Đang gửi..." : "Gửi thông báo cho tất cả user"}</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
 
         <View style={styles.listGrid2}>
           <View style={styles.card}>
-<<<<<<< HEAD
             <SectionHeader title="Danh s�ch voucher" subtitle="B?t/t?t m� gi?m gi�" />
-=======
-            <SectionHeader title="Danh sách voucher" subtitle="Bật/tắt mã giảm giá" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             {voucherRows.length ? voucherRows.map((voucher) => (
               <View key={voucher.id} style={styles.voucherRow}>
                 <View style={styles.voucherIcon}><Feather name="tag" size={17} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{voucher.code}</Text>
-<<<<<<< HEAD
                   <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} � {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} � HSD {compactDate(voucher.expiryDate)}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
@@ -1669,37 +1270,17 @@ export default function AdminScreen() {
 
           <View style={styles.card}>
             <SectionHeader title="Danh s�ch khuy?n m�i" subtitle="Chi?n d?ch dang ch?y" />
-=======
-                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} • HSD {compactDate(voucher.expiryDate)}</Text>
-                </View>
-                <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
-              </View>
-            )) : <Text style={styles.emptyText}>Chưa có voucher.</Text>}
-          </View>
-
-          <View style={styles.card}>
-            <SectionHeader title="Danh sách khuyến mãi" subtitle="Chiến dịch đang chạy" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             {promotionRows.length ? promotionRows.map((promo) => (
               <View key={promo.id} style={styles.promoRow}>
                 {promo.bannerImage ? <Image source={{ uri: promo.bannerImage }} style={styles.promoThumb} /> : <View style={styles.promoThumb}><Feather name="image" size={18} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{promo.title || promo.code}</Text>
-<<<<<<< HEAD
                   <Text style={styles.voucherMeta}>{promo.code} � {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} � {compactDate(promo.startsAt)} ? {compactDate(promo.expiryDate)}</Text>
                   <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chi?n d?ch khuy?n m�i"}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(promo)} style={[styles.statusPill, promo.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{promo.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
             )) : <Text style={styles.emptyText}>Chua c� khuy?n m�i.</Text>}
-=======
-                  <Text style={styles.voucherMeta}>{promo.code} • {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} • {compactDate(promo.startsAt)} → {compactDate(promo.expiryDate)}</Text>
-                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chiến dịch khuyến mãi"}</Text>
-                </View>
-                <Pressable onPress={() => toggleVoucher(promo)} style={[styles.statusPill, promo.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{promo.active ? "ON" : "OFF"}</Text></Pressable>
-              </View>
-            )) : <Text style={styles.emptyText}>Chưa có khuyến mãi.</Text>}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           </View>
         </View>
       </View>
@@ -1718,7 +1299,6 @@ export default function AdminScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={[styles.userAvatar, u.role === "admin" ? styles.userAvatarAdmin : null]}><Feather name={u.role === "admin" ? "shield" : "user"} size={20} color={u.role === "admin" ? "#fff" : ADMIN_GREEN} /></View>
           <View style={{ flex: 1 }}>
-<<<<<<< HEAD
             <Text style={styles.sectionTitle}>{u.name || u.fullName || "Kh�ch JAPANO"}</Text>
             <Text style={styles.userEmail}>{u.email} � {u.phone || "chua c� S�T"}</Text>
             <Text style={styles.userMeta}>�?a ch?: {u.address || "chua c�"} � Xu {formatNumber(u.coins)} {u.vip ? "� VIP" : ""}</Text>
@@ -1737,53 +1317,23 @@ export default function AdminScreen() {
           <View key={o.id} style={styles.orderDetailCard}>
             <View style={styles.barLineTop}>
               <Text style={styles.userName}>#{String(o.id).slice(-8)} � {formatMoney(o.total || o.totalAmount)}</Text>
-=======
-            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khách JAPANO"}</Text>
-            <Text style={styles.userEmail}>{u.email} • {u.phone || "chưa có SĐT"}</Text>
-            <Text style={styles.userMeta}>Địa chỉ: {u.address || "chưa có"} • Xu {formatNumber(u.coins)} {u.vip ? "• VIP" : ""}</Text>
-          </View>
-          <Pressable onPress={() => setSelectedUserId(null)} style={styles.smallBtn}><Feather name="x" size={14} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Đóng</Text></Pressable>
-        </View>
-
-        <View style={styles.statMiniRow}>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userOrders.length}</Text><Text style={styles.statMiniCap}>Đơn hàng</Text></View>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatMoney(spend)}</Text><Text style={styles.statMiniCap}>Tổng chi tiêu</Text></View>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userPayments.length}</Text><Text style={styles.statMiniCap}>Giao dịch</Text></View>
-        </View>
-
-        <Text style={styles.formTitle}>Đơn hàng & sản phẩm đã mua</Text>
-        {userOrders.length ? userOrders.map((o) => (
-          <View key={o.id} style={styles.orderDetailCard}>
-            <View style={styles.barLineTop}>
-              <Text style={styles.userName}>#{String(o.id).slice(-8)} • {formatMoney(o.total || o.totalAmount)}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
               <View style={[styles.statusChip, o.status === "completed" ? styles.statusOk : o.status === "cancelled" ? styles.statusBad : styles.statusPend]}>
                 <Text style={styles.statusChipText}>{o.status || "pending"}</Text>
               </View>
             </View>
-<<<<<<< HEAD
             <Text style={styles.userMeta}>Thanh to�n: {o.paymentMethod || "--"} � {o.paymentStatus || "pending"} � {compactDate(o.createdAt)}</Text>
             {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao t?i: {o.shippingAddress} {o.phoneNumber ? `� ${o.phoneNumber}` : ""}</Text> : null}
-=======
-            <Text style={styles.userMeta}>Thanh toán: {o.paymentMethod || "--"} • {o.paymentStatus || "pending"} • {compactDate(o.createdAt)}</Text>
-            {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao tới: {o.shippingAddress} {o.phoneNumber ? `• ${o.phoneNumber}` : ""}</Text> : null}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             {(o.items || []).map((it: any, idx: number) => (
               <View key={idx} style={styles.orderItemRow}>
                 {it.image ? <Image source={{ uri: it.image }} style={styles.orderItemImg} /> : <View style={styles.orderItemImg}><Feather name="image" size={14} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text numberOfLines={1} style={styles.orderItemName}>{it.name}</Text>
-<<<<<<< HEAD
                   <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `� size ${it.size}` : ""} {it.color ? `� ${it.color}` : ""}</Text>
-=======
-                  <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `• size ${it.size}` : ""} {it.color ? `• ${it.color}` : ""}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
                 </View>
                 <Text style={styles.orderItemPrice}>{formatMoney(it.unitPrice)}</Text>
               </View>
             ))}
             <View style={styles.userActions}>
-<<<<<<< HEAD
               <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>�� thanh to�n</Text></Pressable>
               <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>�ang giao</Text></Pressable>
               <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>�� nh?n</Text></Pressable>
@@ -1795,28 +1345,12 @@ export default function AdminScreen() {
         {userPayments.length ? (
           <>
             <Text style={styles.formTitle}>Th�ng tin thanh to�n</Text>
-=======
-              <Pressable onPress={() => quickUpdateOrder(o, "completed")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>Đã giao</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color="#fff" /><Text style={styles.dangerBtnText}>Hủy đơn</Text></Pressable>
-            </View>
-          </View>
-        )) : <Text style={styles.emptyText}>Khách này chưa có đơn hàng.</Text>}
-
-        {userPayments.length ? (
-          <>
-            <Text style={styles.formTitle}>Thông tin thanh toán</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             {userPayments.map((p) => (
               <View key={p.id} style={styles.paymentRow}>
                 <View style={styles.paymentIcon}><Feather name="credit-card" size={15} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
-<<<<<<< HEAD
                   <Text style={styles.paymentTitle}>{formatMoney(p.amount)} � {p.status}</Text>
                   <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} � Txn {p.transactionId || "--"} � {compactDate(p.createdAt)}</Text>
-=======
-                  <Text style={styles.paymentTitle}>{formatMoney(p.amount)} • {p.status}</Text>
-                  <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} • Txn {p.transactionId || "--"} • {compactDate(p.createdAt)}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
                 </View>
               </View>
             ))}
@@ -1828,11 +1362,7 @@ export default function AdminScreen() {
 
   const renderUsers = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
-      <SectionHeader title="Kh�ch h�ng & Ph�n quy?n" subtitle="B?m m?t kh�ch d? xem don d� mua, s?n ph?m, thanh to�n v� d?i tr?ng th�i giao h�ng." right={<Text style={styles.counterPill}>{filteredUsers.length} kh�ch</Text>} />
-=======
       <SectionHeader title="Khách hàng & Phân quyền" subtitle="Bấm một khách để xem đơn đã mua, sản phẩm, thanh toán và đổi trạng thái giao hàng." right={<Text style={styles.counterPill}>{filteredUsers.length} khách</Text>} />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       {selectedUserId ? renderUserDetail() : null}
       <View style={styles.tableCard}>
         {filteredUsers.map((item) => {
@@ -1847,15 +1377,9 @@ export default function AdminScreen() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={styles.userName}>{item.name || item.fullName || "JAPANO Member"}</Text>
                 <Text numberOfLines={1} style={styles.userEmail}>{item.email}</Text>
-<<<<<<< HEAD
-                <Text style={styles.userMeta}>Tr?ng th�i {item.status || "active"} � Xu {formatNumber(item.coins)} � {ordersCount} don {item.vip ? "� VIP" : ""}</Text>
-              </View>
-              <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "KH�CH"}</Text></View>
-=======
                 <Text style={styles.userMeta}>Trạng thái {item.status || "active"} • Xu {formatNumber(item.coins)} • {ordersCount} đơn {item.vip ? "• VIP" : ""}</Text>
               </View>
               <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "KHÁCH"}</Text></View>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
               <View style={styles.userActions}>
                 <Pressable onPress={() => setSelectedUserId(String(item.id))} style={styles.saleBtn}><Feather name="eye" size={13} color="#fff" /><Text style={styles.saleBtnText}>Chi tiết</Text></Pressable>
                 <Pressable onPress={() => adjustCoins(item, 100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+100 xu</Text></Pressable>
@@ -1872,23 +1396,15 @@ export default function AdminScreen() {
 
   const renderTransactions = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
       <SectionHeader title="�on h�ng / Thanh to�n" subtitle="Theo d�i th�ng tin giao d?ch, don h�ng v� tr?ng th�i thanh to�n." />
       <View style={styles.listGrid2}>
         <View style={styles.card}>
           <SectionHeader title="Thanh to�n" subtitle="Giao d?ch g?n d�y" />
-=======
-      <SectionHeader title="Đơn hàng / Thanh toán" subtitle="Theo dõi thông tin giao dịch, đơn hàng và trạng thái thanh toán." />
-      <View style={styles.listGrid2}>
-        <View style={styles.card}>
-          <SectionHeader title="Thanh toán" subtitle="Giao dịch gần đây" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           {payments.length ? payments.map((payment) => (
             <View key={payment.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
-<<<<<<< HEAD
                 <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh to�n"} � {payment.status} � {compactDate(payment.createdAt)}</Text>
                 <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} � Txn: {payment.transactionId || "--"}</Text>
               </View>
@@ -1897,35 +1413,16 @@ export default function AdminScreen() {
         </View>
         <View style={styles.card}>
           <SectionHeader title="�on h�ng g?n d�y" subtitle="�on h�ng m?i" />
-=======
-                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toán"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
-              </View>
-            </View>
-          )) : <Text style={styles.emptyText}>Chưa có giao dịch.</Text>}
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Đơn hàng gần đây" subtitle="Đơn hàng mới" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
           {orders.length ? orders.map((order) => (
             <View key={order.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
               <View style={{ flex: 1 }}>
-<<<<<<< HEAD
                 <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} � {formatMoney(order.total || order.totalAmount)}</Text>
                 <Text style={styles.paymentMeta}>Status: {order.status} � Payment: {order.paymentStatus} � {compactDate(order.createdAt)}</Text>
                 <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} � {order.paymentMethod || "COD"}</Text>
                 <View style={styles.adminOrderQuickRow}>
                   <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
                     <Text style={styles.successBtnText}>X�c nh?n th�nh c�ng</Text>
-=======
-                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
-                <Text style={styles.paymentMeta}>Status: {order.status} • Payment: {order.paymentStatus} • {compactDate(order.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} • {order.paymentMethod || "COD"}</Text>
-                <View style={styles.adminOrderQuickRow}>
-                  <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
-                    <Text style={styles.successBtnText}>Xác nhận thành công</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
                   </Pressable>
                   <Pressable disabled={actionId === `order-cancelled-${order.id}`} onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}>
                     <Text style={styles.dangerBtnText}>Hủy nhanh</Text>
@@ -1933,11 +1430,7 @@ export default function AdminScreen() {
                 </View>
               </View>
             </View>
-<<<<<<< HEAD
           )) : <Text style={styles.emptyText}>Chua c� don h�ng.</Text>}
-=======
-          )) : <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
       </View>
     </View>
@@ -1945,20 +1438,6 @@ export default function AdminScreen() {
 
   const renderGames = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
-      <SectionHeader title="Qu?n l� tr� choi" subtitle="Th�m, s?a, x�a game v� c?u h�nh thu?ng xu." />
-      <View style={styles.card}>
-        <Text style={styles.formTitle}>{editingGameId ? "S?a game" : "Th�m game"}</Text>
-        <View style={styles.formGrid2}>
-          <Input label="Slug" value={gameForm.slug} onChangeText={(slug: string) => setGameForm((p) => ({ ...p, slug }))} placeholder="quiz-battle" />
-          <Input label="T�n game" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder="Quiz Battle" />
-        </View>
-        <Input label="M� t?" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder="Tr? l?i nhanh nh?n xu" multiline />
-        <Input label="Thu?ng xu" value={gameForm.rewardCoins} keyboardType="numeric" onChangeText={(rewardCoins: string) => setGameForm((p) => ({ ...p, rewardCoins }))} placeholder="30" />
-        <View style={styles.actionRow}>
-          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? "C?p nh?t game" : "Th�m game"}</Text></Pressable>
-          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>X�a form</Text></Pressable>
-=======
       <SectionHeader title="Quản lý trò chơi" subtitle="Thêm, sửa, xóa game và cấu hình thưởng xu." />
       <View style={styles.card}>
         <Text style={styles.formTitle}>{editingGameId ? "Sửa game" : "Thêm game"}</Text>
@@ -1971,26 +1450,17 @@ export default function AdminScreen() {
         <View style={styles.actionRow}>
           <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? "Cập nhật game" : "Thêm game"}</Text></Pressable>
           <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
       </View>
       <View style={styles.productListGrid}>
         {games.map((game) => (
           <View key={String(game._id || game.id)} style={styles.productCard}>
             <Text style={styles.productTitle}>{game.name}</Text>
-<<<<<<< HEAD
-            <Text style={styles.productMeta}>{game.slug} � Thu?ng {formatNumber(game.rewardCoins)} xu</Text>
-            <Text style={styles.productDesc}>{game.description || "Chua c� m� t?."}</Text>
-            <View style={styles.actionRow}>
-              <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>S?a</Text></Pressable>
-              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>X�a</Text></Pressable>
-=======
             <Text style={styles.productMeta}>{game.slug} • Thưởng {formatNumber(game.rewardCoins)} xu</Text>
             <Text style={styles.productDesc}>{game.description || "Chưa có mô tả."}</Text>
             <View style={styles.actionRow}>
               <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
               <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
           </View>
         ))}
@@ -2001,19 +1471,15 @@ export default function AdminScreen() {
   const addBanned = async () => {
     const w = bannedInput.trim();
     if (!w) return;
-<<<<<<< HEAD
     if (!user?.id) {
       Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.");
       return;
     }
-=======
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       await api.addBannedWord(user.id, w);
       setBannedInput("");
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
       Alert.alert("L?i", e?.message || "Kh�ng th�m du?c t? c?m.");
     }
   };
@@ -2022,40 +1488,16 @@ export default function AdminScreen() {
       Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.");
       return;
     }
-=======
-      Alert.alert("Lỗi", e?.message || "Không thêm được từ cấm.");
-    }
-  };
-  const removeBanned = async (id: string) => {
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     try {
       await api.deleteBannedWord(user.id, id);
       await load();
     } catch (e: any) {
-<<<<<<< HEAD
-      Alert.alert("L?i", e?.message || "Kh�ng xo� du?c.");
-=======
       Alert.alert("Lỗi", e?.message || "Không xoá được.");
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     }
   };
 
   const renderModeration = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
-      <SectionHeader title="T? c?m khi b�nh lu?n / d�nh gi�" subtitle="��nh gi� ch?a c�c t? n�y s? b? ch?n t? d?ng tr�n to�n app." right={<Text style={styles.counterPill}>{bannedWords.length} t?</Text>} />
-      <View style={[styles.card, styles.formCard]}>
-        <Text style={styles.formTitle}>Th�m t? c?m</Text>
-        <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
-          <View style={{ flex: 1 }}>
-            <Input label="T? / c?m t? c?m" value={bannedInput} onChangeText={setBannedInput} placeholder="v� d?: l?a d?o" />
-          </View>
-          <Pressable onPress={addBanned} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Th�m</Text></Pressable>
-        </View>
-      </View>
-      <View style={styles.card}>
-        <SectionHeader title="Danh s�ch t? c?m" subtitle="B?m v�o m?t t? d? xo�" />
-=======
       <SectionHeader title="Từ cấm khi bình luận / đánh giá" subtitle="Đánh giá chứa các từ này sẽ bị chặn tự động trên toàn app." right={<Text style={styles.counterPill}>{bannedWords.length} từ</Text>} />
       <View style={[styles.card, styles.formCard]}>
         <Text style={styles.formTitle}>Thêm từ cấm</Text>
@@ -2068,18 +1510,13 @@ export default function AdminScreen() {
       </View>
       <View style={styles.card}>
         <SectionHeader title="Danh sách từ cấm" subtitle="Bấm vào một từ để xoá" />
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         <View style={styles.bannedWrap}>
           {bannedWords.length ? bannedWords.map((b: any) => (
             <Pressable key={b.id} onPress={() => removeBanned(b.id)} style={styles.bannedChip}>
               <Text style={styles.bannedChipText}>{b.word}</Text>
               <Feather name="x" size={13} color={ADMIN_RED} />
             </Pressable>
-<<<<<<< HEAD
-          )) : <Text style={styles.emptyText}>Chua c� t? c?m. H? th?ng t? seed danh s�ch m?c d?nh khi c� d�nh gi� d?u ti�n.</Text>}
-=======
           )) : <Text style={styles.emptyText}>Chưa có từ cấm. Hệ thống tự seed danh sách mặc định khi có đánh giá đầu tiên.</Text>}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
         </View>
       </View>
     </View>
@@ -2087,11 +1524,7 @@ export default function AdminScreen() {
 
   const isAccessoryClient = (p: any) => {
     const hay = `${p?.category || ""} ${p?.subcategory || ""} ${(p?.visualTags || []).join(" ")} ${p?.name || ""}`.toLowerCase();
-<<<<<<< HEAD
-    return /(phu kien|ph? ki?n|accessor|non|n�n|mu |mu|kinh|k�nh|khan|khan|tui|t�i|vong|v�ng|dong ho|d?ng h?|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|b�ng tai|du |d�)/.test(hay);
-=======
     return /(phu kien|phụ kiện|accessor|non|nón|mu |mũ|kinh|kính|khan|khăn|tui|túi|vong|vòng|dong ho|đồng hồ|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|bông tai|du |dù)/.test(hay);
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   };
   const accessoryProducts = useMemo(() => products.filter(isAccessoryClient), [products]);
 
@@ -2103,19 +1536,11 @@ export default function AdminScreen() {
 
   const renderAccessories = () => (
     <View style={styles.pageGap}>
-<<<<<<< HEAD
-      <SectionHeader title="Qu?n l� ph? ki?n (danh m?c ri�ng)" subtitle="N�n, mu, v�ng tay, t�i, k�nh, khan, d?ng h?... Qu?n l� ?nh, m�u, size, t?n kho, gi� ri�ng cho nh�m ph? ki?n." right={<Text style={styles.counterPill}>{accessoryProducts.length} ph? ki?n</Text>} />
-      <View style={[styles.card, { gap: 10 }]}>
-        <Text style={styles.formTitle}>Th�m ph? ki?n m?i</Text>
-        <Text style={styles.userMeta}>M? form s?n ph?m v?i danh m?c d� d?t s?n l� "phu-kien". B?n ch? c?n di?n t�n, ?nh, m�u, size, s? lu?ng v� gi�.</Text>
-        <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Th�m ph? ki?n</Text></Pressable>
-=======
       <SectionHeader title="Quản lý phụ kiện (danh mục riêng)" subtitle="Nón, mũ, vòng tay, túi, kính, khăn, đồng hồ... Quản lý ảnh, màu, size, tồn kho, giá riêng cho nhóm phụ kiện." right={<Text style={styles.counterPill}>{accessoryProducts.length} phụ kiện</Text>} />
       <View style={[styles.card, { gap: 10 }]}>
         <Text style={styles.formTitle}>Thêm phụ kiện mới</Text>
         <Text style={styles.userMeta}>Mở form sản phẩm với danh mục đã đặt sẵn là "phu-kien". Bạn chỉ cần điền tên, ảnh, màu, size, số lượng và giá.</Text>
         <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm phụ kiện</Text></Pressable>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
       <View style={styles.tableCard}>
         {accessoryProducts.length ? accessoryProducts.map((item) => (
@@ -2123,21 +1548,15 @@ export default function AdminScreen() {
             {item.image ? <Image source={{ uri: item.image }} style={styles.accThumb} /> : <View style={styles.accThumb}><Feather name="watch" size={18} color={ADMIN_MUTED} /></View>}
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={styles.userName}>{item.name}</Text>
-<<<<<<< HEAD
-              <Text numberOfLines={1} style={styles.userEmail}>{item.category || "phu-kien"} � {formatMoney(item.price)}</Text>
-              <Text style={styles.userMeta}>T?n kho {formatNumber(item.stockQuantity || item.stock || 0)} � {(item.status || "active") === "active" ? "�ang b�n" : "�ang ?n"} {Array.isArray(item.colors) && item.colors.length ? `� ${item.colors.length} m�u` : ""} {Array.isArray(item.sizes) && item.sizes.length ? `� ${item.sizes.length} size` : ""}</Text>
-=======
               <Text numberOfLines={1} style={styles.userEmail}>{item.category || "phu-kien"} • {formatMoney(item.price)}</Text>
               <Text style={styles.userMeta}>Tồn kho {formatNumber(item.stockQuantity || item.stock || 0)} • {(item.status || "active") === "active" ? "Đang bán" : "Đang ẩn"} {Array.isArray(item.colors) && item.colors.length ? `• ${item.colors.length} màu` : ""} {Array.isArray(item.sizes) && item.sizes.length ? `• ${item.sizes.length} size` : ""}</Text>
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
             </View>
             <View style={styles.userActions}>
               <Pressable onPress={() => editProduct(item)} style={styles.saleBtn}><Feather name="edit-2" size={13} color="#fff" /><Text style={styles.saleBtnText}>Sửa</Text></Pressable>
               <Pressable onPress={() => toggleProduct(item)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{(item.status || "active") === "active" ? "Ẩn" : "Hiện"}</Text></Pressable>
             </View>
           </View>
-<<<<<<< HEAD
-        )) : <Text style={styles.emptyText}>Chua c� ph? ki?n. B?m "Th�m ph? ki?n" d? t?o, ho?c d?t danh m?c s?n ph?m l� "phu-kien".</Text>}
+        )) : <Text style={styles.emptyText}>Chưa có phụ kiện. Bấm "Thêm phụ kiện" để tạo, hoặc đặt danh mục sản phẩm là "phu-kien".</Text>}
       </View>
     </View>
   );
@@ -2237,20 +1656,13 @@ export default function AdminScreen() {
       <View style={styles.card}>
         <SectionHeader title="Prompt h? th?ng & l?ch s? h?i d�p" subtitle="C?n backend luu prompt/l?ch s?" />
         <Text style={styles.emptyText}>�? ch?nh prompt h? th?ng tr?c ti?p v� xem l?ch s? c�u h?i/c�u tr? l?i + d�nh gi� h?u �ch, c?n th�m API luu prompt & h?i tho?i ? backend. C� th? b? sung ? v�ng sau.</Text>
-=======
-        )) : <Text style={styles.emptyText}>Chưa có phụ kiện. Bấm "Thêm phụ kiện" để tạo, hoặc đặt danh mục sản phẩm là "phu-kien".</Text>}
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
       </View>
     </View>
   );
 
   const renderActive = () => {
     if (loading) {
-<<<<<<< HEAD
-      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>�ang t?i d? li?u admin...</Text></View>;
-=======
       return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>Đang tải dữ liệu admin...</Text></View>;
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
     }
     if (activeTab === "overview") return renderOverview();
     if (activeTab === "analytics") return renderAnalytics();
@@ -2281,19 +1693,15 @@ export default function AdminScreen() {
   );
 }
 
-<<<<<<< HEAD
 const textBase = { fontFamily: "System" };
-const textHeading = { ...textBase, color: ADMIN_TEXT, fontWeight: "700", fontSize: 16 };
-const textBody = { ...textBase, color: ADMIN_MUTED, fontWeight: "500", fontSize: 13 };
+const textHeading: any = { ...textBase, color: ADMIN_TEXT, fontWeight: "700", fontSize: 16 };
+const textBody: any = { ...textBase, color: ADMIN_MUTED, fontWeight: "500", fontSize: 13 };
 
-=======
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
 const styles = StyleSheet.create({
   appShell: { flex: 1, flexDirection: "row", backgroundColor: ADMIN_BG },
   sidebar: { width: 238, backgroundColor: ADMIN_DARK, padding: 20, paddingBottom: 16 },
   sidebarMobile: { width: "100%", padding: 12, paddingBottom: 10 },
   sidebarLogoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-<<<<<<< HEAD
   sidebarLogo: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
   sidebarBrand: { color: "#fff", fontSize: 16, fontWeight: "700" },
   sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 11, fontWeight: "600", letterSpacing: 1.2, marginTop: 2 },
@@ -2301,19 +1709,9 @@ const styles = StyleSheet.create({
   navContentMobile: { gap: 8, alignItems: "center" },
   navGroup: { color: "#52605A", fontSize: 11, fontWeight: "700", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },
   navItem: { minHeight: 40, borderRadius: 16, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-=======
-  sidebarLogo: { width: 34, height: 34, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarBrand: { color: "#fff", fontSize: 15, fontWeight: "900" },
-  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 10, fontWeight: "900", letterSpacing: 1.2, marginTop: 2 },
-  navContent: { gap: 4, paddingBottom: 20 },
-  navContentMobile: { gap: 8, alignItems: "center" },
-  navGroup: { color: "#52605A", fontSize: 10, fontWeight: "900", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },
-  navItem: { minHeight: 40, borderRadius: 0, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   navItemActive: { backgroundColor: "#3A1410" },
   navText: { color: ADMIN_MUTED_DARK, fontSize: 13, fontWeight: "600" },
   navTextActive: { color: ADMIN_GREEN },
-<<<<<<< HEAD
   navBadge: { marginLeft: "auto", backgroundColor: ADMIN_GREEN, color: "#fff", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 16, fontSize: 11, fontWeight: "600", overflow: "hidden" },
   sidebarUser: { marginTop: "auto", paddingTop: 14, borderTopWidth: 1, borderTopColor: "#13221B", flexDirection: "row", alignItems: "center", gap: 10 },
   sidebarAvatar: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
@@ -2334,40 +1732,12 @@ const styles = StyleSheet.create({
   heroSub: { color: "#B9C8C0", fontSize: 13, marginTop: 6, fontWeight: "500" },
   heroButton: { minHeight: 42, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
   heroButtonText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-=======
-  navBadge: { marginLeft: "auto", backgroundColor: ADMIN_GREEN, color: "#fff", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 0, fontSize: 10, overflow: "hidden" },
-  sidebarUser: { marginTop: "auto", paddingTop: 14, borderTopWidth: 1, borderTopColor: "#13221B", flexDirection: "row", alignItems: "center", gap: 10 },
-  sidebarAvatar: { width: 34, height: 34, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  sidebarAvatarText: { color: "#fff", fontWeight: "900" },
-  sidebarUserName: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 11, marginTop: 2 },
-  mainArea: { flex: 1, minWidth: 0 },
-  topbar: { minHeight: 68, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", gap: 12 },
-  searchBox: { flex: 1, maxWidth: 420, minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#FAFBFC", borderRadius: 0, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 9 },
-  searchInput: { flex: 1, fontSize: 14, color: ADMIN_TEXT },
-  topIconBtn: { width: 42, height: 42, borderRadius: 0, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff" },
-  newOrderBtn: { minHeight: 42, borderRadius: 0, backgroundColor: ADMIN_GREEN, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  newOrderText: { color: "#fff", fontWeight: "900", fontSize: 13 },
-  content: { padding: 24, paddingBottom: 80 },
-  pageGap: { gap: 18 },
-  heroCard: { minHeight: 108, borderRadius: 0, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: "row", alignItems: "center", gap: 18, overflow: "hidden" },
-  heroTitle: { color: "#fff", fontSize: 28, fontWeight: "900" },
-  heroSub: { color: "#B9C8C0", fontSize: 14, marginTop: 6, fontWeight: "700" },
-  heroButton: { minHeight: 42, borderRadius: 0, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
-  heroButtonText: { color: "#fff", fontWeight: "900" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   statCard: { flexGrow: 1, flexBasis: 220, minHeight: 150, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18 },
   statTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-<<<<<<< HEAD
   statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
   statValue: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "800", marginTop: 6 },
   statIcon: { width: 42, height: 42, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-=======
-  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  statValue: { color: ADMIN_TEXT, fontSize: 25, fontWeight: "900", marginTop: 6 },
-  statIcon: { width: 42, height: 42, borderRadius: 0, alignItems: "center", justifyContent: "center" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   statBottom: { flex: 1, marginTop: 13, flexDirection: "row", alignItems: "flex-end", gap: 10 },
   statChange: { fontSize: 12, fontWeight: "700", minWidth: 70 },
   dashboardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
@@ -2375,7 +1745,6 @@ const styles = StyleSheet.create({
   card: { flexGrow: 1, flexBasis: 300, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, gap: 15, ...ADMIN_CARD_SHADOW },
   bigChartCard: { flexBasis: 560 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-<<<<<<< HEAD
   sectionTitle: { ...textHeading, fontSize: 16 },
   sectionSub: { ...textBody, fontSize: 12, marginTop: 3 },
   segment: { flexDirection: "row", backgroundColor: "#F2F5F7", borderRadius: 16, padding: 4, gap: 3 },
@@ -2402,38 +1771,9 @@ const styles = StyleSheet.create({
   funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
   funnelTrack: { height: 10, borderRadius: 16, backgroundColor: "#EEF3F6", overflow: "hidden", marginTop: 6 },
   funnelFill: { height: "100%", borderRadius: 16 },
-=======
-  sectionTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "900" },
-  sectionSub: { color: ADMIN_MUTED, fontSize: 13, marginTop: 3, fontWeight: "700" },
-  segment: { flexDirection: "row", backgroundColor: "#F1F4F6", borderRadius: 0, padding: 4, gap: 3 },
-  segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 0, fontSize: 12, fontWeight: "900", overflow: "hidden" },
-  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "900" },
-  miniBars: { height: 220, flexDirection: "row", alignItems: "flex-end", gap: 10, paddingTop: 12 },
-  miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },
-  miniBarItem: { flex: 1, minWidth: 14, alignItems: "center", gap: 6 },
-  miniBarTrack: { flex: 1, width: "100%", minHeight: 54, borderRadius: 0, backgroundColor: "#EEF3F6", overflow: "hidden", justifyContent: "flex-end" },
-  miniBarFill: { width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0, opacity: 0.92 },
-  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "800" },
-  chartValue: { color: ADMIN_TEXT, fontSize: 10, fontWeight: "900" },
-  goalCircle: { alignSelf: "center", width: 150, height: 150, borderRadius: 0, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center", marginTop: 10 },
-  goalNumber: { color: ADMIN_TEXT, fontSize: 30, fontWeight: "900" },
-  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "800", textAlign: "center" },
-  barLineTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  hTrack: { height: 9, backgroundColor: "#EEF3F6", borderRadius: 0, overflow: "hidden" },
-  hFill: { height: "100%", borderRadius: 0 },
-  funnelTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  funnelTrack: { height: 10, borderRadius: 0, backgroundColor: "#EEF3F6", overflow: "hidden", marginTop: 6 },
-  funnelFill: { height: "100%", borderRadius: 0 },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   funnelRates: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
   rateText: { fontSize: 12, fontWeight: "700" },
   activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-<<<<<<< HEAD
   activityIcon: { width: 34, height: 34, borderRadius: 16, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
   activityTitle: { ...textHeading, fontSize: 13, fontWeight: "700" },
   activityMeta: { ...textBody, fontSize: 12, marginTop: 2 },
@@ -2451,32 +1791,12 @@ const styles = StyleSheet.create({
   scoreBox: { width: 60, height: 60, borderRadius: 16, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
   scoreText: { color: ADMIN_GREEN, fontSize: 18, fontWeight: "800" },
   scoreLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
-=======
-  activityIcon: { width: 34, height: 34, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  activityTitle: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  activityMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  emptyText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "700", lineHeight: 20 },
-  analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  featureChip: { color: ADMIN_TEXT, backgroundColor: "#F1F4F6", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0, overflow: "hidden", fontSize: 12, fontWeight: "900" },
-  predictionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
-  predictionImage: { width: 64, height: 64, borderRadius: 0, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  predictionTitle: { color: ADMIN_TEXT, fontSize: 15, fontWeight: "900" },
-  predictionMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  predictionSuggestion: { color: ADMIN_TEXT, fontSize: 12, marginTop: 6, fontWeight: "700", lineHeight: 18 },
-  predictionSmall: { color: ADMIN_MUTED, fontSize: 11, marginTop: 4, fontWeight: "800" },
-  scoreBox: { width: 60, height: 60, borderRadius: 0, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
-  scoreText: { color: ADMIN_GREEN, fontSize: 19, fontWeight: "900" },
-  scoreLabel: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "800" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
   formCard: { flexBasis: 650 },
   formTitle: { color: ADMIN_TEXT, fontSize: 17, fontWeight: "900" },
   formGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   formGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   inputWrap: { flex: 1, minWidth: 170, gap: 6 },
-<<<<<<< HEAD
   inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700" },
   input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "500" },
   inputMultiline: { minHeight: 88, textAlignVertical: "top" },
@@ -2496,32 +1816,10 @@ const styles = StyleSheet.create({
   dangerBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
   dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "600" },
   marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-=======
-  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "900" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "700" },
-  inputMultiline: { minHeight: 88, textAlignVertical: "top" },
-  mediaUploadBox: { borderWidth: 1, borderColor: "#D8F3E6", backgroundColor: "#F6E7E3", borderRadius: 0, padding: 12, gap: 8 },
-  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: "900" },
-  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700", lineHeight: 18 },
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 9, alignItems: "center" },
-  primaryBtn: { minHeight: 44, borderRadius: 0, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "900" },
-  secondaryBtn: { minHeight: 44, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  secondaryBtnWide: { minHeight: 44, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: "#F6E7E3", paddingHorizontal: 16, alignItems: "center", justifyContent: "center", alignSelf: "flex-start" },
-  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "900" },
-  smallBtn: { minHeight: 36, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "900" },
-  saleBtn: { minHeight: 36, borderRadius: 0, backgroundColor: "#FFF7E6", borderWidth: 1, borderColor: "#F3D38A", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "900" },
-  dangerBtn: { minHeight: 36, borderRadius: 0, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "900" },
-  marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   previewTopIcons: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   previewImageBox: { height: 270, backgroundColor: "#EEF1F3", alignItems: "center", justifyContent: "center" },
   previewImage: { width: "100%", height: "100%", resizeMode: "cover" },
   previewThumbRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#fff" },
-<<<<<<< HEAD
   previewThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#EEF1F3" },
   previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16 },
   previewDiscountText: { color: "#fff", fontSize: 11, fontWeight: "700" },
@@ -2535,25 +1833,9 @@ const styles = StyleSheet.create({
   messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, fontWeight: "500" },
   sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
   sendText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-=======
-  previewThumb: { flex: 1, height: 58, borderRadius: 0, backgroundColor: "#EEF1F3" },
-  previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0 },
-  previewDiscountText: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  previewBody: { padding: 18, gap: 11 },
-  previewTitle: { color: "#000", fontSize: 25, fontWeight: "900" },
-  previewPriceLine: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  previewSalePrice: { color: "#111", fontSize: 24, fontWeight: "600" },
-  previewOldPrice: { color: "#777", fontSize: 22, textDecorationLine: "line-through" },
-  previewMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 0, paddingHorizontal: 12, paddingVertical: 9, fontWeight: "700" },
-  sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 0, paddingHorizontal: 14, paddingVertical: 9 },
-  sendText: { color: "#fff", fontWeight: "900" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
   productTop: { flexDirection: "row", gap: 12 },
-<<<<<<< HEAD
   productImage: { width: 78, height: 78, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
   productTitle: { ...textHeading, fontSize: 14 },
   productMeta: { ...textBody, fontSize: 12, marginTop: 3 },
@@ -2569,23 +1851,6 @@ const styles = StyleSheet.create({
   successBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   adminThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#F2F5F7" },
   counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
-=======
-  productImage: { width: 78, height: 78, borderRadius: 0, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  productTitle: { color: ADMIN_TEXT, fontSize: 16, fontWeight: "900" },
-  productMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800", marginTop: 3 },
-  productPriceLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  productPrice: { color: ADMIN_GREEN, fontSize: 16, fontWeight: "900" },
-  productOldPrice: { color: ADMIN_MUTED, fontSize: 14, textDecorationLine: "line-through", fontWeight: "800" },
-  discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 0, overflow: "hidden", fontSize: 11, fontWeight: "900" },
-  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "700" },
-  adminThumbRow: { flexDirection: "row", gap: 8 },
-
-  adminOrderQuickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 9 },
-  successBtnText: { color: "#fff", fontSize: 12, fontWeight: "900" },
-  adminThumb: { flex: 1, height: 58, borderRadius: 0, backgroundColor: "#F1F4F6" },
-  counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0, overflow: "hidden", fontSize: 12, fontWeight: "900" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   selectChip: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#fff" },
   selectChipActive: { borderColor: ADMIN_GREEN, backgroundColor: "#E9F8F1" },
@@ -2620,21 +1885,12 @@ const styles = StyleSheet.create({
   paymentMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
   loadingCard: { minHeight: 220, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center", gap: 12 },
   authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
-<<<<<<< HEAD
   authCard: { width: "100%", maxWidth: 420, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
   logoBox: { width: 54, height: 54, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
   authTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "800", textAlign: "center" },
   authText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "500", textAlign: "center", lineHeight: 21 },
   authButton: { minHeight: 46, alignSelf: "stretch", backgroundColor: ADMIN_GREEN, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   authButtonText: { color: "#fff", fontSize: 14, fontWeight: "700" },
-=======
-  authCard: { width: "100%", maxWidth: 420, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
-  logoBox: { width: 54, height: 54, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  authTitle: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "900", textAlign: "center" },
-  authText: { color: ADMIN_MUTED, fontSize: 14, fontWeight: "700", textAlign: "center", lineHeight: 21 },
-  authButton: { minHeight: 46, alignSelf: "stretch", backgroundColor: ADMIN_GREEN, borderRadius: 0, alignItems: "center", justifyContent: "center" },
-  authButtonText: { color: "#fff", fontSize: 14, fontWeight: "900" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
 
   // ML visuals
   modelRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
@@ -2644,15 +1900,9 @@ const styles = StyleSheet.create({
   modelType: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 12 },
   modelMetric: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 12 },
   forecastMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-<<<<<<< HEAD
   metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 10, gap: 2 },
   metricNum: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 16 },
   metricCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
-=======
-  metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 10, gap: 2 },
-  metricNum: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 17 },
-  metricCap: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 11 },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   forecastChart: { flexDirection: "row", alignItems: "flex-end", height: 180, gap: 6, paddingTop: 8 },
   forecastCol: { flex: 1, alignItems: "center", gap: 4 },
   forecastVal: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "600" },
@@ -2661,7 +1911,6 @@ const styles = StyleSheet.create({
   forecastLbl: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 16, flexWrap: "wrap" },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-<<<<<<< HEAD
   legendDot: { width: 14, height: 14, borderRadius: 16 },
   legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500" },
   demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
@@ -2674,32 +1923,13 @@ const styles = StyleSheet.create({
   bannedWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   bannedChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 16 },
   bannedChipText: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
-=======
-  legendDot: { width: 14, height: 14, borderRadius: 0 },
-  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "800" },
-  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: "900", textTransform: "uppercase" },
-  segBar: { flexDirection: "row", height: 22, width: "100%", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-  segRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  segDot: { width: 16, height: 16, borderRadius: 0 },
-  segName: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 13 },
-  segMeta: { color: ADMIN_MUTED, fontWeight: "700", fontSize: 11 },
-  segPct: { color: ADMIN_TEXT, fontWeight: "900", fontSize: 15 },
-  bannedWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  bannedChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 0 },
-  bannedChipText: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 13 },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   statMiniRow: { flexDirection: "row", gap: 10 },
   statMini: { flex: 1, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 10, gap: 2 },
   statMiniNum: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 15 },
   statMiniCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
   orderDetailCard: { borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, padding: 12, gap: 7 },
-<<<<<<< HEAD
   statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 16 },
   statusChipText: { color: "#fff", fontWeight: "700", fontSize: 11, textTransform: "uppercase" },
-=======
-  statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 0 },
-  statusChipText: { color: "#fff", fontWeight: "900", fontSize: 10, textTransform: "uppercase" },
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
   statusOk: { backgroundColor: "#2E7D32" },
   statusBad: { backgroundColor: ADMIN_RED },
   statusPend: { backgroundColor: ADMIN_ORANGE },
@@ -2708,7 +1938,6 @@ const styles = StyleSheet.create({
   orderItemName: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
   orderItemPrice: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 13 },
   accThumb: { width: 48, height: 48, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center" },
-<<<<<<< HEAD
   statusRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },
   statusDot: { width: 12, height: 12, borderRadius: 16 },
   statusName: { flex: 1, color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
@@ -2718,6 +1947,4 @@ const styles = StyleSheet.create({
   errMsg: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 17 },
   swatch: { width: 34, height: 34, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontSize: 13, fontWeight: "600" },
-=======
->>>>>>> 5538ca45114eeabef52c301d4b4f63505d5442ca
 });

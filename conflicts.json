@@ -1,0 +1,708 @@
+[
+  {
+    "head": [],
+    "incoming": [],
+    "endLine": 1386
+  },
+  {
+    "head": [
+      "      <SectionHeader title=\"Qu?n l� tr� choi\" subtitle=\"Th�m, s?a, x�a game v� c?u h�nh thu?ng xu.\" />\r",
+      "      <View style={styles.card}>\r",
+      "        <Text style={styles.formTitle}>{editingGameId ? \"S?a game\" : \"Th�m game\"}</Text>\r",
+      "        <View style={styles.formGrid2}>\r",
+      "          <Input label=\"Slug\" value={gameForm.slug} onChangeText={(slug: string) => setGameForm((p) => ({ ...p, slug }))} placeholder=\"quiz-battle\" />\r",
+      "          <Input label=\"T�n game\" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder=\"Quiz Battle\" />\r",
+      "        </View>\r",
+      "        <Input label=\"M� t?\" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder=\"Tr? l?i nhanh nh?n xu\" multiline />\r",
+      "        <Input label=\"Thu?ng xu\" value={gameForm.rewardCoins} keyboardType=\"numeric\" onChangeText={(rewardCoins: string) => setGameForm((p) => ({ ...p, rewardCoins }))} placeholder=\"30\" />\r",
+      "        <View style={styles.actionRow}>\r",
+      "          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? \"C?p nh?t game\" : \"Th�m game\"}</Text></Pressable>\r",
+      "          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>X�a form</Text></Pressable>\r"
+    ],
+    "incoming": [
+      "      <SectionHeader title=\"Quản lý trò chơi\" subtitle=\"Thêm, sửa, xóa game và cấu hình thưởng xu.\" />\r",
+      "      <View style={styles.card}>\r",
+      "        <Text style={styles.formTitle}>{editingGameId ? \"Sửa game\" : \"Thêm game\"}</Text>\r",
+      "        <View style={styles.formGrid2}>\r",
+      "          <Input label=\"Slug\" value={gameForm.slug} onChangeText={(slug: string) => setGameForm((p) => ({ ...p, slug }))} placeholder=\"quiz-battle\" />\r",
+      "          <Input label=\"Tên game\" value={gameForm.name} onChangeText={(name: string) => setGameForm((p) => ({ ...p, name }))} placeholder=\"Quiz Battle\" />\r",
+      "        </View>\r",
+      "        <Input label=\"Mô tả\" value={gameForm.description} onChangeText={(description: string) => setGameForm((p) => ({ ...p, description }))} placeholder=\"Trả lời nhanh nhận xu\" multiline />\r",
+      "        <Input label=\"Thưởng xu\" value={gameForm.rewardCoins} keyboardType=\"numeric\" onChangeText={(rewardCoins: string) => setGameForm((p) => ({ ...p, rewardCoins }))} placeholder=\"30\" />\r",
+      "        <View style={styles.actionRow}>\r",
+      "          <Pressable onPress={saveGame} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingGameId ? \"Cập nhật game\" : \"Thêm game\"}</Text></Pressable>\r",
+      "          <Pressable onPress={() => { setGameForm(emptyGameForm); setEditingGameId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>\r"
+    ],
+    "startLine": 1445,
+    "endLine": 1471
+  },
+  {
+    "head": [
+      "            <Text style={styles.productMeta}>{game.slug} � Thu?ng {formatNumber(game.rewardCoins)} xu</Text>\r",
+      "            <Text style={styles.productDesc}>{game.description || \"Chua c� m� t?.\"}</Text>\r",
+      "            <View style={styles.actionRow}>\r",
+      "              <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>S?a</Text></Pressable>\r",
+      "              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>X�a</Text></Pressable>\r"
+    ],
+    "incoming": [
+      "            <Text style={styles.productMeta}>{game.slug} • Thưởng {formatNumber(game.rewardCoins)} xu</Text>\r",
+      "            <Text style={styles.productDesc}>{game.description || \"Chưa có mô tả.\"}</Text>\r",
+      "            <View style={styles.actionRow}>\r",
+      "              <Pressable onPress={() => editGame(game)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>\r",
+      "              <Pressable onPress={() => deleteGame(game)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>\r"
+    ],
+    "startLine": 1478,
+    "endLine": 1490
+  },
+  {
+    "head": [
+      "    if (!user?.id) {\r",
+      "      Alert.alert(\"L?i\", \"B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.\");\r",
+      "      return;\r",
+      "    }\r"
+    ],
+    "incoming": [],
+    "startLine": 1501,
+    "endLine": 1507
+  },
+  {
+    "head": [
+      "      Alert.alert(\"L?i\", e?.message || \"Kh�ng th�m du?c t? c?m.\");\r",
+      "    }\r",
+      "  };\r",
+      "  const removeBanned = async (id: string) => {\r",
+      "    if (!user?.id) {\r",
+      "      Alert.alert(\"L?i\", \"B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.\");\r",
+      "      return;\r",
+      "    }\r"
+    ],
+    "incoming": [
+      "      Alert.alert(\"Lỗi\", e?.message || \"Không thêm được từ cấm.\");\r",
+      "    }\r",
+      "  };\r",
+      "  const removeBanned = async (id: string) => {\r"
+    ],
+    "startLine": 1513,
+    "endLine": 1527
+  },
+  {
+    "head": [
+      "      Alert.alert(\"L?i\", e?.message || \"Kh�ng xo� du?c.\");\r"
+    ],
+    "incoming": [
+      "      Alert.alert(\"Lỗi\", e?.message || \"Không xoá được.\");\r"
+    ],
+    "startLine": 1532,
+    "endLine": 1536
+  },
+  {
+    "head": [
+      "      <SectionHeader title=\"T? c?m khi b�nh lu?n / d�nh gi�\" subtitle=\"��nh gi� ch?a c�c t? n�y s? b? ch?n t? d?ng tr�n to�n app.\" right={<Text style={styles.counterPill}>{bannedWords.length} t?</Text>} />\r",
+      "      <View style={[styles.card, styles.formCard]}>\r",
+      "        <Text style={styles.formTitle}>Th�m t? c?m</Text>\r",
+      "        <View style={{ flexDirection: \"row\", gap: 10, alignItems: \"flex-end\" }}>\r",
+      "          <View style={{ flex: 1 }}>\r",
+      "            <Input label=\"T? / c?m t? c?m\" value={bannedInput} onChangeText={setBannedInput} placeholder=\"v� d?: l?a d?o\" />\r",
+      "          </View>\r",
+      "          <Pressable onPress={addBanned} style={styles.newOrderBtn}><Feather name=\"plus\" size={16} color=\"#fff\" /><Text style={styles.newOrderText}>Th�m</Text></Pressable>\r",
+      "        </View>\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"Danh s�ch t? c?m\" subtitle=\"B?m v�o m?t t? d? xo�\" />\r"
+    ],
+    "incoming": [
+      "      <SectionHeader title=\"Từ cấm khi bình luận / đánh giá\" subtitle=\"Đánh giá chứa các từ này sẽ bị chặn tự động trên toàn app.\" right={<Text style={styles.counterPill}>{bannedWords.length} từ</Text>} />\r",
+      "      <View style={[styles.card, styles.formCard]}>\r",
+      "        <Text style={styles.formTitle}>Thêm từ cấm</Text>\r",
+      "        <View style={{ flexDirection: \"row\", gap: 10, alignItems: \"flex-end\" }}>\r",
+      "          <View style={{ flex: 1 }}>\r",
+      "            <Input label=\"Từ / cụm từ cấm\" value={bannedInput} onChangeText={setBannedInput} placeholder=\"ví dụ: lừa đảo\" />\r",
+      "          </View>\r",
+      "          <Pressable onPress={addBanned} style={styles.newOrderBtn}><Feather name=\"plus\" size={16} color=\"#fff\" /><Text style={styles.newOrderText}>Thêm</Text></Pressable>\r",
+      "        </View>\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"Danh sách từ cấm\" subtitle=\"Bấm vào một từ để xoá\" />\r"
+    ],
+    "startLine": 1542,
+    "endLine": 1568
+  },
+  {
+    "head": [
+      "          )) : <Text style={styles.emptyText}>Chua c� t? c?m. H? th?ng t? seed danh s�ch m?c d?nh khi c� d�nh gi� d?u ti�n.</Text>}\r"
+    ],
+    "incoming": [
+      "          )) : <Text style={styles.emptyText}>Chưa có từ cấm. Hệ thống tự seed danh sách mặc định khi có đánh giá đầu tiên.</Text>}\r"
+    ],
+    "startLine": 1575,
+    "endLine": 1579
+  },
+  {
+    "head": [
+      "    return /(phu kien|ph? ki?n|accessor|non|n�n|mu |mu|kinh|k�nh|khan|khan|tui|t�i|vong|v�ng|dong ho|d?ng h?|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|b�ng tai|du |d�)/.test(hay);\r"
+    ],
+    "incoming": [
+      "    return /(phu kien|phụ kiện|accessor|non|nón|mu |mũ|kinh|kính|khan|khăn|tui|túi|vong|vòng|dong ho|đồng hồ|hat|cap|bag|watch|necklace|bracelet|scarf|belt|glasses|earring|bong tai|bông tai|du |dù)/.test(hay);\r"
+    ],
+    "startLine": 1587,
+    "endLine": 1591
+  },
+  {
+    "head": [
+      "      <SectionHeader title=\"Qu?n l� ph? ki?n (danh m?c ri�ng)\" subtitle=\"N�n, mu, v�ng tay, t�i, k�nh, khan, d?ng h?... Qu?n l� ?nh, m�u, size, t?n kho, gi� ri�ng cho nh�m ph? ki?n.\" right={<Text style={styles.counterPill}>{accessoryProducts.length} ph? ki?n</Text>} />\r",
+      "      <View style={[styles.card, { gap: 10 }]}>\r",
+      "        <Text style={styles.formTitle}>Th�m ph? ki?n m?i</Text>\r",
+      "        <Text style={styles.userMeta}>M? form s?n ph?m v?i danh m?c d� d?t s?n l� \"phu-kien\". B?n ch? c?n di?n t�n, ?nh, m�u, size, s? lu?ng v� gi�.</Text>\r",
+      "        <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name=\"plus\" size={16} color=\"#fff\" /><Text style={styles.newOrderText}>Th�m ph? ki?n</Text></Pressable>\r"
+    ],
+    "incoming": [
+      "      <SectionHeader title=\"Quản lý phụ kiện (danh mục riêng)\" subtitle=\"Nón, mũ, vòng tay, túi, kính, khăn, đồng hồ... Quản lý ảnh, màu, size, tồn kho, giá riêng cho nhóm phụ kiện.\" right={<Text style={styles.counterPill}>{accessoryProducts.length} phụ kiện</Text>} />\r",
+      "      <View style={[styles.card, { gap: 10 }]}>\r",
+      "        <Text style={styles.formTitle}>Thêm phụ kiện mới</Text>\r",
+      "        <Text style={styles.userMeta}>Mở form sản phẩm với danh mục đã đặt sẵn là \"phu-kien\". Bạn chỉ cần điền tên, ảnh, màu, size, số lượng và giá.</Text>\r",
+      "        <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name=\"plus\" size={16} color=\"#fff\" /><Text style={styles.newOrderText}>Thêm phụ kiện</Text></Pressable>\r"
+    ],
+    "startLine": 1603,
+    "endLine": 1615
+  },
+  {
+    "head": [
+      "              <Text numberOfLines={1} style={styles.userEmail}>{item.category || \"phu-kien\"} � {formatMoney(item.price)}</Text>\r",
+      "              <Text style={styles.userMeta}>T?n kho {formatNumber(item.stockQuantity || item.stock || 0)} � {(item.status || \"active\") === \"active\" ? \"�ang b�n\" : \"�ang ?n\"} {Array.isArray(item.colors) && item.colors.length ? `� ${item.colors.length} m�u` : \"\"} {Array.isArray(item.sizes) && item.sizes.length ? `� ${item.sizes.length} size` : \"\"}</Text>\r"
+    ],
+    "incoming": [
+      "              <Text numberOfLines={1} style={styles.userEmail}>{item.category || \"phu-kien\"} • {formatMoney(item.price)}</Text>\r",
+      "              <Text style={styles.userMeta}>Tồn kho {formatNumber(item.stockQuantity || item.stock || 0)} • {(item.status || \"active\") === \"active\" ? \"Đang bán\" : \"Đang ẩn\"} {Array.isArray(item.colors) && item.colors.length ? `• ${item.colors.length} màu` : \"\"} {Array.isArray(item.sizes) && item.sizes.length ? `• ${item.sizes.length} size` : \"\"}</Text>\r"
+    ],
+    "startLine": 1623,
+    "endLine": 1629
+  },
+  {
+    "head": [
+      "        )) : <Text style={styles.emptyText}>Chua c� ph? ki?n. B?m \"Th�m ph? ki?n\" d? t?o, ho?c d?t danh m?c s?n ph?m l� \"phu-kien\".</Text>}\r",
+      "      </View>\r",
+      "    </View>\r",
+      "  );\r",
+      "\r",
+      "  const renderSystemStatus = () => {\r",
+      "    const m = systemStatus?.metrics || kpis;\r",
+      "    return (\r",
+      "      <View style={styles.pageGap}>\r",
+      "        <SectionHeader title=\"Tr?ng th�i h? th?ng AI\" subtitle=\"Theo d�i CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo th?i gian th?c.\" right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size=\"small\" color=\"#fff\" /> : <Feather name=\"refresh-cw\" size={14} color=\"#fff\" />}<Text style={styles.newOrderText}>Ki?m tra l?i</Text></Pressable>} />\r",
+      "        <View style={styles.tableCard}>\r",
+      "          {systemStatus?.services ? systemStatus.services.map((s: any) => (\r",
+      "            <View key={s.key} style={styles.userRow}>\r",
+      "              <View style={[styles.statusDot, { backgroundColor: s.online ? \"#2E7D32\" : ADMIN_RED, width: 14, height: 14 }]} />\r",
+      "              <View style={{ flex: 1 }}>\r",
+      "                <Text style={styles.userName}>{s.label}</Text>\r",
+      "                {s.url ? <Text numberOfLines={1} style={styles.userMeta}>{s.url}</Text> : <Text style={styles.userMeta}>D?ch v? n?i b?</Text>}\r",
+      "              </View>\r",
+      "              <View style={[styles.statusChip, s.online ? styles.statusOk : styles.statusBad]}><Text style={styles.statusChipText}>{s.online ? \"Online\" : \"Offline\"}</Text></View>\r",
+      "            </View>\r",
+      "          )) : <Text style={styles.emptyText}>{statusLoading ? \"�ang ki?m tra d?ch v?...\" : \"Chua l?y du?c tr?ng th�i � b?m \\\"Ki?m tra l?i\\\". N?u backend chua ch?y, h�y kh?i d?ng server c?ng 4000.\"}</Text>}\r",
+      "          <View style={{ paddingTop: 10 }}>\r",
+      "            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || \"NVIDIA RTX 5060 Ti\"} � CUDA: {systemStatus?.cuda || \"Available\"}</Text>\r",
+      "            <Text style={styles.userMeta}>Hu?ng d?n restart: ch?y l?i ti?n tr�nh tuong ?ng (CatVTON :7861, Gateway :8001, Ollama :11434) r?i b?m Ki?m tra l?i.</Text>\r",
+      "          </View>\r",
+      "        </View>\r",
+      "\r",
+      "        <View style={styles.statsGrid}>\r",
+      "          <StatCard label=\"Th? d? 2D\" value={formatNumber(m.tryon2d || 0)} change={`${formatNumber(m.tryon2dFail || 0)} l?i`} icon=\"camera\" accent={ADMIN_GREEN} />\r",
+      "          <StatCard label=\"T?o 3D\" value={formatNumber(m.tryon3d || 0)} change={`${formatNumber(m.tryon3dFail || 0)} l?i`} icon=\"box\" accent={ADMIN_BLUE} />\r",
+      "          <StatCard label=\"T? l? l?i 2D\" value={`${m.tryon2d ? Math.round((m.tryon2dFail / m.tryon2d) * 100) : 0}%`} change=\"AI try-on\" icon=\"alert-triangle\" accent={ADMIN_ORANGE} />\r",
+      "          <StatCard label=\"T? l? l?i 3D\" value={`${m.tryon3d ? Math.round((m.tryon3dFail / m.tryon3d) * 100) : 0}%`} change=\"AI 3D\" icon=\"alert-triangle\" accent={ADMIN_RED} />\r",
+      "        </View>\r",
+      "\r",
+      "        <View style={styles.card}>\r",
+      "          <SectionHeader title=\"Nh?t k� l?i g?n d�y\" subtitle=\"20 l?i m?i nh?t t? AI/h? th?ng\" />\r",
+      "          {systemStatus?.errors?.length ? systemStatus.errors.map((e: any, i: number) => (\r",
+      "            <View key={i} style={styles.errRow}>\r",
+      "              <Feather name=\"alert-triangle\" size={13} color={ADMIN_ORANGE} />\r",
+      "              <View style={{ flex: 1 }}>\r",
+      "                <Text style={styles.errScope}>{e.scope} � {String(e.at).slice(0, 19).replace(\"T\", \" \")}</Text>\r",
+      "                <Text style={styles.errMsg}>{e.message}</Text>\r",
+      "              </View>\r",
+      "            </View>\r",
+      "          )) : <Text style={styles.emptyText}>Chua c� l?i n�o du?c ghi nh?n.</Text>}\r",
+      "        </View>\r",
+      "      </View>\r",
+      "    );\r",
+      "  };\r",
+      "\r",
+      "  const renderTryon2d = () => (\r",
+      "    <View style={styles.pageGap}>\r",
+      "      <SectionHeader title=\"Qu?n l� th? d? AI 2D (CatVTON)\" subtitle={'Theo d�i s? lu?t, t? l? l?i v� c?u h�nh model. B?m \"Ki?m tra l?i\" ? tab Tr?ng th�i d? c?p nh?t.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lu?t</Text>} />\r",
+      "      <View style={styles.statsGrid}>\r",
+      "        <StatCard label=\"T?ng lu?t th? d?\" value={formatNumber(kpis.tryon2d || 0)} change=\"t?t c? th?i gian\" icon=\"camera\" accent={ADMIN_GREEN} />\r",
+      "        <StatCard label=\"Th�nh c�ng\" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change=\"u?c t�nh\" icon=\"check-circle\" accent={ADMIN_BLUE} />\r",
+      "        <StatCard label=\"L?i\" value={formatNumber(kpis.tryon2dFail || 0)} change=\"xem nh?t k�\" icon=\"alert-triangle\" accent={ADMIN_RED} />\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"C?u h�nh engine\" subtitle=\"Chu?i uu ti�n model m?nh\" />\r",
+      "        <Text style={styles.userMeta}>Uu ti�n: CatVTON (JAPANO_CATVTON_URL:7861) ? AI Gateway (:8001, model=strong, steps=50, hd) ? gh�p ?nh d? ph�ng (lu�n ra k?t qu?).</Text>\r",
+      "        <Text style={styles.userMeta}>L?y ?nh s?n ph?m: g?i c? gallery (t?i da 6 ?nh) cho model d? th? d? h?p l� hon.</Text>\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"L?ch s? th? d? (?nh v�o / ?nh k?t qu?)\" subtitle=\"C?n b?t luu l?ch s? ? backend\" />\r",
+      "        <Text style={styles.emptyText}>Chua b?t luu l?ch s? ?nh. �? hi?n danh s�ch ?nh ngu?i d�ng / ?nh qu?n �o / ?nh k?t qu? k�m seed/steps/cfg v� n�t ch?y l?i, c?n th�m collection luu m?i lu?t th? d? ? backend (m�nh c� th? l�m ? v�ng sau).</Text>\r",
+      "      </View>\r",
+      "    </View>\r",
+      "  );\r",
+      "\r",
+      "  const renderModel3d = () => (\r",
+      "    <View style={styles.pageGap}>\r",
+      "      <SectionHeader title=\"Qu?n l� m?u 3D\" subtitle=\"S? lu?t d?ng 3D v� tr?ng th�i. GLB storage c?n backend luu file.\" right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lu?t</Text>} />\r",
+      "      <View style={styles.statsGrid}>\r",
+      "        <StatCard label=\"T?ng lu?t t?o 3D\" value={formatNumber(kpis.tryon3d || 0)} change=\"t?t c? th?i gian\" icon=\"box\" accent={ADMIN_GREEN} />\r",
+      "        <StatCard label=\"Th�nh c�ng\" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change=\"u?c t�nh\" icon=\"check-circle\" accent={ADMIN_BLUE} />\r",
+      "        <StatCard label=\"L?i\" value={formatNumber(kpis.tryon3dFail || 0)} change=\"xem nh?t k�\" icon=\"alert-triangle\" accent={ADMIN_RED} />\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"Danh s�ch model .glb\" subtitle=\"C?n b?t luu GLB ? backend\" />\r",
+      "        <Text style={styles.emptyText}>Hi?n 3D tr? v? khung h�nh nhi?u g�c (turntable). �? c� danh s�ch file .glb + ?nh d?u v�o + n�t xem/t?i/x�a + tr?ng th�i TripoSR + th?i gian d?ng, c?n backend luu file GLB (TripoSR/SF3D) v� metadata. C� th? b? sung ? v�ng sau.</Text>\r",
+      "      </View>\r",
+      "    </View>\r",
+      "  );\r",
+      "\r",
+      "  const renderBotChat = () => (\r",
+      "    <View style={styles.pageGap}>\r",
+      "      <SectionHeader title=\"Bot chat & G?i � th?i trang\" subtitle=\"Model, embedding v� ki?m duy?t.\" />\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"C?u h�nh model\" subtitle=\"�ang d�ng\" />\r",
+      "        <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) � Embedding: nomic-embed-text</Text>\r",
+      "        <Text style={styles.userMeta}>Phong c�ch: tu v?n th?i trang th�n thi?n, g?i � outfit theo d?p v� s?n ph?m trong shop.</Text>\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"Danh s�ch t? c?m\" subtitle=\"�p d?ng cho b�nh lu?n & chat\" right={<Pressable onPress={() => setActiveTab(\"moderation\")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Qu?n l�</Text></Pressable>} />\r",
+      "        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} t? dang ch?n. V�o tab T? c?m d? th�m/xo�.</Text>\r",
+      "      </View>\r",
+      "      <View style={styles.card}>\r",
+      "        <SectionHeader title=\"Prompt h? th?ng & l?ch s? h?i d�p\" subtitle=\"C?n backend luu prompt/l?ch s?\" />\r",
+      "        <Text style={styles.emptyText}>�? ch?nh prompt h? th?ng tr?c ti?p v� xem l?ch s? c�u h?i/c�u tr? l?i + d�nh gi� h?u �ch, c?n th�m API luu prompt & h?i tho?i ? backend. C� th? b? sung ? v�ng sau.</Text>\r"
+    ],
+    "incoming": [
+      "        )) : <Text style={styles.emptyText}>Chưa có phụ kiện. Bấm \"Thêm phụ kiện\" để tạo, hoặc đặt danh mục sản phẩm là \"phu-kien\".</Text>}\r"
+    ],
+    "startLine": 1636,
+    "endLine": 1739
+  },
+  {
+    "head": [
+      "      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>�ang t?i d? li?u admin...</Text></View>;\r"
+    ],
+    "incoming": [
+      "      return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>Đang tải dữ liệu admin...</Text></View>;\r"
+    ],
+    "startLine": 1746,
+    "endLine": 1750
+  },
+  {
+    "head": [
+      "const textBase = { fontFamily: \"System\" };\r",
+      "const textHeading = { ...textBase, color: ADMIN_TEXT, fontWeight: \"700\", fontSize: 16 };\r",
+      "const textBody = { ...textBase, color: ADMIN_MUTED, fontWeight: \"500\", fontSize: 13 };\r",
+      "\r"
+    ],
+    "incoming": [],
+    "startLine": 1781,
+    "endLine": 1787
+  },
+  {
+    "head": [
+      "  sidebarLogo: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  sidebarBrand: { color: \"#fff\", fontSize: 16, fontWeight: \"700\" },\r",
+      "  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 11, fontWeight: \"600\", letterSpacing: 1.2, marginTop: 2 },\r",
+      "  navContent: { gap: 4, paddingBottom: 20 },\r",
+      "  navContentMobile: { gap: 8, alignItems: \"center\" },\r",
+      "  navGroup: { color: \"#52605A\", fontSize: 11, fontWeight: \"700\", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },\r",
+      "  navItem: { minHeight: 40, borderRadius: 16, paddingHorizontal: 12, flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r"
+    ],
+    "incoming": [
+      "  sidebarLogo: { width: 34, height: 34, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  sidebarBrand: { color: \"#fff\", fontSize: 15, fontWeight: \"900\" },\r",
+      "  sidebarSub: { color: ADMIN_MUTED_DARK, fontSize: 10, fontWeight: \"900\", letterSpacing: 1.2, marginTop: 2 },\r",
+      "  navContent: { gap: 4, paddingBottom: 20 },\r",
+      "  navContentMobile: { gap: 8, alignItems: \"center\" },\r",
+      "  navGroup: { color: \"#52605A\", fontSize: 10, fontWeight: \"900\", letterSpacing: 1.1, marginTop: 14, marginBottom: 5 },\r",
+      "  navItem: { minHeight: 40, borderRadius: 0, paddingHorizontal: 12, flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r"
+    ],
+    "startLine": 1793,
+    "endLine": 1809
+  },
+  {
+    "head": [
+      "  navBadge: { marginLeft: \"auto\", backgroundColor: ADMIN_GREEN, color: \"#fff\", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 16, fontSize: 11, fontWeight: \"600\", overflow: \"hidden\" },\r",
+      "  sidebarUser: { marginTop: \"auto\", paddingTop: 14, borderTopWidth: 1, borderTopColor: \"#13221B\", flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  sidebarAvatar: { width: 34, height: 34, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  sidebarAvatarText: { color: \"#fff\", fontSize: 13, fontWeight: \"700\" },\r",
+      "  sidebarUserName: { color: \"#fff\", fontSize: 13, fontWeight: \"700\" },\r",
+      "  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 12, fontWeight: \"500\", marginTop: 2 },\r",
+      "  mainArea: { flex: 1, minWidth: 0 },\r",
+      "  topbar: { minHeight: 68, backgroundColor: \"#fff\", borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER, paddingHorizontal: 22, flexDirection: \"row\", alignItems: \"center\", gap: 12 },\r",
+      "  searchBox: { flex: 1, maxWidth: 420, minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#FAFBFC\", borderRadius: 16, paddingHorizontal: 12, flexDirection: \"row\", alignItems: \"center\", gap: 9 },\r",
+      "  searchInput: { flex: 1, fontSize: 14, fontWeight: \"500\", color: ADMIN_TEXT },\r",
+      "  topIconBtn: { width: 42, height: 42, borderRadius: 16, alignItems: \"center\", justifyContent: \"center\", borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#fff\" },\r",
+      "  newOrderBtn: { minHeight: 42, borderRadius: 16, backgroundColor: ADMIN_GREEN, paddingHorizontal: 14, flexDirection: \"row\", alignItems: \"center\", justifyContent: \"center\", gap: 8 },\r",
+      "  newOrderText: { color: \"#fff\", fontWeight: \"700\", fontSize: 13 },\r",
+      "  content: { padding: 24, paddingBottom: 80 },\r",
+      "  pageGap: { gap: 18 },\r",
+      "  heroCard: { minHeight: 108, borderRadius: 16, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: \"row\", alignItems: \"center\", gap: 18, overflow: \"hidden\" },\r",
+      "  heroTitle: { color: \"#fff\", fontSize: 24, fontWeight: \"800\" },\r",
+      "  heroSub: { color: \"#B9C8C0\", fontSize: 13, marginTop: 6, fontWeight: \"500\" },\r",
+      "  heroButton: { minHeight: 42, borderRadius: 16, backgroundColor: \"rgba(255,255,255,0.16)\", paddingHorizontal: 15, flexDirection: \"row\", gap: 8, alignItems: \"center\" },\r",
+      "  heroButtonText: { color: \"#fff\", fontSize: 13, fontWeight: \"700\" },\r"
+    ],
+    "incoming": [
+      "  navBadge: { marginLeft: \"auto\", backgroundColor: ADMIN_GREEN, color: \"#fff\", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 0, fontSize: 10, overflow: \"hidden\" },\r",
+      "  sidebarUser: { marginTop: \"auto\", paddingTop: 14, borderTopWidth: 1, borderTopColor: \"#13221B\", flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  sidebarAvatar: { width: 34, height: 34, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  sidebarAvatarText: { color: \"#fff\", fontWeight: \"900\" },\r",
+      "  sidebarUserName: { color: \"#fff\", fontSize: 12, fontWeight: \"900\" },\r",
+      "  sidebarUserRole: { color: ADMIN_MUTED_DARK, fontSize: 11, marginTop: 2 },\r",
+      "  mainArea: { flex: 1, minWidth: 0 },\r",
+      "  topbar: { minHeight: 68, backgroundColor: \"#fff\", borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER, paddingHorizontal: 22, flexDirection: \"row\", alignItems: \"center\", gap: 12 },\r",
+      "  searchBox: { flex: 1, maxWidth: 420, minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#FAFBFC\", borderRadius: 0, paddingHorizontal: 12, flexDirection: \"row\", alignItems: \"center\", gap: 9 },\r",
+      "  searchInput: { flex: 1, fontSize: 14, color: ADMIN_TEXT },\r",
+      "  topIconBtn: { width: 42, height: 42, borderRadius: 0, alignItems: \"center\", justifyContent: \"center\", borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#fff\" },\r",
+      "  newOrderBtn: { minHeight: 42, borderRadius: 0, backgroundColor: ADMIN_GREEN, paddingHorizontal: 14, flexDirection: \"row\", alignItems: \"center\", justifyContent: \"center\", gap: 8 },\r",
+      "  newOrderText: { color: \"#fff\", fontWeight: \"900\", fontSize: 13 },\r",
+      "  content: { padding: 24, paddingBottom: 80 },\r",
+      "  pageGap: { gap: 18 },\r",
+      "  heroCard: { minHeight: 108, borderRadius: 0, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: \"row\", alignItems: \"center\", gap: 18, overflow: \"hidden\" },\r",
+      "  heroTitle: { color: \"#fff\", fontSize: 28, fontWeight: \"900\" },\r",
+      "  heroSub: { color: \"#B9C8C0\", fontSize: 14, marginTop: 6, fontWeight: \"700\" },\r",
+      "  heroButton: { minHeight: 42, borderRadius: 0, backgroundColor: \"rgba(255,255,255,0.16)\", paddingHorizontal: 15, flexDirection: \"row\", gap: 8, alignItems: \"center\" },\r",
+      "  heroButtonText: { color: \"#fff\", fontWeight: \"900\" },\r"
+    ],
+    "startLine": 1813,
+    "endLine": 1855
+  },
+  {
+    "head": [
+      "  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"600\" },\r",
+      "  statValue: { color: ADMIN_TEXT, fontSize: 24, fontWeight: \"800\", marginTop: 6 },\r",
+      "  statIcon: { width: 42, height: 42, borderRadius: 16, alignItems: \"center\", justifyContent: \"center\" },\r"
+    ],
+    "incoming": [
+      "  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"800\" },\r",
+      "  statValue: { color: ADMIN_TEXT, fontSize: 25, fontWeight: \"900\", marginTop: 6 },\r",
+      "  statIcon: { width: 42, height: 42, borderRadius: 0, alignItems: \"center\", justifyContent: \"center\" },\r"
+    ],
+    "startLine": 1859,
+    "endLine": 1867
+  },
+  {
+    "head": [
+      "  sectionTitle: { ...textHeading, fontSize: 16 },\r",
+      "  sectionSub: { ...textBody, fontSize: 12, marginTop: 3 },\r",
+      "  segment: { flexDirection: \"row\", backgroundColor: \"#F2F5F7\", borderRadius: 16, padding: 4, gap: 3 },\r",
+      "  segmentActive: { backgroundColor: \"#fff\", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, fontSize: 12, fontWeight: \"700\", overflow: \"hidden\" },\r",
+      "  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: \"600\" },\r",
+      "  miniBars: { height: 220, flexDirection: \"row\", alignItems: \"flex-end\", gap: 10, paddingTop: 12 },\r",
+      "  miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },\r",
+      "  miniBarItem: { flex: 1, minWidth: 14, alignItems: \"center\", gap: 6 },\r",
+      "  miniBarTrack: { flex: 1, width: \"100%\", minHeight: 54, borderRadius: 16, backgroundColor: \"#EEF3F6\", overflow: \"hidden\", justifyContent: \"flex-end\" },\r",
+      "  miniBarFill: { width: \"100%\", borderTopLeftRadius: 6, borderTopRightRadius: 6, opacity: 0.92 },\r",
+      "  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: \"500\" },\r",
+      "  chartValue: { color: ADMIN_TEXT, fontSize: 11, fontWeight: \"700\" },\r",
+      "  goalCircle: { alignSelf: \"center\", width: 150, height: 150, borderRadius: 16, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\", marginTop: 10 },\r",
+      "  goalNumber: { color: ADMIN_TEXT, fontSize: 24, fontWeight: \"800\" },\r",
+      "  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"600\" },\r",
+      "  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: \"600\", textAlign: \"center\" },\r",
+      "  barLineTop: { flexDirection: \"row\", alignItems: \"center\", justifyContent: \"space-between\", gap: 10 },\r",
+      "  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: \"700\" },\r",
+      "  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"600\" },\r",
+      "  hTrack: { height: 9, backgroundColor: \"#EEF3F6\", borderRadius: 16, overflow: \"hidden\" },\r",
+      "  hFill: { height: \"100%\", borderRadius: 16 },\r",
+      "  funnelTop: { flexDirection: \"row\", justifyContent: \"space-between\", alignItems: \"center\" },\r",
+      "  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: \"700\" },\r",
+      "  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"600\" },\r",
+      "  funnelTrack: { height: 10, borderRadius: 16, backgroundColor: \"#EEF3F6\", overflow: \"hidden\", marginTop: 6 },\r",
+      "  funnelFill: { height: \"100%\", borderRadius: 16 },\r"
+    ],
+    "incoming": [
+      "  sectionTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: \"900\" },\r",
+      "  sectionSub: { color: ADMIN_MUTED, fontSize: 13, marginTop: 3, fontWeight: \"700\" },\r",
+      "  segment: { flexDirection: \"row\", backgroundColor: \"#F1F4F6\", borderRadius: 0, padding: 4, gap: 3 },\r",
+      "  segmentActive: { backgroundColor: \"#fff\", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 0, fontSize: 12, fontWeight: \"900\", overflow: \"hidden\" },\r",
+      "  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: \"900\" },\r",
+      "  miniBars: { height: 220, flexDirection: \"row\", alignItems: \"flex-end\", gap: 10, paddingTop: 12 },\r",
+      "  miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },\r",
+      "  miniBarItem: { flex: 1, minWidth: 14, alignItems: \"center\", gap: 6 },\r",
+      "  miniBarTrack: { flex: 1, width: \"100%\", minHeight: 54, borderRadius: 0, backgroundColor: \"#EEF3F6\", overflow: \"hidden\", justifyContent: \"flex-end\" },\r",
+      "  miniBarFill: { width: \"100%\", borderTopLeftRadius: 0, borderTopRightRadius: 0, opacity: 0.92 },\r",
+      "  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: \"800\" },\r",
+      "  chartValue: { color: ADMIN_TEXT, fontSize: 10, fontWeight: \"900\" },\r",
+      "  goalCircle: { alignSelf: \"center\", width: 150, height: 150, borderRadius: 0, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\", marginTop: 10 },\r",
+      "  goalNumber: { color: ADMIN_TEXT, fontSize: 30, fontWeight: \"900\" },\r",
+      "  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"800\" },\r",
+      "  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: \"800\", textAlign: \"center\" },\r",
+      "  barLineTop: { flexDirection: \"row\", alignItems: \"center\", justifyContent: \"space-between\", gap: 10 },\r",
+      "  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: \"900\" },\r",
+      "  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"900\" },\r",
+      "  hTrack: { height: 9, backgroundColor: \"#EEF3F6\", borderRadius: 0, overflow: \"hidden\" },\r",
+      "  hFill: { height: \"100%\", borderRadius: 0 },\r",
+      "  funnelTop: { flexDirection: \"row\", justifyContent: \"space-between\", alignItems: \"center\" },\r",
+      "  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: \"900\" },\r",
+      "  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"900\" },\r",
+      "  funnelTrack: { height: 10, borderRadius: 0, backgroundColor: \"#EEF3F6\", overflow: \"hidden\", marginTop: 6 },\r",
+      "  funnelFill: { height: \"100%\", borderRadius: 0 },\r"
+    ],
+    "startLine": 1875,
+    "endLine": 1929
+  },
+  {
+    "head": [
+      "  activityIcon: { width: 34, height: 34, borderRadius: 16, backgroundColor: \"#E9F8F1\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  activityTitle: { ...textHeading, fontSize: 13, fontWeight: \"700\" },\r",
+      "  activityMeta: { ...textBody, fontSize: 12, marginTop: 2 },\r",
+      "  emptyText: { ...textBody, fontSize: 13, lineHeight: 20 },\r",
+      "  analyticsGrid: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 16 },\r",
+      "  featureWrap: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8 },\r",
+      "  featureChip: { color: ADMIN_TEXT, backgroundColor: \"#F2F5F7\", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: \"hidden\", fontSize: 12, fontWeight: \"700\" },\r",
+      "  predictionGrid: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 14 },\r",
+      "  predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: \"row\", alignItems: \"center\", gap: 12 },\r",
+      "  predictionImage: { width: 64, height: 64, borderRadius: 16, backgroundColor: \"#F2F5F7\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  predictionTitle: { ...textHeading, fontSize: 14 },\r",
+      "  predictionMeta: { ...textBody, fontSize: 12, marginTop: 2 },\r",
+      "  predictionSuggestion: { ...textBody, fontSize: 12, marginTop: 6, lineHeight: 18 },\r",
+      "  predictionSmall: { ...textBody, fontSize: 11, marginTop: 4 },\r",
+      "  scoreBox: { width: 60, height: 60, borderRadius: 16, backgroundColor: \"#ECFFF7\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  scoreText: { color: ADMIN_GREEN, fontSize: 18, fontWeight: \"800\" },\r",
+      "  scoreLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: \"600\" },\r"
+    ],
+    "incoming": [
+      "  activityIcon: { width: 34, height: 34, borderRadius: 0, backgroundColor: \"#E9F8F1\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  activityTitle: { color: ADMIN_TEXT, fontSize: 13, fontWeight: \"900\" },\r",
+      "  activityMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: \"700\" },\r",
+      "  emptyText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: \"700\", lineHeight: 20 },\r",
+      "  analyticsGrid: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 16 },\r",
+      "  featureWrap: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8 },\r",
+      "  featureChip: { color: ADMIN_TEXT, backgroundColor: \"#F1F4F6\", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0, overflow: \"hidden\", fontSize: 12, fontWeight: \"900\" },\r",
+      "  predictionGrid: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 14 },\r",
+      "  predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: \"row\", alignItems: \"center\", gap: 12 },\r",
+      "  predictionImage: { width: 64, height: 64, borderRadius: 0, backgroundColor: \"#F1F4F6\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  predictionTitle: { color: ADMIN_TEXT, fontSize: 15, fontWeight: \"900\" },\r",
+      "  predictionMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: \"800\" },\r",
+      "  predictionSuggestion: { color: ADMIN_TEXT, fontSize: 12, marginTop: 6, fontWeight: \"700\", lineHeight: 18 },\r",
+      "  predictionSmall: { color: ADMIN_MUTED, fontSize: 11, marginTop: 4, fontWeight: \"800\" },\r",
+      "  scoreBox: { width: 60, height: 60, borderRadius: 0, backgroundColor: \"#ECFFF7\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  scoreText: { color: ADMIN_GREEN, fontSize: 19, fontWeight: \"900\" },\r",
+      "  scoreLabel: { color: ADMIN_MUTED, fontSize: 10, fontWeight: \"800\" },\r"
+    ],
+    "startLine": 1933,
+    "endLine": 1969
+  },
+  {
+    "head": [
+      "  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"700\" },\r",
+      "  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, backgroundColor: \"#FAFBFC\", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: \"500\" },\r",
+      "  inputMultiline: { minHeight: 88, textAlignVertical: \"top\" },\r",
+      "  mediaUploadBox: { borderWidth: 1, borderColor: \"#D8F3E6\", backgroundColor: \"#F6E7E3\", borderRadius: 16, padding: 12, gap: 8 },\r",
+      "  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: \"700\" },\r",
+      "  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"500\", lineHeight: 18 },\r",
+      "  actionRow: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 9, alignItems: \"center\" },\r",
+      "  primaryBtn: { minHeight: 44, borderRadius: 16, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  primaryBtnText: { color: \"#fff\", fontSize: 13, fontWeight: \"700\" },\r",
+      "  secondaryBtn: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#fff\", paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  secondaryBtnWide: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: \"#F6E7E3\", paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\", alignSelf: \"flex-start\" },\r",
+      "  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: \"700\" },\r",
+      "  smallBtn: { minHeight: 36, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\", backgroundColor: \"#fff\" },\r",
+      "  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: \"600\" },\r",
+      "  saleBtn: { minHeight: 36, borderRadius: 16, backgroundColor: \"#FFF7E6\", borderWidth: 1, borderColor: \"#F3D38A\", paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  saleBtnText: { color: \"#B45309\", fontSize: 12, fontWeight: \"600\" },\r",
+      "  dangerBtn: { minHeight: 36, borderRadius: 16, backgroundColor: \"#FFF1F2\", borderWidth: 1, borderColor: \"#FBC4C8\", paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: \"600\" },\r",
+      "  marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: \"#fff\", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: \"hidden\" },\r"
+    ],
+    "incoming": [
+      "  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"900\" },\r",
+      "  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, backgroundColor: \"#FAFBFC\", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: \"700\" },\r",
+      "  inputMultiline: { minHeight: 88, textAlignVertical: \"top\" },\r",
+      "  mediaUploadBox: { borderWidth: 1, borderColor: \"#D8F3E6\", backgroundColor: \"#F6E7E3\", borderRadius: 0, padding: 12, gap: 8 },\r",
+      "  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: \"900\" },\r",
+      "  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"700\", lineHeight: 18 },\r",
+      "  actionRow: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 9, alignItems: \"center\" },\r",
+      "  primaryBtn: { minHeight: 44, borderRadius: 0, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  primaryBtnText: { color: \"#fff\", fontSize: 13, fontWeight: \"900\" },\r",
+      "  secondaryBtn: { minHeight: 44, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: \"#fff\", paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  secondaryBtnWide: { minHeight: 44, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: \"#F6E7E3\", paddingHorizontal: 16, alignItems: \"center\", justifyContent: \"center\", alignSelf: \"flex-start\" },\r",
+      "  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: \"900\" },\r",
+      "  smallBtn: { minHeight: 36, borderRadius: 0, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\", backgroundColor: \"#fff\" },\r",
+      "  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: \"900\" },\r",
+      "  saleBtn: { minHeight: 36, borderRadius: 0, backgroundColor: \"#FFF7E6\", borderWidth: 1, borderColor: \"#F3D38A\", paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  saleBtnText: { color: \"#B45309\", fontSize: 12, fontWeight: \"900\" },\r",
+      "  dangerBtn: { minHeight: 36, borderRadius: 0, backgroundColor: \"#FFF1F2\", borderWidth: 1, borderColor: \"#FBC4C8\", paddingHorizontal: 11, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: \"900\" },\r",
+      "  marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 0, backgroundColor: \"#fff\", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: \"hidden\" },\r"
+    ],
+    "startLine": 1976,
+    "endLine": 2016
+  },
+  {
+    "head": [
+      "  previewThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: \"#EEF1F3\" },\r",
+      "  previewDiscount: { position: \"absolute\", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16 },\r",
+      "  previewDiscountText: { color: \"#fff\", fontSize: 11, fontWeight: \"700\" },\r",
+      "  previewBody: { padding: 18, gap: 11 },\r",
+      "  previewTitle: { ...textHeading, fontSize: 20 },\r",
+      "  previewPriceLine: { flexDirection: \"row\", alignItems: \"flex-end\", gap: 12 },\r",
+      "  previewSalePrice: { ...textHeading, fontSize: 18, color: ADMIN_TEXT },\r",
+      "  previewOldPrice: { ...textBody, fontSize: 14, textDecorationLine: \"line-through\" },\r",
+      "  previewMeta: { ...textBody, fontSize: 12 },\r",
+      "  messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 12, flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  messageText: { flex: 1, color: \"#111\", backgroundColor: \"#F0F1F6\", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, fontWeight: \"500\" },\r",
+      "  sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },\r",
+      "  sendText: { color: \"#fff\", fontSize: 13, fontWeight: \"700\" },\r"
+    ],
+    "incoming": [
+      "  previewThumb: { flex: 1, height: 58, borderRadius: 0, backgroundColor: \"#EEF1F3\" },\r",
+      "  previewDiscount: { position: \"absolute\", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0 },\r",
+      "  previewDiscountText: { color: \"#fff\", fontSize: 12, fontWeight: \"900\" },\r",
+      "  previewBody: { padding: 18, gap: 11 },\r",
+      "  previewTitle: { color: \"#000\", fontSize: 25, fontWeight: \"900\" },\r",
+      "  previewPriceLine: { flexDirection: \"row\", alignItems: \"flex-end\", gap: 12 },\r",
+      "  previewSalePrice: { color: \"#111\", fontSize: 24, fontWeight: \"600\" },\r",
+      "  previewOldPrice: { color: \"#777\", fontSize: 22, textDecorationLine: \"line-through\" },\r",
+      "  previewMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"800\" },\r",
+      "  messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 12, flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  messageText: { flex: 1, color: \"#111\", backgroundColor: \"#F0F1F6\", borderRadius: 0, paddingHorizontal: 12, paddingVertical: 9, fontWeight: \"700\" },\r",
+      "  sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 0, paddingHorizontal: 14, paddingVertical: 9 },\r",
+      "  sendText: { color: \"#fff\", fontWeight: \"900\" },\r"
+    ],
+    "startLine": 2021,
+    "endLine": 2049
+  },
+  {
+    "head": [
+      "  productImage: { width: 78, height: 78, borderRadius: 16, backgroundColor: \"#F2F5F7\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  productTitle: { ...textHeading, fontSize: 14 },\r",
+      "  productMeta: { ...textBody, fontSize: 12, marginTop: 3 },\r",
+      "  productPriceLine: { flexDirection: \"row\", alignItems: \"center\", flexWrap: \"wrap\", gap: 8, marginTop: 6 },\r",
+      "  productPrice: { color: ADMIN_GREEN, fontSize: 15, fontWeight: \"700\" },\r",
+      "  productOldPrice: { color: ADMIN_MUTED, fontSize: 13, textDecorationLine: \"line-through\", fontWeight: \"500\" },\r",
+      "  discountBadge: { color: \"#fff\", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16, overflow: \"hidden\", fontSize: 11, fontWeight: \"700\" },\r",
+      "  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: \"500\" },\r",
+      "  adminThumbRow: { flexDirection: \"row\", gap: 8 },\r",
+      "\r",
+      "  adminOrderQuickRow: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8, marginTop: 10 },\r",
+      "  successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9 },\r",
+      "  successBtnText: { color: \"#fff\", fontSize: 12, fontWeight: \"700\" },\r",
+      "  adminThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: \"#F2F5F7\" },\r",
+      "  counterPill: { color: ADMIN_GREEN, backgroundColor: \"#E9F8F1\", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: \"hidden\", fontSize: 12, fontWeight: \"700\" },\r"
+    ],
+    "incoming": [
+      "  productImage: { width: 78, height: 78, borderRadius: 0, backgroundColor: \"#F1F4F6\", alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  productTitle: { color: ADMIN_TEXT, fontSize: 16, fontWeight: \"900\" },\r",
+      "  productMeta: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"800\", marginTop: 3 },\r",
+      "  productPriceLine: { flexDirection: \"row\", alignItems: \"center\", flexWrap: \"wrap\", gap: 8, marginTop: 6 },\r",
+      "  productPrice: { color: ADMIN_GREEN, fontSize: 16, fontWeight: \"900\" },\r",
+      "  productOldPrice: { color: ADMIN_MUTED, fontSize: 14, textDecorationLine: \"line-through\", fontWeight: \"800\" },\r",
+      "  discountBadge: { color: \"#fff\", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 0, overflow: \"hidden\", fontSize: 11, fontWeight: \"900\" },\r",
+      "  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: \"700\" },\r",
+      "  adminThumbRow: { flexDirection: \"row\", gap: 8 },\r",
+      "\r",
+      "  adminOrderQuickRow: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8, marginTop: 10 },\r",
+      "  successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 9 },\r",
+      "  successBtnText: { color: \"#fff\", fontSize: 12, fontWeight: \"900\" },\r",
+      "  adminThumb: { flex: 1, height: 58, borderRadius: 0, backgroundColor: \"#F1F4F6\" },\r",
+      "  counterPill: { color: ADMIN_GREEN, backgroundColor: \"#E9F8F1\", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 0, overflow: \"hidden\", fontSize: 12, fontWeight: \"900\" },\r"
+    ],
+    "startLine": 2053,
+    "endLine": 2085
+  },
+  {
+    "head": [
+      "  authCard: { width: \"100%\", maxWidth: 420, borderRadius: 16, backgroundColor: \"#fff\", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: \"center\", gap: 14 },\r",
+      "  logoBox: { width: 54, height: 54, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  authTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: \"800\", textAlign: \"center\" },\r",
+      "  authText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: \"500\", textAlign: \"center\", lineHeight: 21 },\r",
+      "  authButton: { minHeight: 46, alignSelf: \"stretch\", backgroundColor: ADMIN_GREEN, borderRadius: 16, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  authButtonText: { color: \"#fff\", fontSize: 14, fontWeight: \"700\" },\r"
+    ],
+    "incoming": [
+      "  authCard: { width: \"100%\", maxWidth: 420, borderRadius: 0, backgroundColor: \"#fff\", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: \"center\", gap: 14 },\r",
+      "  logoBox: { width: 54, height: 54, borderRadius: 0, backgroundColor: ADMIN_GREEN, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  authTitle: { color: ADMIN_TEXT, fontSize: 24, fontWeight: \"900\", textAlign: \"center\" },\r",
+      "  authText: { color: ADMIN_MUTED, fontSize: 14, fontWeight: \"700\", textAlign: \"center\", lineHeight: 21 },\r",
+      "  authButton: { minHeight: 46, alignSelf: \"stretch\", backgroundColor: ADMIN_GREEN, borderRadius: 0, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  authButtonText: { color: \"#fff\", fontSize: 14, fontWeight: \"900\" },\r"
+    ],
+    "startLine": 2120,
+    "endLine": 2134
+  },
+  {
+    "head": [
+      "  metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 10, gap: 2 },\r",
+      "  metricNum: { color: ADMIN_TEXT, fontWeight: \"800\", fontSize: 16 },\r",
+      "  metricCap: { color: ADMIN_MUTED, fontWeight: \"500\", fontSize: 11 },\r"
+    ],
+    "incoming": [
+      "  metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 10, gap: 2 },\r",
+      "  metricNum: { color: ADMIN_TEXT, fontWeight: \"900\", fontSize: 17 },\r",
+      "  metricCap: { color: ADMIN_MUTED, fontWeight: \"700\", fontSize: 11 },\r"
+    ],
+    "startLine": 2144,
+    "endLine": 2152
+  },
+  {
+    "head": [
+      "  legendDot: { width: 14, height: 14, borderRadius: 16 },\r",
+      "  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"500\" },\r",
+      "  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: \"700\", textTransform: \"uppercase\" },\r",
+      "  segBar: { flexDirection: \"row\", height: 22, width: \"100%\", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: \"hidden\" },\r",
+      "  segRow: { flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  segDot: { width: 16, height: 16, borderRadius: 16 },\r",
+      "  segName: { color: ADMIN_TEXT, fontWeight: \"700\", fontSize: 13 },\r",
+      "  segMeta: { color: ADMIN_MUTED, fontWeight: \"500\", fontSize: 11 },\r",
+      "  segPct: { color: ADMIN_TEXT, fontWeight: \"700\", fontSize: 14 },\r",
+      "  bannedWrap: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8 },\r",
+      "  bannedChip: { flexDirection: \"row\", alignItems: \"center\", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 16 },\r",
+      "  bannedChipText: { color: ADMIN_TEXT, fontWeight: \"600\", fontSize: 13 },\r"
+    ],
+    "incoming": [
+      "  legendDot: { width: 14, height: 14, borderRadius: 0 },\r",
+      "  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"800\" },\r",
+      "  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: \"900\", textTransform: \"uppercase\" },\r",
+      "  segBar: { flexDirection: \"row\", height: 22, width: \"100%\", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: \"hidden\" },\r",
+      "  segRow: { flexDirection: \"row\", alignItems: \"center\", gap: 10 },\r",
+      "  segDot: { width: 16, height: 16, borderRadius: 0 },\r",
+      "  segName: { color: ADMIN_TEXT, fontWeight: \"900\", fontSize: 13 },\r",
+      "  segMeta: { color: ADMIN_MUTED, fontWeight: \"700\", fontSize: 11 },\r",
+      "  segPct: { color: ADMIN_TEXT, fontWeight: \"900\", fontSize: 15 },\r",
+      "  bannedWrap: { flexDirection: \"row\", flexWrap: \"wrap\", gap: 8 },\r",
+      "  bannedChip: { flexDirection: \"row\", alignItems: \"center\", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 0 },\r",
+      "  bannedChipText: { color: ADMIN_TEXT, fontWeight: \"800\", fontSize: 13 },\r"
+    ],
+    "startLine": 2161,
+    "endLine": 2187
+  },
+  {
+    "head": [
+      "  statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 16 },\r",
+      "  statusChipText: { color: \"#fff\", fontWeight: \"700\", fontSize: 11, textTransform: \"uppercase\" },\r"
+    ],
+    "incoming": [
+      "  statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 0 },\r",
+      "  statusChipText: { color: \"#fff\", fontWeight: \"900\", fontSize: 10, textTransform: \"uppercase\" },\r"
+    ],
+    "startLine": 2193,
+    "endLine": 2199
+  },
+  {
+    "head": [
+      "  statusRow: { flexDirection: \"row\", alignItems: \"center\", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },\r",
+      "  statusDot: { width: 12, height: 12, borderRadius: 16 },\r",
+      "  statusName: { flex: 1, color: ADMIN_TEXT, fontWeight: \"600\", fontSize: 13 },\r",
+      "  statusVal: { fontWeight: \"700\", fontSize: 13 },\r",
+      "  errRow: { flexDirection: \"row\", gap: 8, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },\r",
+      "  errScope: { color: ADMIN_TEXT, fontWeight: \"700\", fontSize: 12 },\r",
+      "  errMsg: { color: ADMIN_MUTED, fontSize: 12, fontWeight: \"500\", lineHeight: 17 },\r",
+      "  swatch: { width: 34, height: 34, borderWidth: 2, alignItems: \"center\", justifyContent: \"center\" },\r",
+      "  hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontSize: 13, fontWeight: \"600\" },\r"
+    ],
+    "incoming": [],
+    "startLine": 2208,
+    "endLine": 2219
+  }
+]
