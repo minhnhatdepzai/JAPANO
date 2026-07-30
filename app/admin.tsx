@@ -1,4 +1,4 @@
-import * as ImagePicker from "expo-image-picker";
+﻿import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -62,7 +62,7 @@ type AdminProduct = {
   styleUseCase?: string;
 };
 
-type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games" | "accessories" | "moderation" | "tryon2d" | "model3d" | "botchat" | "system";
+type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games" | "accessories" | "moderation" | "tryon2d" | "model3d" | "botchat" | "system" | "reviews" | "inventory" | "settings" | "reports" | "staff" | "newsletter";
 
 type NavItem = { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap; group: string; badge?: string };
 
@@ -77,6 +77,7 @@ const ADMIN_MUTED = "#75808A";
 const ADMIN_BLUE = "#1E88E5";
 const ADMIN_ORANGE = "#F59E0B";
 const ADMIN_RED = "#EF4444";
+const ADMIN_PURPLE = "#8B5CF6";
 const ADMIN_CARD_SHADOW = Platform.OS === "web"
   ? ({ boxShadow: "0 10px 22px rgba(94,107,120,0.08)" } as any)
   : { shadowColor: "#5E6B78", shadowOpacity: 0.08, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 3 };
@@ -84,26 +85,32 @@ const ADMIN_CARD_SHADOW = Platform.OS === "web"
 const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1516257984-b1b4d707412e?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1516257984-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=80",
 ];
 
 const navItems: NavItem[] = [
-  { key: "overview", label: "T?ng quan", icon: "grid", group: "T?NG QUAN" },
-  { key: "analytics", label: "B�o c�o & Ph�n t�ch", icon: "bar-chart-2", group: "T?NG QUAN" },
-  { key: "transactions", label: "�on h�ng", icon: "shopping-bag", group: "B�N H�NG" },
-  { key: "products", label: "S?n ph?m", icon: "package", group: "B�N H�NG" },
-  { key: "accessories", label: "Danh m?c & Ph? ki?n", icon: "watch", group: "B�N H�NG" },
-  { key: "users", label: "Kh�ch h�ng", icon: "users", group: "B�N H�NG" },
-  { key: "promotions", label: "Khuy?n m�i", icon: "percent", group: "B�N H�NG" },
-  { key: "tryon2d", label: "Th? d? AI 2D", icon: "camera", group: "AI & 3D" },
-  { key: "model3d", label: "T?o m?u 3D", icon: "box", group: "AI & 3D" },
-  { key: "botchat", label: "Bot chat & G?i �", icon: "message-circle", group: "AI & 3D" },
-  { key: "moderation", label: "T? c?m", icon: "shield", group: "N?I DUNG" },
-  { key: "games", label: "Tr� choi", icon: "zap", group: "N?I DUNG" },
-  { key: "system", label: "Tr?ng th�i & Nh?t k�", icon: "activity", group: "H? TH?NG" },
+  { key: "overview", label: "Tổng quan", icon: "grid", group: "TỔNG QUAN" },
+  { key: "analytics", label: "Báo cáo & Phân tích", icon: "bar-chart-2", group: "TỔNG QUAN" },
+  { key: "transactions", label: "Đơn hàng", icon: "shopping-bag", group: "BÁN HÀNG" },
+  { key: "products", label: "Sản phẩm", icon: "package", group: "BÁN HÀNG" },
+  { key: "inventory", label: "Kho hàng", icon: "box", group: "BÁN HÀNG" },
+  { key: "accessories", label: "Danh mục & Phụ kiện", icon: "watch", group: "BÁN HÀNG" },
+  { key: "users", label: "Khách hàng", icon: "users", group: "BÁN HÀNG" },
+  { key: "reviews", label: "Đánh giá & Bình luận", icon: "star", group: "BÁN HÀNG" },
+  { key: "promotions", label: "Khuyến mãi", icon: "percent", group: "BÁN HÀNG" },
+  { key: "newsletter", label: "Email Marketing", icon: "mail", group: "MARKETING" },
+  { key: "tryon2d", label: "Thử đồ AI 2D", icon: "camera", group: "AI & 3D" },
+  { key: "model3d", label: "Tạo mẫu 3D", icon: "box", group: "AI & 3D" },
+  { key: "botchat", label: "Bot chat & Gợi ý", icon: "message-circle", group: "AI & 3D" },
+  { key: "moderation", label: "Từ cấm", icon: "shield", group: "NỘI DUNG" },
+  { key: "games", label: "Trò chơi", icon: "zap", group: "NỘI DUNG" },
+  { key: "staff", label: "Nhân viên & Quyền", icon: "user-check", group: "HỆ THỐNG" },
+  { key: "system", label: "Trạng thái & Nhật ký", icon: "activity", group: "HỆ THỐNG" },
+  { key: "settings", label: "Cài đặt cửa hàng", icon: "settings", group: "HỆ THỐNG" },
+  { key: "reports", label: "Báo cáo tài chính", icon: "bar-chart", group: "HỆ THỐNG" },
 ];
 
 const emptyProductForm = {
@@ -127,7 +134,7 @@ const emptyProductForm = {
   styleUseCase: "",
   sizes: "S, M, L, XL",
   dimensions: "",
-  colors: "�en, Tr?ng, Kem",
+  colors: "Đen, Trắng, Kem",
   fit: "Regular fit",
 };
 
@@ -156,6 +163,9 @@ const emptyPromotionForm = {
 
 const emptyNotificationForm = { title: "", content: "" };
 const emptyGameForm = { slug: "", name: "", description: "", rewardCoins: "" };
+const emptyStaffForm = { email: "", name: "", role: "staff", permissions: [] };
+const emptySettingsForm = { taxRate: "10", shippingBase: "30000", storeName: "JAPANO SHOP", storeEmail: "shop@japano.com", storePhone: "0123456789" };
+const emptyNewsletterForm = { subject: "", content: "", recipient: "all" };
 
 function formatMoney(value: any) {
   return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
@@ -236,7 +246,7 @@ function toProductForm(product: AdminProduct) {
     styleUseCase: product.styleUseCase || "",
     sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "S, M, L, XL",
     dimensions: product.dimensions || "",
-    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "�en, Tr?ng, Kem",
+    colors: Array.isArray(product.colors) ? product.colors.join(", ") : "Đen, Trắng, Kem",
     fit: product.fit || "Regular fit",
   };
 }
@@ -317,7 +327,7 @@ function fmtVnd(n: any) {
 }
 
 function ForecastChart({ forecast }: any) {
-  if (!forecast) return <Text style={styles.emptyText}>Chua c� d? li?u d? b�o.</Text>;
+  if (!forecast) return <Text style={styles.emptyText}>Chưa có dữ liệu để báo cáo.</Text>;
   const hist = forecast.history || [];
   const fc = forecast.forecast || [];
   const all = [...hist.map((h: any) => ({ ...h, kind: 'hist' })), ...fc.map((f: any) => ({ ...f, kind: 'fc' }))];
@@ -325,9 +335,9 @@ function ForecastChart({ forecast }: any) {
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.forecastMetrics}>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}d</Text><Text style={styles.metricCap}>D? b�o th�ng t?i</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>R� {forecast.r2}</Text><Text style={styles.metricCap}>�? kh?p m� h�nh</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '?' : '?'} {fmtVnd(Math.abs(forecast.slope))}d</Text><Text style={styles.metricCap}>Xu hu?ng/th�ng</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}đ</Text><Text style={styles.metricCap}>Dự báo tháng tới</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>R² {forecast.r2}</Text><Text style={styles.metricCap}>Độ khớp mô hình</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '↑' : '↓'} {fmtVnd(Math.abs(forecast.slope))}đ</Text><Text style={styles.metricCap}>Xu hướng/tháng</Text></View>
       </View>
       <View style={styles.forecastChart}>
         {all.map((a: any, i: number) => {
@@ -345,16 +355,16 @@ function ForecastChart({ forecast }: any) {
         })}
       </View>
       <View style={styles.legendRow}>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Th?c t?</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>D? b�o (OLS)</Text></View>
-        {forecast.demo ? <Text style={styles.demoTag}>d? li?u minh ho?</Text> : null}
+        <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Thực tế</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>Dự báo (OLS)</Text></View>
+        {forecast.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ</Text> : null}
       </View>
     </View>
   );
 }
 
 function SegmentsView({ segments }: any) {
-  if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chua d? kh�ch h�ng d? ph�n c?m.</Text>;
+  if (!segments || !segments.clusters?.length) return <Text style={styles.emptyText}>Chưa đủ khách hàng để phân cụm.</Text>;
   const total = Math.max(1, segments.clusters.reduce((s: number, c: any) => s + c.size, 0));
   return (
     <View style={{ gap: 12 }}>
@@ -368,7 +378,7 @@ function SegmentsView({ segments }: any) {
           <View style={[styles.segDot, { backgroundColor: c.color }]} />
           <View style={{ flex: 1 }}>
             <Text style={styles.segName}>{c.name}</Text>
-            <Text style={styles.segMeta}>{c.size} KH � chi TB {fmtVnd(c.avgSpend)}d � {c.avgOrders} don � mua c�ch {c.avgRecency} ng�y</Text>
+            <Text style={styles.segMeta}>{c.size} KH • chi TB {fmtVnd(c.avgSpend)}đ • {c.avgOrders} đơn • mua cách {c.avgRecency} ngày</Text>
           </View>
           <Text style={styles.segPct}>{Math.round((c.size / total) * 100)}%</Text>
         </View>
@@ -378,11 +388,10 @@ function SegmentsView({ segments }: any) {
   );
 }
 
-
 function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
   const rows = Array.isArray(data) ? data : [];
   const max = Math.max(1, ...rows.map((x: any) => Number(x.value || 0)));
-  if (!rows.length) return <Text style={styles.emptyText}>Chua c� d? li?u d? d? v? bi?u d?.</Text>;
+  if (!rows.length) return <Text style={styles.emptyText}>Chưa có dữ liệu để vẽ biểu đồ.</Text>;
   return (
     <View style={{ gap: 14 }}>
       {rows.map((item: any, index: number) => {
@@ -410,10 +419,10 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
   const customers = Math.max(users, Math.round(leads * 0.37));
   const paying = Math.max(orders, Math.round(customers * 0.72));
   const rows = [
-    { label: "Lu?t truy c?p", value: visitors, color: ADMIN_GREEN, pct: 100 },
-    { label: "Ti?m nang", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
-    { label: "Kh�ch h�ng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
-    { label: "�� mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
+    { label: "Lượt truy cập", value: visitors, color: ADMIN_GREEN, pct: 100 },
+    { label: "Tiềm năng", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
+    { label: "Khách hàng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
+    { label: "Đã mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
   ];
   return (
     <View style={{ gap: 13 }}>
@@ -429,9 +438,9 @@ function Funnel({ orders, users }: { orders: number; users: number }) {
         </View>
       ))}
       <View style={styles.funnelRates}>
-        <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy c?p?Ti?m nang 24%</Text>
-        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Ti?m nang?Kh�ch 37%</Text>
-        <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer?Paid 72%</Text>
+        <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy cập→Tiềm năng 24%</Text>
+        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Tiềm năng→Khách 37%</Text>
+        <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer→Paid 72%</Text>
       </View>
     </View>
   );
@@ -459,18 +468,18 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
         ))}
       </View>
       <View style={styles.previewBody}>
-        <Text numberOfLines={2} style={styles.previewTitle}>{name || "T�n s?n ph?m"}</Text>
+        <Text numberOfLines={2} style={styles.previewTitle}>{name || "Tên sản phẩm"}</Text>
         <View style={styles.previewPriceLine}>
           <Text style={styles.previewSalePrice}>{formatMoney(price)}</Text>
           {Number(originalPrice || 0) > Number(price || 0) ? <Text style={styles.previewOldPrice}>{formatMoney(originalPrice)}</Text> : null}
         </View>
-        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' � ') || 'S � M � L � XL'}</Text>
-        <Text style={styles.previewMeta}>M�u: {splitAdminList(colors).join(' � ') || '�en � Tr?ng � Kem'}</Text>
-        {!!dimensions ? <Text style={styles.previewMeta}>K�ch thu?c: {dimensions}</Text> : null}
+        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' • ') || 'S • M • L • XL'}</Text>
+        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(' • ') || 'Đen • Trắng • Kem'}</Text>
+        {!!dimensions ? <Text style={styles.previewMeta}>Kích thước: {dimensions}</Text> : null}
         <View style={styles.messageBox}>
           <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
-          <Text style={styles.messageText}>M?t h�ng n�y c�n kh�ng?</Text>
-          <View style={styles.sendPill}><Text style={styles.sendText}>G?i</Text></View>
+          <Text style={styles.messageText}>Mặt hàng này còn không?</Text>
+          <View style={styles.sendPill}><Text style={styles.sendText}>Gửi</Text></View>
         </View>
       </View>
     </View>
@@ -511,6 +520,11 @@ export default function AdminScreen() {
   const [games, setGames] = useState<any[]>([]);
   const [bannedWords, setBannedWords] = useState<any[]>([]);
   const [bannedInput, setBannedInput] = useState("");
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [inventoryLogs, setInventoryLogs] = useState<any[]>([]);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [storeSettings, setStoreSettings] = useState<any>(emptySettingsForm);
+  const [newsletters, setNewsletters] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -518,12 +532,17 @@ export default function AdminScreen() {
   const [uploadingMediaField, setUploadingMediaField] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingGameId, setEditingGameId] = useState<string | null>(null);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [voucherForm, setVoucherForm] = useState(emptyVoucherForm);
   const [promotionForm, setPromotionForm] = useState(emptyPromotionForm);
   const [notificationForm, setNotificationForm] = useState(emptyNotificationForm);
   const [gameForm, setGameForm] = useState(emptyGameForm);
+  const [staffForm, setStaffForm] = useState(emptyStaffForm);
+  const [settingsForm, setSettingsForm] = useState(emptySettingsForm);
+  const [newsletterForm, setNewsletterForm] = useState(emptyNewsletterForm);
   const [search, setSearch] = useState("");
+  const [reviewFilter, setReviewFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const isAdmin = user?.role === "admin" || (user as any)?.isAdmin;
   const openAdminLogin = () => router.replace({ pathname: "/login", params: { redirectTo: "/admin" } } as any);
   const dashboard = overview?.dashboard || {};
@@ -531,7 +550,7 @@ export default function AdminScreen() {
 
   const load = useCallback(async () => {
     if (!user?.id || !isAdmin) return;
-    const [nextOverview, nextUsers, nextProducts, nextOrders, nextPayments, nextVouchers, nextGames, nextBanned] = await Promise.all([
+    const [nextOverview, nextUsers, nextProducts, nextOrders, nextPayments, nextVouchers, nextGames, nextBanned, nextReviews, nextInventory, nextStaff, nextNewsletters] = await Promise.all([
       api.getAdminOverview(user.id),
       api.getAdminUsers(user.id),
       api.getAdminProducts(user.id),
@@ -540,6 +559,10 @@ export default function AdminScreen() {
       api.getAdminVouchers(user.id),
       api.getAdminGames(user.id),
       api.getBannedWords(user.id).catch(() => ({ words: [] })),
+      api.getAdminReviews(user.id).catch(() => ({ reviews: [] })),
+      api.getInventoryLogs(user.id).catch(() => ({ logs: [] })),
+      api.getStaffMembers(user.id).catch(() => ({ staff: [] })),
+      api.getNewsletters(user.id).catch(() => ({ newsletters: [] })),
     ]);
     setOverview(nextOverview);
     setUsers(Array.isArray(nextUsers?.users) ? nextUsers.users : []);
@@ -549,34 +572,37 @@ export default function AdminScreen() {
     setVouchers(Array.isArray(nextVouchers?.vouchers) ? nextVouchers.vouchers : []);
     setGames(Array.isArray(nextGames?.games) ? nextGames.games : []);
     setBannedWords(Array.isArray(nextBanned?.words) ? nextBanned.words : []);
+    setReviews(Array.isArray(nextReviews?.reviews) ? nextReviews.reviews : []);
+    setInventoryLogs(Array.isArray(nextInventory?.logs) ? nextInventory.logs : []);
+    setStaffMembers(Array.isArray(nextStaff?.staff) ? nextStaff.staff : []);
+    setNewsletters(Array.isArray(nextNewsletters?.newsletters) ? nextNewsletters.newsletters : []);
   }, [user?.id, isAdmin]);
 
   useEffect(() => {
     setLoading(true);
     load()
-      .catch((e: any) => Alert.alert("Kh�ng m? du?c admin", e?.message || "Ki?m tra backend/MongoDB."))
+      .catch((e: any) => Alert.alert("Không mở được admin", e?.message || "Kiểm tra backend/MongoDB."))
       .finally(() => setLoading(false));
   }, [load]);
 
   const refresh = async () => {
     setRefreshing(true);
-    await load().catch((e: any) => Alert.alert("Kh�ng t?i l?i du?c", e?.message || "C� l?i x?y ra."));
+    await load().catch((e: any) => Alert.alert("Không tải lại được", e?.message || "Có lỗi xảy ra."));
     setRefreshing(false);
   };
-
 
   const quickUpdateOrder = async (order: any, nextStatus: string) => {
     if (!user?.id) return;
     const orderId = String(order.id || order._id || "");
-    if (!orderId) return Alert.alert("Thi?u m� don", "Kh�ng t�m th?y ID don h�ng.");
-    const labelMap: any = { paid: "�� thanh to�n", shipping: "�ang giao", delivered: "�� nh?n", completed: "Ho�n t?t", cancelled: "�� h?y", processing: "Ch? x? l�" };
+    if (!orderId) return Alert.alert("Thiếu mã đơn", "Không tìm thấy ID đơn hàng.");
+    const labelMap: any = { paid: "Đã thanh toán", shipping: "Đang giao", delivered: "Đã nhận", completed: "Hoàn tất", cancelled: "Đã hủy", processing: "Chờ xử lý" };
     try {
       setActionId(`order-${nextStatus}-${orderId}`);
       const res = await api.updateAdminOrderStatus(user.id, orderId, nextStatus);
-      Alert.alert(labelMap[nextStatus] || "�� c?p nh?t", res?.message || "�� c?p nh?t don h�ng.");
+      Alert.alert(labelMap[nextStatus] || "Đã cập nhật", res?.message || "Đã cập nhật đơn hàng.");
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng c?p nh?t du?c don", e?.message || "Ki?m tra backend.");
+      Alert.alert("Không cập nhật được đơn", e?.message || "Kiểm tra backend.");
     } finally {
       setActionId(null);
     }
@@ -594,6 +620,14 @@ export default function AdminScreen() {
     return users.filter((u) => `${u.name || ""} ${u.fullName || ""} ${u.email}`.toLowerCase().includes(q));
   }, [users, search]);
 
+  const filteredReviews = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let filtered = reviews;
+    if (reviewFilter !== "all") filtered = filtered.filter((r) => r.status === reviewFilter);
+    if (!q) return filtered;
+    return filtered.filter((r) => `${r.productName} ${r.userName} ${r.content}`.toLowerCase().includes(q));
+  }, [reviews, search, reviewFilter]);
+
   const revenueByMonth = Array.isArray(dashboard?.revenueByMonth) ? dashboard.revenueByMonth.map((x: any) => ({ label: String(x.month || x.label || "").slice(5), value: Number(x.value ?? x.revenue ?? 0) })) : [];
   const topProducts = Array.isArray(dashboard?.salesByProduct) ? dashboard.salesByProduct : [];
   const predictions = Array.isArray(dashboard?.ml?.predictions) ? dashboard.ml.predictions : [];
@@ -606,14 +640,15 @@ export default function AdminScreen() {
   const hiddenProducts = products.filter((p) => (p.status || "active") !== "active").length;
   const activeVouchers = vouchers.filter((v) => v.active !== false && (v.kind || "voucher") === "voucher").length;
   const activePromotions = vouchers.filter((v) => v.active !== false && v.kind === "promotion").length;
+  const pendingReviews = reviews.filter((r) => r.status === "pending").length;
   const latestActivity = [
-    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `�on #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} � ${o.status || "pending"}` })),
-    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh to�n ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} � ${compactDate(p.createdAt)}` })),
+    ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `Đơn #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} • ${o.status || "pending"}` })),
+    ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toán ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} • ${compactDate(p.createdAt)}` })),
   ].slice(0, 6);
 
   const saveProduct = async () => {
     if (!user?.id) return;
-    if (!productForm.name.trim()) return Alert.alert("Thi?u t�n", "Nh?p t�n s?n ph?m tru?c khi luu.");
+    if (!productForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên sản phẩm trước khi lưu.");
     try {
       setActionId("product-save");
       const body = {
@@ -633,9 +668,9 @@ export default function AdminScreen() {
       setProductForm(emptyProductForm);
       setEditingProductId(null);
       await load();
-      Alert.alert("�� luu", "S?n ph?m d� du?c c?p nh?t.");
+      Alert.alert("Đã lưu", "Sản phẩm đã được cập nhật.");
     } catch (e: any) {
-      Alert.alert("Kh�ng luu du?c", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không lưu được", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -662,7 +697,7 @@ export default function AdminScreen() {
       });
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng t?o gi?m gi�", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không tạo giảm giá", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -675,7 +710,7 @@ export default function AdminScreen() {
       await api.changeAdminProductPrice(user.id, product.id, percent);
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng ch?nh du?c gi�", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không chỉnh được giá", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -688,7 +723,49 @@ export default function AdminScreen() {
       await api.setAdminProductHidden(user.id, product.id, (product.status || "active") === "active");
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng ?n/hi?n du?c", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không ẩn/hiện được", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const adjustInventory = async (productId: string, quantity: number, type: "import" | "export" | "adjust") => {
+    if (!user?.id) return;
+    try {
+      setActionId(`inventory-${productId}`);
+      await api.adjustInventory(user.id, productId, quantity, type);
+      await load();
+      Alert.alert("Đã cập nhật kho", "Số lượng hàng đã được điều chỉnh.");
+    } catch (e: any) {
+      Alert.alert("Lỗi kho hàng", e?.message || "Không thể cập nhật.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const approveReview = async (reviewId: string, approved: boolean) => {
+    if (!user?.id) return;
+    try {
+      setActionId(`review-${reviewId}`);
+      await api.updateReviewStatus(user.id, reviewId, approved ? "approved" : "rejected");
+      await load();
+      Alert.alert("Đã cập nhật", approved ? "Đánh giá đã được duyệt." : "Đánh giá đã bị từ chối.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thể cập nhật.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const deleteReview = async (reviewId: string) => {
+    if (!user?.id) return;
+    try {
+      setActionId(`delete-review-${reviewId}`);
+      await api.deleteReview(user.id, reviewId);
+      await load();
+      Alert.alert("Đã xóa", "Đánh giá đã bị xóa.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thể xóa.");
     } finally {
       setActionId(null);
     }
@@ -697,7 +774,7 @@ export default function AdminScreen() {
   const pickAndUploadAdminImage = async (target: "image" | "image2" | "image3" | "image4" | "bannerImage") => {
     if (!user?.id) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert("C?n quy?n ?nh", "Cho ph�p truy c?p thu vi?n d? upload ?nh l�n Cloudinary.");
+    if (!permission.granted) return Alert.alert("Cần quyền ảnh", "Cho phép truy cập thư viện để upload ảnh lên Cloudinary.");
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.86, allowsEditing: false });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
@@ -716,12 +793,12 @@ export default function AdminScreen() {
         user.id,
       );
       const url = data.secureUrl || data.url;
-      if (!url) throw new Error("Cloudinary kh�ng tr? v? URL ?nh.");
+      if (!url) throw new Error("Cloudinary không trả về URL ảnh.");
       if (target === "bannerImage") setPromotionForm((p) => ({ ...p, bannerImage: url }));
       else setProductForm((p) => ({ ...p, [target]: url }));
-      Alert.alert("�� upload", "?nh d� luu tr�n Cloudinary v� URL d� du?c di?n v�o form.");
+      Alert.alert("Đã upload", "Ảnh đã lưu trên Cloudinary và URL đã được điền vào form.");
     } catch (e: any) {
-      Alert.alert("Upload Cloudinary l?i", e?.message || "Kh�ng upload du?c ?nh.");
+      Alert.alert("Upload Cloudinary lỗi", e?.message || "Không upload được ảnh.");
     } finally {
       setUploadingMediaField(null);
     }
@@ -729,7 +806,7 @@ export default function AdminScreen() {
 
   const saveVoucher = async () => {
     if (!user?.id) return;
-    if (!voucherForm.code.trim()) return Alert.alert("Thi?u m�", "Nh?p m� voucher tru?c.");
+    if (!voucherForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã voucher trước.");
     try {
       setActionId("voucher-save");
       await api.saveAdminVoucher(user.id, {
@@ -741,9 +818,9 @@ export default function AdminScreen() {
       });
       setVoucherForm(emptyVoucherForm);
       await load();
-      Alert.alert("�� t?o voucher", "Voucher d� s?n s�ng cho ngu?i d�ng.");
+      Alert.alert("Đã tạo voucher", "Voucher đã sẵn sàng cho người dùng.");
     } catch (e: any) {
-      Alert.alert("Kh�ng luu voucher", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không lưu voucher", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -751,7 +828,7 @@ export default function AdminScreen() {
 
   const savePromotion = async () => {
     if (!user?.id) return;
-    if (!promotionForm.code.trim()) return Alert.alert("Thi?u m�", "Nh?p m� khuy?n m�i tru?c.");
+    if (!promotionForm.code.trim()) return Alert.alert("Thiếu mã", "Nhập mã khuyến mãi trước.");
     try {
       setActionId("promotion-save");
       await api.saveAdminVoucher(user.id, {
@@ -763,9 +840,9 @@ export default function AdminScreen() {
       });
       setPromotionForm(emptyPromotionForm);
       await load();
-      Alert.alert("�� t?o khuy?n m�i", "Chi?n d?ch d� du?c luu trong DiscountCodes theo ERD.");
+      Alert.alert("Đã tạo khuyến mãi", "Chiến dịch đã được lưu trong DiscountCodes theo ERD.");
     } catch (e: any) {
-      Alert.alert("Kh�ng luu khuy?n m�i", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không lưu khuyến mãi", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -778,7 +855,7 @@ export default function AdminScreen() {
       await api.updateAdminVoucher(user.id, voucher.id, { active: !voucher.active });
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng d?i tr?ng th�i", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không đổi trạng thái", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -786,15 +863,31 @@ export default function AdminScreen() {
 
   const sendNotification = async () => {
     if (!user?.id) return;
-    if (!notificationForm.title.trim()) return Alert.alert("Thi?u ti�u d?", "Nh?p ti�u d? th�ng b�o.");
+    if (!notificationForm.title.trim()) return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề thông báo.");
     try {
       setActionId("notification-send");
       const data = await api.sendAdminNotification(user.id, notificationForm);
       setNotificationForm(emptyNotificationForm);
       await load();
-      Alert.alert("�� g?i", data?.message || "Th�ng b�o d� du?c g?i.");
+      Alert.alert("Đã gửi", data?.message || "Thông báo đã được gửi.");
     } catch (e: any) {
-      Alert.alert("Kh�ng g?i du?c", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không gửi được", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const sendNewsletter = async () => {
+    if (!user?.id) return;
+    if (!newsletterForm.subject.trim()) return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề email.");
+    try {
+      setActionId("newsletter-send");
+      const data = await api.sendNewsletter(user.id, newsletterForm);
+      setNewsletterForm(emptyNewsletterForm);
+      await load();
+      Alert.alert("Đã gửi newsletter", data?.message || "Email đã được gửi cho " + (newsletterForm.recipient === "all" ? "tất cả" : "nhóm") + " khách hàng.");
+    } catch (e: any) {
+      Alert.alert("Lỗi gửi newsletter", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -807,9 +900,9 @@ export default function AdminScreen() {
       const data = await api.setAdminUserRole(user.id, target.id, nextRole);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
       await load().catch(() => null);
-      Alert.alert("�� c?p nh?t", data?.message || "�� d?i quy?n t�i kho?n.");
+      Alert.alert("Đã cập nhật", data?.message || "Đã đổi quyền tài khoản.");
     } catch (e: any) {
-      Alert.alert("Kh�ng d?i du?c quy?n", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không đổi được quyền", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -822,7 +915,54 @@ export default function AdminScreen() {
       const data = await api.adjustAdminUserCoins(user.id, target.id, delta);
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
     } catch (e: any) {
-      Alert.alert("Kh�ng ch?nh du?c xu", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không chỉnh được xu", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const saveStaff = async () => {
+    if (!user?.id) return;
+    if (!staffForm.email.trim()) return Alert.alert("Thiếu email", "Nhập email nhân viên.");
+    try {
+      setActionId("staff-save");
+      if (editingStaffId) await api.updateStaffMember(user.id, editingStaffId, staffForm);
+      else await api.createStaffMember(user.id, staffForm);
+      setStaffForm(emptyStaffForm);
+      setEditingStaffId(null);
+      await load();
+      Alert.alert("Đã lưu", "Nhân viên đã được cập nhật.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thể lưu.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const deleteStaff = async (staffId: string) => {
+    if (!user?.id) return;
+    try {
+      setActionId(`delete-staff-${staffId}`);
+      await api.deleteStaffMember(user.id, staffId);
+      await load();
+      Alert.alert("Đã xóa", "Nhân viên đã bị xóa.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thể xóa.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const saveSettings = async () => {
+    if (!user?.id) return;
+    try {
+      setActionId("settings-save");
+      await api.saveStoreSettings(user.id, settingsForm);
+      setStoreSettings(settingsForm);
+      await load();
+      Alert.alert("Đã lưu", "Cài đặt cửa hàng đã được cập nhật.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thể lưu.");
     } finally {
       setActionId(null);
     }
@@ -830,7 +970,7 @@ export default function AdminScreen() {
 
   const saveGame = async () => {
     if (!user?.id) return;
-    if (!gameForm.name.trim()) return Alert.alert("Thi?u t�n", "Nh?p t�n game tru?c.");
+    if (!gameForm.name.trim()) return Alert.alert("Thiếu tên", "Nhập tên game trước.");
     try {
       setActionId("game-save");
       const body = { ...gameForm, rewardCoins: Number(gameForm.rewardCoins || 0), active: true };
@@ -840,7 +980,7 @@ export default function AdminScreen() {
       setEditingGameId(null);
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng luu game", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không lưu game", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -858,7 +998,7 @@ export default function AdminScreen() {
       await api.deleteAdminGame(user.id, String(game._id || game.id));
       await load();
     } catch (e: any) {
-      Alert.alert("Kh�ng xo� game", e?.message || "C� l?i x?y ra.");
+      Alert.alert("Không xóa game", e?.message || "Có lỗi xảy ra.");
     } finally {
       setActionId(null);
     }
@@ -869,10 +1009,10 @@ export default function AdminScreen() {
       <View style={styles.authPage}>
         <View style={styles.authCard}>
           <View style={styles.logoBox}><Feather name={isLoggedIn ? "lock" : "shield"} size={26} color="#fff" /></View>
-          <Text style={styles.authTitle}>{isLoggedIn ? "Kh�ng c� quy?n admin" : "�ang nh?p admin"}</Text>
-          <Text style={styles.authText}>{isLoggedIn ? `Email hi?n t?i: ${user?.email}. H�y d�ng t�i kho?n admin.` : "T�i kho?n admin m?c d?nh: a@gmail.com / m?t kh?u 1."}</Text>
+          <Text style={styles.authTitle}>{isLoggedIn ? "Không có quyền admin" : "Đăng nhập admin"}</Text>
+          <Text style={styles.authText}>{isLoggedIn ? `Email hiện tại: ${user?.email}. Hãy dùng tài khoản admin.` : "Tài khoản admin mặc định: a@gmail.com / mật khẩu 1."}</Text>
           <Pressable onPress={openAdminLogin} style={styles.authButton}>
-            <Text style={styles.authButtonText}>{isLoggedIn ? "�?i t�i kho?n" : "�ang nh?p"}</Text>
+            <Text style={styles.authButtonText}>{isLoggedIn ? "Đổi tài khoản" : "Đăng nhập"}</Text>
           </Pressable>
         </View>
       </View>
@@ -924,10 +1064,10 @@ export default function AdminScreen() {
     <View style={styles.topbar}>
       <View style={styles.searchBox}>
         <Feather name="search" size={18} color={ADMIN_MUTED} />
-        <TextInput value={search} onChangeText={setSearch} placeholder="T�m s?n ph?m, kh�ch h�ng, don h�ng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
+        <TextInput value={search} onChangeText={setSearch} placeholder="Tìm sản phẩm, khách hàng, đơn hàng..." placeholderTextColor={ADMIN_MUTED} style={styles.searchInput} />
       </View>
       <Pressable onPress={refresh} style={styles.topIconBtn}><Feather name="refresh-cw" size={18} color={ADMIN_TEXT} /></Pressable>
-      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Th�m s?n ph?m</Text></Pressable>
+      <Pressable onPress={() => setActiveTab("products")} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm sản phẩm</Text></Pressable>
     </View>
   );
 
@@ -935,27 +1075,26 @@ export default function AdminScreen() {
     <View style={styles.pageGap}>
       <View style={styles.heroCard}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.heroTitle}>Ch�o tr? l?i, {user?.name || "Admin"}</Text>
-          <Text style={styles.heroSub}>H�m nay c� {formatNumber(orders.length)} don trong h? th?ng, {activeVouchers + activePromotions} chi?n d?ch dang ho?t d?ng.</Text>
+          <Text style={styles.heroTitle}>Chào trở lại, {user?.name || "Admin"}</Text>
+          <Text style={styles.heroSub}>Hôm nay có {formatNumber(orders.length)} đơn trong hệ thống, {activeVouchers + activePromotions} chiến dịch đang hoạt động, {pendingReviews} đánh giá chờ duyệt.</Text>
         </View>
-        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem ph�n t�ch</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
+        <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem phân tích</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
       </View>
 
-      {loading ? <View style={[styles.card, { flexDirection: "row", gap: 10, alignItems: "center" }]}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.userMeta}>�ang t?i d? li?u b?ng di?u khi?n...</Text></View> : null}
+      {loading ? <View style={[styles.card, { flexDirection: "row", gap: 10, alignItems: "center" }]}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.userMeta}>Đang tải dữ liệu bảng điều khiển...</Text></View> : null}
 
-      {/* KPI h�m nay - d? li?u th?t */}
       <View style={styles.statsGrid}>
-        <StatCard label="Doanh thu h�m nay" value={formatCompactMoney(kpis.revenueToday)} change={`${formatNumber(kpis.ordersToday || 0)} don h�m nay`} icon="dollar-sign" accent={ADMIN_GREEN} />
-        <StatCard label="�on h�ng" value={formatNumber(kpis.orders || orders.length)} change={`${formatNumber(kpis.ordersToday || 0)} h�m nay`} icon="shopping-bag" accent={ADMIN_BLUE} />
-        <StatCard label="Ngu?i d�ng m?i" value={formatNumber(kpis.newUsersToday || 0)} change={`${formatNumber(kpis.users || users.length)} t?ng`} icon="user-plus" accent="#A33A2F" />
-        <StatCard label="Lu?t th? d? AI" value={formatNumber(kpis.tryon2d || 0)} change={`${formatNumber(kpis.tryon2dFail || 0)} l?i`} icon="camera" accent={ADMIN_ORANGE} />
-        <StatCard label="Lu?t t?o 3D" value={formatNumber(kpis.tryon3d || 0)} change={`${formatNumber(kpis.tryon3dFail || 0)} l?i`} icon="box" accent={ADMIN_BLUE} />
+        <StatCard label="Doanh thu hôm nay" value={formatCompactMoney(kpis.revenueToday)} change={`${formatNumber(kpis.ordersToday || 0)} đơn hôm nay`} icon="dollar-sign" accent={ADMIN_GREEN} />
+        <StatCard label="Đơn hàng" value={formatNumber(kpis.orders || orders.length)} change={`${formatNumber(kpis.ordersToday || 0)} hôm nay`} icon="shopping-bag" accent={ADMIN_BLUE} />
+        <StatCard label="Người dùng mới" value={formatNumber(kpis.newUsersToday || 0)} change={`${formatNumber(kpis.users || users.length)} tổng`} icon="user-plus" accent="#A33A2F" />
+        <StatCard label="Lượt thử đồ AI" value={formatNumber(kpis.tryon2d || 0)} change={`${formatNumber(kpis.tryon2dFail || 0)} lỗi`} icon="camera" accent={ADMIN_ORANGE} />
+        <StatCard label="Lượt tạo 3D" value={formatNumber(kpis.tryon3d || 0)} change={`${formatNumber(kpis.tryon3dFail || 0)} lỗi`} icon="box" accent={ADMIN_BLUE} />
+        <StatCard label="Đánh giá chờ" value={formatNumber(pendingReviews)} change={`${formatNumber(reviews.length)} tổng`} icon="star" accent={ADMIN_PURPLE} />
       </View>
 
-      {/* Tr?ng th�i server AI + l?i m?i nh?t */}
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="T�nh tr?ng server AI" subtitle="Ki?m tra nhanh c�c d?ch v?" right={<Pressable onPress={refreshStatus} style={styles.smallBtn}>{statusLoading ? <ActivityIndicator size="small" color={ADMIN_TEXT} /> : <Feather name="refresh-cw" size={13} color={ADMIN_TEXT} />}<Text style={styles.smallBtnText}>Ki?m tra l?i</Text></Pressable>} />
+          <SectionHeader title="Tình trạng server AI" subtitle="Kiểm tra nhanh các dịch vụ" right={<Pressable onPress={refreshStatus} style={styles.smallBtn}>{statusLoading ? <ActivityIndicator size="small" color={ADMIN_TEXT} /> : <Feather name="refresh-cw" size={13} color={ADMIN_TEXT} />}<Text style={styles.smallBtnText}>Kiểm tra lại</Text></Pressable>} />
           {systemStatus?.services ? (
             <View style={{ gap: 8 }}>
               {systemStatus.services.map((s: any) => (
@@ -965,12 +1104,12 @@ export default function AdminScreen() {
                   <Text style={[styles.statusVal, { color: s.online ? "#2E7D32" : ADMIN_RED }]}>{s.online ? "Online" : "Offline"}</Text>
                 </View>
               ))}
-              <Text style={styles.userMeta}>GPU: {systemStatus.gpu} � CUDA: {systemStatus.cuda} � Stripe: {systemStatus.stripe ? "d� c?u h�nh" : "chua c?u h�nh"}</Text>
+              <Text style={styles.userMeta}>GPU: {systemStatus.gpu} • CUDA: {systemStatus.cuda} • Stripe: {systemStatus.stripe ? "đã cấu hình" : "chưa cấu hình"}</Text>
             </View>
-          ) : <Text style={styles.emptyText}>{statusLoading ? "�ang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng th�i. B?m \"Ki?m tra l?i\"."}</Text>}
+          ) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra dịch vụ..." : "Chưa lấy được trạng thái. Bấm \"Kiểm tra lại\"."}</Text>}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="L?i m?i nh?t" subtitle="Nh?t k� l?i AI/h? th?ng" />
+          <SectionHeader title="Lỗi mới nhất" subtitle="Nhật ký lỗi AI/hệ thống" />
           {systemStatus?.errors?.length ? systemStatus.errors.slice(0, 6).map((e: any, i: number) => (
             <View key={i} style={styles.errRow}>
               <Feather name="alert-triangle" size={13} color={ADMIN_ORANGE} />
@@ -979,31 +1118,31 @@ export default function AdminScreen() {
                 <Text numberOfLines={2} style={styles.errMsg}>{e.message}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua c� l?i n�o du?c ghi nh?n. ??</Text>}
+          )) : <Text style={styles.emptyText}>Chưa có lỗi nào được ghi nhận. 🎉</Text>}
         </View>
       </View>
 
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Tang tru?ng doanh thu" subtitle="Xu hu?ng theo th�ng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
+          <SectionHeader title="Tăng trưởng doanh thu" subtitle="Xu hướng theo tháng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
           <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="S?n ph?m b�n ch?y" subtitle="Top theo s? lu?ng b�n" />
-          {topProducts.length ? <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} /> : <Text style={styles.emptyText}>Chua c� d? li?u b�n h�ng.</Text>}
+          <SectionHeader title="Sản phẩm bán chạy" subtitle="Top theo số lượng bán" />
+          {topProducts.length ? <HorizontalBars data={topProducts.map((x: any) => ({ label: x.name, value: x.unitsSold }))} accent={ADMIN_GREEN} /> : <Text style={styles.emptyText}>Chưa có dữ liệu bán hàng.</Text>}
         </View>
       </View>
 
       <View style={styles.dashboardGrid3}>
         <View style={styles.card}>
-          <SectionHeader title="Ho?t d?ng g?n dy" subtitle="on hng v thanh ton" />
+          <SectionHeader title="Hoạt động gần đây" subtitle="Đơn hàng và thanh toán" />
           <View style={{ gap: 13 }}>
             {latestActivity.length ? latestActivity.map((item, idx) => (
               <View key={`${item.title}-${idx}`} style={styles.activityRow}>
                 <View style={styles.activityIcon}><Feather name={item.icon as any} size={16} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}><Text style={styles.activityTitle}>{item.title}</Text><Text style={styles.activityMeta}>{item.meta}</Text></View>
               </View>
-            )) : <Text style={styles.emptyText}>Chua c ho?t d?ng g?n dy.</Text>}
+            )) : <Text style={styles.emptyText}>Chưa có hoạt động gần đây.</Text>}
           </View>
         </View>
       </View>
@@ -1026,23 +1165,23 @@ export default function AdminScreen() {
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="D? b�o doanh thu � H?i quy tuy?n t�nh (OLS)" subtitle={mlForecast?.algorithm || 'U?c lu?ng xu hu?ng v� d? b�o 3 th�ng t?i.'} />
+          <SectionHeader title="Dự báo doanh thu • Hồi quy tuyến tính (OLS)" subtitle={mlForecast?.algorithm || 'Ước lượng xu hướng và dự báo 3 tháng tới.'} />
           <ForecastChart forecast={mlForecast} />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Ph�n kh�c kh�ch h�ng � K-Means" subtitle={mlSegments?.algorithm || 'Gom kh�ch h�ng theo h�nh vi mua.'} />
+          <SectionHeader title="Phân khúc khách hàng • K-Means" subtitle={mlSegments?.algorithm || 'Gom khách hàng theo hành vi mua.'} />
           <SegmentsView segments={mlSegments} />
         </View>
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="S?n ph?m n?i b?t � G?i � (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'L?c c?ng t�c item-based + ph�n r� ma tr?n d? x?p h?ng s?n ph?m.'} />
+          <SectionHeader title="Sản phẩm nổi bật • Gợi ý (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'Lọc cộng tác item-based + phân rã ma trận để xếp hạng sản phẩm.'} />
           <HorizontalBars data={(mlRecommender?.featured || []).map((x: any) => ({ label: x.name, value: x.score }))} accent="#2F4A73" />
-          {mlRecommender?.demo ? <Text style={styles.demoTag}>d? li?u minh ho? � s? ch�nh x�c hon khi c� nhi?u don/gi?/wishlist</Text> : null}
+          {mlRecommender?.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ • sẽ chính xác hơn khi có nhiều đơn/giỏ/wishlist</Text> : null}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="�i?m nhu c?u s?n ph?m (DemandScore)" subtitle="B�n ra, wishlist, gi?, d�nh gi�, d? m?i, nh?c trong AI chat." />
+          <SectionHeader title="Điểm nhu cầu sản phẩm (DemandScore)" subtitle="Bán ra, wishlist, giỏ, đánh giá, độ mới, nhắc trong AI chat." />
           <View style={styles.featureWrap}>{(dashboard?.ml?.features || ["unitsSold", "wishlist", "cart", "rating", "recency", "chatMention"]).map((f: string) => <Text key={f} style={styles.featureChip}>{f}</Text>)}</View>
           <HorizontalBars data={predictions.map((x: any) => ({ label: x.name, value: x.score }))} accent={ADMIN_GREEN} />
         </View>
@@ -1050,7 +1189,7 @@ export default function AdminScreen() {
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Xu hu?ng theo danh m?c" subtitle="T?ng h?p b�n ra + wishlist + gi?" />
+          <SectionHeader title="Xu hướng theo danh mục" subtitle="Tổng hợp bán ra + wishlist + giỏ" />
           <HorizontalBars data={customerTrends.map((x: any) => ({ label: x.category, value: x.score }))} accent="#A33A2F" />
         </View>
       </View>
@@ -1061,9 +1200,9 @@ export default function AdminScreen() {
             {item.image ? <Image source={{ uri: item.image }} style={styles.predictionImage} /> : <View style={styles.predictionImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
             <View style={{ flex: 1 }}>
               <Text numberOfLines={1} style={styles.predictionTitle}>{item.name}</Text>
-              <Text style={styles.predictionMeta}>{item.category} � {formatMoney(item.price)}</Text>
-              <Text style={styles.predictionSuggestion}>{item.predictedDemand} � {item.suggestion}</Text>
-              <Text style={styles.predictionSmall}>B�n {item.features?.sold || 0} � Th�ch {item.features?.wishlist || 0} � Gi? {item.features?.cart || 0} � ? {item.features?.avgRating ?? '-'}</Text>
+              <Text style={styles.predictionMeta}>{item.category} • {formatMoney(item.price)}</Text>
+              <Text style={styles.predictionSuggestion}>{item.predictedDemand} • {item.suggestion}</Text>
+              <Text style={styles.predictionSmall}>Bán {item.features?.sold || 0} • Thích {item.features?.wishlist || 0} • Giỏ {item.features?.cart || 0} • ⭐ {item.features?.avgRating ?? '-'}</Text>
             </View>
             <View style={styles.scoreBox}><Text style={styles.scoreText}>{item.score}</Text><Text style={styles.scoreLabel}>điểm</Text></View>
           </View>
@@ -1074,23 +1213,23 @@ export default function AdminScreen() {
 
   const renderProducts = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n l� s?n ph?m" subtitle="Th�m, ?n, s?a 4 ?nh s?n ph?m, size/k�ch c?, k�ch thu?c, m�u s?c, m� t?, gi� v� sale." right={<Text style={styles.counterPill}>{activeProducts} dang b�n / {hiddenProducts} dang ?n</Text>} />
+      <SectionHeader title="Quản lý sản phẩm" subtitle="Thêm, ẩn, sửa 4 ảnh sản phẩm, size/kích cỡ, kích thước, màu sắc, mô tả, giá và sale." right={<Text style={styles.counterPill}>{activeProducts} đang bán / {hiddenProducts} đang ẩn</Text>} />
       <View style={styles.productManagerGrid}>
         <View style={[styles.card, styles.formCard]}>
-          <Text style={styles.formTitle}>{editingProductId ? `�ang s?a: ${editingProductId}` : "Th�m s?n ph?m m?i"}</Text>
+          <Text style={styles.formTitle}>{editingProductId ? `Đang sửa: ${editingProductId}` : "Thêm sản phẩm mới"}</Text>
           <View style={styles.formGrid2}>
-            <Input label="M� s?n ph?m" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
+            <Input label="Mã sản phẩm" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
             <Input label="SKU" value={productForm.sku} onChangeText={(sku: string) => setProductForm((p) => ({ ...p, sku }))} placeholder="JP-001" />
           </View>
-          <Input label="T�n s?n ph?m" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="��n guitar v� gi� d? d�n" />
+          <Input label="Tên sản phẩm" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Đơn guitar và giây dây đàn" />
           <View style={styles.formGrid3}>
-            <Input label="Gi� dang b�n" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
-            <Input label="Gi� g?c / gi� g?ch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
-            <Input label="% gi?m" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
+            <Input label="Giá đang bán" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
+            <Input label="Giá gốc / giá gạch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
+            <Input label="% giảm" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Nh�n gi?m gi�" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
-            <Input label="Nh�n" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GI?M 17%" />
+            <Input label="Nhãn giảm giá" value={productForm.discountLabel} onChangeText={(discountLabel: string) => setProductForm((p) => ({ ...p, discountLabel }))} placeholder="Flash Sale" />
+            <Input label="Nhãn" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GIẢM 17%" />
           </View>
           <View style={styles.formGrid2}>
             <Input label="Ảnh lớn / ảnh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
@@ -1101,29 +1240,29 @@ export default function AdminScreen() {
             <Input label="Ảnh nhỏ 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
           </View>
           <View style={styles.mediaUploadBox}>
-            <Text style={styles.mediaUploadTitle}>Upload ?nh s?n ph?m l�n Cloudinary</Text>
-            <Text style={styles.mediaUploadHint}>Ch?n ?nh t? m�y, h? th?ng s? upload l�n Cloudinary r?i t? di?n URL v�o 4 � ?nh.</Text>
+            <Text style={styles.mediaUploadTitle}>Upload ảnh sản phẩm lên Cloudinary</Text>
+            <Text style={styles.mediaUploadHint}>Chọn ảnh từ máy, hệ thống sẽ upload lên Cloudinary rồi tự điền URL vào 4 ô ảnh.</Text>
             <View style={styles.actionRow}>
               {(["image", "image2", "image3", "image4"] as const).map((field, index) => {
                 const key = `upload-${field}`;
                 return (
                   <Pressable key={field} disabled={uploadingMediaField === key} onPress={() => pickAndUploadAdminImage(field)} style={styles.smallBtn}>
-                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "�ang upload..." : `Upload ?nh ${index + 1}`}</Text>
+                    <Text style={styles.smallBtnText}>{uploadingMediaField === key ? "Đang upload..." : `Upload ảnh ${index + 1}`}</Text>
                   </Pressable>
                 );
               })}
             </View>
           </View>
-          <Input label="M� t? s?n ph?m" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="M� t? ng?n..." multiline />
+          <Input label="Mô tả sản phẩm" value={productForm.description} onChangeText={(description: string) => setProductForm((p) => ({ ...p, description }))} placeholder="Mô tả ngắn..." multiline />
           <View style={styles.formGrid3}>
             <Input label="Danh mục" value={productForm.category} onChangeText={(category: string) => setProductForm((p) => ({ ...p, category }))} placeholder="fashion" />
             <Input label="Danh mục con" value={productForm.subcategory} onChangeText={(subcategory: string) => setProductForm((p) => ({ ...p, subcategory }))} placeholder="streetwear" />
             <Input label="Tồn kho" value={productForm.stockQuantity} keyboardType="numeric" onChangeText={(stockQuantity: string) => setProductForm((p) => ({ ...p, stockQuantity }))} placeholder="999" />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Size / k�ch c?" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
-            <Input label="M�u s?c" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="�en, tr?ng, kem ho?c #000000, #FFFFFF" />
-            <Text style={[styles.userMeta, { marginTop: 6 }]}>B?ng m�u nhanh (b?m d? th�m m� hex):</Text>
+            <Input label="Size / kích cỡ" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
+            <Input label="Màu sắc" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Đen, trắng, kem hoặc #000000, #FFFFFF" />
+            <Text style={[styles.userMeta, { marginTop: 6 }]}>Bảng màu nhanh (bấm để thêm mã hex):</Text>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
               {["#000000", "#FFFFFF", "#F5F5DC", "#A33A2F", "#1C140F", "#8B4513", "#2F4A73", "#2E7D32", "#B00020", "#D4AF37", "#808080", "#F28C28"].map((hex) => (
                 <Pressable key={hex} onPress={() => setProductForm((p) => { const arr = splitAdminList(p.colors || ""); return arr.map((x: string) => x.toLowerCase()).includes(hex.toLowerCase()) ? p : { ...p, colors: [...arr, hex].join(", ") }; })} style={[styles.swatch, { backgroundColor: hex, borderColor: ADMIN_BORDER }]}>
@@ -1133,14 +1272,14 @@ export default function AdminScreen() {
             </View>
           </View>
           <View style={styles.formGrid2}>
-            <Input label="K�ch thu?c" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="D�i 68cm, ngang vai 46cm..." />
-            <Input label="Form / ki?u v?a" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
+            <Input label="Kích thước" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dài 68cm, ngang vai 46cm..." />
+            <Input label="Form / kiểu vừa" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
           </View>
-          <Input label="Th? h�nh ?nh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
-          <Input label="Ki?u s? d?ng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="�i choi, ch?p ?nh, cosplay nh?" />
+          <Input label="Thẻ hình ảnh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
+          <Input label="Kiểu sử dụng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Đi chơi, chụp ảnh, cosplay nhé" />
           <View style={styles.actionRow}>
-            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "�ang luu..." : editingProductId ? "C?p nh?t s?n ph?m" : "Th�m s?n ph?m"}</Text></Pressable>
-            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>X�a form</Text></Pressable>
+            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Đang lưu..." : editingProductId ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}</Text></Pressable>
+            <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
           </View>
         </View>
         <ProductDiscountPreview name={productForm.name} price={Number(productForm.price || 0)} originalPrice={Number(productForm.originalPrice || 0)} discountPercent={Number(productForm.discountPercent || 0)} image={productForm.image} images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]} sizes={productForm.sizes} colors={productForm.colors} dimensions={productForm.dimensions} />
@@ -1159,21 +1298,21 @@ export default function AdminScreen() {
                 {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.productImage} /> : <View style={styles.productImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text numberOfLines={1} style={styles.productTitle}>{product.name || product.productName}</Text>
-                  <Text style={styles.productMeta}>{product.id} � {product.category || "general"}</Text>
+                  <Text style={styles.productMeta}>{product.id} • {product.category || "general"}</Text>
                   <View style={styles.productPriceLine}>
                     <Text style={styles.productPrice}>{formatMoney(product.price)}</Text>
                     {Number(product.originalPrice || 0) > Number(product.price || 0) ? <Text style={styles.productOldPrice}>{formatMoney(product.originalPrice)}</Text> : null}
                     {discount > 0 ? <Text style={styles.discountBadge}>-{discount}%</Text> : null}
                   </View>
-                  <Text style={styles.productMeta}>Status: {product.status || "active"} � Stock: {product.stockQuantity || 0}</Text>
+                  <Text style={styles.productMeta}>Status: {product.status || "active"} • Stock: {product.stockQuantity || 0}</Text>
                 </View>
               </View>
-              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chua c� m� t?."}</Text>
+              <Text numberOfLines={2} style={styles.productDesc}>{product.description || "Chưa có mô tả."}</Text>
               <View style={styles.adminThumbRow}>
                 {gallery.map((url, index) => <Image key={`${product.id}-thumb-${index}`} source={{ uri: url }} style={styles.adminThumb} />)}
               </View>
-              <Text style={styles.productMeta}>?nh: {gallery.length}/4 � Size: {sizes.join(' / ') || 'S / M / L / XL'} � M�u: {colors.join(' / ') || '�en / Tr?ng / Kem'}</Text>
-              {product.dimensions || product.fit ? <Text style={styles.productMeta}>K�ch thu?c: {product.dimensions || '--'} � Form: {product.fit || '--'}</Text> : null}
+              <Text style={styles.productMeta}>Ảnh: {gallery.length}/4 • Size: {sizes.join(' / ') || 'S / M / L / XL'} • Màu: {colors.join(' / ') || 'Đen / Trắng / Kem'}</Text>
+              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kích thước: {product.dimensions || '--'} • Form: {product.fit || '--'}</Text> : null}
               <View style={styles.actionRow}>
                 <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
                 <Pressable onPress={() => toggleProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{hidden ? "Hiện" : "Ẩn"}</Text></Pressable>
@@ -1188,99 +1327,298 @@ export default function AdminScreen() {
     </View>
   );
 
+  const renderInventory = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Quản lý kho hàng" subtitle="Nhập/xuất kho, theo dõi lịch sử thay đổi stock sản phẩm." right={<Text style={styles.counterPill}>{products.length} sản phẩm</Text>} />
+      
+      <View style={styles.card}>
+        <Text style={styles.formTitle}>Lịch sử nhập/xuất kho gần đây</Text>
+        {inventoryLogs.length ? (
+          <View style={{ gap: 10 }}>
+            {inventoryLogs.slice(0, 20).map((log: any, idx: number) => (
+              <View key={idx} style={styles.inventoryLogRow}>
+                <View style={[styles.inventoryIcon, { backgroundColor: log.type === "import" ? "#E9F8F1" : log.type === "export" ? "#FFF7E6" : "#F2F5F7" }]}>
+                  <Feather name={log.type === "import" ? "arrow-down" : log.type === "export" ? "arrow-up" : "edit"} size={14} color={log.type === "import" ? ADMIN_GREEN : log.type === "export" ? ADMIN_ORANGE : ADMIN_MUTED} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userName}>{log.productName}</Text>
+                  <Text style={styles.userMeta}>{log.type === "import" ? "Nhập" : log.type === "export" ? "Xuất" : "Điều chỉnh"} {log.quantity} cái • Số dư {log.newQuantity} • {compactDate(log.createdAt)}</Text>
+                </View>
+                <Text style={styles.inventoryChange}>{log.type === "import" ? "+" : "-"}{log.quantity}</Text>
+              </View>
+            ))}
+          </View>
+        ) : <Text style={styles.emptyText}>Chưa có nhật ký kho hàng.</Text>}
+      </View>
+
+      <View style={styles.tableCard}>
+        <SectionHeader title="Sản phẩm tồn kho thấp" subtitle="Dưới 50 cái - cần nhập thêm" />
+        {products.filter((p) => (p.stockQuantity || 0) < 50).length ? (
+          products.filter((p) => (p.stockQuantity || 0) < 50).map((product) => (
+            <View key={product.id} style={styles.userRow}>
+              {product.image ? <Image source={{ uri: product.image }} style={styles.accThumb} /> : <View style={styles.accThumb}><Feather name="box" size={18} color={ADMIN_MUTED} /></View>}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text numberOfLines={1} style={styles.userName}>{product.name}</Text>
+                <Text numberOfLines={1} style={styles.userEmail}>{product.id}</Text>
+                <Text style={styles.userMeta}>Tồn kho: {product.stockQuantity || 0} cái • Giá {formatMoney(product.price)}</Text>
+              </View>
+              <View style={styles.userActions}>
+                <Pressable onPress={() => adjustInventory(product.id, 50, "import")} style={styles.saleBtn}><Feather name="arrow-down" size={13} color="#fff" /><Text style={styles.saleBtnText}>+50</Text></Pressable>
+                <Pressable onPress={() => adjustInventory(product.id, 100, "import")} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>+100</Text></Pressable>
+              </View>
+            </View>
+          ))
+        ) : <Text style={styles.emptyText}>Tất cả sản phẩm đều có đủ kho.</Text>}
+      </View>
+    </View>
+  );
+
+  const renderReviews = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Đánh giá & Bình luận" subtitle="Duyệt, phê duyệt, từ chối và xóa các đánh giá sản phẩm." right={<Text style={styles.counterPill}>{pendingReviews} chờ duyệt / {reviews.length} tổng</Text>} />
+      
+      <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+        {(["all", "pending", "approved", "rejected"] as const).map((filter) => (
+          <Pressable key={filter} onPress={() => setReviewFilter(filter)} style={[styles.selectChip, reviewFilter === filter ? styles.selectChipActive : null]}>
+            <Text style={[styles.selectChipText, reviewFilter === filter ? styles.selectChipTextActive : null]}>{filter === "all" ? "Tất cả" : filter === "pending" ? "Chờ duyệt" : filter === "approved" ? "Đã duyệt" : "Từ chối"}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {filteredReviews.length ? filteredReviews.map((review: any, idx: number) => (
+        <View key={idx} style={styles.card}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+            <View style={styles.userAvatar}><Feather name="user" size={16} color={ADMIN_GREEN} /></View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.barLineTop}>
+                <View>
+                  <Text style={styles.userName}>{review.userName}</Text>
+                  <Text style={styles.userEmail}>{review.productName}</Text>
+                </View>
+                <View style={[styles.statusChip, review.status === "approved" ? styles.statusOk : review.status === "pending" ? styles.statusPend : styles.statusBad]}>
+                  <Text style={styles.statusChipText}>{review.status === "approved" ? "Duyệt" : review.status === "pending" ? "Chờ" : "Từ chối"}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Feather key={i} name={i <= (review.rating || 0) ? "star" : "star"} size={14} color={i <= (review.rating || 0) ? ADMIN_ORANGE : ADMIN_MUTED} style={{ opacity: i <= (review.rating || 0) ? 1 : 0.3 }} />
+                ))}
+                <Text style={styles.userMeta}>{review.rating}/5 • {compactDate(review.createdAt)}</Text>
+              </View>
+              <Text style={[styles.productDesc, { marginTop: 8 }]}>{review.content || "Không có nội dung."}</Text>
+              {review.images?.length ? (
+                <View style={{ flexDirection: "row", gap: 6, marginTop: 8 }}>
+                  {review.images.slice(0, 3).map((img: string, i: number) => (
+                    <Image key={i} source={{ uri: img }} style={{ width: 50, height: 50, borderRadius: 8 }} />
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          </View>
+          <View style={styles.actionRow}>
+            {review.status !== "approved" && (
+              <Pressable onPress={() => approveReview(review.id, true)} style={styles.successBtn}><Text style={styles.successBtnText}>Phê duyệt</Text></Pressable>
+            )}
+            {review.status !== "rejected" && (
+              <Pressable onPress={() => approveReview(review.id, false)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Từ chối</Text></Pressable>
+            )}
+            <Pressable onPress={() => deleteReview(review.id)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
+          </View>
+        </View>
+      )) : <Text style={styles.emptyText}>Không có đánh giá trong danh sách này.</Text>}
+    </View>
+  );
+
+  const renderStaff = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Quản lý nhân viên & Phân quyền" subtitle="Tạo tài khoản nhân viên với các quyền hạn cụ thể." right={<Text style={styles.counterPill}>{staffMembers.length} nhân viên</Text>} />
+
+      <View style={[styles.card, styles.formCard]}>
+        <Text style={styles.formTitle}>{editingStaffId ? "Sửa nhân viên" : "Thêm nhân viên mới"}</Text>
+        <Input label="Email" value={staffForm.email} onChangeText={(email: string) => setStaffForm((p) => ({ ...p, email }))} placeholder="staff@japano.com" />
+        <Input label="Tên nhân viên" value={staffForm.name} onChangeText={(name: string) => setStaffForm((p) => ({ ...p, name }))} placeholder="Nguyễn Văn A" />
+        <View style={{ gap: 8 }}>
+          <Text style={styles.inputLabel}>Vai trò</Text>
+          <View style={styles.actionRow}>
+            <SelectChip active={staffForm.role === "staff"} label="Nhân viên" onPress={() => setStaffForm((p) => ({ ...p, role: "staff" }))} />
+            <SelectChip active={staffForm.role === "manager"} label="Quản lý" onPress={() => setStaffForm((p) => ({ ...p, role: "manager" }))} />
+            <SelectChip active={staffForm.role === "admin"} label="Admin" onPress={() => setStaffForm((p) => ({ ...p, role: "admin" }))} />
+          </View>
+        </View>
+        <View style={styles.actionRow}>
+          <Pressable onPress={saveStaff} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{editingStaffId ? "Cập nhật" : "Thêm nhân viên"}</Text></Pressable>
+          <Pressable onPress={() => { setStaffForm(emptyStaffForm); setEditingStaffId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Hủy</Text></Pressable>
+        </View>
+      </View>
+
+      <View style={styles.tableCard}>
+        {staffMembers.length ? staffMembers.map((staff: any) => (
+          <View key={staff.id} style={styles.userRow}>
+            <View style={styles.userAvatar}><Feather name="user-check" size={16} color={staff.role === "admin" ? "#fff" : ADMIN_GREEN} style={{ backgroundColor: staff.role === "admin" ? ADMIN_GREEN : "#E9F8F1" }} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text numberOfLines={1} style={styles.userName}>{staff.name}</Text>
+              <Text numberOfLines={1} style={styles.userEmail}>{staff.email}</Text>
+              <Text style={styles.userMeta}>Vai trò: {staff.role} • Tham gia {compactDate(staff.createdAt)}</Text>
+            </View>
+            <View style={styles.userActions}>
+              <Pressable onPress={() => { setEditingStaffId(staff.id); setStaffForm({ email: staff.email, name: staff.name, role: staff.role, permissions: staff.permissions || [] }); }} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
+              <Pressable onPress={() => deleteStaff(staff.id)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
+            </View>
+          </View>
+        )) : <Text style={styles.emptyText}>Chưa có nhân viên nào.</Text>}
+      </View>
+    </View>
+  );
+
+  const renderSettings = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Cài đặt cửa hàng" subtitle="Thông tin cửa hàng, thuế, phí vận chuyển, cài đặt Stripe và các tùy chọn khác." />
+
+      <View style={[styles.card, styles.formCard]}>
+        <Text style={styles.formTitle}>Thông tin cửa hàng</Text>
+        <Input label="Tên cửa hàng" value={settingsForm.storeName} onChangeText={(storeName: string) => setSettingsForm((p) => ({ ...p, storeName }))} placeholder="JAPANO SHOP" />
+        <Input label="Email cửa hàng" value={settingsForm.storeEmail} onChangeText={(storeEmail: string) => setSettingsForm((p) => ({ ...p, storeEmail }))} placeholder="shop@japano.com" />
+        <Input label="Số điện thoại" value={settingsForm.storePhone} onChangeText={(storePhone: string) => setSettingsForm((p) => ({ ...p, storePhone }))} placeholder="0123456789" />
+        
+        <Text style={[styles.inputLabel, { marginTop: 14 }]}>Cài đặt tài chính</Text>
+        <View style={styles.formGrid2}>
+          <Input label="Thuế suất (%)" value={settingsForm.taxRate} keyboardType="numeric" onChangeText={(taxRate: string) => setSettingsForm((p) => ({ ...p, taxRate }))} placeholder="10" />
+          <Input label="Phí vận chuyển cơ bản" value={settingsForm.shippingBase} keyboardType="numeric" onChangeText={(shippingBase: string) => setSettingsForm((p) => ({ ...p, shippingBase }))} placeholder="30000" />
+        </View>
+
+        <Pressable onPress={saveSettings} style={[styles.primaryBtn, { marginTop: 14 }]}><Text style={styles.primaryBtnText}>Lưu cài đặt</Text></Pressable>
+      </View>
+    </View>
+  );
+
+  const renderNewsLetter = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Email Marketing & Newsletter" subtitle="Gửi email thông báo và bản tin tới khách hàng." right={<Text style={styles.counterPill}>{newsletters.length} email đã gửi</Text>} />
+
+      <View style={[styles.card, styles.formCard]}>
+        <Text style={styles.formTitle}>Gửi Newsletter</Text>
+        <Input label="Tiêu đề email" value={newsletterForm.subject} onChangeText={(subject: string) => setNewsletterForm((p) => ({ ...p, subject }))} placeholder="Khuyến mãi mới từ JAPANO" />
+        <Input label="Nội dung" value={newsletterForm.content} onChangeText={(content: string) => setNewsletterForm((p) => ({ ...p, content }))} placeholder="Viết nội dung email..." multiline />
+        <View style={{ gap: 8, marginTop: 12 }}>
+          <Text style={styles.inputLabel}>Gửi tới</Text>
+          <View style={styles.actionRow}>
+            <SelectChip active={newsletterForm.recipient === "all"} label="Tất cả" onPress={() => setNewsletterForm((p) => ({ ...p, recipient: "all" }))} />
+            <SelectChip active={newsletterForm.recipient === "vip"} label="VIP" onPress={() => setNewsletterForm((p) => ({ ...p, recipient: "vip" }))} />
+            <SelectChip active={newsletterForm.recipient === "active"} label="Hoạt động" onPress={() => setNewsletterForm((p) => ({ ...p, recipient: "active" }))} />
+          </View>
+        </View>
+        <Pressable onPress={sendNewsletter} style={[styles.primaryBtn, { marginTop: 12 }]}><Text style={styles.primaryBtnText}>{actionId === "newsletter-send" ? "Đang gửi..." : "Gửi Newsletter"}</Text></Pressable>
+      </View>
+
+      <View style={styles.tableCard}>
+        <SectionHeader title="Lịch sử gửi" subtitle="Newsletter đã gửi" />
+        {newsletters.length ? newsletters.slice(0, 10).map((news: any, idx: number) => (
+          <View key={idx} style={styles.userRow}>
+            <View style={styles.paymentIcon}><Feather name="mail" size={16} color={ADMIN_BLUE} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName}>{news.subject}</Text>
+              <Text style={styles.userMeta}>Gửi tới {news.recipientCount || 0} người • {compactDate(news.createdAt)}</Text>
+            </View>
+            <View style={[styles.statusChip, { backgroundColor: "#E9F8F1" }]}><Text style={[styles.statusChipText, { color: ADMIN_GREEN }]}>Đã gửi</Text></View>
+          </View>
+        )) : <Text style={styles.emptyText}>Chưa gửi newsletter nào.</Text>}
+      </View>
+    </View>
+  );
+
   const renderPromotions = () => {
     const voucherRows = vouchers.filter((v) => (v.kind || "voucher") === "voucher");
     const promotionRows = vouchers.filter((v) => v.kind === "promotion");
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Voucher & Khuy?n m�i" subtitle="T?o voucher, khuy?n m�i, flash sale v� g?i th�ng b�o chung cho ngu?i d�ng." right={<Text style={styles.counterPill}>{activeVouchers} voucher � {activePromotions} chi?n d?ch</Text>} />
+        <SectionHeader title="Voucher & Khuyến mãi" subtitle="Tạo voucher, khuyến mãi, flash sale và gửi thông báo chung cho người dùng." right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} chiến dịch</Text>} />
         <View style={styles.promoGrid}>
           <View style={styles.card}>
-            <Text style={styles.formTitle}>Th�m voucher cho ngu?i d�ng</Text>
+            <Text style={styles.formTitle}>Thêm voucher cho người dùng</Text>
             <View style={styles.formGrid2}>
-              <Input label="M� voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
-              <Input label="T�n voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Gi?m cho kh�ch m?i" />
+              <Input label="Mã voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
+              <Input label="Tên voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Giảm cho khách mới" />
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={voucherForm.discountType === "percent"} label="Theo %" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={voucherForm.discountType === "fixed"} label="Theo tiền" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-              <Input label="Gi� tr? gi?m" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 ho?c 50000" />
-              <Input label="�on t?i thi?u" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
-              <Input label="H?t h?n" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
+              <Input label="Giá trị giảm" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 hoặc 50000" />
+              <Input label="Đơn tối thiểu" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
+              <Input label="Hết hạn" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
             </View>
-            <Input label="M� t?" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="�p d?ng to�n shop..." multiline />
-            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "�ang t?o..." : "T?o voucher"}</Text></Pressable>
+            <Input label="Mô tả" value={voucherForm.description} onChangeText={(description: string) => setVoucherForm((p) => ({ ...p, description }))} placeholder="Áp dụng toàn shop..." multiline />
+            <Pressable disabled={actionId === "voucher-save"} onPress={saveVoucher} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "voucher-save" ? "Đang tạo..." : "Tạo voucher"}</Text></Pressable>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.formTitle}>Th�m khuy?n m�i / chi?n d?ch</Text>
+            <Text style={styles.formTitle}>Thêm khuyến mãi / chiến dịch</Text>
             <View style={styles.formGrid2}>
-              <Input label="M� chi?n d?ch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
-              <Input label="T�n khuy?n m�i" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cu?i tu?n" />
+              <Input label="Mã chiến dịch" value={promotionForm.code} onChangeText={(code: string) => setPromotionForm((p) => ({ ...p, code }))} placeholder="FLASHSALE15" />
+              <Input label="Tên khuyến mãi" value={promotionForm.title} onChangeText={(title: string) => setPromotionForm((p) => ({ ...p, title }))} placeholder="Flash Sale cuối tuần" />
             </View>
             <View style={styles.actionRow}>
               <SelectChip active={promotionForm.discountType === "percent"} label="Giảm %" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "percent" }))} />
               <SelectChip active={promotionForm.discountType === "fixed"} label="Giảm tiền" onPress={() => setPromotionForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-              <Input label="Gi� tr?" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
-              <Input label="�on t?i thi?u" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
-              <Input label="Ph?m vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:�o" />
+              <Input label="Giá trị" value={promotionForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setPromotionForm((p) => ({ ...p, discountValue }))} placeholder="15" />
+              <Input label="Đơn tối thiểu" value={promotionForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setPromotionForm((p) => ({ ...p, minOrderValue }))} placeholder="0" />
+              <Input label="Phạm vi" value={promotionForm.scope} onChangeText={(scope: string) => setPromotionForm((p) => ({ ...p, scope }))} placeholder="all / category:áo" />
             </View>
             <View style={styles.formGrid2}>
-              <Input label="B?t d?u" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
-              <Input label="K?t th�c" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
+              <Input label="Bắt đầu" value={promotionForm.startsAt} onChangeText={(startsAt: string) => setPromotionForm((p) => ({ ...p, startsAt }))} placeholder="2026-06-10" />
+              <Input label="Kết thúc" value={promotionForm.expiryDate} onChangeText={(expiryDate: string) => setPromotionForm((p) => ({ ...p, expiryDate }))} placeholder="2026-06-30" />
             </View>
             <View style={styles.inputWrap}>
               <Input label="Ảnh banner (URL)" value={promotionForm.bannerImage} onChangeText={(bannerImage: string) => setPromotionForm((p) => ({ ...p, bannerImage }))} placeholder="https://..." />
               <Pressable disabled={uploadingMediaField === "upload-bannerImage"} onPress={() => pickAndUploadAdminImage("bannerImage")} style={styles.smallBtn}>
-                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "�ang upload..." : "Upload banner Cloudinary"}</Text>
+                <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "Đang upload..." : "Upload banner Cloudinary"}</Text>
               </Pressable>
             </View>
-            <Input label="M� t? chi?n d?ch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Gi?m gi� cu?i tu?n cho to�n b? s?n ph?m..." multiline />
-            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "�ang t?o..." : "T?o khuy?n m�i"}</Text></Pressable>
+            <Input label="Mô tả chiến dịch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Giảm giá cuối tuần cho toàn bộ sản phẩm..." multiline />
+            <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "Đang tạo..." : "Tạo khuyến mãi"}</Text></Pressable>
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.formTitle}>Th�ng b�o chung</Text>
+          <Text style={styles.formTitle}>Thông báo chung</Text>
           <View style={styles.formGrid2}>
-            <Input label="Ti�u d?" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
-            <Input label="N?i dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="M? app nh?n voucher h�m nay..." />
+            <Input label="Tiêu đề" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
+            <Input label="Nội dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="Mở app nhận voucher hôm nay..." />
           </View>
-          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "�ang g?i..." : "G?i th�ng b�o cho t?t c? user"}</Text></Pressable>
+          <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "Đang gửi..." : "Gửi thông báo cho tất cả user"}</Text></Pressable>
         </View>
 
         <View style={styles.listGrid2}>
           <View style={styles.card}>
-            <SectionHeader title="Danh s�ch voucher" subtitle="B?t/t?t m� gi?m gi�" />
+            <SectionHeader title="Danh sách voucher" subtitle="Bật/tắt mã giảm giá" />
             {voucherRows.length ? voucherRows.map((voucher) => (
               <View key={voucher.id} style={styles.voucherRow}>
                 <View style={styles.voucherIcon}><Feather name="tag" size={17} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{voucher.code}</Text>
-                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} � {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} � HSD {compactDate(voucher.expiryDate)}</Text>
+                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} • HSD {compactDate(voucher.expiryDate)}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
-            )) : <Text style={styles.emptyText}>Chua c� voucher.</Text>}
+            )) : <Text style={styles.emptyText}>Chưa có voucher.</Text>}
           </View>
 
           <View style={styles.card}>
-            <SectionHeader title="Danh s�ch khuy?n m�i" subtitle="Chi?n d?ch dang ch?y" />
+            <SectionHeader title="Danh sách khuyến mãi" subtitle="Chiến dịch đang chạy" />
             {promotionRows.length ? promotionRows.map((promo) => (
               <View key={promo.id} style={styles.promoRow}>
                 {promo.bannerImage ? <Image source={{ uri: promo.bannerImage }} style={styles.promoThumb} /> : <View style={styles.promoThumb}><Feather name="image" size={18} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{promo.title || promo.code}</Text>
-                  <Text style={styles.voucherMeta}>{promo.code} � {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} � {compactDate(promo.startsAt)} ? {compactDate(promo.expiryDate)}</Text>
-                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chi?n d?ch khuy?n m�i"}</Text>
+                  <Text style={styles.voucherMeta}>{promo.code} • {promo.discountType === "fixed" ? formatMoney(promo.discountValue) : `${promo.discountValue}%`} • {compactDate(promo.startsAt)} → {compactDate(promo.expiryDate)}</Text>
+                  <Text numberOfLines={1} style={styles.voucherMeta}>{promo.description || "Chiến dịch khuyến mãi"}</Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(promo)} style={[styles.statusPill, promo.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{promo.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
-            )) : <Text style={styles.emptyText}>Chua c� khuy?n m�i.</Text>}
+            )) : <Text style={styles.emptyText}>Chưa có khuyến mãi.</Text>}
           </View>
         </View>
       </View>
@@ -1299,58 +1637,58 @@ export default function AdminScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={[styles.userAvatar, u.role === "admin" ? styles.userAvatarAdmin : null]}><Feather name={u.role === "admin" ? "shield" : "user"} size={20} color={u.role === "admin" ? "#fff" : ADMIN_GREEN} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Kh�ch JAPANO"}</Text>
-            <Text style={styles.userEmail}>{u.email} � {u.phone || "chua c� S�T"}</Text>
-            <Text style={styles.userMeta}>�?a ch?: {u.address || "chua c�"} � Xu {formatNumber(u.coins)} {u.vip ? "� VIP" : ""}</Text>
+            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khách JAPANO"}</Text>
+            <Text style={styles.userEmail}>{u.email} • {u.phone || "chưa có SĐT"}</Text>
+            <Text style={styles.userMeta}>Địa chỉ: {u.address || "chưa có"} • Xu {formatNumber(u.coins)} {u.vip ? "• VIP" : ""}</Text>
           </View>
-          <Pressable onPress={() => setSelectedUserId(null)} style={styles.smallBtn}><Feather name="x" size={14} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>��ng</Text></Pressable>
+          <Pressable onPress={() => setSelectedUserId(null)} style={styles.smallBtn}><Feather name="x" size={14} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Đóng</Text></Pressable>
         </View>
 
         <View style={styles.statMiniRow}>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userOrders.length}</Text><Text style={styles.statMiniCap}>�on h�ng</Text></View>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatMoney(spend)}</Text><Text style={styles.statMiniCap}>T?ng chi ti�u</Text></View>
-          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userPayments.length}</Text><Text style={styles.statMiniCap}>Giao d?ch</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userOrders.length}</Text><Text style={styles.statMiniCap}>Đơn hàng</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatMoney(spend)}</Text><Text style={styles.statMiniCap}>Tổng chi tiêu</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{userPayments.length}</Text><Text style={styles.statMiniCap}>Giao dịch</Text></View>
         </View>
 
-        <Text style={styles.formTitle}>�on h�ng & s?n ph?m d� mua</Text>
+        <Text style={styles.formTitle}>Đơn hàng & sản phẩm đã mua</Text>
         {userOrders.length ? userOrders.map((o) => (
           <View key={o.id} style={styles.orderDetailCard}>
             <View style={styles.barLineTop}>
-              <Text style={styles.userName}>#{String(o.id).slice(-8)} � {formatMoney(o.total || o.totalAmount)}</Text>
+              <Text style={styles.userName}>#{String(o.id).slice(-8)} • {formatMoney(o.total || o.totalAmount)}</Text>
               <View style={[styles.statusChip, o.status === "completed" ? styles.statusOk : o.status === "cancelled" ? styles.statusBad : styles.statusPend]}>
                 <Text style={styles.statusChipText}>{o.status || "pending"}</Text>
               </View>
             </View>
-            <Text style={styles.userMeta}>Thanh to�n: {o.paymentMethod || "--"} � {o.paymentStatus || "pending"} � {compactDate(o.createdAt)}</Text>
-            {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao t?i: {o.shippingAddress} {o.phoneNumber ? `� ${o.phoneNumber}` : ""}</Text> : null}
+            <Text style={styles.userMeta}>Thanh toán: {o.paymentMethod || "--"} • {o.paymentStatus || "pending"} • {compactDate(o.createdAt)}</Text>
+            {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao tới: {o.shippingAddress} {o.phoneNumber ? `• ${o.phoneNumber}` : ""}</Text> : null}
             {(o.items || []).map((it: any, idx: number) => (
               <View key={idx} style={styles.orderItemRow}>
                 {it.image ? <Image source={{ uri: it.image }} style={styles.orderItemImg} /> : <View style={styles.orderItemImg}><Feather name="image" size={14} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text numberOfLines={1} style={styles.orderItemName}>{it.name}</Text>
-                  <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `� size ${it.size}` : ""} {it.color ? `� ${it.color}` : ""}</Text>
+                  <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `• size ${it.size}` : ""} {it.color ? `• ${it.color}` : ""}</Text>
                 </View>
                 <Text style={styles.orderItemPrice}>{formatMoney(it.unitPrice)}</Text>
               </View>
             ))}
             <View style={styles.userActions}>
-              <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>�� thanh to�n</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>�ang giao</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>�� nh?n</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color="#fff" /><Text style={styles.dangerBtnText}>H?y</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Đã thanh toán</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>Đang giao</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>Đã nhận</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color="#fff" /><Text style={styles.dangerBtnText}>Hủy</Text></Pressable>
             </View>
           </View>
-        )) : <Text style={styles.emptyText}>Kh�ch n�y chua c� don h�ng.</Text>}
+        )) : <Text style={styles.emptyText}>Khách này chưa có đơn hàng.</Text>}
 
         {userPayments.length ? (
           <>
-            <Text style={styles.formTitle}>Th�ng tin thanh to�n</Text>
+            <Text style={styles.formTitle}>Thông tin thanh toán</Text>
             {userPayments.map((p) => (
               <View key={p.id} style={styles.paymentRow}>
                 <View style={styles.paymentIcon}><Feather name="credit-card" size={15} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.paymentTitle}>{formatMoney(p.amount)} � {p.status}</Text>
-                  <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} � Txn {p.transactionId || "--"} � {compactDate(p.createdAt)}</Text>
+                  <Text style={styles.paymentTitle}>{formatMoney(p.amount)} • {p.status}</Text>
+                  <Text numberOfLines={1} style={styles.paymentMeta}>{p.method || "--"} • Txn {p.transactionId || "--"} • {compactDate(p.createdAt)}</Text>
                 </View>
               </View>
             ))}
@@ -1396,33 +1734,33 @@ export default function AdminScreen() {
 
   const renderTransactions = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="�on h�ng / Thanh to�n" subtitle="Theo d�i th�ng tin giao d?ch, don h�ng v� tr?ng th�i thanh to�n." />
+      <SectionHeader title="Đơn hàng / Thanh toán" subtitle="Theo dõi thông tin giao dịch, đơn hàng và trạng thái thanh toán." />
       <View style={styles.listGrid2}>
         <View style={styles.card}>
-          <SectionHeader title="Thanh to�n" subtitle="Giao d?ch g?n d�y" />
+          <SectionHeader title="Thanh toán" subtitle="Giao dịch gần đây" />
           {payments.length ? payments.map((payment) => (
             <View key={payment.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
-                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh to�n"} � {payment.status} � {compactDate(payment.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} � Txn: {payment.transactionId || "--"}</Text>
+                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toán"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
+                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua c� giao d?ch.</Text>}
+          )) : <Text style={styles.emptyText}>Chưa có giao dịch.</Text>}
         </View>
         <View style={styles.card}>
-          <SectionHeader title="�on h�ng g?n d�y" subtitle="�on h�ng m?i" />
+          <SectionHeader title="Đơn hàng gần đây" subtitle="Đơn hàng mới" />
           {orders.length ? orders.map((order) => (
             <View key={order.id} style={styles.paymentRow}>
               <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} � {formatMoney(order.total || order.totalAmount)}</Text>
-                <Text style={styles.paymentMeta}>Status: {order.status} � Payment: {order.paymentStatus} � {compactDate(order.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} � {order.paymentMethod || "COD"}</Text>
+                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
+                <Text style={styles.paymentMeta}>Status: {order.status} • Payment: {order.paymentStatus} • {compactDate(order.createdAt)}</Text>
+                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} • {order.paymentMethod || "COD"}</Text>
                 <View style={styles.adminOrderQuickRow}>
                   <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
-                    <Text style={styles.successBtnText}>X�c nh?n th�nh c�ng</Text>
+                    <Text style={styles.successBtnText}>Xác nhận thành công</Text>
                   </Pressable>
                   <Pressable disabled={actionId === `order-cancelled-${order.id}`} onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}>
                     <Text style={styles.dangerBtnText}>Hủy nhanh</Text>
@@ -1430,7 +1768,7 @@ export default function AdminScreen() {
                 </View>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua c� don h�ng.</Text>}
+          )) : <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>}
         </View>
       </View>
     </View>
@@ -1472,7 +1810,7 @@ export default function AdminScreen() {
     const w = bannedInput.trim();
     if (!w) return;
     if (!user?.id) {
-      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.");
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
       return;
     }
     try {
@@ -1480,19 +1818,19 @@ export default function AdminScreen() {
       setBannedInput("");
       await load();
     } catch (e: any) {
-      Alert.alert("L?i", e?.message || "Kh�ng th�m du?c t? c?m.");
+      Alert.alert("Lỗi", e?.message || "Không thêm được từ cấm.");
     }
   };
   const removeBanned = async (id: string) => {
     if (!user?.id) {
-      Alert.alert("L?i", "B?n c?n dang nh?p d? th?c hi?n thao t�c n�y.");
+      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
       return;
     }
     try {
       await api.deleteBannedWord(user.id, id);
       await load();
     } catch (e: any) {
-      Alert.alert("Lỗi", e?.message || "Không xoá được.");
+      Alert.alert("Lỗi", e?.message || "Không xóa được.");
     }
   };
 
@@ -1509,7 +1847,7 @@ export default function AdminScreen() {
         </View>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh sách từ cấm" subtitle="Bấm vào một từ để xoá" />
+        <SectionHeader title="Danh sách từ cấm" subtitle="Bấm vào một từ để xóa" />
         <View style={styles.bannedWrap}>
           {bannedWords.length ? bannedWords.map((b: any) => (
             <Pressable key={b.id} onPress={() => removeBanned(b.id)} style={styles.bannedChip}>
@@ -1565,42 +1903,42 @@ export default function AdminScreen() {
     const m = systemStatus?.metrics || kpis;
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Tr?ng th�i h? th?ng AI" subtitle="Theo d�i CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo th?i gian th?c." right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}<Text style={styles.newOrderText}>Ki?m tra l?i</Text></Pressable>} />
+        <SectionHeader title="Trạng thái hệ thống AI" subtitle="Theo dõi CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo thời gian thực." right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}<Text style={styles.newOrderText}>Kiểm tra lại</Text></Pressable>} />
         <View style={styles.tableCard}>
           {systemStatus?.services ? systemStatus.services.map((s: any) => (
             <View key={s.key} style={styles.userRow}>
               <View style={[styles.statusDot, { backgroundColor: s.online ? "#2E7D32" : ADMIN_RED, width: 14, height: 14 }]} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.userName}>{s.label}</Text>
-                {s.url ? <Text numberOfLines={1} style={styles.userMeta}>{s.url}</Text> : <Text style={styles.userMeta}>D?ch v? n?i b?</Text>}
+                {s.url ? <Text numberOfLines={1} style={styles.userMeta}>{s.url}</Text> : <Text style={styles.userMeta}>Dịch vụ nội bộ</Text>}
               </View>
               <View style={[styles.statusChip, s.online ? styles.statusOk : styles.statusBad]}><Text style={styles.statusChipText}>{s.online ? "Online" : "Offline"}</Text></View>
             </View>
-          )) : <Text style={styles.emptyText}>{statusLoading ? "�ang ki?m tra d?ch v?..." : "Chua l?y du?c tr?ng th�i � b?m \"Ki?m tra l?i\". N?u backend chua ch?y, h�y kh?i d?ng server c?ng 4000."}</Text>}
+          )) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra dịch vụ..." : "Chưa lấy được trạng thái • bấm \"Kiểm tra lại\". Nếu backend chưa chạy, hãy khởi động server cổng 4000."}</Text>}
           <View style={{ paddingTop: 10 }}>
-            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "NVIDIA RTX 5060 Ti"} � CUDA: {systemStatus?.cuda || "Available"}</Text>
-            <Text style={styles.userMeta}>Hu?ng d?n restart: ch?y l?i ti?n tr�nh tuong ?ng (CatVTON :7861, Gateway :8001, Ollama :11434) r?i b?m Ki?m tra l?i.</Text>
+            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "NVIDIA RTX 5060 Ti"} • CUDA: {systemStatus?.cuda || "Available"}</Text>
+            <Text style={styles.userMeta}>Hướng dẫn restart: chạy lại tiến trình tương ứng (CatVTON :7861, Gateway :8001, Ollama :11434) rồi bấm Kiểm tra lại.</Text>
           </View>
         </View>
 
         <View style={styles.statsGrid}>
-          <StatCard label="Th? d? 2D" value={formatNumber(m.tryon2d || 0)} change={`${formatNumber(m.tryon2dFail || 0)} l?i`} icon="camera" accent={ADMIN_GREEN} />
-          <StatCard label="T?o 3D" value={formatNumber(m.tryon3d || 0)} change={`${formatNumber(m.tryon3dFail || 0)} l?i`} icon="box" accent={ADMIN_BLUE} />
-          <StatCard label="T? l? l?i 2D" value={`${m.tryon2d ? Math.round((m.tryon2dFail / m.tryon2d) * 100) : 0}%`} change="AI try-on" icon="alert-triangle" accent={ADMIN_ORANGE} />
-          <StatCard label="T? l? l?i 3D" value={`${m.tryon3d ? Math.round((m.tryon3dFail / m.tryon3d) * 100) : 0}%`} change="AI 3D" icon="alert-triangle" accent={ADMIN_RED} />
+          <StatCard label="Thử đồ 2D" value={formatNumber(m.tryon2d || 0)} change={`${formatNumber(m.tryon2dFail || 0)} lỗi`} icon="camera" accent={ADMIN_GREEN} />
+          <StatCard label="Tạo 3D" value={formatNumber(m.tryon3d || 0)} change={`${formatNumber(m.tryon3dFail || 0)} lỗi`} icon="box" accent={ADMIN_BLUE} />
+          <StatCard label="Tỷ lệ lỗi 2D" value={`${m.tryon2d ? Math.round((m.tryon2dFail / m.tryon2d) * 100) : 0}%`} change="AI try-on" icon="alert-triangle" accent={ADMIN_ORANGE} />
+          <StatCard label="Tỷ lệ lỗi 3D" value={`${m.tryon3d ? Math.round((m.tryon3dFail / m.tryon3d) * 100) : 0}%`} change="AI 3D" icon="alert-triangle" accent={ADMIN_RED} />
         </View>
 
         <View style={styles.card}>
-          <SectionHeader title="Nh?t k� l?i g?n d�y" subtitle="20 l?i m?i nh?t t? AI/h? th?ng" />
+          <SectionHeader title="Nhật ký lỗi gần đây" subtitle="20 lỗi mới nhất từ AI/hệ thống" />
           {systemStatus?.errors?.length ? systemStatus.errors.map((e: any, i: number) => (
             <View key={i} style={styles.errRow}>
               <Feather name="alert-triangle" size={13} color={ADMIN_ORANGE} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.errScope}>{e.scope} � {String(e.at).slice(0, 19).replace("T", " ")}</Text>
+                <Text style={styles.errScope}>{e.scope} • {String(e.at).slice(0, 19).replace("T", " ")}</Text>
                 <Text style={styles.errMsg}>{e.message}</Text>
               </View>
             </View>
-          )) : <Text style={styles.emptyText}>Chua c� l?i n�o du?c ghi nh?n.</Text>}
+          )) : <Text style={styles.emptyText}>Chưa có lỗi nào được ghi nhận.</Text>}
         </View>
       </View>
     );
@@ -1608,54 +1946,88 @@ export default function AdminScreen() {
 
   const renderTryon2d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n l� th? d? AI 2D (CatVTON)" subtitle={'Theo d�i s? lu?t, t? l? l?i v� c?u h�nh model. B?m "Ki?m tra l?i" ? tab Tr?ng th�i d? c?p nh?t.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lu?t</Text>} />
+      <SectionHeader title="Quản lý thử đồ AI 2D (CatVTON)" subtitle={'Theo dõi số lượt, tỷ lệ lỗi và cấu hình model. Bấm "Kiểm tra lại" ở tab Trạng thái để cập nhật.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lượt</Text>} />
       <View style={styles.statsGrid}>
-        <StatCard label="T?ng lu?t th? d?" value={formatNumber(kpis.tryon2d || 0)} change="t?t c? th?i gian" icon="camera" accent={ADMIN_GREEN} />
-        <StatCard label="Th�nh c�ng" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="u?c t�nh" icon="check-circle" accent={ADMIN_BLUE} />
-        <StatCard label="L?i" value={formatNumber(kpis.tryon2dFail || 0)} change="xem nh?t k�" icon="alert-triangle" accent={ADMIN_RED} />
+        <StatCard label="Tổng lượt thử đồ" value={formatNumber(kpis.tryon2d || 0)} change="tất cả thời gian" icon="camera" accent={ADMIN_GREEN} />
+        <StatCard label="Thành công" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="ước tính" icon="check-circle" accent={ADMIN_BLUE} />
+        <StatCard label="Lỗi" value={formatNumber(kpis.tryon2dFail || 0)} change="xem nhật ký" icon="alert-triangle" accent={ADMIN_RED} />
       </View>
       <View style={styles.card}>
-        <SectionHeader title="C?u h�nh engine" subtitle="Chu?i uu ti�n model m?nh" />
-        <Text style={styles.userMeta}>Uu ti�n: CatVTON (JAPANO_CATVTON_URL:7861) ? AI Gateway (:8001, model=strong, steps=50, hd) ? gh�p ?nh d? ph�ng (lu�n ra k?t qu?).</Text>
-        <Text style={styles.userMeta}>L?y ?nh s?n ph?m: g?i c? gallery (t?i da 6 ?nh) cho model d? th? d? h?p l� hon.</Text>
+        <SectionHeader title="Cấu hình engine" subtitle="Chuỗi ưu tiên model mạnh" />
+        <Text style={styles.userMeta}>Ưu tiên: CatVTON (JAPANO_CATVTON_URL:7861) → AI Gateway (:8001, model=strong, steps=50, hd) → ghép ảnh dự phòng (luôn ra kết quả).</Text>
+        <Text style={styles.userMeta}>Lấy ảnh sản phẩm: gọi cả gallery (tối đa 6 ảnh) cho model để thử đồ hợp lý hơn.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="L?ch s? th? d? (?nh v�o / ?nh k?t qu?)" subtitle="C?n b?t luu l?ch s? ? backend" />
-        <Text style={styles.emptyText}>Chua b?t luu l?ch s? ?nh. �? hi?n danh s�ch ?nh ngu?i d�ng / ?nh qu?n �o / ?nh k?t qu? k�m seed/steps/cfg v� n�t ch?y l?i, c?n th�m collection luu m?i lu?t th? d? ? backend (m�nh c� th? l�m ? v�ng sau).</Text>
+        <SectionHeader title="Lịch sử thử đồ (ảnh vào / ảnh kết quả)" subtitle="Cần bật lưu lịch sử ở backend" />
+        <Text style={styles.emptyText}>Chưa bật lưu lịch sử ảnh. Để hiển thị danh sách ảnh người dùng / ảnh quần áo / ảnh kết quả kèm seed/steps/cfg và nút chạy lại, cần thêm collection lưu mỗi lượt thử đồ ở backend (mình có thể làm ở vòng sau).</Text>
       </View>
     </View>
   );
 
   const renderModel3d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Qu?n l� m?u 3D" subtitle="S? lu?t d?ng 3D v� tr?ng th�i. GLB storage c?n backend luu file." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lu?t</Text>} />
+      <SectionHeader title="Quản lý mẫu 3D" subtitle="Số lượt dùng 3D và trạng thái. GLB storage cần backend lưu file." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lượt</Text>} />
       <View style={styles.statsGrid}>
-        <StatCard label="T?ng lu?t t?o 3D" value={formatNumber(kpis.tryon3d || 0)} change="t?t c? th?i gian" icon="box" accent={ADMIN_GREEN} />
-        <StatCard label="Th�nh c�ng" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change="u?c t�nh" icon="check-circle" accent={ADMIN_BLUE} />
-        <StatCard label="L?i" value={formatNumber(kpis.tryon3dFail || 0)} change="xem nh?t k�" icon="alert-triangle" accent={ADMIN_RED} />
+        <StatCard label="Tổng lượt tạo 3D" value={formatNumber(kpis.tryon3d || 0)} change="tất cả thời gian" icon="box" accent={ADMIN_GREEN} />
+        <StatCard label="Thành công" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change="ước tính" icon="check-circle" accent={ADMIN_BLUE} />
+        <StatCard label="Lỗi" value={formatNumber(kpis.tryon3dFail || 0)} change="xem nhật ký" icon="alert-triangle" accent={ADMIN_RED} />
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh s�ch model .glb" subtitle="C?n b?t luu GLB ? backend" />
-        <Text style={styles.emptyText}>Hi?n 3D tr? v? khung h�nh nhi?u g�c (turntable). �? c� danh s�ch file .glb + ?nh d?u v�o + n�t xem/t?i/x�a + tr?ng th�i TripoSR + th?i gian d?ng, c?n backend luu file GLB (TripoSR/SF3D) v� metadata. C� th? b? sung ? v�ng sau.</Text>
+        <SectionHeader title="Danh sách model .glb" subtitle="Cần bật lưu GLB ở backend" />
+        <Text style={styles.emptyText}>Hiện 3D trở về khung hình nhiều góc (turntable). Để có danh sách file .glb + ảnh đầu vào + nút xem/tải/xóa + trạng thái TripoSR + thời gian dừng, cần backend lưu file GLB (TripoSR/SF3D) và metadata. Có thể bổ sung ở vòng sau.</Text>
       </View>
     </View>
   );
 
   const renderBotChat = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Bot chat & G?i � th?i trang" subtitle="Model, embedding v� ki?m duy?t." />
+      <SectionHeader title="Bot chat & Gợi ý thời trang" subtitle="Model, embedding và kiểm duyệt." />
       <View style={styles.card}>
-        <SectionHeader title="C?u h�nh model" subtitle="�ang d�ng" />
-        <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) � Embedding: nomic-embed-text</Text>
-        <Text style={styles.userMeta}>Phong c�ch: tu v?n th?i trang th�n thi?n, g?i � outfit theo d?p v� s?n ph?m trong shop.</Text>
+        <SectionHeader title="Cấu hình model" subtitle="Đang dùng" />
+        <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) • Embedding: nomic-embed-text</Text>
+        <Text style={styles.userMeta}>Phong cách: tư vấn thời trang thân thiện, gợi ý outfit theo dịp và sản phẩm trong shop.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Danh s�ch t? c?m" subtitle="�p d?ng cho b�nh lu?n & chat" right={<Pressable onPress={() => setActiveTab("moderation")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Qu?n l�</Text></Pressable>} />
-        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} t? dang ch?n. V�o tab T? c?m d? th�m/xo�.</Text>
+        <SectionHeader title="Danh sách từ cấm" subtitle="Áp dụng cho bình luận & chat" right={<Pressable onPress={() => setActiveTab("moderation")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Quản lý</Text></Pressable>} />
+        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} từ đang chặn. Vào tab Từ cấm để thêm/xóa.</Text>
       </View>
       <View style={styles.card}>
-        <SectionHeader title="Prompt h? th?ng & l?ch s? h?i d�p" subtitle="C?n backend luu prompt/l?ch s?" />
-        <Text style={styles.emptyText}>�? ch?nh prompt h? th?ng tr?c ti?p v� xem l?ch s? c�u h?i/c�u tr? l?i + d�nh gi� h?u �ch, c?n th�m API luu prompt & h?i tho?i ? backend. C� th? b? sung ? v�ng sau.</Text>
+        <SectionHeader title="Prompt hệ thống & lịch sử hỏi đáp" subtitle="Cần backend lưu prompt/lịch sử" />
+        <Text style={styles.emptyText}>Để chỉnh prompt hệ thống trực tiếp và xem lịch sử câu hỏi/câu trả lời + đánh giá hữu ích, cần thêm API lưu prompt & hội thoại ở backend. Có thể bổ sung ở vòng sau.</Text>
+      </View>
+    </View>
+  );
+
+  const renderReports = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader title="Báo cáo tài chính" subtitle="Phân tích doanh thu, chi phí, lợi nhuận và các chỉ số kinh doanh." />
+      <View style={styles.statsGrid}>
+        <StatCard label="Tổng doanh thu" value={formatCompactMoney(dashboard?.totalRevenue || 0)} change="tất cả thời gian" icon="dollar-sign" accent={ADMIN_GREEN} />
+        <StatCard label="Doanh thu tháng này" value={formatCompactMoney(dashboard?.monthlyRevenue || 0)} change={`${formatNumber(orders.length)} đơn`} icon="trending-up" accent={ADMIN_BLUE} />
+        <StatCard label="Chi phí vận chuyển" value={formatCompactMoney(dashboard?.shippingCost || 0)} change="ước tính" icon="truck" accent={ADMIN_ORANGE} />
+        <StatCard label="Lợi nhuận ròng" value={formatCompactMoney((dashboard?.totalRevenue || 0) - (dashboard?.shippingCost || 0))} change="doanh thu - chi phí" icon="award" accent={ADMIN_PURPLE} />
+      </View>
+      
+      <View style={styles.dashboardGrid}>
+        <View style={[styles.card, styles.bigChartCard]}>
+          <SectionHeader title="Doanh thu theo tháng" subtitle="12 tháng gần nhất" />
+          <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
+        </View>
+        <View style={styles.card}>
+          <SectionHeader title="Top sản phẩm theo doanh thu" subtitle="Bán chạy nhất" />
+          {topProducts.length ? <HorizontalBars data={topProducts.slice(0, 5).map((x: any) => ({ label: x.name, value: x.revenue || x.unitsSold * x.price }))} accent={ADMIN_GREEN} money /> : <Text style={styles.emptyText}>Chưa có dữ liệu.</Text>}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.formTitle}>Tóm tắt tài chính</Text>
+        <View style={styles.statMiniRow}>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(orders.length)}</Text><Text style={styles.statMiniCap}>Tổng đơn</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(users.length)}</Text><Text style={styles.statMiniCap}>Tổng khách</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(products.length)}</Text><Text style={styles.statMiniCap}>Sản phẩm</Text></View>
+          <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(reviews.length)}</Text><Text style={styles.statMiniCap}>Đánh giá</Text></View>
+        </View>
+        <Text style={[styles.userMeta, { marginTop: 12 }]}>Xuất báo cáo: In/PDF để gửi cho đối tác (chưa được triển khai).</Text>
       </View>
     </View>
   );
@@ -1667,12 +2039,23 @@ export default function AdminScreen() {
     if (activeTab === "overview") return renderOverview();
     if (activeTab === "analytics") return renderAnalytics();
     if (activeTab === "products") return renderProducts();
+    if (activeTab === "inventory") return renderInventory();
+    if (activeTab === "reviews") return renderReviews();
     if (activeTab === "accessories") return renderAccessories();
     if (activeTab === "promotions") return renderPromotions();
     if (activeTab === "users") return renderUsers();
     if (activeTab === "transactions") return renderTransactions();
     if (activeTab === "moderation") return renderModeration();
-    return renderGames();
+    if (activeTab === "staff") return renderStaff();
+    if (activeTab === "settings") return renderSettings();
+    if (activeTab === "newsletter") return renderNewsLetter();
+    if (activeTab === "reports") return renderReports();
+    if (activeTab === "games") return renderGames();
+    if (activeTab === "tryon2d") return renderTryon2d();
+    if (activeTab === "model3d") return renderModel3d();
+    if (activeTab === "botchat") return renderBotChat();
+    if (activeTab === "system") return renderSystemStatus();
+    return renderOverview();
   };
 
   return (
@@ -1815,6 +2198,8 @@ const styles = StyleSheet.create({
   saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "600" },
   dangerBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
   dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "600" },
+  successBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#E9F8F1", borderWidth: 1, borderColor: "#B8E6D5", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
+  successBtnText: { color: ADMIN_GREEN, fontSize: 12, fontWeight: "600" },
   marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
   previewTopIcons: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   previewImageBox: { height: 270, backgroundColor: "#EEF1F3", alignItems: "center", justifyContent: "center" },
@@ -1845,10 +2230,7 @@ const styles = StyleSheet.create({
   discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16, overflow: "hidden", fontSize: 11, fontWeight: "700" },
   productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "500" },
   adminThumbRow: { flexDirection: "row", gap: 8 },
-
   adminOrderQuickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  successBtn: { backgroundColor: ADMIN_GREEN, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9 },
-  successBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   adminThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#F2F5F7" },
   counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
   promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
@@ -1947,4 +2329,7 @@ const styles = StyleSheet.create({
   errMsg: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 17 },
   swatch: { width: 34, height: 34, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontSize: 13, fontWeight: "600" },
+  inventoryLogRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  inventoryIcon: { width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  inventoryChange: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 14 },
 });
