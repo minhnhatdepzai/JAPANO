@@ -62,6 +62,7 @@ function vietnameseOr(value, fallbackValue, max) {
 
 function ensureVietnameseProductDescription(raw, product = {}) {
   const fallback = fallbackProductDescription(product);
+  const isVision = raw?.engine === 'qwen3-vl:8b' || raw?.engine === 'thi-giac-san-pham';
   const details = Array.isArray(raw?.details)
     ? [...new Set(raw.details.map((item, index) => vietnameseOr(item, fallback.details[index] || '', 220)).filter(Boolean))].slice(0, 5)
     : fallback.details;
@@ -72,7 +73,7 @@ function ensureVietnameseProductDescription(raw, product = {}) {
     stylingTip: vietnameseOr(raw?.stylingTip, fallback.stylingTip, 400),
     purchaseReason: vietnameseOr(raw?.purchaseReason, fallback.purchaseReason, 400),
     confidence: vietnameseOr(raw?.confidence, fallback.confidence, 240),
-    engine: raw?.engine === 'qwen3-vl:8b' ? 'thi-giac-san-pham' : fallback.engine,
+    engine: isVision ? 'thi-giac-san-pham' : fallback.engine,
   };
 }
 
@@ -90,7 +91,9 @@ function normalizeVisionResult(raw, fallback, product) {
   return ensureVietnameseProductDescription(normalized, product);
 }
 
-async function analyzeProductImage({ product, imagePath, ollamaUrl, model = 'qwen3-vl:8b', timeoutMs = 120000 }) {
+async function analyzeProductImage({
+  product, imagePath, ollamaUrl, model = 'qwen3-vl:8b', timeoutMs = 120000, signal,
+}) {
   const fallback = fallbackProductDescription(product);
   if (!imagePath || !fs.existsSync(imagePath)) return fallback;
   const image = fs.readFileSync(imagePath).toString('base64');
@@ -108,6 +111,9 @@ async function analyzeProductImage({ product, imagePath, ollamaUrl, model = 'qwe
     '{"headline":"...","visualSummary":"...","details":["..."],"stylingTip":"...","purchaseReason":"...","confidence":"..."}',
   ].join('\n');
   const controller = new AbortController();
+  const cancelFromQueue = () => controller.abort(signal?.reason);
+  if (signal?.aborted) cancelFromQueue();
+  else signal?.addEventListener('abort', cancelFromQueue, { once: true });
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${ollamaUrl.replace(/\/+$/, '')}/api/chat`, {
@@ -118,18 +124,23 @@ async function analyzeProductImage({ product, imagePath, ollamaUrl, model = 'qwe
         model,
         stream: false,
         format: 'json',
+        // Qwen3-VL mặc định có thể dành toàn bộ token budget cho reasoning và
+        // không còn content JSON để parser đọc. Endpoint này chỉ cần schema
+        // ngắn, nên tắt thinking để luôn nhận phần trả lời cuối.
+        think: false,
         messages: [{ role: 'user', content: prompt, images: [image] }],
-        // Qwen3-VL dùng một phần token cho suy luận thị giác trước khi xuất JSON.
-        options: { temperature: 0.15, num_predict: 2500 },
+        options: { temperature: 0.15, num_predict: 900 },
       }),
     });
     if (!response.ok) return fallback;
     const data = await response.json();
     return normalizeVisionResult(parseJsonText(data.message?.content || data.response), fallback, product);
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw signal.reason || error;
     return fallback;
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', cancelFromQueue);
   }
 }
 

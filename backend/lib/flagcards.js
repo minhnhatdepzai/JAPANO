@@ -135,8 +135,10 @@ function ensureFlagcardState(state) {
 
 function isSuccessfulOrder(order) {
   const payment = String(order?.payment?.status || '').toLowerCase();
+  const method = String(order?.payment?.method || order?.payment?.provider || '').toLowerCase();
   const status = String(order?.status || '').toLowerCase();
-  return payment === 'paid' || ['completed', 'delivered'].includes(status);
+  const codAccepted = /cod/.test(method) && !['cancelled', 'failed', 'returned', 'refunded'].includes(status);
+  return payment === 'paid' || ['completed', 'delivered'].includes(status) || codAccepted;
 }
 
 function orderUserId(order) {
@@ -205,7 +207,7 @@ function awardFlagcardForOrder(state, order, now = Date.now()) {
   ensureFlagcardState(state);
   const config = state.flagcardConfig;
   const userId = orderUserId(order);
-  if (!config.active || !userId || !isSuccessfulOrder(order) || finite(order.total) <= finite(config.qualifyingOrderMin, 5_000_000)) return null;
+  if (!config.active || !userId || !isSuccessfulOrder(order) || finite(order.total) < finite(config.qualifyingOrderMin, 5_000_000)) return null;
   if (order.flagcardAward?.cardId) return order.flagcardAward;
   const collection = getOrCreateCollection(state, userId, now);
   const available = state.flagcards

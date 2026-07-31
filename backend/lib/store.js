@@ -1,8 +1,44 @@
 const fs = require('fs');
 const path = require('path');
 const { emptyState, seededState } = require('../seed');
+const { getDb, mongoEnabled } = require('./mongo');
+const { logger } = require('./logger');
 
-const SERVER_MANAGED_FIELDS = Object.freeze(['orders', 'interactions', 'profiles', 'chats', 'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections', 'voucherRedemptions', 'payments', 'returnRequests', 'carts', 'reviews', 'reviewReactions', 'moderationSamples']);
+// MongoDB, khi cấu hình MONGODB_URI, trở thành nơi lưu trữ bền lâu dùng chung
+// (nhiều máy/nhiều lần khởi động cùng thấy một state) thay vì chỉ 1 file JSON
+// trên đúng 1 máy. Đây là bản "mirror" state hiện có dưới dạng 1 document duy
+// nhất — giữ nguyên toàn bộ API đồng bộ (read/write/update) mà mọi route đang
+// dùng, không cần viết lại sang truy vấn theo từng collection (việc đó là một
+// đợt tái cấu trúc lớn hơn nhiều, để dành cho giai đoạn sau).
+const MONGO_COLLECTION = 'app_state';
+const MONGO_DOC_ID = 'main';
+
+async function loadFromMongo() {
+  if (!mongoEnabled()) return null;
+  try {
+    const db = await getDb();
+    const doc = await db.collection(MONGO_COLLECTION).findOne({ _id: MONGO_DOC_ID });
+    if (!doc) return null;
+    const { _id, _syncedAt, ...state } = doc;
+    return state;
+  } catch (error) {
+    logger.warn({ err: error }, 'Không đọc được state từ MongoDB — dùng file JSON cục bộ.');
+    return null;
+  }
+}
+
+function persistToMongoAsync(state) {
+  if (!mongoEnabled()) return;
+  getDb()
+    .then((db) => db.collection(MONGO_COLLECTION).replaceOne(
+      { _id: MONGO_DOC_ID },
+      { _id: MONGO_DOC_ID, ...state, _syncedAt: Date.now() },
+      { upsert: true },
+    ))
+    .catch((error) => logger.warn({ err: error }, 'Không đồng bộ được state lên MongoDB (vẫn lưu file cục bộ bình thường).'));
+}
+
+const SERVER_MANAGED_FIELDS = Object.freeze(['orders', 'interactions', 'searchLogs', 'pushTokens', 'profiles', 'chats', 'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections', 'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts', 'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists']);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -18,7 +54,7 @@ function normalizeState(input) {
     normalized[key] = Array.isArray(source[key]) ? source[key] : clone(defaults[key]);
   }
   normalized.flagcardConfig = { ...defaults.flagcardConfig, ...(source.flagcardConfig || {}) };
-  normalized.schemaVersion = Math.max(4, Number(source.schemaVersion || 0));
+  normalized.schemaVersion = Math.max(5, Number(source.schemaVersion || 0));
   normalized.seeded = Boolean(source.seeded || normalized.products.length);
   return normalized;
 }
@@ -33,6 +69,7 @@ function createStore(filePath) {
     const temporary = `${resolved}.${process.pid}.tmp`;
     fs.writeFileSync(temporary, JSON.stringify(normalized, null, 2));
     fs.renameSync(temporary, resolved);
+    persistToMongoAsync(normalized);
     return normalized;
   }
 
@@ -88,7 +125,7 @@ function createStore(filePath) {
     // diện quản trị mở từ trước tuyệt đối không được ghi đè hay xoá đơn mới.
     merged.orders = current.orders;
     merged.flagcardConfig = { ...current.flagcardConfig, ...(incoming.flagcardConfig || {}) };
-    merged.schemaVersion = Math.max(4, Number(current.schemaVersion || 0), Number(incoming.schemaVersion || 0));
+    merged.schemaVersion = Math.max(5, Number(current.schemaVersion || 0), Number(incoming.schemaVersion || 0));
     return write(merged);
   }
 
@@ -106,7 +143,25 @@ function createStore(filePath) {
     write(current);
   }
 
-  return { filePath: resolved, read, write, update, replaceFromAdmin };
+  // Gọi đúng 1 lần lúc khởi động, trước khi mở cổng lắng nghe (xem server.js).
+  // Chỉ ghi đè file cục bộ nếu Mongo thực sự có dữ liệu MỚI HƠN — tránh một lần
+  // khởi động với Mongo trống/lỗi kết nối xoá mất dữ liệu cục bộ đang có.
+  async function hydrateFromMongoIfNewer() {
+    const remote = await loadFromMongo();
+    if (!remote) return false;
+    const local = read();
+    const newestOf = (state) => Math.max(
+      0,
+      ...(state.orders || []).map((o) => Number(o.createdAt || 0)),
+      ...(state.interactions || []).map((i) => Number(i.createdAt || 0)),
+    );
+    if (newestOf(remote) <= newestOf(local)) return false;
+    write(remote);
+    logger.info('Đã nạp state mới hơn từ MongoDB lúc khởi động.');
+    return true;
+  }
+
+  return { filePath: resolved, read, write, update, replaceFromAdmin, hydrateFromMongoIfNewer };
 }
 
 module.exports = { SERVER_MANAGED_FIELDS, normalizeState, createStore };

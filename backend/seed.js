@@ -85,8 +85,8 @@ function makeVariants(slug, productIndex) {
 function emptyState() {
   return {
     seeded: false,
-    schemaVersion: 4,
-    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, logo: null },
+    schemaVersion: 5,
+    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, vnpay: true, logo: null },
     integrations: { mongo: false, cloudinary: false, ai: false },
     categories: JSON.parse(JSON.stringify(CATS)),
     products: [],
@@ -98,20 +98,42 @@ function emptyState() {
     reviewReactions: [],
     moderationSamples: [],
     users: [],
+    addresses: [],
+    wishlists: [],
     notifications: [],
     vouchers: [],
     flagcards: JSON.parse(JSON.stringify(FLAGCARDS)),
     flagcardCollections: [],
+    vipMemberships: [],
     flagcardConfig: { ...DEFAULT_FLAGCARD_CONFIG },
     voucherRedemptions: [],
     banners: [],
     interactions: [],
+    searchLogs: [],
+    pushTokens: [],
     profiles: [],
     chats: [],
     tryonHistory: [],
     goals: [],
     aiDescriptions: [],
+    japanSpotReviews: [],
+    japanSpotSuggestions: [],
   };
+}
+
+// Sản phẩm cosplay/anime mới — CHƯA có ảnh sản phẩm thật nên nằm ở trạng thái
+// draft (ẩn khỏi shop, xem catalog.js) cho tới khi admin tải ảnh thật lên qua
+// trang quản trị. Không tự chế ảnh giả — xem quy ước "ảnh phải là ảnh thật,
+// không dùng ô màu thay thế" đã ghi ở đầu server.js.
+const DRAFT_COSPLAY_PRODUCTS = [
+  { slug: 'doraemon', name: 'Trang phục hóa thân Doraemon', price: 890000, colorHex: '#2E86DE', tags: ['hóa thân', 'hoạt hình Nhật', 'xanh dương'] },
+  { slug: 'son-goku', name: 'Trang phục hóa thân Songoku', price: 950000, colorHex: '#F58220', tags: ['hóa thân', 'hoạt hình Nhật', 'cam'] },
+  { slug: 'luffy', name: 'Trang phục hóa thân Luffy', price: 890000, colorHex: '#B91C1C', tags: ['hóa thân', 'hoạt hình Nhật', 'đỏ'] },
+];
+
+function draftVariants(slug) {
+  const prefix = skuPrefix(slug);
+  return SIZES.slice(0, 4).map((size) => ({ colorName: 'Mặc định', colorHex: '#1A1410', size, sku: `${prefix}-${size}`, stock: 0 }));
 }
 
 function seededState() {
@@ -264,6 +286,38 @@ function seededState() {
     { id: 'b2', title: 'Cách tân Nhật Bản', img: '#243244', link: '/culture', active: true, order: 2 },
     { id: 'b3', title: 'Cosplay Fest', img: '#6D28D9', link: '/category/cosplay', active: false, order: 3 },
   ];
+
+  // Thêm SAU khi đơn/tương tác demo đã được sinh ở trên — các đoạn đó chọn sản
+  // phẩm demo theo index modulo state.products.length lúc đó (23 sản phẩm gốc),
+  // nên push muộn để không làm lệch dữ liệu demo (đơn mua kèm, xu hướng...).
+  state.products.push(...DRAFT_COSPLAY_PRODUCTS.map((draft, index) => ({
+    id: `p-draft-${index + 1}`,
+    slug: draft.slug,
+    name: draft.name,
+    kanji: 'コス',
+    sku: skuPrefix(draft.slug),
+    cat: 'cosplay',
+    category: 'cosplay',
+    brand: 'JAPANO',
+    price: draft.price,
+    old: null,
+    sale: null,
+    discountPercent: 0,
+    status: 'draft',
+    colorHex: draft.colorHex,
+    rating: 0,
+    sold: 0,
+    tags: draft.tags,
+    visualTags: draft.tags,
+    desc: `Trang phục hóa thân ${draft.name.replace('Trang phục hóa thân ', '')} — đang chờ ảnh sản phẩm thật, admin cần tải ảnh lên trước khi xuất bản.`,
+    story: '',
+    image: '',
+    images: [],
+    videos: [],
+    variants: draftVariants(draft.slug),
+    createdAt: now,
+  })));
+
   state.seeded = true;
   return state;
 }

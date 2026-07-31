@@ -7,6 +7,8 @@ const {
   buildDemandAndTrends,
   buildMarketBasketRules,
 } = require('./analytics');
+const { buildAdvancedModel, scoreAdvanced } = require('./advancedRecommend');
+const { ensureProductEmbeddingsFresh, getProductEmbedding, cosineSimilarity: embeddingCosine, embeddingsStatus } = require('./embeddings');
 
 // Trọng số phản ánh mức độ chủ ý: tìm kiếm mạnh hơn lượt xem nhưng nhẹ hơn
 // yêu thích/thử đồ; mua hàng là tín hiệu xác nhận mạnh nhất.
@@ -16,7 +18,7 @@ const CACHE_TTL_MS = 60000;
 const NEIGHBOR_LIMIT = 12;
 const CATEGORY_CAP = 2;
 
-let cache = { at: 0, key: '', data: null };
+let cache = new WeakMap();
 
 function decay(weight, ageDays) {
   return weight * Math.pow(0.5, Math.max(0, ageDays) / HALF_LIFE_DAYS);
@@ -76,18 +78,36 @@ function profileTokenPairs(profile) {
 }
 
 function dateAgeDays(timestamp, now) {
-  const t = Number(timestamp) || now;
+  const numeric = Number(timestamp);
+  const parsed = Number.isFinite(numeric) && numeric > 0 ? numeric : Date.parse(timestamp);
+  const t = Number.isFinite(parsed) ? parsed : now;
   return (now - t) / 86400000;
 }
 
+function timestampMs(value, fallback) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function isRecommendableProduct(product) {
+  const status = String(product?.status || '').toLowerCase();
+  if (['archived', 'hidden', 'draft', 'out'].includes(status)) return false;
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  if (variants.length && variants.reduce((sum, variant) => sum + Math.max(0, finiteNumber(variant.stock, 0)), 0) <= 0) return false;
+  return true;
+}
+
 function build(state, now = Date.now()) {
-  const products = (state.products || []).filter((p) => !['archived', 'hidden'].includes(String(p.status || '')));
+  const products = (state.products || []).filter(isRecommendableProduct);
   const itemIndex = new Map(products.map((p, i) => [pid(p), i]));
   const nItems = products.length;
   const sortedPrices = products.map((p) => finiteNumber(p.price, 0)).sort((a, b) => a - b);
 
   const successfulOrders = (state.orders || []).filter(isSuccessfulOrder);
   const events = [];
+  const negativeEvents = [];
   const stateful = new Map();
   const interactionRows = [];
   (state.interactions || []).forEach((row) => {
@@ -103,7 +123,10 @@ function build(state, now = Date.now()) {
     const weight = TYPE_WEIGHT[String(row.type || '').toLowerCase()];
     if (!weight || !itemIndex.has(productSlug) || !row.userId) return;
     const value = row.value == null ? 1 : Math.max(0, finiteNumber(row.value, 0));
-    if (value <= 0) return;
+    if (value <= 0) {
+      negativeEvents.push({ userId: String(row.userId), productSlug, at: row.createdAt || now, type: String(row.type || '') });
+      return;
+    }
     events.push({ userId: String(row.userId), productSlug, weight: weight * Math.min(5, value), at: row.createdAt || now });
   });
   successfulOrders.forEach((order) => {
@@ -120,13 +143,20 @@ function build(state, now = Date.now()) {
   const userIndex = new Map(userIds.map((u, i) => [u, i]));
   const itemVectors = Array.from({ length: nItems }, () => new Map());
   const userRecent = new Map();
+  const userNegatives = new Map();
+  negativeEvents.forEach((event) => {
+    const rows = userNegatives.get(event.userId) || new Map();
+    const previous = rows.get(event.productSlug);
+    if (!previous || timestampMs(event.at, now) > timestampMs(previous.at, now)) rows.set(event.productSlug, event);
+    userNegatives.set(event.userId, rows);
+  });
   events.forEach(({ userId, productSlug, weight, at }) => {
     const ui = userIndex.get(userId);
     const ii = itemIndex.get(productSlug);
     const decayed = decay(weight, dateAgeDays(at, now));
     itemVectors[ii].set(ui, (itemVectors[ii].get(ui) || 0) + decayed);
     const list = userRecent.get(userId) || [];
-    list.push({ productSlug, weight: decayed, at: Number(at) || now });
+    list.push({ productSlug, weight: decayed, at: timestampMs(at, now) });
     userRecent.set(userId, list);
   });
 
@@ -164,13 +194,18 @@ function build(state, now = Date.now()) {
     rows.push(rule);
     basketByAntecedent.set(rule.antecedent, rows);
   });
+  const advanced = buildAdvancedModel({ products, events: events.map((event) => ({
+    ...event,
+    at: timestampMs(event.at, now),
+  })), now });
 
   return {
-    products, itemIndex, itemSim, mf, userIndex, userRecent,
+    products, itemIndex, itemSim, mf, userIndex, userRecent, userNegatives,
     trendingByProduct, predictions: demand.predictions, categoryTrends: demand.categoryTrends,
     contentVectors,
     marketBasketRules,
     basketByAntecedent,
+    advanced,
     categoryLabel: new Map((state.categories || []).map((c) => [c.id, c.name])),
     generatedAt: now,
     trainingStats: {
@@ -178,24 +213,31 @@ function build(state, now = Date.now()) {
       events: events.length,
       products: nItems,
       matrixFactorizationActive: Boolean(mf),
-      itemCollaborativeFilteringActive: itemSim.size > 0,
+      itemCollaborativeFilteringActive: [...itemSim.values()].some((neighbors) => neighbors.length > 0),
       contentModelActive: contentVectors.size > 0,
       marketBasketRules: marketBasketRules.length,
+      selectiveSsmActive: advanced.sequences.size > 0,
+      lightGcnActive: advanced.graph.edges > 0,
+      autoregressiveNextItemActive: advanced.transitions.count > 0,
+      pairwiseRankerActive: advanced.diagnostics.rankerTrained,
+      negativeFeedbackEvents: negativeEvents.length,
+      ...advanced.diagnostics,
     },
   };
 }
 
 function getCached(state) {
   const now = Date.now();
-  if (cache.data && now - cache.at < CACHE_TTL_MS) return cache.data;
+  const cached = state && typeof state === 'object' ? cache.get(state) : null;
+  if (cached?.data && now - cached.at < CACHE_TTL_MS) return cached.data;
   const data = build(state, now);
-  cache = { at: now, data };
+  if (state && typeof state === 'object') cache.set(state, { at: now, data });
   return data;
 }
 
 // Gọi sau khi ghi interactions/orders/profiles/products mới để engine phản ánh ngay, không đợi hết TTL.
 function invalidateCache() {
-  cache = { at: 0, key: '', data: null };
+  cache = new WeakMap();
 }
 
 function userContentVector(reco, userId, profile) {
@@ -209,9 +251,11 @@ function userContentVector(reco, userId, profile) {
 }
 
 function pickWeights(interactionCount, hasContentSignal) {
-  if (interactionCount >= 3) return { mf: 0.3, cf: 0.2, basket: 0.2, content: 0.15, trending: 0.15 };
-  if (interactionCount >= 1) return { mf: 0.1, cf: 0.25, basket: 0.25, content: 0.2, trending: 0.2 };
-  return hasContentSignal ? { mf: 0, cf: 0, basket: 0, content: 0.35, trending: 0.65 } : { mf: 0, cf: 0, basket: 0, content: 0, trending: 1 };
+  if (interactionCount >= 3) return { mf: 0.09, cf: 0.07, basket: 0.07, content: 0.07, trending: 0.06, sequence: 0.15, graph: 0.12, transition: 0.14, rank: 0.23 };
+  if (interactionCount >= 1) return { mf: 0.04, cf: 0.08, basket: 0.08, content: 0.09, trending: 0.11, sequence: 0.15, graph: 0.1, transition: 0.12, rank: 0.23 };
+  return hasContentSignal
+    ? { mf: 0, cf: 0, basket: 0, content: 0.3, trending: 0.45, sequence: 0, graph: 0, transition: 0, rank: 0.25 }
+    : { mf: 0, cf: 0, basket: 0, content: 0, trending: 0.7, sequence: 0, graph: 0, transition: 0, rank: 0.3 };
 }
 
 function normalize(values) {
@@ -222,6 +266,11 @@ function normalize(values) {
   const out = new Map();
   values.forEach((v, k) => out.set(k, (v - min) / range));
   return out;
+}
+
+function logit(probability) {
+  const value = Math.min(0.999999, Math.max(0.000001, finiteNumber(probability, 0.5)));
+  return Math.log(value / (1 - value));
 }
 
 function categoryOf(reco, slug) {
@@ -238,6 +287,10 @@ function reasonFor(reco, slug, contributions, exploring) {
   if (top === 'mf' || top === 'cf') return `Vì bạn đã quan tâm các mẫu ${catLabel}`;
   if (top === 'basket') return 'Thường được mua/phối cùng món bạn đã quan tâm';
   if (top === 'content') return `Hợp phong cách bạn đã chọn`;
+  if (top === 'sequence') return 'Phù hợp với chuỗi quan tâm gần đây của bạn';
+  if (top === 'graph') return 'Được cộng đồng có sở thích tương tự quan tâm';
+  if (top === 'transition') return 'Thường là lựa chọn tiếp theo trong hành trình mua sắm tương tự';
+  if (top === 'rank') return 'Mô hình xếp hạng dự đoán bạn có thể quan tâm';
   return `Đang là xu hướng trong danh mục ${catLabel}`;
 }
 
@@ -273,8 +326,26 @@ function scoreCandidates(reco, userId, profile) {
       return rule ? Math.max(best, Math.min(1, rule.confidence * Math.min(3, rule.lift) / 1.5)) : best;
     }, 0);
     const trendingScore = reco.trendingByProduct.get(slug) || 0;
-    const contributions = { mf: weights.mf * mfScore, cf: weights.cf * cfScore, basket: weights.basket * basketScore, content: weights.content * contentScore, trending: weights.trending * trendingScore };
-    const score = contributions.mf + contributions.cf + contributions.basket + contributions.content + contributions.trending;
+    const advanced = scoreAdvanced(reco.advanced, String(userId), slug, contentScore, trendingScore);
+    const rejected = reco.userNegatives.get(String(userId))?.has(slug) ? 0.45 : 0;
+    const contributions = {
+      mf: weights.mf * mfScore, cf: weights.cf * cfScore,
+      basket: weights.basket * basketScore, content: weights.content * contentScore,
+      trending: weights.trending * trendingScore,
+      sequence: weights.sequence * advanced.sequence,
+      graph: weights.graph * advanced.graph,
+      transition: weights.transition * advanced.transition,
+      rank: weights.rank * advanced.rank,
+      negative: -rejected,
+    };
+    // Final stacked ranker: MoE experts tạo retrieval score đã calibration,
+    // pairwise model tạo logit cuối. Diversification chỉ chạy sau điểm này.
+    const retrievalMass = Math.max(0.0001, 1 - weights.rank);
+    const retrievalScore = Object.entries(contributions)
+      .filter(([name]) => !['rank', 'negative'].includes(name))
+      .reduce((sum, [, value]) => sum + value, 0) / retrievalMass;
+    const finalLogit = 0.7 * logit(advanced.rank) + 2.2 * (retrievalScore - 0.5) - rejected * 5;
+    const score = 1 / (1 + Math.exp(-Math.max(-20, Math.min(20, finalLogit))));
     return { slug, score, contributions, category: categoryOf(reco, slug) };
   }).sort((a, b) => b.score - a.score);
 
@@ -326,8 +397,8 @@ function getHomeRecommendations(state, { userId = 'guest', limit = 8, profile } 
   return {
     items: items.map((c) => c.slug),
     reasons,
-    source: 'ensemble: Matrix Factorization SGD + item-CF cosine + market-basket rules + content-based + time-decay trending',
-    models: ['matrix-factorization-sgd', 'item-cf-cosine', 'association-rules', 'content-profile', 'demand-trending'],
+    source: 'adaptive mixture-of-experts: selective SSM sequence + LightGCN graph + autoregressive next-item distribution + pairwise ranker, blended with classic retrieval',
+    models: ['selective-ssm-sequence', 'lightgcn-user-item', 'autoregressive-next-item', 'adaptive-moe-gate', 'pairwise-logistic-ranker', 'matrix-factorization-sgd', 'item-cf-cosine', 'association-rules', 'content-profile', 'demand-trending'],
     modelStatus: reco.trainingStats,
     learnedFrom: ['tìm kiếm', 'xem sản phẩm', 'yêu thích', 'thêm giỏ', 'thử đồ', 'trò chuyện', 'mua hàng'],
   };
@@ -343,6 +414,22 @@ function getRelatedProducts(state, slug, limit = 8) {
     .sort((a, b) => (b.confidence * b.lift) - (a.confidence * a.lift))
     .forEach((rule) => { if (!seen.has(rule.consequent) && picked.length < limit) { picked.push(rule.consequent); seen.add(rule.consequent); } });
   (reco.itemSim.get(target) || []).forEach((n) => { if (!seen.has(n.slug) && picked.length < limit) { picked.push(n.slug); seen.add(n.slug); } });
+  // Semantic embedding (transformer thật, xem lib/embeddings.js) — bắt được sản
+  // phẩm cùng chủ đề dù khác category/tag, đặc biệt hữu ích cho sản phẩm mới
+  // chưa đủ dữ liệu hành vi cho luật mua kèm/item-CF ở trên. Model tải nền
+  // (fire-and-forget); request nào chưa có embedding thì rơi xuống các bước sau.
+  ensureProductEmbeddingsFresh(reco.products);
+  if (picked.length < limit) {
+    const targetEmbedding = getProductEmbedding(target);
+    if (targetEmbedding) {
+      reco.products
+        .filter((p) => !seen.has(pid(p)))
+        .map((p) => ({ slug: pid(p), score: embeddingCosine(targetEmbedding, getProductEmbedding(pid(p))) }))
+        .filter((c) => c.score > 0.3)
+        .sort((a, b) => b.score - a.score)
+        .forEach((c) => { if (picked.length < limit && !seen.has(c.slug)) { picked.push(c.slug); seen.add(c.slug); } });
+    }
+  }
   if (picked.length < limit) {
     const cat = categoryOf(reco, target);
     reco.products
@@ -378,4 +465,45 @@ function trendingList(state) {
   return reco.predictions;
 }
 
-module.exports = { getHomeRecommendations, getRelatedProducts, invalidateCache, buildTagIndex, trendingList, TYPE_WEIGHT };
+function getRecommendationDiagnostics(state) {
+  const builtAt = Date.now();
+  const reco = build(state, builtAt);
+  const stats = reco.trainingStats;
+  const productCount = Math.max(1, stats.products);
+  const activeProducts = new Set();
+  reco.userRecent.forEach((rows) => rows.forEach((row) => activeProducts.add(row.productSlug)));
+  return {
+    status: stats.events > 0 ? 'active' : 'waiting-for-data',
+    generatedAt: new Date(builtAt).toISOString(),
+    events: stats.events,
+    users: stats.users,
+    products: stats.products,
+    itemCoverage: stats.products ? activeProducts.size / productCount : 0,
+    graphEdges: stats.graphEdges,
+    graphDensity: stats.graphDensity,
+    transitionCount: stats.transitionCount,
+    trainingPairs: stats.rankerTrainingPairs,
+    negativeFeedbackEvents: stats.negativeFeedbackEvents,
+    embeddingDimensions: stats.embeddingDimensions,
+    stages: [
+      { id: 'selective-ssm-sequence', role: 'sequence encoder', active: stats.selectiveSsmActive, metrics: { users: stats.sequenceUsers, maxLength: stats.maxSequenceLength } },
+      { id: 'lightgcn-user-item', role: 'relationship encoder', active: stats.lightGcnActive, metrics: { layers: stats.graphLayers, nodes: stats.graphNodes, edges: stats.graphEdges, density: stats.graphDensity } },
+      { id: 'autoregressive-next-item', role: 'generative next-item expert', active: stats.autoregressiveNextItemActive, metrics: { transitions: stats.transitionCount, sources: stats.transitionSources } },
+      { id: 'pairwise-logistic-ranker', role: 'final ranker', active: stats.pairwiseRankerActive, metrics: { epochs: stats.rankerEpochs, positives: stats.rankerPositiveEvents, pairs: stats.rankerTrainingPairs } },
+      { id: 'adaptive-moe-gate', role: 'expert fusion', active: stats.events > 0, metrics: { experts: 9 } },
+      { id: 'semantic-embeddings', role: 'related-products content matcher', active: embeddingsStatus().ready, metrics: embeddingsStatus() },
+    ],
+    implementation: 'online-js',
+    evaluation: { status: 'not-measured', ndcgAt10: null, recallAt10: null, sampleSize: 0 },
+  };
+}
+
+module.exports = {
+  getHomeRecommendations,
+  getRelatedProducts,
+  getRecommendationDiagnostics,
+  invalidateCache,
+  buildTagIndex,
+  trendingList,
+  TYPE_WEIGHT,
+};

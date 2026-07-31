@@ -1,6 +1,8 @@
 const { finiteNumber, productId: pid } = require('./analytics');
 const { getHomeRecommendations } = require('./recommend');
 const { composeOutfit, todaysOutfit } = require('./outfit');
+const { japanKnowledgeAnswer } = require('./japanKnowledge');
+const { routeChatIntent, semanticSimilarity } = require('./postTransformer');
 
 const INTENTS = [
   { name: 'greeting', test: /\b(chào|hi|hello|xin chào|alo)\b/i },
@@ -25,8 +27,10 @@ function matchProducts(message, products, limit = 4) {
     let hits = 0;
     shortPhrases.forEach((phrase) => { const w = words(phrase); if (w.length && w.every((word) => messageWords.has(word))) hits += 1; });
     words(p.name).forEach((word) => { if (messageWords.has(word)) hits += 1; });
-    return { p, hits };
-  }).filter((x) => x.hits > 0).sort((a, b) => b.hits - a.hits);
+    const semanticText = [p.name, p.cat, p.category, ...(p.tags || []), ...(p.visualTags || [])].filter(Boolean).join(' ');
+    const semantic = semanticSimilarity(message, semanticText);
+    return { p, hits, semantic, score: hits * 2 + semantic };
+  }).filter((x) => x.hits > 0 || x.semantic >= 0.34).sort((a, b) => b.score - a.score);
   return scored.slice(0, limit).map((x) => x.p);
 }
 
@@ -45,12 +49,20 @@ function categoryLabel(state, cat) {
   return found ? found.name : cat;
 }
 
+function isAvailableProduct(product) {
+  const status = String(product?.status || '').toLowerCase();
+  if (['archived', 'hidden', 'draft', 'out'].includes(status)) return false;
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  return !variants.length || variants.some((variant) => finiteNumber(variant.stock, 0) > 0);
+}
+
 // Chatbot dạng intent + truy hồi (retrieval), không cần LLM ngoài: nhận diện ý định qua từ khoá tiếng Việt,
 // tận dụng lại engine gợi ý (recommend.js) và ghép đồ (outfit.js) đã có để trả lời có sản phẩm thật kèm theo.
-function reply(state, { userId = 'guest', message = '', profile } = {}) {
-  const products = (state.products || []).filter((p) => !['archived', 'hidden'].includes(String(p.status || '')));
+function baseReply(state, { userId = 'guest', message = '', profile, routedIntent } = {}) {
+  const products = (state.products || []).filter(isAvailableProduct);
   const mentioned = matchProducts(message, products);
-  const intent = INTENTS.find((i) => i.test.test(message))?.name || (mentioned.length ? 'lookup' : 'fallback');
+  const ruleIntent = INTENTS.find((i) => i.test.test(message))?.name || (mentioned.length ? 'lookup' : 'fallback');
+  const intent = routedIntent && routedIntent !== 'fallback' ? routedIntent : ruleIntent;
   const under = priceRange(message);
 
   if (intent === 'greeting') {
@@ -104,6 +116,13 @@ function reply(state, { userId = 'guest', message = '', profile } = {}) {
     return { message: 'Bạn muốn hỏi giá sản phẩm nào? Cho mình tên hoặc loại đồ (vd: kimono, haori, phụ kiện) nhé.', productIds: [] };
   }
 
+  // Trả lời kiến thức Nhật Bản trước nhánh lookup: câu như "kimono mặc khi nào"
+  // cần một lời giải thích hữu ích, đồng thời vẫn đính kèm sản phẩm liên quan nếu có.
+  const knowledge = japanKnowledgeAnswer(message);
+  if (knowledge) {
+    return { message: knowledge, productIds: mentioned.slice(0, 4).map(pid) };
+  }
+
   if (intent === 'lookup') {
     let pool = mentioned;
     if (under) pool = pool.filter((p) => finiteNumber(p.price, 0) <= under).length ? pool.filter((p) => finiteNumber(p.price, 0) <= under) : pool;
@@ -112,7 +131,23 @@ function reply(state, { userId = 'guest', message = '', profile } = {}) {
   }
 
   const fallback = getHomeRecommendations(state, { userId, limit: 4, profile });
-  return { message: 'Ori chưa chắc hiểu ý bạn lắm, nhưng đây là vài gợi ý có thể bạn sẽ thích — hoặc bạn thử hỏi rõ hơn về giá, size, phối đồ, khuyến mãi nhé:', productIds: fallback.items };
+  return { message: 'Mình chưa có đủ dữ kiện để trả lời chính xác câu này. Bạn có thể hỏi lại theo chủ đề cụ thể hơn — ví dụ tên trang phục Nhật, thành phố muốn đến, mùa du lịch, cách di chuyển, món ăn, văn hóa, hoặc nhu cầu phối đồ. Trong lúc đó, đây là vài món hợp gu của bạn:', productIds: fallback.items };
 }
 
-module.exports = { reply };
+function reply(state, { userId = 'guest', message = '', profile, history } = {}) {
+  const products = (state.products || []).filter(isAvailableProduct);
+  const mentioned = matchProducts(message, products);
+  const ruleIntent = INTENTS.find((item) => item.test.test(message))?.name || (mentioned.length ? 'lookup' : 'fallback');
+  const trace = routeChatIntent(message, history, ruleIntent);
+  // "lookup" là expert dựa trên catalog, không nằm trong prototype intent.
+  if (ruleIntent === 'lookup' && trace.confidence < 0.58) trace.intent = 'lookup';
+  const result = baseReply(state, { userId, message, profile, routedIntent: trace.intent });
+  return {
+    ...result,
+    intent: trace.intent,
+    confidence: trace.confidence,
+    modelTrace: trace,
+  };
+}
+
+module.exports = { reply, matchProducts };

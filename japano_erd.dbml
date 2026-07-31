@@ -1,0 +1,961 @@
+// JAPANO — ERD bám theo app hiện tại (app_state schemaVersion 5)
+//
+// Nguồn đối chiếu:
+//   - backend/seed.js (emptyState + seededState)
+//   - backend/lib/store.js (normalizeState + app_state Mongo mirror)
+//   - backend/routes/* và backend/data/db.json
+//
+// Runtime hiện lưu một object app_state trong backend/data/db.json và mirror
+// toàn bộ object đó vào MongoDB collection "app_state", document _id = "main".
+// File này là relational view để vẽ ERD trên dbdiagram.io:
+//   - camelCase trong JSON được đổi sang snake_case;
+//   - object nhỏ được trải phẳng vào bảng cha;
+//   - array lồng được tách thành bảng con;
+//   - object lớn/biến đổi mạnh (moderation, plan, metadata...) giữ kiểu JSON;
+//   - mọi mốc thời gian là BIGINT epoch milliseconds, đúng cách app đang lưu.
+//
+// PK, UNIQUE và Ref bên dưới là khóa/quan hệ logic mong muốn khi chiếu sang mô
+// hình quan hệ. Runtime JSON hiện không cưỡng chế các ràng buộc này, vì vậy dữ
+// liệu thực tế vẫn có thể thiếu khóa hoặc có tham chiếu mồ côi.
+
+// ============================================================================
+// APP STATE & SINGLETON SETTINGS
+// ============================================================================
+
+Table app_state_meta {
+  id varchar(20) [pk, note: 'main khi lưu trong MongoDB']
+  seeded boolean [not null]
+  schema_version int [not null, note: 'Hiện tại là 5']
+  synced_at bigint [note: '_syncedAt, chỉ có trên Mongo mirror']
+  Note: 'Metadata của object app_state; không phải bảng SQL vật lý của runtime.'
+}
+
+Table shop_settings {
+  id tinyint [pk, note: 'Singleton = 1']
+  name varchar(150)
+  hotline varchar(40)
+  email varchar(190)
+  address varchar(500)
+  ship_fee bigint
+  cod boolean
+  stripe boolean
+  vnpay boolean
+  logo text
+  updated_at bigint
+}
+
+Table integration_settings {
+  id tinyint [pk, note: 'Singleton = 1']
+  mongo boolean
+  cloudinary boolean
+  ai boolean
+}
+
+Table flagcard_config {
+  id tinyint [pk, note: 'Singleton = 1']
+  active boolean
+  qualifying_order_min bigint
+  required_cards int
+  reward_percent int
+  reward_voucher_min_order bigint
+  reward_validity_days int
+}
+
+// ============================================================================
+// USERS, AUTH & CUSTOMER DATA
+// ============================================================================
+
+Table users {
+  id varchar(80) [pk]
+  name varchar(150) [not null]
+  email varchar(190) [unique]
+  password_hash varchar(255)
+  reset_code_hash varchar(64)
+  reset_code_expires_at bigint
+  stripe_customer_id varchar(120)
+  role varchar(30) [not null, note: 'customer | staff | admin | super_admin']
+  status varchar(30) [not null, note: 'active | locked']
+  orders_count int [note: 'JSON field orders; số liệu denormalized cho admin']
+  spent bigint [note: 'Tổng chi tiêu denormalized']
+  tryons int [note: 'Số lượt thử đồ denormalized']
+  vip varchar(40)
+  vip_membership json [note: 'Snapshot VIP được reconcileVipState gắn vào user']
+  joined_at bigint
+}
+
+Table addresses {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null]
+  title varchar(80)
+  name varchar(150) [not null, note: 'Tên người nhận']
+  phone varchar(40) [not null]
+  street varchar(255) [not null]
+  ward_code varchar(20)
+  ward varchar(120)
+  province_code varchar(20)
+  province varchar(120)
+  is_default boolean [not null]
+  created_at bigint [not null]
+  updated_at bigint [not null]
+}
+
+Table profiles {
+  user_id varchar(80) [pk]
+  gender varchar(30)
+  skin_tone varchar(60)
+  occasion varchar(120)
+  budget bigint
+  height_cm int
+  weight_kg int
+  usual_size varchar(20)
+  updated_at bigint [not null]
+  Note: 'Hồ sơ phong cách dùng cho stylist và recommendation.'
+}
+
+Table profile_styles {
+  user_id varchar(80) [not null]
+  position int [not null]
+  style varchar(80) [not null]
+
+  indexes {
+    (user_id, position) [pk]
+  }
+}
+
+Table push_tokens {
+  token varchar(255) [pk]
+  user_id varchar(80) [not null]
+  platform varchar(30)
+  created_at bigint [not null]
+}
+
+// ============================================================================
+// CATALOG
+// ============================================================================
+
+Table categories {
+  id varchar(80) [pk]
+  name varchar(150) [not null]
+  kanji varchar(40)
+}
+
+Table products {
+  id varchar(80) [pk]
+  slug varchar(120) [unique, note: 'Route catalog tự sinh; dữ liệu legacy/import qua toàn bộ state vẫn có thể thiếu']
+  owner_id varchar(80) [note: 'Có khi sản phẩm do staff tạo']
+  name varchar(190) [not null]
+  kanji varchar(40)
+  sku varchar(60)
+  cat varchar(80) [note: 'Category id chính mà app đang đọc']
+  category varchar(80) [note: 'Alias legacy vẫn đang được persist']
+  brand varchar(80)
+  price bigint [not null]
+  old bigint
+  sale int
+  discount_percent int
+  status varchar(30) [not null, note: 'draft | published | active | archived | hidden']
+  color_hex varchar(16)
+  rating decimal(3,1) [note: 'Giá trị seed/legacy; API public tính lại từ reviews']
+  sold int [note: 'Giá trị seed/legacy; API public tính lại từ order items']
+  description text [note: 'JSON field desc']
+  story text
+  image text [note: 'Ảnh đại diện; có thể là local path hoặc URL']
+  source varchar(30) [note: 'demo | admin; có thể thiếu ở dữ liệu legacy']
+  created_at bigint
+  updated_at bigint
+}
+
+Table product_images {
+  product_id varchar(80) [not null]
+  position int [not null]
+  url text [not null]
+
+  indexes {
+    (product_id, position) [pk]
+  }
+  Note: 'Array products[].images.'
+}
+
+Table product_videos {
+  product_id varchar(80) [not null]
+  position int [not null]
+  url text [not null, note: 'URL hoặc data:video base64']
+  metadata json [note: 'Các field khác nếu phần tử video là object']
+
+  indexes {
+    (product_id, position) [pk]
+  }
+  Note: 'Array products[].videos.'
+}
+
+Table product_variants {
+  product_id varchar(80) [not null]
+  position int [not null]
+  sku varchar(60) [note: 'Admin/import hiện cho phép rỗng hoặc trùng']
+  color_name varchar(60)
+  color_hex varchar(16)
+  size varchar(20)
+  stock int [not null]
+
+  indexes {
+    (product_id, position) [pk]
+  }
+  Note: 'Array products[].variants; dùng vị trí làm khóa vì runtime chưa bảo đảm SKU hay màu/size là duy nhất.'
+}
+
+Table product_tags {
+  product_id varchar(80) [not null]
+  kind varchar(20) [not null, note: 'tag | visual_tag']
+  position int [not null]
+  tag varchar(100) [not null]
+
+  indexes {
+    (product_id, kind, position) [pk]
+  }
+  Note: 'Gộp hai array products[].tags và products[].visualTags.'
+}
+
+Table cloud_product_assets {
+  slug varchar(120) [pk]
+  name varchar(190)
+  cat varchar(80)
+  price bigint
+  old_price bigint
+  color_hex varchar(16)
+  kanji varchar(40)
+  tags json
+  updated_at bigint
+  Note: 'Mongo collection products do syncProductsToCloud.js tạo; runtime chỉ đọc images để override ảnh catalog.'
+}
+
+Table cloud_product_images {
+  product_slug varchar(120) [not null]
+  position int [not null]
+  public_id varchar(255)
+  url text [not null]
+
+  indexes {
+    (product_slug, position) [pk]
+  }
+}
+
+// ============================================================================
+// CART, WISHLIST & VOUCHERS
+// ============================================================================
+
+Table carts {
+  user_id varchar(80) [not null]
+  product_slug varchar(120) [not null, note: 'JSON field productId']
+  color varchar(60) [not null]
+  size varchar(20) [not null]
+  quantity int [not null]
+  updated_at bigint [not null]
+
+  indexes {
+    (user_id, product_slug, color, size) [pk]
+  }
+  Note: 'App lưu trực tiếp từng dòng giỏ trong state.carts; không có cart header/cart id.'
+}
+
+Table wishlists {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null]
+  product_slug varchar(120) [not null]
+  created_at bigint [not null]
+
+  indexes {
+    (user_id, product_slug) [unique]
+  }
+}
+
+Table vouchers {
+  code varchar(40) [pk]
+  type varchar(20) [not null, note: 'percent | amount']
+  value bigint [not null]
+  min_order bigint [not null, note: 'JSON field min']
+  expiry date
+  usage_limit int [not null, note: 'JSON field limit']
+  used int [not null]
+  active boolean [not null]
+  applies_to varchar(40)
+  owner_user_id varchar(80) [note: 'Voucher cá nhân']
+  source varchar(40) [note: 'flagcard-collection | admin-compensation | ...']
+  reason varchar(300)
+  issued_by varchar(80)
+  issued_at bigint
+}
+
+Table voucher_redemptions {
+  id varchar(100) [pk]
+  code varchar(40) [not null]
+  user_id varchar(80) [not null]
+  order_id varchar(80) [not null]
+  discount bigint [not null]
+  redeemed_at bigint [not null]
+}
+
+// ============================================================================
+// ORDERS & PAYMENTS
+// ============================================================================
+
+Table orders {
+  id varchar(80) [pk]
+  code varchar(40) [unique, not null]
+  user_id varchar(80)
+  client_request_id varchar(120) [unique, note: 'Idempotency key từ mobile']
+
+  customer_id varchar(80)
+  customer_name varchar(150)
+  customer_email varchar(190)
+  customer_phone varchar(40)
+
+  address text
+  address_street varchar(255)
+  address_ward_code varchar(20)
+  address_ward varchar(120)
+  address_province_code varchar(20)
+  address_province varchar(120)
+
+  subtotal bigint [note: 'Có trên order mới; order demo/legacy có thể thiếu']
+  discount bigint [note: 'Có trên order mới; order demo/legacy có thể thiếu']
+  voucher_discount bigint
+  payment_discount bigint
+  vip_discount bigint
+  discount_code varchar(40) [note: 'Voucher hoặc promo hard-code STRIPE10/VNPAY5/JAPANO-VIP10']
+  vip_promotion json
+  payment_promotion_code varchar(40)
+  payment_promotion_label varchar(190)
+  payment_promotion_percent int
+  total bigint [not null]
+  ship bigint [not null]
+
+  payment_method varchar(40)
+  payment_provider varchar(40)
+  payment_status varchar(40)
+  payment_txn varchar(120)
+  payment_currency varchar(10)
+  payment_id varchar(80)
+  payment_intent_id varchar(120)
+  payment_checkout_session_id varchar(190)
+  payment_paid_at bigint
+  payment_card json
+  payment_bank json
+  payment_refund_id varchar(120)
+  payment_refunded_amount bigint
+  payment_pending_refund_amount bigint
+
+  status varchar(30) [not null, note: 'pending | pending_payment | confirmed | shipping | completed | cancelled | returned']
+  completed_at bigint
+  return_status varchar(40)
+  return_request_id varchar(80)
+  return_request_code varchar(60)
+  return_request_kind varchar(20)
+
+  flagcard_award_card_id varchar(80)
+  flagcard_awarded_at bigint
+  flagcard_award_source varchar(40)
+  voucher_redemption_id varchar(100) [note: 'Snapshot của redemption cũng được nhúng trong order']
+
+  source varchar(30)
+  created_at bigint [not null]
+  Note: 'Các cột customer/address/payment/award là object snapshot đang được nhúng trực tiếp trong order JSON.'
+}
+
+Table order_items {
+  order_id varchar(80) [not null]
+  position int [not null]
+  product_slug varchar(120) [not null, note: 'products[].slug; JSON lưu cả productId và slug']
+  name varchar(190) [not null]
+  color_name varchar(60)
+  color_hex varchar(16)
+  size varchar(20)
+  qty int [not null]
+  price bigint [not null]
+
+  indexes {
+    (order_id, position) [pk]
+  }
+}
+
+Table order_history {
+  order_id varchar(80) [not null]
+  position int [not null]
+  status varchar(40) [not null, note: 'JSON field s']
+  at bigint [not null]
+  txn varchar(120)
+  reason varchar(255)
+  return_request_id varchar(80)
+  refund_id varchar(120)
+  amount bigint
+
+  indexes {
+    (order_id, position) [pk]
+  }
+}
+
+Table payments {
+  id varchar(80) [pk]
+  code varchar(60)
+  order_id varchar(80)
+  order_code varchar(40)
+  user_id varchar(80)
+  provider varchar(40) [note: 'stripe | vnpay | stripe-seed']
+  method varchar(40)
+  status varchar(40)
+  amount bigint
+  original_amount bigint
+  amount_subtotal bigint
+  discount bigint
+  voucher_discount bigint
+  payment_discount bigint
+  vip_discount bigint
+  vip_promotion json
+  promotion_code varchar(40)
+  currency varchar(10)
+  transaction_code varchar(120)
+
+  payment_intent_id varchar(120)
+  checkout_session_id varchar(190)
+  intent_status varchar(60)
+  native_attempt int
+  payment_method_type varchar(60)
+  charge_id varchar(120)
+  receipt_url text
+  failure_reason varchar(255)
+
+  customer json [note: 'Stripe billing/customer snapshot']
+  card json [note: 'brand, last4, funding']
+
+  vnp_create_date varchar(20)
+  vnp_transaction_no varchar(80)
+  vnp_bank_code varchar(40)
+  vnp_card_type varchar(40)
+  vnp_pay_date varchar(20)
+
+  refundable boolean
+  refunded_amount bigint
+  pending_refund_amount bigint
+  refund_id varchar(120)
+  refunded_at bigint
+  paid_at bigint
+  created_at bigint [not null]
+  updated_at bigint [not null]
+}
+
+Table payment_refunds {
+  id varchar(120) [pk]
+  payment_id varchar(80) [not null]
+  amount bigint [not null]
+  currency varchar(10)
+  status varchar(40)
+  reason varchar(120)
+  failure_reason varchar(255)
+  return_request_id varchar(80)
+  created_at bigint
+  updated_at bigint
+  Note: 'Array payments[].refunds; dùng chung cho Stripe và VNPay.'
+}
+
+// ============================================================================
+// CANCELLATION, RETURNS & REFUNDS
+// ============================================================================
+
+Table return_requests {
+  id varchar(80) [pk]
+  kind varchar(20) [note: 'cancel | return; bản ghi legacy có thể thiếu và được hiểu là return']
+  code varchar(60) [unique, not null]
+  order_id varchar(80) [not null]
+  order_code varchar(40)
+  user_id varchar(80)
+  payment_id varchar(80)
+  payment_code varchar(60)
+  status varchar(40) [not null]
+  reason varchar(160)
+  note text
+  admin_note text
+  cod_manual_refund boolean
+  amount bigint
+  currency varchar(10)
+  refund_id varchar(120)
+  refund_status varchar(40)
+  created_at bigint [not null]
+  updated_at bigint [not null]
+}
+
+Table return_request_items {
+  return_request_id varchar(80) [not null]
+  position int [not null]
+  product_slug varchar(120)
+  name varchar(190)
+  size varchar(20)
+  color_name varchar(60)
+  qty int [not null]
+  price bigint
+
+  indexes {
+    (return_request_id, position) [pk]
+  }
+}
+
+Table return_request_photos {
+  return_request_id varchar(80) [not null]
+  position int [not null]
+  media json [not null, note: 'Cloudinary URL/publicId hoặc payload media đã upload']
+
+  indexes {
+    (return_request_id, position) [pk]
+  }
+}
+
+Table return_request_timeline {
+  return_request_id varchar(80) [not null]
+  position int [not null]
+  status varchar(40) [not null, note: 'JSON field s']
+  at bigint [not null]
+  note varchar(1000)
+  refund_id varchar(120)
+
+  indexes {
+    (return_request_id, position) [pk]
+  }
+}
+
+// ============================================================================
+// REVIEWS & MODERATION
+// ============================================================================
+
+Table reviews {
+  id varchar(100) [pk]
+  product_slug varchar(120) [not null, note: 'JSON field productId']
+  user_id varchar(80) [not null]
+  user_name varchar(150)
+  order_id varchar(80) [not null]
+  order_code varchar(40)
+  rating tinyint [not null]
+  comment text [not null]
+  media json [note: 'Ảnh/video/audio sau upload']
+  status varchar(20) [not null, note: 'approved | pending | rejected']
+  moderation json [note: 'decision, score, local, semantic, engine, reason, checkedAt']
+  admin_note varchar(500)
+  moderated_at bigint
+  created_at bigint [not null]
+  updated_at bigint
+
+  indexes {
+    (user_id, product_slug) [unique]
+  }
+}
+
+Table review_reactions {
+  id varchar(100) [pk]
+  review_id varchar(100) [not null]
+  user_id varchar(80) [not null]
+  value varchar(20) [not null, note: 'helpful | not_helpful']
+  updated_at bigint [not null]
+
+  indexes {
+    (review_id, user_id) [unique]
+  }
+}
+
+Table moderation_samples {
+  id varchar(100) [pk]
+  review_id varchar(100)
+  label varchar(30)
+  normalized_text text
+  source varchar(30)
+  updated_at bigint [not null]
+}
+
+Table moderation_sample_phrases {
+  sample_id varchar(100) [not null]
+  position int [not null]
+  phrase text [not null]
+
+  indexes {
+    (sample_id, position) [pk]
+  }
+  Note: 'Array moderationSamples[].learnedPhrases.'
+}
+
+// ============================================================================
+// BEHAVIOR, SEARCH & AI
+// ============================================================================
+
+Table interactions {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null, note: 'Có thể là guest']
+  product_slug varchar(120) [not null, note: 'JSON field productId; route cũng chấp nhận product id']
+  type varchar(30) [not null, note: 'view | search | wishlist | cart | purchase | tryon | chat | impression | goal']
+  value int
+  metadata json [note: 'color, size, query, rank, resultCount, intent...']
+  created_at bigint [not null]
+  source varchar(30)
+}
+
+Table search_logs {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null, note: 'Có thể là guest']
+  query varchar(500) [not null]
+  result_count int [not null]
+  created_at bigint [not null]
+  Note: 'Tối đa 5.000 dòng gần nhất trong state.searchLogs.'
+}
+
+Table chats {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null, note: 'Có thể là guest']
+  role varchar(20) [not null, note: 'user | assistant']
+  message text
+  engine varchar(100)
+  intent varchar(60)
+  confidence decimal(5,4)
+  model_trace json
+  generation_model varchar(100)
+  latency_ms int
+  fallback_reason varchar(255)
+  created_at bigint [not null]
+}
+
+Table chat_product_refs {
+  chat_id varchar(100) [not null]
+  position int [not null]
+  product_slug varchar(120) [not null]
+
+  indexes {
+    (chat_id, position) [pk]
+  }
+  Note: 'Array chats[].productIds.'
+}
+
+Table tryon_history {
+  id varchar(100) [pk]
+  user_id varchar(80) [not null, note: 'Có thể là guest']
+  product_slug varchar(120) [not null, note: 'JSON field productId']
+  engine varchar(190)
+  created_at bigint [not null]
+}
+
+Table tryon_accessories {
+  tryon_id varchar(100) [not null]
+  position int [not null]
+  product_slug varchar(120) [not null]
+
+  indexes {
+    (tryon_id, position) [pk]
+  }
+  Note: 'Array tryonHistory[].accessoryIds.'
+}
+
+Table goals {
+  id varchar(150) [pk]
+  user_id varchar(80) [not null, note: 'Có thể là guest']
+  product_slug varchar(120) [not null, note: 'JSON field productId']
+  product_snapshot json [not null, note: 'slug, name, price, image']
+  age int
+  height_cm int
+  current_weight_kg decimal(6,2)
+  target_weight_kg decimal(6,2)
+  monthly_income bigint
+  fixed_expenses bigint
+  current_savings bigint
+  target_months int
+  plan json [not null, note: 'saving, wellness, coaching, methodology, disclaimer']
+  created_at bigint [not null]
+  updated_at bigint [not null]
+}
+
+Table ai_descriptions {
+  product_slug varchar(120) [pk, note: 'JSON field productId']
+  generated_at bigint [not null]
+  headline varchar(255)
+  visual_summary text
+  styling_tip text
+  purchase_reason text
+  confidence varchar(20)
+  engine varchar(100)
+  Note: 'Object aiDescriptions[].description được trải phẳng.'
+}
+
+Table ai_description_details {
+  product_slug varchar(120) [not null]
+  position int [not null]
+  detail varchar(500) [not null]
+
+  indexes {
+    (product_slug, position) [pk]
+  }
+}
+
+// ============================================================================
+// FLAGCARDS & VIP
+// ============================================================================
+
+Table flagcards {
+  id varchar(80) [pk]
+  sort_order int [note: 'JSON field order']
+  glyph varchar(16)
+  accent varchar(16)
+  title varchar(190) [not null]
+  japanese varchar(190)
+  region varchar(120)
+  summary text
+  formation_history text
+  legend text
+  outfit_style varchar(190)
+  outfit_reason text
+  source_url text
+  active boolean [not null]
+}
+
+Table flagcard_facts {
+  flagcard_id varchar(80) [not null]
+  position int [not null]
+  fact varchar(500) [not null]
+
+  indexes {
+    (flagcard_id, position) [pk]
+  }
+}
+
+Table flagcard_checkins {
+  flagcard_id varchar(80) [not null]
+  position int [not null]
+  name varchar(190) [not null]
+  tip varchar(500)
+
+  indexes {
+    (flagcard_id, position) [pk]
+  }
+}
+
+Table flagcard_outfit_items {
+  flagcard_id varchar(80) [not null]
+  kind varchar(20) [not null, note: 'clothing | accessory']
+  position int [not null]
+  item varchar(190) [not null]
+
+  indexes {
+    (flagcard_id, kind, position) [pk]
+  }
+  Note: 'Hai array outfit.clothing và outfit.accessories.'
+}
+
+Table flagcard_recommended_products {
+  flagcard_id varchar(80) [not null]
+  position int [not null]
+  product_slug varchar(120) [not null]
+
+  indexes {
+    (flagcard_id, position) [pk]
+  }
+}
+
+Table flagcard_collections {
+  id varchar(100) [pk]
+  user_id varchar(80) [unique, not null]
+  reward_voucher_code varchar(40)
+  completed_at bigint
+  created_at bigint [not null]
+  updated_at bigint [not null]
+}
+
+Table flagcard_collection_cards {
+  collection_id varchar(100) [not null]
+  flagcard_id varchar(80) [not null]
+
+  indexes {
+    (collection_id, flagcard_id) [pk]
+  }
+  Note: 'Array flagcardCollections[].cardIds; giữ riêng vì admin có thể cấp thẻ thủ công.'
+}
+
+Table flagcard_collection_awards {
+  collection_id varchar(100) [not null]
+  position int [not null]
+  flagcard_id varchar(80) [not null]
+  order_id varchar(80)
+  order_code varchar(40)
+  order_total bigint
+  awarded_at bigint [not null]
+  source varchar(40)
+
+  indexes {
+    (collection_id, position) [pk]
+  }
+}
+
+Table vip_memberships {
+  id varchar(120) [pk]
+  user_id varchar(80) [not null]
+  qualifying_period varchar(10) [not null, note: 'YYYY-MM']
+  qualified_spend bigint [not null]
+  threshold bigint [not null]
+  discount_percent int [not null]
+  discounted_units_per_order int [not null]
+  started_at bigint [not null]
+  expires_at bigint [not null]
+  status varchar(20) [not null, note: 'active | expired']
+  created_at bigint [not null]
+  updated_at bigint [not null]
+
+  indexes {
+    (user_id, qualifying_period) [unique]
+  }
+}
+
+Table vip_qualifying_orders {
+  membership_id varchar(120) [not null]
+  position int [not null]
+  order_id varchar(80) [not null]
+
+  indexes {
+    (membership_id, position) [pk]
+  }
+  Note: 'Array vipMemberships[].qualifyingOrderIds.'
+}
+
+// ============================================================================
+// JAPAN COMMUNITY & CONTENT
+// ============================================================================
+
+Table japan_spot_reviews {
+  id varchar(100) [pk]
+  place varchar(190) [not null]
+  prefecture varchar(120) [not null]
+  user_id varchar(80) [not null]
+  user_name varchar(150)
+  rating tinyint [not null]
+  comment varchar(500) [not null]
+  media json
+  status varchar(20) [note: 'Bản ghi legacy có thể thiếu; giao diện admin mặc định approved']
+  moderation json
+  created_at bigint [not null]
+  Note: 'Khi Mongo bật, route lưu ở collection japanSpotReviews; nếu không thì lưu trong app_state.'
+}
+
+Table japan_spot_suggestions {
+  id varchar(100) [pk]
+  prefecture varchar(120) [not null]
+  user_id varchar(80) [not null]
+  user_name varchar(150)
+  suggestion varchar(500) [not null]
+  status varchar(20) [note: 'Bản ghi legacy có thể thiếu; giao diện admin mặc định approved']
+  moderation json
+  created_at bigint [not null]
+  Note: 'Khi Mongo bật, route lưu ở collection japanSpotSuggestions; nếu không thì lưu trong app_state.'
+}
+
+Table notifications {
+  id varchar(100) [pk]
+  user_id varchar(80) [note: 'NULL = thông báo chung']
+  title varchar(200) [not null]
+  body varchar(500) [not null]
+  type varchar(60)
+  action varchar(120)
+  reach int
+  at bigint [not null]
+}
+
+Table banners {
+  id varchar(40) [pk]
+  title varchar(190)
+  img text
+  link varchar(255)
+  active boolean [not null]
+  sort_order int [note: 'JSON field order']
+}
+
+// ============================================================================
+// RELATIONSHIPS (logical FK in relational view)
+// ============================================================================
+
+Ref: addresses.user_id > users.id
+Ref: profiles.user_id > users.id
+Ref: profile_styles.user_id > profiles.user_id
+Ref: push_tokens.user_id > users.id
+
+Ref: products.owner_id > users.id
+Ref: products.cat > categories.id
+Ref: products.category > categories.id
+Ref: product_images.product_id > products.id
+Ref: product_videos.product_id > products.id
+Ref: product_variants.product_id > products.id
+Ref: product_tags.product_id > products.id
+Ref: cloud_product_assets.slug > products.slug
+Ref: cloud_product_images.product_slug > cloud_product_assets.slug
+
+Ref: carts.user_id > users.id
+Ref: carts.product_slug > products.slug
+Ref: wishlists.user_id > users.id
+Ref: wishlists.product_slug > products.slug
+Ref: vouchers.owner_user_id > users.id
+Ref: vouchers.issued_by > users.id
+Ref: voucher_redemptions.code > vouchers.code
+Ref: voucher_redemptions.user_id > users.id
+Ref: voucher_redemptions.order_id > orders.id
+
+Ref: orders.user_id > users.id
+Ref: orders.customer_id > users.id
+Ref: orders.payment_id > payments.id
+Ref: orders.return_request_id > return_requests.id
+Ref: orders.flagcard_award_card_id > flagcards.id
+Ref: orders.voucher_redemption_id > voucher_redemptions.id
+Ref: order_items.order_id > orders.id
+Ref: order_items.product_slug > products.slug
+Ref: order_history.order_id > orders.id
+Ref: order_history.return_request_id > return_requests.id
+
+Ref: payments.order_id > orders.id
+Ref: payments.user_id > users.id
+Ref: payment_refunds.payment_id > payments.id
+Ref: payment_refunds.return_request_id > return_requests.id
+
+Ref: return_requests.order_id > orders.id
+Ref: return_requests.user_id > users.id
+Ref: return_requests.payment_id > payments.id
+Ref: return_request_items.return_request_id > return_requests.id
+Ref: return_request_items.product_slug > products.slug
+Ref: return_request_photos.return_request_id > return_requests.id
+Ref: return_request_timeline.return_request_id > return_requests.id
+
+Ref: reviews.product_slug > products.slug
+Ref: reviews.user_id > users.id
+Ref: reviews.order_id > orders.id
+Ref: review_reactions.review_id > reviews.id
+Ref: review_reactions.user_id > users.id
+Ref: moderation_samples.review_id > reviews.id
+Ref: moderation_sample_phrases.sample_id > moderation_samples.id
+
+Ref: interactions.product_slug > products.slug
+Ref: chats.user_id > users.id
+Ref: chat_product_refs.chat_id > chats.id
+Ref: chat_product_refs.product_slug > products.slug
+Ref: tryon_history.user_id > users.id
+Ref: tryon_history.product_slug > products.slug
+Ref: tryon_accessories.tryon_id > tryon_history.id
+Ref: tryon_accessories.product_slug > products.slug
+Ref: goals.product_slug > products.slug
+Ref: ai_descriptions.product_slug > products.slug
+Ref: ai_description_details.product_slug > ai_descriptions.product_slug
+
+Ref: flagcard_facts.flagcard_id > flagcards.id
+Ref: flagcard_checkins.flagcard_id > flagcards.id
+Ref: flagcard_outfit_items.flagcard_id > flagcards.id
+Ref: flagcard_recommended_products.flagcard_id > flagcards.id
+Ref: flagcard_recommended_products.product_slug > products.slug
+Ref: flagcard_collections.user_id > users.id
+Ref: flagcard_collections.reward_voucher_code > vouchers.code
+Ref: flagcard_collection_cards.collection_id > flagcard_collections.id
+Ref: flagcard_collection_cards.flagcard_id > flagcards.id
+Ref: flagcard_collection_awards.collection_id > flagcard_collections.id
+Ref: flagcard_collection_awards.flagcard_id > flagcards.id
+Ref: flagcard_collection_awards.order_id > orders.id
+
+Ref: vip_memberships.user_id > users.id
+Ref: vip_qualifying_orders.membership_id > vip_memberships.id
+Ref: vip_qualifying_orders.order_id > orders.id
+
+Ref: japan_spot_reviews.user_id > users.id
+Ref: japan_spot_suggestions.user_id > users.id
+Ref: notifications.user_id > users.id

@@ -15,11 +15,23 @@ if [[ -f "$ROOT_DIR/.env.server" ]]; then
   set +a
 fi
 
-# Android Studio trên Linux của máy này cài SDK ở Android/Sdk (chữ S viết
-# hoa). Expo mặc định dò Android/sdk nên cần export rõ để lệnh chạy một lần
-# không lặp cảnh báo và luôn mở đúng emulator.
-export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
-export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+# Chọn Android SDK thực sự tồn tại. Máy dev có thể dùng Android Studio trong
+# thư mục người dùng hoặc gói hệ thống Ubuntu tại /usr/lib/android-sdk.
+if [[ -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME" ]]; then
+  DEFAULT_ANDROID_SDK="$ANDROID_HOME"
+elif [[ -d "$HOME/Android/Sdk" ]]; then
+  DEFAULT_ANDROID_SDK="$HOME/Android/Sdk"
+elif [[ -d "$HOME/Android/sdk" ]]; then
+  DEFAULT_ANDROID_SDK="$HOME/Android/sdk"
+elif [[ -d /usr/lib/android-sdk ]]; then
+  DEFAULT_ANDROID_SDK="/usr/lib/android-sdk"
+else
+  DEFAULT_ANDROID_SDK="${ANDROID_HOME:-$HOME/Android/Sdk}"
+fi
+export ANDROID_HOME="$DEFAULT_ANDROID_SDK"
+if [[ -z "${ANDROID_SDK_ROOT:-}" || ! -d "$ANDROID_SDK_ROOT" ]]; then
+  export ANDROID_SDK_ROOT="$ANDROID_HOME"
+fi
 
 # Pose/accessory pipeline cần numpy + OpenCV + Ultralytics. Python hệ thống
 # tối giản không có các gói này; ưu tiên môi trường pyenv đã cài model YOLO.
@@ -40,11 +52,30 @@ FASHN_PYTHON="${JAPANO_FASHN_PYTHON:-$FASHN_DIR/.venv/bin/python}"
 FASHN_LOG="${JAPANO_FASHN_LOG:-/tmp/japano-fashn-7862.log}"
 FASHN_PID=""
 export JAPANO_FASHN_URL="${JAPANO_FASHN_URL:-http://127.0.0.1:7862}"
+MOTION_DIR="${JAPANO_ONE_TO_ALL_HOME:-$HOME/jp/ai/One-to-All-Animation}"
+MOTION_PYTHON="${JAPANO_ONE_TO_ALL_PYTHON:-$MOTION_DIR/.venv/bin/python}"
+MOTION_LOG="${JAPANO_MOTION_LOG:-/tmp/japano-motion-7864.log}"
+MOTION_PID=""
+export JAPANO_MOTION_URL="${JAPANO_MOTION_URL:-http://127.0.0.1:7864}"
+export JAPANO_MOTION_ENGINE_LABEL="${JAPANO_MOTION_ENGINE_LABEL:-one-to-all-animation-1.3b-v1}"
 CATVTON_DIR="${JAPANO_CATVTON_DIR:-$HOME/jp/ai/CatVTON}"
 CATVTON_PYTHON="${JAPANO_CATVTON_PYTHON:-$CATVTON_DIR/.venv/bin/python}"
 CATVTON_LOG="${JAPANO_CATVTON_LOG:-/tmp/japano-catvton-7861.log}"
 CATVTON_PID=""
 export JAPANO_CATVTON_URL="${JAPANO_CATVTON_URL:-http://127.0.0.1:7861}"
+EMBED_DIR="${JAPANO_EMBEDDING_DIR:-$HOME/jp/ai/embedding-service}"
+if [[ -n "${JAPANO_EMBEDDING_PYTHON:-}" ]]; then
+  EMBED_PYTHON="$JAPANO_EMBEDDING_PYTHON"
+elif [[ -x "$EMBED_DIR/.venv/bin/python" ]]; then
+  EMBED_PYTHON="$EMBED_DIR/.venv/bin/python"
+elif [[ -x "$HOME/.pyenv/shims/python3" ]]; then
+  EMBED_PYTHON="$HOME/.pyenv/shims/python3"
+else
+  EMBED_PYTHON="$MOTION_PYTHON"
+fi
+EMBED_LOG="${JAPANO_EMBEDDING_LOG:-/tmp/japano-embedding-7865.log}"
+EMBED_PID=""
+export JAPANO_EMBEDDING_URL="${JAPANO_EMBEDDING_URL:-http://127.0.0.1:7865}"
 
 for required_command in node npm curl awk grep; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
@@ -65,10 +96,20 @@ cleanup() {
     kill "$FASHN_PID" 2>/dev/null || true
     wait "$FASHN_PID" 2>/dev/null || true
   fi
+  if [[ -n "$MOTION_PID" ]] && kill -0 "$MOTION_PID" 2>/dev/null; then
+    echo "→ Dừng One-to-All motion service (PID $MOTION_PID)…"
+    kill "$MOTION_PID" 2>/dev/null || true
+    wait "$MOTION_PID" 2>/dev/null || true
+  fi
   if [[ -n "$CATVTON_PID" ]] && kill -0 "$CATVTON_PID" 2>/dev/null; then
     echo "→ Dừng CatVTON (PID $CATVTON_PID)…"
     kill "$CATVTON_PID" 2>/dev/null || true
     wait "$CATVTON_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$EMBED_PID" ]] && kill -0 "$EMBED_PID" 2>/dev/null; then
+    echo "→ Dừng embedding service (PID $EMBED_PID)…"
+    kill "$EMBED_PID" 2>/dev/null || true
+    wait "$EMBED_PID" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT
@@ -89,10 +130,24 @@ fashn_is_ready() {
   [[ "$response" == *'"ok":true'* && "$response" == *'"modelReady":true'* && "$response" == *'"poseEditorReady":true'* ]]
 }
 
+motion_is_ready() {
+  local response
+  response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
+    "${JAPANO_MOTION_URL%/}/health" 2>/dev/null)" || return 1
+  [[ "$response" == *'"ok":true'* && "$response" == *"\"engine\":\"$JAPANO_MOTION_ENGINE_LABEL\""* ]]
+}
+
 catvton_is_ready() {
   local response
   response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
     "${JAPANO_CATVTON_URL%/}/health" 2>/dev/null)" || return 1
+  [[ "$response" == *'"ok":true'* ]]
+}
+
+embedding_is_ready() {
+  local response
+  response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
+    "${JAPANO_EMBEDDING_URL%/}/health" 2>/dev/null)" || return 1
   [[ "$response" == *'"ok":true'* ]]
 }
 
@@ -146,6 +201,36 @@ else
   echo "  FASHN log: $FASHN_LOG"
 fi
 
+# One-to-All chỉ giữ một service nhẹ khi idle. Model video được nạp sau khi
+# người dùng chọn action, sau khi FASHN đã tạo xong ảnh và nhả GPU.
+if [[ "${JAPANO_SKIP_MOTION:-0}" == "1" ]]; then
+  echo "→ Bỏ qua motion (JAPANO_SKIP_MOTION=1)."
+elif motion_is_ready; then
+  echo "✓ Dùng One-to-All motion đang chạy tại $JAPANO_MOTION_URL"
+elif [[ ! -x "$MOTION_PYTHON" || ! -f "$ROOT_DIR/backend/motion_service.py" ]]; then
+  echo "· Không tìm thấy One-to-All local tại $MOTION_DIR — tính năng Ảnh sống sẽ tạm ẩn."
+else
+  echo "→ Khởi động $JAPANO_MOTION_ENGINE_LABEL CUDA + quality gate…"
+  (
+    JAPANO_ONE_TO_ALL_HOME="$MOTION_DIR" JAPANO_ONE_TO_ALL_PYTHON="$MOTION_PYTHON" \
+      "$MOTION_PYTHON" -u "$ROOT_DIR/backend/motion_service.py"
+  ) >"$MOTION_LOG" 2>&1 &
+  MOTION_PID=$!
+  for ((attempt = 1; attempt <= 60; attempt += 1)); do
+    if motion_is_ready; then break; fi
+    if ! kill -0 "$MOTION_PID" 2>/dev/null; then
+      echo "· One-to-All không khởi động được; app vẫn dùng thử đồ ảnh. Log: $MOTION_LOG"
+      MOTION_PID=""
+      break
+    fi
+    sleep 0.5
+  done
+  if [[ -n "$MOTION_PID" ]] && motion_is_ready; then
+    echo "✓ One-to-All sẵn sàng: $JAPANO_MOTION_URL"
+    echo "  Motion log: $MOTION_LOG"
+  fi
+fi
+
 # CatVTON là phương án dự phòng (fallback) khi FASHN lỗi/không đạt quality gate —
 # hoàn toàn tuỳ chọn, không chặn script nếu thiếu hoặc không khởi động được. Chạy
 # cùng lúc với FASHN+FLUX.2 cần nhiều VRAM hơn; bỏ qua bằng JAPANO_SKIP_CATVTON=1
@@ -177,6 +262,38 @@ else
   done
   if [[ -n "$CATVTON_PID" ]] && ! catvton_is_ready; then
     echo "· CatVTON chưa sẵn sàng sau 90 giây (không chặn, chỉ mất fallback). Log: $CATVTON_LOG"
+  fi
+fi
+
+# Semantic embeddings cho related-products — hoàn toàn tuỳ chọn, không có thì
+# recommend.js chỉ mất tín hiệu này, engine gợi ý chính vẫn chạy bình thường.
+if [[ "${JAPANO_SKIP_EMBEDDING:-0}" == "1" ]]; then
+  echo "→ Bỏ qua embedding service (JAPANO_SKIP_EMBEDDING=1)."
+elif embedding_is_ready; then
+  echo "✓ Dùng embedding service đang chạy tại $JAPANO_EMBEDDING_URL"
+elif [[ ! -x "$EMBED_PYTHON" || ! -f "$ROOT_DIR/backend/embedding_service.py" ]]; then
+  echo "· Không tìm thấy embedding service đã cài tại $EMBED_DIR — related-products sẽ tạm thiếu tín hiệu semantic."
+else
+  echo "→ Khởi động embedding service (CUDA nếu có GPU, tự rơi về CPU)…"
+  (
+    CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}" \
+      "$EMBED_PYTHON" -u "$ROOT_DIR/backend/embedding_service.py"
+  ) >"$EMBED_LOG" 2>&1 &
+  EMBED_PID=$!
+  for ((attempt = 1; attempt <= 60; attempt += 1)); do
+    if embedding_is_ready; then
+      echo "✓ Embedding service đã sẵn sàng: $JAPANO_EMBEDDING_URL"
+      break
+    fi
+    if ! kill -0 "$EMBED_PID" 2>/dev/null; then
+      echo "· Embedding service dừng trước khi sẵn sàng (không chặn, chỉ mất tín hiệu semantic). Log: $EMBED_LOG"
+      EMBED_PID=""
+      break
+    fi
+    sleep 1
+  done
+  if [[ -n "$EMBED_PID" ]] && ! embedding_is_ready; then
+    echo "· Embedding service chưa sẵn sàng sau 60 giây (không chặn). Log: $EMBED_LOG"
   fi
 fi
 

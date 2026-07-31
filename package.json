@@ -7,6 +7,7 @@
     "mobile"
   ],
   "scripts": {
+    "postinstall": "node scripts/patch-stripe-card-form.mjs",
     "backend": "npm --workspace backend start",
     "backend:dev": "npm --workspace backend run dev",
     "mobile": "npm --workspace mobile start",

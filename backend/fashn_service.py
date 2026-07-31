@@ -5,6 +5,7 @@ for photos whose pose is unsuitable, then released before FASHN is loaded so
 both models fit on a 16 GB GPU.
 """
 
+import ctypes
 import gc
 import json
 import os
@@ -37,6 +38,7 @@ RUNTIME_DIR = Path(os.getenv("JAPANO_TRYON_RUNTIME_DIR", "/tmp/japano-tryon-runt
 RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 
 LOCK = threading.Lock()
+CANCEL_REQUESTED = threading.Event()
 FASHN_PIPELINE = None
 FLUX_PIPELINE = None
 LAST_ENGINE = ""
@@ -45,11 +47,24 @@ GPU_ACTIVE_FILE = Path(os.getenv("JAPANO_TRYON_GPU_LOCK", "/tmp/japano-tryon-gpu
 api = FastAPI(title="JAPANO FASHN VTON 1.5 + FLUX.2 Pose API")
 
 
+class GpuJobCancelled(RuntimeError):
+    pass
+
+
+def check_cancelled():
+    if CANCEL_REQUESTED.is_set():
+        raise GpuJobCancelled("Lượt thử đồ đã dừng vì người dùng đổi tính năng.")
+
+
 def cuda_cleanup():
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):
+        pass
 
 
 def ollama_loaded_models(base: str):
@@ -122,6 +137,32 @@ def wait_for_gpu_headroom():
     raise RuntimeError(
         f"GPU chưa đủ bộ nhớ trống cho thử đồ: {last_free / (1024 ** 3):.1f} GB, cần {required / (1024 ** 3):.1f} GB"
     )
+
+
+def gpu_job_active() -> bool:
+    """Có lượt thử đồ đang chạy thật hay không.
+
+    Khoá ghi PID tiến trình đang giữ GPU. Nếu tiến trình đó đã chết (máy sập,
+    service bị kill) thì khoá còn sót lại là khoá mồ côi — phải dọn đi, nếu
+    không mọi yêu cầu nhả VRAM về sau đều bị từ chối oan.
+    """
+    if not GPU_ACTIVE_FILE.exists():
+        return False
+    try:
+        pid = int(GPU_ACTIVE_FILE.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return True
+    if pid == os.getpid():
+        return True
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        GPU_ACTIVE_FILE.unlink(missing_ok=True)
+        print(f"=== Dọn khoá GPU mồ côi của tiến trình {pid} ===", flush=True)
+        return False
+    except PermissionError:
+        return True
 
 
 def unload_fashn():
@@ -343,15 +384,18 @@ def run_accessory_refine_locked(
     with LOCK:
         GPU_ACTIVE_FILE.write_text(str(os.getpid()), encoding="utf-8")
         try:
+            check_cancelled()
             rough = open_rgb(rough_path)
             clean = open_rgb(clean_path)
             accessories = [open_rgb(item) for item in accessory_paths]
             for attempt in range(2):
                 try:
+                    check_cancelled()
                     result = refine_accessory_fit(
                         rough, clean, accessories, metadata, seed,
                         low_memory=attempt > 0,
                     )
+                    check_cancelled()
                     output_path = RUNTIME_DIR / f"accessory-refined-{time.time_ns()}.png"
                     result.save(output_path)
                     LAST_ENGINE = "flux2-klein-4b-accessory-refine" + ("+adaptive-low-memory" if attempt else "")
@@ -384,16 +428,19 @@ def run_tryon(
     low_memory: bool = False,
 ):
     global LAST_ENGINE
+    check_cancelled()
     release_ollama_vram()
     cuda_cleanup()
     person = open_rgb(person_path)
     reposed_path = RUNTIME_DIR / f"reposed-{time.time_ns()}.png"
     if repose:
         person = repose_main_subject(person, reposed_path, low_memory)
+        check_cancelled()
         # Do not keep the 13 GB edit model resident while loading FASHN.
         unload_flux()
 
     pipeline = load_fashn()
+    check_cancelled()
     cloth = open_rgb(cloth_path)
     output = pipeline(
         person_image=person,
@@ -406,11 +453,13 @@ def run_tryon(
         seed=seed,
         segmentation_free=True,
     ).images[0].convert("RGB")
+    check_cancelled()
     refined = False
     if refine:
         unload_fashn()
         try:
             output = refine_garment_fidelity(output, cloth, low_memory)
+            check_cancelled()
             refined = True
         except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
             # Fidelity refinement is cosmetic. A valid FASHN result is much
@@ -458,6 +507,7 @@ def run_tryon_locked(
             }
             for attempt in range(2):
                 try:
+                    check_cancelled()
                     return run_tryon(
                         person_path,
                         cloth_path,
@@ -509,8 +559,35 @@ def health():
         "lastEngine": LAST_ENGINE,
         "singleSubject": True,
         "ollamaVramHandoff": os.getenv("JAPANO_RELEASE_OLLAMA_VRAM", "1") != "0",
-        "gpuJobActive": GPU_ACTIVE_FILE.exists(),
+        "gpuJobActive": gpu_job_active(),
     }
+
+
+@api.post("/unload")
+def unload_models():
+    """Nhả toàn bộ VRAM đang giữ, để tính năng khác (tạo chuyển động, chatbot,
+    vision) được ưu tiên GPU. Bộ điều phối GPU ở backend Node gọi endpoint này
+    khi người dùng chuyển sang màn hình khác; model sẽ tự nạp lại ở lượt thử đồ
+    kế tiếp nên không mất chức năng, chỉ tốn thêm thời gian nạp lần đầu."""
+    if gpu_job_active():
+        # Đang có lượt thử đồ chạy dở — nhả model giữa chừng sẽ làm hỏng chính
+        # tác vụ người dùng đang chờ. Từ chối một cách tường minh.
+        return {"ok": False, "skipped": "gpu-job-active", "loaded": {"fashn": FASHN_PIPELINE is not None, "flux": FLUX_PIPELINE is not None}}
+    was = {"fashn": FASHN_PIPELINE is not None, "flux": FLUX_PIPELINE is not None}
+    unload_fashn()
+    unload_flux()
+    cuda_cleanup()
+    free_bytes = torch.cuda.mem_get_info()[0] if torch.cuda.is_available() else 0
+    print(f"=== Unload theo yêu cầu: {was} -> đã nhả, VRAM trống {free_bytes / (1024 ** 3):.1f} GB ===", flush=True)
+    return {"ok": True, "unloaded": was, "freeVramGb": round(free_bytes / (1024 ** 3), 2)}
+
+
+@api.post("/cancel")
+def cancel_active_job():
+    """Yêu cầu job hiện tại dừng ở checkpoint an toàn gần nhất."""
+    active = gpu_job_active() or LOCK.locked()
+    CANCEL_REQUESTED.set()
+    return {"ok": True, "cancelled": active, "cooperative": True}
 
 
 @api.post("/accessory-refine")
@@ -539,6 +616,7 @@ async def accessory_refine(
         item_path.write_bytes(await upload.read())
         accessory_paths.append(item_path)
     try:
+        CANCEL_REQUESTED.clear()
         output_path = await run_in_threadpool(
             run_accessory_refine_locked,
             rough_path,
@@ -554,6 +632,8 @@ async def accessory_refine(
         )
     except torch.cuda.OutOfMemoryError as exc:
         raise HTTPException(status_code=507, detail="GPU không đủ VRAM cho bước làm đẹp phụ kiện") from exc
+    except GpuJobCancelled as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         print(f"Accessory refinement failed: {exc}", flush=True)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -583,6 +663,7 @@ async def tryon(
     person_path.write_bytes(await person.read())
     cloth_path.write_bytes(await cloth.read())
     try:
+        CANCEL_REQUESTED.clear()
         output_path, reposed_path = await run_in_threadpool(
             run_tryon_locked, person_path, cloth_path, category, garment_photo_type, repose, refine, seed
         )
@@ -598,6 +679,8 @@ async def tryon(
         unload_flux()
         unload_fashn()
         raise HTTPException(status_code=507, detail="GPU không đủ VRAM cho pipeline thử đồ") from exc
+    except GpuJobCancelled as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except Exception as exc:
         print(f"Try-on failed: {exc}", flush=True)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -6,13 +6,17 @@ const {
   buildAnalytics,
   buildDemandAndTrends,
   buildMarketBasketRules,
+  buildSearchIntelligence,
 } = require('../lib/analytics');
 const {
   getHomeRecommendations,
   getRelatedProducts,
+  getRecommendationDiagnostics,
   invalidateCache,
 } = require('../lib/recommend');
-const { fallbackProductDescription } = require('../lib/productVision');
+const { buildAdvancedModel, scoreAdvanced } = require('../lib/advancedRecommend');
+const chatbot = require('../lib/chatbot');
+const { fallbackProductDescription, ensureVietnameseProductDescription } = require('../lib/productVision');
 const { accessoryKind } = require('../lib/accessory');
 const { ensureFlagcardState, reconcileFlagRewards, flagcardCollectionView, validateVoucher } = require('../lib/flagcards');
 const { localModeration } = require('../lib/reviewModeration');
@@ -101,15 +105,105 @@ test('hybrid recommender chỉ trả slug hợp lệ, không trùng và có mode
   assert.equal(result.items.length, 8);
   assert.equal(new Set(result.items).size, result.items.length);
   result.items.forEach((slug) => assert.ok(knownSlugs.has(slug)));
+  assert.ok(!result.items.includes('balo-vai'), 'không gợi ý sản phẩm đã hết tồn kho');
   assert.ok(result.models.includes('matrix-factorization-sgd'));
   assert.ok(result.models.includes('association-rules'));
+  assert.ok(result.models.includes('selective-ssm-sequence'));
+  assert.ok(result.models.includes('lightgcn-user-item'));
+  assert.ok(result.models.includes('autoregressive-next-item'));
+  assert.ok(result.models.includes('adaptive-moe-gate'));
+  assert.ok(result.models.includes('pairwise-logistic-ranker'));
   assert.equal(result.modelStatus.matrixFactorizationActive, true);
+  assert.equal(result.modelStatus.selectiveSsmActive, true);
+  assert.equal(result.modelStatus.lightGcnActive, true);
+  assert.equal(result.modelStatus.pairwiseRankerActive, true);
   assert.ok(result.learnedFrom.includes('tìm kiếm'));
 
   const related = getRelatedProducts(state, 'kimono-hong', 6);
   assert.equal(new Set(related).size, related.length);
   assert.ok(!related.includes('kimono-hong'));
   related.forEach((slug) => assert.ok(knownSlugs.has(slug)));
+});
+
+test('cache recommendation cô lập giữa các state khác nhau', () => {
+  const makeState = (prefix) => ({
+    products: Array.from({ length: 5 }, (_, index) => ({
+      id: `${prefix}-${index}`, slug: `${prefix}-${index}`, name: `${prefix} ${index}`,
+      cat: prefix, price: 100000 + index, tags: [prefix], variants: [{ stock: 10 }],
+    })),
+    categories: [], interactions: [], orders: [], profiles: [], chats: [],
+  });
+  invalidateCache();
+  const first = getHomeRecommendations(makeState('alpha'), { userId: 'guest', limit: 4 });
+  const second = getHomeRecommendations(makeState('beta'), { userId: 'guest', limit: 4 });
+  assert.ok(first.items.every((slug) => slug.startsWith('alpha-')));
+  assert.ok(second.items.every((slug) => slug.startsWith('beta-')));
+});
+
+test('autoregressive next-item expert học chuyển tiếp A sang B theo session', () => {
+  const products = ['a', 'b', 'c'].map((slug) => ({ slug, name: slug, cat: slug, tags: [slug] }));
+  const events = [];
+  for (let user = 0; user < 5; user += 1) {
+    events.push(
+      { userId: `u${user}`, productSlug: 'a', weight: 3, at: 1000 + user * 10 },
+      { userId: `u${user}`, productSlug: 'b', weight: 4, at: 2000 + user * 10 },
+    );
+  }
+  events.push({ userId: 'current', productSlug: 'a', weight: 1, at: 3000 });
+  const model = buildAdvancedModel({ products, events, now: 4000 });
+  assert.ok(scoreAdvanced(model, 'current', 'b', 0, 0).transition > scoreAdvanced(model, 'current', 'c', 0, 0).transition);
+  assert.ok(model.diagnostics.transitionCount >= 5);
+});
+
+test('diagnostics chỉ bật ranker khi có causal training pair thật và ghi nhận feedback âm', () => {
+  const state = {
+    products: [
+      { slug: 'a', name: 'A', cat: 'x', tags: ['x'] },
+      { slug: 'b', name: 'B', cat: 'y', tags: ['y'] },
+    ],
+    interactions: [
+      { userId: 'u', productId: 'a', type: 'view', value: 1, createdAt: 1000 },
+      { userId: 'u', productId: 'b', type: 'cart', value: 0, createdAt: 2000 },
+    ],
+    orders: [], categories: [],
+  };
+  const diagnostics = getRecommendationDiagnostics(state);
+  const ranker = diagnostics.stages.find((stage) => stage.id === 'pairwise-logistic-ranker');
+  assert.equal(ranker.active, false);
+  assert.equal(diagnostics.trainingPairs, 0);
+  assert.equal(diagnostics.negativeFeedbackEvents, 1);
+});
+
+test('botchat trả provenance của mLSTM memory và sparse MoE router', () => {
+  const state = seededState();
+  const result = chatbot.reply(state, {
+    userId: 'u1',
+    message: 'có mã giảm giá nào không',
+    history: [
+      { role: 'user', content: 'mình đang tìm kimono' },
+      { role: 'assistant', content: 'Bạn thích phong cách truyền thống chứ?' },
+    ],
+  });
+  assert.equal(result.intent, 'discount');
+  assert.ok(result.confidence > 0);
+  assert.ok(result.modelTrace.models.includes('mlstm-style-matrix-memory'));
+  assert.ok(result.modelTrace.models.includes('sparse-moe-router'));
+});
+
+test('analytics tổng hợp telemetry botchat và diagnostics model thật', () => {
+  const state = seededState();
+  state.chats.push({
+    id: 'trace-ai', userId: 'u1', role: 'assistant', message: 'ok',
+    engine: 'hybrid-post-transformer', intent: 'outfit', confidence: 0.8,
+    modelTrace: { models: ['mlstm-style-matrix-memory'] },
+  });
+  const diagnostics = getRecommendationDiagnostics(state);
+  const analytics = buildAnalytics(state, { now: FIXED_NOW, recommendationDiagnostics: diagnostics });
+  assert.equal(analytics.botIntelligence.status, 'active');
+  assert.equal(analytics.botIntelligence.requests, 1);
+  assert.equal(analytics.botIntelligence.intentCounts.outfit, 1);
+  assert.equal(analytics.recommendationHealth.graphEdges, diagnostics.graphEdges);
+  assert.equal(analytics.recommendationHealth.trainingPairs, diagnostics.trainingPairs);
 });
 
 test('tín hiệu tìm kiếm và thử đồ được đưa vào phân tích nhu cầu và sức khỏe mô hình gợi ý', () => {
@@ -126,6 +220,37 @@ test('tín hiệu tìm kiếm và thử đồ được đưa vào phân tích nh
   assert.equal(analytics.recommendationHealth.active, true);
 });
 
+test('search intelligence gộp đúng từ khoá hot và từ khoá không ra kết quả', () => {
+  const now = Date.now();
+  const searchLogs = [
+    { query: 'yukata xanh', resultCount: 3, userId: 'u1', createdAt: now },
+    { query: 'Yukata Xanh', resultCount: 3, userId: 'u2', createdAt: now }, // khác hoa/thường, cùng từ khoá
+    { query: 'yukata xanh', resultCount: 3, userId: 'u3', createdAt: now },
+    { query: 'áo blazer đỏ', resultCount: 0, userId: 'u1', createdAt: now },
+    { query: 'áo blazer đỏ', resultCount: 0, userId: 'u4', createdAt: now },
+    { query: 'kimono', resultCount: 5, userId: 'u1', createdAt: now },
+  ];
+  const result = buildSearchIntelligence(searchLogs, new Date(now));
+  assert.equal(result.totalSearches, 6);
+  assert.equal(result.zeroResultSearches, 2);
+  assert.equal(result.uniqueQueries, 3);
+  assert.equal(result.topQueries[0].query.toLowerCase(), 'yukata xanh');
+  assert.equal(result.topQueries[0].count, 3);
+  assert.equal(result.zeroResultQueries.length, 1);
+  assert.equal(result.zeroResultQueries[0].zeroResults, 2);
+  assert.equal(result.zeroResultQueries[0].zeroResultRate, 1);
+  assert.equal(result.searchVolumeByDay.length, 14);
+  assert.equal(result.searchVolumeByDay[13].value, 6);
+});
+
+test('search intelligence không vỡ khi chưa có log tìm kiếm nào', () => {
+  const result = buildSearchIntelligence([], new Date());
+  assert.equal(result.totalSearches, 0);
+  assert.equal(result.zeroResultRate, 0);
+  assert.deepEqual(result.topQueries, []);
+  assert.deepEqual(result.zeroResultQueries, []);
+});
+
 test('mô tả ảnh fallback luôn bám đúng tên sản phẩm và không bịa chất liệu', () => {
   const product = seededState().products.find((item) => item.slug === 'kimono-hong');
   const result = fallbackProductDescription(product);
@@ -133,6 +258,19 @@ test('mô tả ảnh fallback luôn bám đúng tên sản phẩm và không b�
   assert.match(result.details.join(' '), /Kimono truyền thống Hồng/);
   assert.equal(result.engine, 'catalog-grounded-fallback');
   assert.match(result.confidence, /không suy đoán chất liệu/i);
+});
+
+test('mô tả Qwen giữ nhãn thị giác sau khi chuẩn hóa và đọc lại từ cache', () => {
+  const product = seededState().products.find((item) => item.slug === 'yukata-xanh');
+  const first = ensureVietnameseProductDescription({
+    ...fallbackProductDescription(product),
+    headline: 'Yukata xanh đen với họa tiết hoa nổi bật',
+    engine: 'qwen3-vl:8b',
+  }, product);
+  const cached = ensureVietnameseProductDescription(first, product);
+  assert.equal(first.engine, 'thi-giac-san-pham');
+  assert.equal(cached.engine, 'thi-giac-san-pham');
+  assert.equal(cached.headline, first.headline);
 });
 
 test('mục tiêu kết hợp quỹ mua sắm và lộ trình giảm cân có giới hạn an toàn', () => {
@@ -157,12 +295,12 @@ test('phụ kiện nón và ô được định tuyến tới đúng điểm neo
   assert.equal(accessoryKind({ name: 'Dù Nhật bản', slug: 'du-nhat', tags: ['dù'] }), 'umbrella');
 });
 
-test('Flagcard chỉ cấp một lần cho đơn thành công trên 5 triệu', () => {
+test('Flagcard chỉ cấp một lần cho đơn thành công từ 5 triệu', () => {
   const state = emptyState();
   ensureFlagcardState(state);
   state.orders = [
-    { id: 'small', code: 'SMALL', userId: 'u-flag', total: 5_000_000, status: 'completed', payment: { status: 'paid' } },
-    { id: 'eligible', code: 'BIG', userId: 'u-flag', total: 5_000_001, status: 'completed', payment: { status: 'paid' } },
+    { id: 'small', code: 'SMALL', userId: 'u-flag', total: 4_999_999, status: 'completed', payment: { status: 'paid' } },
+    { id: 'eligible', code: 'BIG', userId: 'u-flag', total: 5_000_000, status: 'completed', payment: { status: 'paid' } },
   ];
   reconcileFlagRewards(state, 1000);
   reconcileFlagRewards(state, 2000);
