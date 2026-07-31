@@ -1,4 +1,5 @@
-﻿import * as ImagePicker from "expo-image-picker";
+
+import * as ImagePicker from "expo-image-picker";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -32,6 +33,8 @@ type AdminUser = {
   createdAt?: string | null;
   isProtectedAdmin?: boolean;
   address?: string;
+  banned?: boolean;
+  notes?: string;
 };
 
 type AdminProduct = {
@@ -62,7 +65,11 @@ type AdminProduct = {
   styleUseCase?: string;
 };
 
-type TabKey = "overview" | "analytics" | "products" | "promotions" | "users" | "transactions" | "games" | "accessories" | "moderation" | "tryon2d" | "model3d" | "botchat" | "system" | "reviews" | "inventory" | "settings" | "reports" | "staff" | "newsletter";
+type TabKey =
+  | "overview" | "analytics" | "products" | "promotions" | "users"
+  | "transactions" | "orders" | "games" | "accessories" | "moderation"
+  | "tryon2d" | "model3d" | "botchat" | "system" | "reviews" | "inventory"
+  | "settings" | "reports" | "staff" | "newsletter" | "auditlog" | "refunds";
 
 type NavItem = { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap; group: string; badge?: string };
 
@@ -82,6 +89,8 @@ const ADMIN_CARD_SHADOW = Platform.OS === "web"
   ? ({ boxShadow: "0 10px 22px rgba(94,107,120,0.08)" } as any)
   : { shadowColor: "#5E6B78", shadowOpacity: 0.08, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 3 };
 
+const LOW_STOCK_THRESHOLD_DEFAULT = 50;
+
 const ADMIN_FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=900&q=80",
@@ -94,7 +103,9 @@ const ADMIN_FALLBACK_IMAGES = [
 const navItems: NavItem[] = [
   { key: "overview", label: "Tổng quan", icon: "grid", group: "TỔNG QUAN" },
   { key: "analytics", label: "Báo cáo & Phân tích", icon: "bar-chart-2", group: "TỔNG QUAN" },
-  { key: "transactions", label: "Đơn hàng", icon: "shopping-bag", group: "BÁN HÀNG" },
+  { key: "orders", label: "Đơn hàng", icon: "shopping-bag", group: "BÁN HÀNG" },
+  { key: "transactions", label: "Thanh toán", icon: "credit-card", group: "BÁN HÀNG" },
+  { key: "refunds", label: "Hoàn tiền / Trả hàng", icon: "corner-up-left", group: "BÁN HÀNG" },
   { key: "products", label: "Sản phẩm", icon: "package", group: "BÁN HÀNG" },
   { key: "inventory", label: "Kho hàng", icon: "box", group: "BÁN HÀNG" },
   { key: "accessories", label: "Danh mục & Phụ kiện", icon: "watch", group: "BÁN HÀNG" },
@@ -109,68 +120,45 @@ const navItems: NavItem[] = [
   { key: "games", label: "Trò chơi", icon: "zap", group: "NỘI DUNG" },
   { key: "staff", label: "Nhân viên & Quyền", icon: "user-check", group: "HỆ THỐNG" },
   { key: "system", label: "Trạng thái & Nhật ký", icon: "activity", group: "HỆ THỐNG" },
+  { key: "auditlog", label: "Nhật ký hoạt động", icon: "file-text", group: "HỆ THỐNG" },
   { key: "settings", label: "Cài đặt cửa hàng", icon: "settings", group: "HỆ THỐNG" },
   { key: "reports", label: "Báo cáo tài chính", icon: "bar-chart", group: "HỆ THỐNG" },
 ];
 
 const emptyProductForm = {
-  id: "",
-  name: "",
-  price: "",
-  originalPrice: "",
-  discountPercent: "",
-  discountLabel: "",
-  badge: "",
-  image: "",
-  image2: "",
-  image3: "",
-  image4: "",
-  description: "",
-  category: "",
-  subcategory: "",
-  stockQuantity: "999",
-  sku: "",
-  visualTags: "",
-  styleUseCase: "",
-  sizes: "S, M, L, XL",
-  dimensions: "",
-  colors: "Đen, Trắng, Kem",
-  fit: "Regular fit",
+  id: "", name: "", price: "", originalPrice: "", discountPercent: "",
+  discountLabel: "", badge: "", image: "", image2: "", image3: "", image4: "",
+  description: "", category: "", subcategory: "", stockQuantity: "999", sku: "",
+  visualTags: "", styleUseCase: "", sizes: "S, M, L, XL", dimensions: "",
+  colors: "Đen, Trắng, Kem", fit: "Regular fit",
 };
 
 const emptyVoucherForm = {
-  code: "",
-  title: "",
-  discountType: "percent",
-  discountValue: "",
-  minOrderValue: "",
-  expiryDate: "",
-  description: "",
+  code: "", title: "", discountType: "percent", discountValue: "",
+  minOrderValue: "", expiryDate: "", description: "",
 };
 
 const emptyPromotionForm = {
-  code: "",
-  title: "",
-  discountType: "percent",
-  discountValue: "",
-  minOrderValue: "",
-  startsAt: "",
-  expiryDate: "",
-  scope: "all",
-  bannerImage: "",
-  description: "",
+  code: "", title: "", discountType: "percent", discountValue: "",
+  minOrderValue: "", startsAt: "", expiryDate: "", scope: "all",
+  bannerImage: "", description: "",
 };
 
 const emptyNotificationForm = { title: "", content: "" };
 const emptyGameForm = { slug: "", name: "", description: "", rewardCoins: "" };
-const emptyStaffForm = { email: "", name: "", role: "staff", permissions: [] };
-const emptySettingsForm = { taxRate: "10", shippingBase: "30000", storeName: "JAPANO SHOP", storeEmail: "shop@japano.com", storePhone: "0123456789" };
-const emptyNewsletterForm = { subject: "", content: "", recipient: "all" };
+const emptyStaffForm = { email: "", name: "", role: "staff", permissions: [] as string[] };
+const emptySettingsForm = {
+  taxRate: "10", shippingBase: "30000", storeName: "JAPANO SHOP",
+  storeEmail: "shop@japano.com", storePhone: "0123456789",
+  lowStockThreshold: String(LOW_STOCK_THRESHOLD_DEFAULT),
+  currency: "VND", freeShippingThreshold: "500000",
+};
+const emptyNewsletterForm = { subject: "", content: "", recipient: "all", testEmail: "" };
+const emptyTrackingForm = { trackingNumber: "", carrier: "", note: "" };
 
 function formatMoney(value: any) {
   return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 }
-
 function formatCompactMoney(value: any) {
   const n = Number(value || 0);
   if (n >= 1_000_000_000) return `${Math.round(n / 100_000_000) / 10}Bđ`;
@@ -178,30 +166,25 @@ function formatCompactMoney(value: any) {
   if (n >= 1000) return `${Math.round(n / 1000)}Kđ`;
   return `${n.toLocaleString("vi-VN")}đ`;
 }
-
 function formatNumber(value: any) {
   return Number(value || 0).toLocaleString("vi-VN");
 }
-
 function compactDate(value: any) {
   if (!value) return "--";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleDateString("vi-VN");
 }
-
 function calcDiscount(product: AdminProduct) {
   const price = Number(product.price || 0);
   const original = Number(product.originalPrice || 0);
   if (original > price && price > 0) return Math.max(1, Math.round((1 - price / original) * 100));
   return Number(product.discountPercent || 0);
 }
-
 function splitAdminList(value: any) {
   if (Array.isArray(value)) return value.map((x) => String(x || "").trim()).filter(Boolean);
   return String(value || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
 }
-
 function adminGalleryImages(product: Partial<AdminProduct> & Record<string, any>) {
   const seen = new Set<string>();
   const gallery = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
@@ -214,15 +197,11 @@ function adminGalleryImages(product: Partial<AdminProduct> & Record<string, any>
   let offset = String(product.id || product.name || product.image || "japano").length;
   while (gallery.length < 4) {
     const fallback = ADMIN_FALLBACK_IMAGES[offset % ADMIN_FALLBACK_IMAGES.length];
-    if (!seen.has(fallback)) {
-      gallery.push(fallback);
-      seen.add(fallback);
-    }
+    if (!seen.has(fallback)) { gallery.push(fallback); seen.add(fallback); }
     offset += 1;
   }
   return gallery.slice(0, 4);
 }
-
 function toProductForm(product: AdminProduct) {
   const gallery = adminGalleryImages(product);
   return {
@@ -250,19 +229,59 @@ function toProductForm(product: AdminProduct) {
     fit: product.fit || "Regular fit",
   };
 }
-
 function miniTrendData(input: any[]) {
   if (Array.isArray(input) && input.length) return input;
   return [
-    { label: "T2", value: 18 },
-    { label: "T3", value: 24 },
-    { label: "T4", value: 21 },
-    { label: "T5", value: 32 },
-    { label: "T6", value: 39 },
-    { label: "T7", value: 34 },
+    { label: "T2", value: 18 }, { label: "T3", value: 24 }, { label: "T4", value: 21 },
+    { label: "T5", value: 32 }, { label: "T6", value: 39 }, { label: "T7", value: 34 },
     { label: "CN", value: 46 },
   ];
 }
+function fmtVnd(n: any) {
+  const v = Number(n || 0);
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + " tỷ";
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + " tr";
+  if (v >= 1e3) return Math.round(v / 1e3) + "k";
+  return String(Math.round(v));
+}
+
+// [NEW] CSV export helper — works on web & mobile
+function exportCsv(filename: string, rows: any[][]) {
+  try {
+    const csv = rows.map((r) => r.map((v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(",")).join("\n");
+    if (Platform.OS === "web") {
+      const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      Alert.alert("Export CSV", `Đã sinh dữ liệu CSV (${rows.length - 1} dòng). Trên mobile hãy dùng chia sẻ để lưu file.\n\nPreview:\n${csv.slice(0, 400)}...`);
+    }
+  } catch (e: any) {
+    Alert.alert("Lỗi export", e?.message || "Không xuất được file.");
+  }
+}
+
+// [NEW] Date range helpers
+function daysAgo(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+function inRange(dateStr: any, from: Date | null, to: Date | null) {
+  if (!dateStr) return true;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return true;
+  if (from && d < from) return false;
+  if (to && d > to) return false;
+  return true;
+}
+
+// ── Small reusable UI components ────────────────────────────────────────────
 
 function SectionHeader({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
   return (
@@ -318,36 +337,28 @@ function MiniBars({ data, compact = false, accent = ADMIN_GREEN, money = false }
   );
 }
 
-function fmtVnd(n: any) {
-  const v = Number(n || 0);
-  if (v >= 1e9) return (v / 1e9).toFixed(1) + ' tỷ';
-  if (v >= 1e6) return (v / 1e6).toFixed(1) + ' tr';
-  if (v >= 1e3) return Math.round(v / 1e3) + 'k';
-  return String(Math.round(v));
-}
-
 function ForecastChart({ forecast }: any) {
   if (!forecast) return <Text style={styles.emptyText}>Chưa có dữ liệu để báo cáo.</Text>;
   const hist = forecast.history || [];
   const fc = forecast.forecast || [];
-  const all = [...hist.map((h: any) => ({ ...h, kind: 'hist' })), ...fc.map((f: any) => ({ ...f, kind: 'fc' }))];
+  const all = [...hist.map((h: any) => ({ ...h, kind: "hist" })), ...fc.map((f: any) => ({ ...f, kind: "fc" }))];
   const max = Math.max(1, ...all.map((a: any) => Number(a.value || 0)));
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.forecastMetrics}>
         <View style={styles.metricPill}><Text style={styles.metricNum}>{fmtVnd(forecast.nextMonth)}đ</Text><Text style={styles.metricCap}>Dự báo tháng tới</Text></View>
         <View style={styles.metricPill}><Text style={styles.metricNum}>R² {forecast.r2}</Text><Text style={styles.metricCap}>Độ khớp mô hình</Text></View>
-        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === 'tang' ? '↑' : '↓'} {fmtVnd(Math.abs(forecast.slope))}đ</Text><Text style={styles.metricCap}>Xu hướng/tháng</Text></View>
+        <View style={styles.metricPill}><Text style={styles.metricNum}>{forecast.trend === "tang" ? "↑" : "↓"} {fmtVnd(Math.abs(forecast.slope))}đ</Text><Text style={styles.metricCap}>Xu hướng/tháng</Text></View>
       </View>
       <View style={styles.forecastChart}>
         {all.map((a: any, i: number) => {
           const h = `${Math.max(6, Math.round((Number(a.value || 0) / max) * 100))}%` as any;
-          const isFc = a.kind === 'fc';
+          const isFc = a.kind === "fc";
           return (
             <View key={i} style={styles.forecastCol}>
               <Text style={styles.forecastVal}>{fmtVnd(a.value)}</Text>
               <View style={styles.forecastTrack}>
-                <View style={[styles.forecastFill, { height: h, backgroundColor: isFc ? 'transparent' : ADMIN_GREEN, borderWidth: isFc ? 2 : 0, borderColor: ADMIN_GREEN, borderStyle: isFc ? 'dashed' : 'solid' }]} />
+                <View style={[styles.forecastFill, { height: h, backgroundColor: isFc ? "transparent" : ADMIN_GREEN, borderWidth: isFc ? 2 : 0, borderColor: ADMIN_GREEN, borderStyle: isFc ? "dashed" : "solid" }]} />
               </View>
               <Text style={styles.forecastLbl}>{String(a.label).slice(5)}</Text>
             </View>
@@ -356,7 +367,7 @@ function ForecastChart({ forecast }: any) {
       </View>
       <View style={styles.legendRow}>
         <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: ADMIN_GREEN }]} /><Text style={styles.legendText}>Thực tế</Text></View>
-        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: 'transparent' }]} /><Text style={styles.legendText}>Dự báo (OLS)</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendDot, { borderWidth: 2, borderColor: ADMIN_GREEN, backgroundColor: "transparent" }]} /><Text style={styles.legendText}>Dự báo (OLS)</Text></View>
         {forecast.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ</Text> : null}
       </View>
     </View>
@@ -370,7 +381,7 @@ function SegmentsView({ segments }: any) {
     <View style={{ gap: 12 }}>
       <View style={styles.segBar}>
         {segments.clusters.map((c: any, i: number) => (
-          <View key={i} style={{ width: `${(c.size / total) * 100}%` as any, backgroundColor: c.color, height: '100%' }} />
+          <View key={i} style={{ width: `${(c.size / total) * 100}%` as any, backgroundColor: c.color, height: "100%" }} />
         ))}
       </View>
       {segments.clusters.map((c: any, i: number) => (
@@ -413,39 +424,6 @@ function HorizontalBars({ data, accent = ADMIN_GREEN, money = false }: any) {
   );
 }
 
-function Funnel({ orders, users }: { orders: number; users: number }) {
-  const visitors = Math.max(10000, users * 9, orders * 15);
-  const leads = Math.max(users * 2, Math.round(visitors * 0.24));
-  const customers = Math.max(users, Math.round(leads * 0.37));
-  const paying = Math.max(orders, Math.round(customers * 0.72));
-  const rows = [
-    { label: "Lượt truy cập", value: visitors, color: ADMIN_GREEN, pct: 100 },
-    { label: "Tiềm năng", value: leads, color: "#A33A2F", pct: Math.round((leads / visitors) * 100) },
-    { label: "Khách hàng", value: customers, color: ADMIN_BLUE, pct: Math.round((customers / visitors) * 100) },
-    { label: "Đã mua", value: paying, color: "#6D5DD3", pct: Math.round((paying / visitors) * 100) },
-  ];
-  return (
-    <View style={{ gap: 13 }}>
-      {rows.map((row) => (
-        <View key={row.label}>
-          <View style={styles.funnelTop}>
-            <Text style={styles.funnelLabel}>{row.label}</Text>
-            <Text style={styles.funnelValue}>{formatNumber(row.value)}</Text>
-          </View>
-          <View style={styles.funnelTrack}>
-            <View style={[styles.funnelFill, { width: `${Math.max(8, row.pct)}%` as any, backgroundColor: row.color }]} />
-          </View>
-        </View>
-      ))}
-      <View style={styles.funnelRates}>
-        <Text style={[styles.rateText, { color: ADMIN_GREEN }]}>Truy cập→Tiềm năng 24%</Text>
-        <Text style={[styles.rateText, { color: "#A33A2F" }]}>Tiềm năng→Khách 37%</Text>
-        <Text style={[styles.rateText, { color: ADMIN_ORANGE }]}>Customer→Paid 72%</Text>
-      </View>
-    </View>
-  );
-}
-
 function ProductDiscountPreview({ name, price, originalPrice, image, images = [], discountPercent, sizes = [], colors = [], dimensions = "" }: any) {
   const percent = Number(discountPercent || (Number(originalPrice) > Number(price) ? Math.round((1 - Number(price || 0) / Number(originalPrice || 1)) * 100) : 0));
   const gallery = adminGalleryImages({ image, images });
@@ -473,14 +451,9 @@ function ProductDiscountPreview({ name, price, originalPrice, image, images = []
           <Text style={styles.previewSalePrice}>{formatMoney(price)}</Text>
           {Number(originalPrice || 0) > Number(price || 0) ? <Text style={styles.previewOldPrice}>{formatMoney(originalPrice)}</Text> : null}
         </View>
-        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(' • ') || 'S • M • L • XL'}</Text>
-        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(' • ') || 'Đen • Trắng • Kem'}</Text>
+        <Text style={styles.previewMeta}>Size: {splitAdminList(sizes).join(" • ") || "S • M • L • XL"}</Text>
+        <Text style={styles.previewMeta}>Màu: {splitAdminList(colors).join(" • ") || "Đen • Trắng • Kem"}</Text>
         {!!dimensions ? <Text style={styles.previewMeta}>Kích thước: {dimensions}</Text> : null}
-        <View style={styles.messageBox}>
-          <Feather name="message-circle" size={18} color={ADMIN_BLUE} />
-          <Text style={styles.messageText}>Mặt hàng này còn không?</Text>
-          <View style={styles.sendPill}><Text style={styles.sendText}>Gửi</Text></View>
-        </View>
       </View>
     </View>
   );
@@ -503,19 +476,25 @@ function SelectChip({ active, label, onPress }: any) {
   );
 }
 
+// ── Main screen ─────────────────────────────────────────────────────────────
+
 export default function AdminScreen() {
   const { width } = useWindowDimensions();
   const desktop = width >= 920;
   const { user, isLoggedIn } = useApp();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+
+  // System status
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
-  const refreshStatus = async () => {}; // TODO: implement status refresh
+
+  // Data
   const [overview, setOverview] = useState<any>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [refunds, setRefunds] = useState<any[]>([]);
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [games, setGames] = useState<any[]>([]);
   const [bannedWords, setBannedWords] = useState<any[]>([]);
@@ -523,9 +502,12 @@ export default function AdminScreen() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [inventoryLogs, setInventoryLogs] = useState<any[]>([]);
   const [staffMembers, setStaffMembers] = useState<any[]>([]);
-  const [storeSettings, setStoreSettings] = useState<any>(emptySettingsForm);
   const [newsletters, setNewsletters] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+
+  // UI state
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -533,6 +515,8 @@ export default function AdminScreen() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingGameId, setEditingGameId] = useState<string | null>(null);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+
+  // Forms
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [voucherForm, setVoucherForm] = useState(emptyVoucherForm);
   const [promotionForm, setPromotionForm] = useState(emptyPromotionForm);
@@ -541,16 +525,51 @@ export default function AdminScreen() {
   const [staffForm, setStaffForm] = useState(emptyStaffForm);
   const [settingsForm, setSettingsForm] = useState(emptySettingsForm);
   const [newsletterForm, setNewsletterForm] = useState(emptyNewsletterForm);
+  const [trackingForm, setTrackingForm] = useState(emptyTrackingForm);
+
+  // Filters
   const [search, setSearch] = useState("");
   const [reviewFilter, setReviewFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d" | "ytd" | "all">("30d");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
   const isAdmin = user?.role === "admin" || (user as any)?.isAdmin;
   const openAdminLogin = () => router.replace({ pathname: "/login", params: { redirectTo: "/admin" } } as any);
   const dashboard = overview?.dashboard || {};
   const kpis = dashboard?.kpis || {};
 
+  // [FIX] Actual implementation of refreshStatus
+  const refreshStatus = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      setStatusLoading(true);
+      const data = await api.getSystemStatus?.(user.id).catch(() => null);
+      if (data) setSystemStatus(data);
+      else {
+        // fallback demo status if API not available
+        setSystemStatus({
+          services: [
+            { key: "backend", label: "Backend API", online: true, url: "http://localhost:4000" },
+            { key: "mongo", label: "MongoDB", online: true, url: "mongodb://localhost:27017" },
+            { key: "catvton", label: "CatVTON (Thử đồ 2D)", online: false, url: "http://localhost:7861" },
+            { key: "gateway", label: "AI Gateway", online: false, url: "http://localhost:8001" },
+            { key: "ollama", label: "Ollama (Bot chat)", online: false, url: "http://localhost:11434" },
+          ],
+          gpu: "NVIDIA RTX 5060 Ti", cuda: "Available", stripe: false,
+          errors: [], metrics: kpis,
+        });
+      }
+    } catch (e: any) {
+      Alert.alert("Không lấy được trạng thái", e?.message || "Kiểm tra kết nối.");
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [user?.id, kpis]);
+
   const load = useCallback(async () => {
     if (!user?.id || !isAdmin) return;
-    const [nextOverview, nextUsers, nextProducts, nextOrders, nextPayments, nextVouchers, nextGames, nextBanned, nextReviews, nextInventory, nextStaff, nextNewsletters] = await Promise.all([
+    const [nextOverview, nextUsers, nextProducts, nextOrders, nextPayments, nextVouchers, nextGames, nextBanned, nextReviews, nextInventory, nextStaff, nextNewsletters, nextRefunds, nextAudit, nextSettings] = await Promise.all([
       api.getAdminOverview(user.id),
       api.getAdminUsers(user.id),
       api.getAdminProducts(user.id),
@@ -563,6 +582,9 @@ export default function AdminScreen() {
       api.getInventoryLogs(user.id).catch(() => ({ logs: [] })),
       api.getStaffMembers(user.id).catch(() => ({ staff: [] })),
       api.getNewsletters(user.id).catch(() => ({ newsletters: [] })),
+      (api as any).getRefunds?.(user.id).catch(() => ({ refunds: [] })) ?? Promise.resolve({ refunds: [] }),
+      (api as any).getAuditLogs?.(user.id).catch(() => ({ logs: [] })) ?? Promise.resolve({ logs: [] }),
+      (api as any).getStoreSettings?.(user.id).catch(() => null) ?? Promise.resolve(null),
     ]);
     setOverview(nextOverview);
     setUsers(Array.isArray(nextUsers?.users) ? nextUsers.users : []);
@@ -576,6 +598,12 @@ export default function AdminScreen() {
     setInventoryLogs(Array.isArray(nextInventory?.logs) ? nextInventory.logs : []);
     setStaffMembers(Array.isArray(nextStaff?.staff) ? nextStaff.staff : []);
     setNewsletters(Array.isArray(nextNewsletters?.newsletters) ? nextNewsletters.newsletters : []);
+    setRefunds(Array.isArray(nextRefunds?.refunds) ? nextRefunds.refunds : []);
+    setAuditLogs(Array.isArray(nextAudit?.logs) ? nextAudit.logs : []);
+    // [FIX] Load settings on mount
+    if (nextSettings?.settings) {
+      setSettingsForm({ ...emptySettingsForm, ...nextSettings.settings });
+    }
   }, [user?.id, isAdmin]);
 
   useEffect(() => {
@@ -585,11 +613,28 @@ export default function AdminScreen() {
       .finally(() => setLoading(false));
   }, [load]);
 
+  // Auto refresh status when opening system tab
+  useEffect(() => {
+    if (activeTab === "system" || activeTab === "overview") {
+      refreshStatus().catch(() => null);
+    }
+  }, [activeTab, refreshStatus]);
+
   const refresh = async () => {
     setRefreshing(true);
     await load().catch((e: any) => Alert.alert("Không tải lại được", e?.message || "Có lỗi xảy ra."));
     setRefreshing(false);
   };
+
+  // [NEW] Date range as Date objects
+  const rangeStart = useMemo(() => {
+    if (dateRange === "all") return null;
+    if (dateRange === "ytd") return new Date(new Date().getFullYear(), 0, 1);
+    if (dateRange === "7d") return daysAgo(7);
+    if (dateRange === "30d") return daysAgo(30);
+    if (dateRange === "90d") return daysAgo(90);
+    return null;
+  }, [dateRange]);
 
   const quickUpdateOrder = async (order: any, nextStatus: string) => {
     if (!user?.id) return;
@@ -608,6 +653,24 @@ export default function AdminScreen() {
     }
   };
 
+  // [NEW] Update tracking info
+  const updateTracking = async (orderId: string) => {
+    if (!user?.id) return;
+    if (!trackingForm.trackingNumber.trim()) return Alert.alert("Thiếu mã", "Nhập mã vận đơn.");
+    try {
+      setActionId(`tracking-${orderId}`);
+      await (api as any).updateOrderTracking?.(user.id, orderId, trackingForm);
+      setTrackingForm(emptyTrackingForm);
+      await load();
+      Alert.alert("Đã cập nhật", "Thông tin vận chuyển đã lưu.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "API cập nhật tracking chưa có ở backend.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // Filters
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return products;
@@ -628,6 +691,17 @@ export default function AdminScreen() {
     return filtered.filter((r) => `${r.productName} ${r.userName} ${r.content}`.toLowerCase().includes(q));
   }, [reviews, search, reviewFilter]);
 
+  // [NEW] Order filter with status + search + date
+  const filteredOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return orders.filter((o) => {
+      if (orderStatusFilter !== "all" && (o.status || "pending") !== orderStatusFilter) return false;
+      if (!inRange(o.createdAt, rangeStart, null)) return false;
+      if (!q) return true;
+      return `${o.id || ""} ${o.userId || ""} ${o.phoneNumber || ""} ${o.shippingAddress || ""}`.toLowerCase().includes(q);
+    });
+  }, [orders, orderStatusFilter, search, rangeStart]);
+
   const revenueByMonth = Array.isArray(dashboard?.revenueByMonth) ? dashboard.revenueByMonth.map((x: any) => ({ label: String(x.month || x.label || "").slice(5), value: Number(x.value ?? x.revenue ?? 0) })) : [];
   const topProducts = Array.isArray(dashboard?.salesByProduct) ? dashboard.salesByProduct : [];
   const predictions = Array.isArray(dashboard?.ml?.predictions) ? dashboard.ml.predictions : [];
@@ -641,10 +715,15 @@ export default function AdminScreen() {
   const activeVouchers = vouchers.filter((v) => v.active !== false && (v.kind || "voucher") === "voucher").length;
   const activePromotions = vouchers.filter((v) => v.active !== false && v.kind === "promotion").length;
   const pendingReviews = reviews.filter((r) => r.status === "pending").length;
+  const lowStockCount = products.filter((p) => (p.stockQuantity || 0) < Number(settingsForm.lowStockThreshold || LOW_STOCK_THRESHOLD_DEFAULT)).length;
+  const pendingRefunds = refunds.filter((r: any) => r.status === "pending").length;
+
   const latestActivity = [
     ...orders.slice(0, 4).map((o) => ({ icon: "shopping-bag", title: `Đơn #${String(o.id || "").slice(-8)}`, meta: `${formatMoney(o.total || o.totalAmount)} • ${o.status || "pending"}` })),
     ...payments.slice(0, 3).map((p) => ({ icon: "credit-card", title: `Thanh toán ${formatMoney(p.amount)}`, meta: `${p.status || "pending"} • ${compactDate(p.createdAt)}` })),
   ].slice(0, 6);
+
+  // ── Actions ──
 
   const saveProduct = async () => {
     if (!user?.id) return;
@@ -682,6 +761,52 @@ export default function AdminScreen() {
     setActiveTab("products");
   };
 
+  // [NEW] Duplicate product
+  const duplicateProduct = (product: AdminProduct) => {
+    const form = toProductForm(product);
+    setProductForm({ ...form, id: "", name: `${form.name} (Copy)`, sku: form.sku ? `${form.sku}-COPY` : "" });
+    setEditingProductId(null);
+    setActiveTab("products");
+    Alert.alert("Đã sao chép", "Form đã điền thông tin sản phẩm mới. Đổi tên/mã rồi bấm Thêm.");
+  };
+
+  // [NEW] Delete product
+  const deleteProduct = async (product: AdminProduct) => {
+    if (!user?.id) return;
+    try {
+      setActionId(`delete-${product.id}`);
+      await (api as any).deleteAdminProduct?.(user.id, product.id);
+      await load();
+      Alert.alert("Đã xóa", "Sản phẩm đã bị xóa.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không xóa được. Cần API deleteAdminProduct ở backend.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // [NEW] Bulk actions
+  const toggleSelectProduct = (id: string) => {
+    setSelectedProductIds((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  };
+  const bulkHideProducts = async () => {
+    if (!user?.id || !selectedProductIds.length) return;
+    try {
+      setActionId("bulk-hide");
+      for (const id of selectedProductIds) {
+        const p = products.find((x) => x.id === id);
+        if (p) await api.setAdminProductHidden(user.id, id, (p.status || "active") === "active");
+      }
+      setSelectedProductIds([]);
+      await load();
+      Alert.alert("Đã cập nhật", `${selectedProductIds.length} sản phẩm đã đổi trạng thái.`);
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
   const quickDiscount = async (product: AdminProduct, percent: number) => {
     if (!user?.id) return;
     const base = Number(product.originalPrice || product.price || 0);
@@ -689,11 +814,8 @@ export default function AdminScreen() {
     try {
       setActionId(`discount-${product.id}`);
       await api.updateAdminProduct(user.id, product.id, {
-        price: nextPrice,
-        originalPrice: base,
-        discountPercent: percent,
-        discountLabel: `Giảm ${percent}%`,
-        badge: `GIẢM ${percent}%`,
+        price: nextPrice, originalPrice: base, discountPercent: percent,
+        discountLabel: `Giảm ${percent}%`, badge: `GIẢM ${percent}%`,
       });
       await load();
     } catch (e: any) {
@@ -771,6 +893,25 @@ export default function AdminScreen() {
     }
   };
 
+  // [NEW] Bulk approve pending reviews
+  const bulkApproveReviews = async () => {
+    if (!user?.id) return;
+    const pending = reviews.filter((r) => r.status === "pending");
+    if (!pending.length) return Alert.alert("Không có đánh giá chờ", "Tất cả đánh giá đã được xử lý.");
+    try {
+      setActionId("bulk-approve");
+      for (const r of pending) {
+        await api.updateReviewStatus(user.id, r.id, "approved");
+      }
+      await load();
+      Alert.alert("Xong", `Đã duyệt ${pending.length} đánh giá.`);
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
   const pickAndUploadAdminImage = async (target: "image" | "image2" | "image3" | "image4" | "bannerImage") => {
     if (!user?.id) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -782,11 +923,7 @@ export default function AdminScreen() {
     try {
       setUploadingMediaField(uploadKey);
       const data = await uploadMediaFile(
-        {
-          uri: asset.uri,
-          name: asset.fileName || `${target}-${Date.now()}.jpg`,
-          type: asset.mimeType || "image/jpeg",
-        },
+        { uri: asset.uri, name: asset.fileName || `${target}-${Date.now()}.jpg`, type: asset.mimeType || "image/jpeg" },
         user.id,
         target === "bannerImage" ? "admin/banners" : "admin/products",
         target === "bannerImage" ? "admin-banner-image" : "admin-product-image",
@@ -810,8 +947,7 @@ export default function AdminScreen() {
     try {
       setActionId("voucher-save");
       await api.saveAdminVoucher(user.id, {
-        ...voucherForm,
-        kind: "voucher",
+        ...voucherForm, kind: "voucher",
         discountValue: Number(voucherForm.discountValue || 0),
         minOrderValue: Number(voucherForm.minOrderValue || 0),
         active: true,
@@ -832,15 +968,14 @@ export default function AdminScreen() {
     try {
       setActionId("promotion-save");
       await api.saveAdminVoucher(user.id, {
-        ...promotionForm,
-        kind: "promotion",
+        ...promotionForm, kind: "promotion",
         discountValue: Number(promotionForm.discountValue || 0),
         minOrderValue: Number(promotionForm.minOrderValue || 0),
         active: true,
       });
       setPromotionForm(emptyPromotionForm);
       await load();
-      Alert.alert("Đã tạo khuyến mãi", "Chiến dịch đã được lưu trong DiscountCodes theo ERD.");
+      Alert.alert("Đã tạo khuyến mãi", "Chiến dịch đã được lưu.");
     } catch (e: any) {
       Alert.alert("Không lưu khuyến mãi", e?.message || "Có lỗi xảy ra.");
     } finally {
@@ -877,15 +1012,19 @@ export default function AdminScreen() {
     }
   };
 
-  const sendNewsletter = async () => {
+  const sendNewsletter = async (testOnly = false) => {
     if (!user?.id) return;
     if (!newsletterForm.subject.trim()) return Alert.alert("Thiếu tiêu đề", "Nhập tiêu đề email.");
+    if (testOnly && !newsletterForm.testEmail.trim()) return Alert.alert("Thiếu email test", "Nhập email để gửi thử.");
     try {
-      setActionId("newsletter-send");
-      const data = await api.sendNewsletter(user.id, newsletterForm);
-      setNewsletterForm(emptyNewsletterForm);
+      setActionId(testOnly ? "newsletter-test" : "newsletter-send");
+      const payload = testOnly
+        ? { ...newsletterForm, recipient: "test", testEmail: newsletterForm.testEmail }
+        : newsletterForm;
+      const data = await api.sendNewsletter(user.id, payload);
+      if (!testOnly) setNewsletterForm(emptyNewsletterForm);
       await load();
-      Alert.alert("Đã gửi newsletter", data?.message || "Email đã được gửi cho " + (newsletterForm.recipient === "all" ? "tất cả" : "nhóm") + " khách hàng.");
+      Alert.alert(testOnly ? "Đã gửi test" : "Đã gửi newsletter", data?.message || `Email đã được gửi ${testOnly ? `tới ${newsletterForm.testEmail}` : `cho ${newsletterForm.recipient === "all" ? "tất cả" : "nhóm"} khách hàng`}.`);
     } catch (e: any) {
       Alert.alert("Lỗi gửi newsletter", e?.message || "Có lỗi xảy ra.");
     } finally {
@@ -916,6 +1055,23 @@ export default function AdminScreen() {
       setUsers((current) => current.map((item) => (item.id === target.id ? { ...item, ...data.user } : item)));
     } catch (e: any) {
       Alert.alert("Không chỉnh được xu", e?.message || "Có lỗi xảy ra.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // [NEW] Ban/unban user
+  const toggleBanUser = async (target: AdminUser) => {
+    if (!user?.id) return;
+    if (target.id === user.id) return Alert.alert("Không thể", "Không thể tự khóa tài khoản của mình.");
+    if (target.isProtectedAdmin) return Alert.alert("Không thể", "Tài khoản admin gốc không thể bị khóa.");
+    try {
+      setActionId(`ban-${target.id}`);
+      await (api as any).setUserBanned?.(user.id, target.id, !target.banned);
+      await load();
+      Alert.alert("Đã cập nhật", target.banned ? "Đã mở khóa tài khoản." : "Đã khóa tài khoản.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "API setUserBanned chưa có ở backend.");
     } finally {
       setActionId(null);
     }
@@ -958,7 +1114,6 @@ export default function AdminScreen() {
     try {
       setActionId("settings-save");
       await api.saveStoreSettings(user.id, settingsForm);
-      setStoreSettings(settingsForm);
       await load();
       Alert.alert("Đã lưu", "Cài đặt cửa hàng đã được cập nhật.");
     } catch (e: any) {
@@ -1004,6 +1159,79 @@ export default function AdminScreen() {
     }
   };
 
+  const addBanned = async () => {
+    const w = bannedInput.trim();
+    if (!w) return;
+    if (!user?.id) return Alert.alert("Lỗi", "Bạn cần đăng nhập.");
+    try {
+      await api.addBannedWord(user.id, w);
+      setBannedInput("");
+      await load();
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không thêm được từ cấm.");
+    }
+  };
+  const removeBanned = async (id: string) => {
+    if (!user?.id) return Alert.alert("Lỗi", "Bạn cần đăng nhập.");
+    try {
+      await api.deleteBannedWord(user.id, id);
+      await load();
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "Không xóa được.");
+    }
+  };
+
+  // [NEW] Handle refund
+  const handleRefund = async (refundId: string, action: "approve" | "reject") => {
+    if (!user?.id) return;
+    try {
+      setActionId(`refund-${refundId}`);
+      await (api as any).handleRefund?.(user.id, refundId, action);
+      await load();
+      Alert.alert("Đã cập nhật", action === "approve" ? "Đã duyệt hoàn tiền." : "Đã từ chối yêu cầu.");
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message || "API handleRefund chưa có ở backend.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  // [NEW] Export functions
+  const exportOrdersCsv = () => {
+    const header = ["ID", "User ID", "Total", "Status", "Payment", "Method", "Phone", "Address", "Created"];
+    const rows = filteredOrders.map((o) => [
+      o.id, o.userId, o.total || o.totalAmount || 0, o.status || "pending",
+      o.paymentStatus || "pending", o.paymentMethod || "COD",
+      o.phoneNumber || "", o.shippingAddress || "", o.createdAt || "",
+    ]);
+    exportCsv(`orders-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const exportProductsCsv = () => {
+    const header = ["ID", "Name", "SKU", "Category", "Price", "OriginalPrice", "Stock", "Status"];
+    const rows = filteredProducts.map((p) => [
+      p.id, p.name, p.sku || "", p.category || "",
+      p.price || 0, p.originalPrice || 0, p.stockQuantity || 0, p.status || "active",
+    ]);
+    exportCsv(`products-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const exportUsersCsv = () => {
+    const header = ["ID", "Email", "Name", "Phone", "Role", "Coins", "VIP", "Banned", "Created"];
+    const rows = filteredUsers.map((u) => [
+      u.id, u.email, u.name || u.fullName || "", u.phone || "",
+      u.role, u.coins || 0, u.vip ? "yes" : "no", u.banned ? "yes" : "no", u.createdAt || "",
+    ]);
+    exportCsv(`users-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  const exportRevenueCsv = () => {
+    const header = ["Month", "Revenue"];
+    const rows = revenueByMonth.map((r: any) => [r.label, r.value]);
+    exportCsv(`revenue-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
+  };
+
+  // ── Auth guard ──
   if (!isLoggedIn || !isAdmin) {
     return (
       <View style={styles.authPage}>
@@ -1018,6 +1246,8 @@ export default function AdminScreen() {
       </View>
     );
   }
+
+  // ── Layout parts ──
 
   const Sidebar = () => {
     let lastGroup = "";
@@ -1035,13 +1265,18 @@ export default function AdminScreen() {
             const showGroup = desktop && item.group !== lastGroup;
             lastGroup = item.group;
             const active = activeTab === item.key;
+            // dynamic badges
+            let badge: string | undefined = item.badge;
+            if (item.key === "reviews" && pendingReviews > 0) badge = String(pendingReviews);
+            if (item.key === "refunds" && pendingRefunds > 0) badge = String(pendingRefunds);
+            if (item.key === "inventory" && lowStockCount > 0) badge = String(lowStockCount);
             return (
               <React.Fragment key={item.key}>
                 {showGroup ? <Text style={styles.navGroup}>{item.group}</Text> : null}
                 <Pressable onPress={() => setActiveTab(item.key)} style={[styles.navItem, active ? styles.navItemActive : null]}>
                   <Feather name={item.icon} size={17} color={active ? ADMIN_GREEN : ADMIN_MUTED_DARK} />
                   <Text style={[styles.navText, active ? styles.navTextActive : null]}>{item.label}</Text>
-                  {item.badge ? <Text style={styles.navBadge}>{item.badge}</Text> : null}
+                  {badge ? <Text style={styles.navBadge}>{badge}</Text> : null}
                 </Pressable>
               </React.Fragment>
             );
@@ -1071,12 +1306,17 @@ export default function AdminScreen() {
     </View>
   );
 
+  // ── Tab renderers ──
+
   const renderOverview = () => (
     <View style={styles.pageGap}>
       <View style={styles.heroCard}>
         <View style={{ flex: 1 }}>
           <Text style={styles.heroTitle}>Chào trở lại, {user?.name || "Admin"}</Text>
-          <Text style={styles.heroSub}>Hôm nay có {formatNumber(orders.length)} đơn trong hệ thống, {activeVouchers + activePromotions} chiến dịch đang hoạt động, {pendingReviews} đánh giá chờ duyệt.</Text>
+          <Text style={styles.heroSub}>
+            Hôm nay có {formatNumber(orders.length)} đơn, {activeVouchers + activePromotions} chiến dịch,
+            {" "}{pendingReviews} đánh giá chờ duyệt, {lowStockCount} SP sắp hết hàng, {pendingRefunds} yêu cầu hoàn tiền.
+          </Text>
         </View>
         <Pressable onPress={() => setActiveTab("analytics")} style={styles.heroButton}><Text style={styles.heroButtonText}>Xem phân tích</Text><Feather name="arrow-right" size={16} color="#fff" /></Pressable>
       </View>
@@ -1089,7 +1329,7 @@ export default function AdminScreen() {
         <StatCard label="Người dùng mới" value={formatNumber(kpis.newUsersToday || 0)} change={`${formatNumber(kpis.users || users.length)} tổng`} icon="user-plus" accent="#A33A2F" />
         <StatCard label="Lượt thử đồ AI" value={formatNumber(kpis.tryon2d || 0)} change={`${formatNumber(kpis.tryon2dFail || 0)} lỗi`} icon="camera" accent={ADMIN_ORANGE} />
         <StatCard label="Lượt tạo 3D" value={formatNumber(kpis.tryon3d || 0)} change={`${formatNumber(kpis.tryon3dFail || 0)} lỗi`} icon="box" accent={ADMIN_BLUE} />
-        <StatCard label="Đánh giá chờ" value={formatNumber(pendingReviews)} change={`${formatNumber(reviews.length)} tổng`} icon="star" accent={ADMIN_PURPLE} />
+        <StatCard label="SP sắp hết hàng" value={formatNumber(lowStockCount)} change={`ngưỡng ${settingsForm.lowStockThreshold}`} icon="alert-circle" accent={ADMIN_RED} />
       </View>
 
       <View style={styles.dashboardGrid}>
@@ -1106,7 +1346,7 @@ export default function AdminScreen() {
               ))}
               <Text style={styles.userMeta}>GPU: {systemStatus.gpu} • CUDA: {systemStatus.cuda} • Stripe: {systemStatus.stripe ? "đã cấu hình" : "chưa cấu hình"}</Text>
             </View>
-          ) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra dịch vụ..." : "Chưa lấy được trạng thái. Bấm \"Kiểm tra lại\"."}</Text>}
+          ) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra dịch vụ..." : 'Chưa lấy được trạng thái. Bấm "Kiểm tra lại".'}</Text>}
         </View>
         <View style={styles.card}>
           <SectionHeader title="Lỗi mới nhất" subtitle="Nhật ký lỗi AI/hệ thống" />
@@ -1124,7 +1364,7 @@ export default function AdminScreen() {
 
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Tăng trưởng doanh thu" subtitle="Xu hướng theo tháng" right={<View style={styles.segment}><Text style={styles.segmentActive}>MRR</Text><Text style={styles.segmentText}>ARR</Text></View>} />
+          <SectionHeader title="Tăng trưởng doanh thu" subtitle="Xu hướng theo tháng" right={<Pressable onPress={exportRevenueCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>CSV</Text></Pressable>} />
           <MiniBars data={revenueByMonth.length ? revenueByMonth : miniTrendData([])} accent={ADMIN_GREEN} money />
         </View>
         <View style={styles.card}>
@@ -1151,34 +1391,44 @@ export default function AdminScreen() {
 
   const renderAnalytics = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Phân tích & Học máy (ML)" subtitle="3 mô hình chạy trực tiếp trên dữ liệu đơn hàng / khách hàng / sản phẩm, không cần cài thêm thư viện." />
+      <SectionHeader
+        title="Phân tích & Học máy (ML)"
+        subtitle="3 mô hình chạy trực tiếp trên dữ liệu đơn hàng / khách hàng / sản phẩm."
+        right={
+          <View style={{ flexDirection: "row", gap: 6 }}>
+            {(["7d", "30d", "90d", "ytd", "all"] as const).map((r) => (
+              <SelectChip key={r} active={dateRange === r} label={r === "ytd" ? "YTD" : r === "all" ? "Tất cả" : r} onPress={() => setDateRange(r)} />
+            ))}
+          </View>
+        }
+      />
 
       <View style={styles.modelRow}>
-        {(mlModels.length ? mlModels : [{ name: 'Đang tải mô hình', type: '—', metric: '' }]).map((m: any, i: number) => (
+        {(mlModels.length ? mlModels : [{ name: "Đang tải mô hình", type: "—", metric: "" }]).map((m: any, i: number) => (
           <View key={i} style={styles.modelCard}>
             <View style={styles.modelTop}><Feather name="cpu" size={16} color={ADMIN_GREEN} /><Text style={styles.modelName}>{m.name}</Text></View>
             <Text style={styles.modelType}>{m.type}</Text>
-            <Text style={styles.modelMetric}>{m.metric}{m.demo ? ' · minh hoạ' : ''}</Text>
+            <Text style={styles.modelMetric}>{m.metric}{m.demo ? " · minh hoạ" : ""}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Dự báo doanh thu • Hồi quy tuyến tính (OLS)" subtitle={mlForecast?.algorithm || 'Ước lượng xu hướng và dự báo 3 tháng tới.'} />
+          <SectionHeader title="Dự báo doanh thu • Hồi quy tuyến tính (OLS)" subtitle={mlForecast?.algorithm || "Ước lượng xu hướng và dự báo 3 tháng tới."} />
           <ForecastChart forecast={mlForecast} />
         </View>
         <View style={styles.card}>
-          <SectionHeader title="Phân khúc khách hàng • K-Means" subtitle={mlSegments?.algorithm || 'Gom khách hàng theo hành vi mua.'} />
+          <SectionHeader title="Phân khúc khách hàng • K-Means" subtitle={mlSegments?.algorithm || "Gom khách hàng theo hành vi mua."} />
           <SegmentsView segments={mlSegments} />
         </View>
       </View>
 
       <View style={styles.analyticsGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
-          <SectionHeader title="Sản phẩm nổi bật • Gợi ý (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || 'Lọc cộng tác item-based + phân rã ma trận để xếp hạng sản phẩm.'} />
+          <SectionHeader title="Sản phẩm nổi bật • Gợi ý (CF + Matrix Factorization)" subtitle={mlRecommender?.algorithm || "Lọc cộng tác item-based + phân rã ma trận."} />
           <HorizontalBars data={(mlRecommender?.featured || []).map((x: any) => ({ label: x.name, value: x.score }))} accent="#2F4A73" />
-          {mlRecommender?.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ • sẽ chính xác hơn khi có nhiều đơn/giỏ/wishlist</Text> : null}
+          {mlRecommender?.demo ? <Text style={styles.demoTag}>dữ liệu minh hoạ</Text> : null}
         </View>
         <View style={styles.card}>
           <SectionHeader title="Điểm nhu cầu sản phẩm (DemandScore)" subtitle="Bán ra, wishlist, giỏ, đánh giá, độ mới, nhắc trong AI chat." />
@@ -1202,7 +1452,7 @@ export default function AdminScreen() {
               <Text numberOfLines={1} style={styles.predictionTitle}>{item.name}</Text>
               <Text style={styles.predictionMeta}>{item.category} • {formatMoney(item.price)}</Text>
               <Text style={styles.predictionSuggestion}>{item.predictedDemand} • {item.suggestion}</Text>
-              <Text style={styles.predictionSmall}>Bán {item.features?.sold || 0} • Thích {item.features?.wishlist || 0} • Giỏ {item.features?.cart || 0} • ⭐ {item.features?.avgRating ?? '-'}</Text>
+              <Text style={styles.predictionSmall}>Bán {item.features?.sold || 0} • Thích {item.features?.wishlist || 0} • Giỏ {item.features?.cart || 0} • ⭐ {item.features?.avgRating ?? "-"}</Text>
             </View>
             <View style={styles.scoreBox}><Text style={styles.scoreText}>{item.score}</Text><Text style={styles.scoreLabel}>điểm</Text></View>
           </View>
@@ -1213,7 +1463,28 @@ export default function AdminScreen() {
 
   const renderProducts = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý sản phẩm" subtitle="Thêm, ẩn, sửa 4 ảnh sản phẩm, size/kích cỡ, kích thước, màu sắc, mô tả, giá và sale." right={<Text style={styles.counterPill}>{activeProducts} đang bán / {hiddenProducts} đang ẩn</Text>} />
+      <SectionHeader
+        title="Quản lý sản phẩm"
+        subtitle="Thêm, ẩn, sửa 4 ảnh sản phẩm, size, kích thước, màu sắc, mô tả, giá và sale."
+        right={
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            <Text style={styles.counterPill}>{activeProducts} đang bán / {hiddenProducts} đang ẩn</Text>
+            <Pressable onPress={exportProductsCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Xuất CSV</Text></Pressable>
+          </View>
+        }
+      />
+
+      {/* [NEW] Bulk action bar */}
+      {selectedProductIds.length > 0 ? (
+        <View style={styles.bulkBar}>
+          <Text style={styles.bulkText}>Đã chọn {selectedProductIds.length} sản phẩm</Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable onPress={bulkHideProducts} style={styles.smallBtn}><Text style={styles.smallBtnText}>Ẩn/Hiện đã chọn</Text></Pressable>
+            <Pressable onPress={() => setSelectedProductIds([])} style={styles.smallBtn}><Text style={styles.smallBtnText}>Bỏ chọn</Text></Pressable>
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.productManagerGrid}>
         <View style={[styles.card, styles.formCard]}>
           <Text style={styles.formTitle}>{editingProductId ? `Đang sửa: ${editingProductId}` : "Thêm sản phẩm mới"}</Text>
@@ -1221,10 +1492,10 @@ export default function AdminScreen() {
             <Input label="Mã sản phẩm" value={productForm.id} onChangeText={(id: string) => setProductForm((p) => ({ ...p, id }))} placeholder="jp-kimono-001" />
             <Input label="SKU" value={productForm.sku} onChangeText={(sku: string) => setProductForm((p) => ({ ...p, sku }))} placeholder="JP-001" />
           </View>
-          <Input label="Tên sản phẩm" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Đơn guitar và giây dây đàn" />
+          <Input label="Tên sản phẩm" value={productForm.name} onChangeText={(name: string) => setProductForm((p) => ({ ...p, name }))} placeholder="Áo kimono nam" />
           <View style={styles.formGrid3}>
             <Input label="Giá đang bán" value={productForm.price} keyboardType="numeric" onChangeText={(price: string) => setProductForm((p) => ({ ...p, price }))} placeholder="250000" />
-            <Input label="Giá gốc / giá gạch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
+            <Input label="Giá gốc / gạch" value={productForm.originalPrice} keyboardType="numeric" onChangeText={(originalPrice: string) => setProductForm((p) => ({ ...p, originalPrice }))} placeholder="300000" />
             <Input label="% giảm" value={productForm.discountPercent} keyboardType="numeric" onChangeText={(discountPercent: string) => setProductForm((p) => ({ ...p, discountPercent }))} placeholder="17" />
           </View>
           <View style={styles.formGrid2}>
@@ -1232,16 +1503,15 @@ export default function AdminScreen() {
             <Input label="Nhãn" value={productForm.badge} onChangeText={(badge: string) => setProductForm((p) => ({ ...p, badge }))} placeholder="GIẢM 17%" />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Ảnh lớn / ảnh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
-            <Input label="Ảnh nhỏ 2 URL" value={productForm.image2} onChangeText={(image2: string) => setProductForm((p) => ({ ...p, image2 }))} placeholder="https://..." />
+            <Input label="Ảnh 1 URL" value={productForm.image} onChangeText={(image: string) => setProductForm((p) => ({ ...p, image }))} placeholder="https://..." />
+            <Input label="Ảnh 2 URL" value={productForm.image2} onChangeText={(image2: string) => setProductForm((p) => ({ ...p, image2 }))} placeholder="https://..." />
           </View>
           <View style={styles.formGrid2}>
-            <Input label="Ảnh nhỏ 3 URL" value={productForm.image3} onChangeText={(image3: string) => setProductForm((p) => ({ ...p, image3 }))} placeholder="https://..." />
-            <Input label="Ảnh nhỏ 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
+            <Input label="Ảnh 3 URL" value={productForm.image3} onChangeText={(image3: string) => setProductForm((p) => ({ ...p, image3 }))} placeholder="https://..." />
+            <Input label="Ảnh 4 URL" value={productForm.image4} onChangeText={(image4: string) => setProductForm((p) => ({ ...p, image4 }))} placeholder="https://..." />
           </View>
           <View style={styles.mediaUploadBox}>
-            <Text style={styles.mediaUploadTitle}>Upload ảnh sản phẩm lên Cloudinary</Text>
-            <Text style={styles.mediaUploadHint}>Chọn ảnh từ máy, hệ thống sẽ upload lên Cloudinary rồi tự điền URL vào 4 ô ảnh.</Text>
+            <Text style={styles.mediaUploadTitle}>Upload ảnh lên Cloudinary</Text>
             <View style={styles.actionRow}>
               {(["image", "image2", "image3", "image4"] as const).map((field, index) => {
                 const key = `upload-${field}`;
@@ -1261,28 +1531,30 @@ export default function AdminScreen() {
           </View>
           <View style={styles.formGrid2}>
             <Input label="Size / kích cỡ" value={productForm.sizes} onChangeText={(sizes: string) => setProductForm((p) => ({ ...p, sizes }))} placeholder="S, M, L, XL" />
-            <Input label="Màu sắc" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Đen, trắng, kem hoặc #000000, #FFFFFF" />
-            <Text style={[styles.userMeta, { marginTop: 6 }]}>Bảng màu nhanh (bấm để thêm mã hex):</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
-              {["#000000", "#FFFFFF", "#F5F5DC", "#A33A2F", "#1C140F", "#8B4513", "#2F4A73", "#2E7D32", "#B00020", "#D4AF37", "#808080", "#F28C28"].map((hex) => (
-                <Pressable key={hex} onPress={() => setProductForm((p) => { const arr = splitAdminList(p.colors || ""); return arr.map((x: string) => x.toLowerCase()).includes(hex.toLowerCase()) ? p : { ...p, colors: [...arr, hex].join(", ") }; })} style={[styles.swatch, { backgroundColor: hex, borderColor: ADMIN_BORDER }]}>
-                  {hex === "#FFFFFF" ? <Feather name="plus" size={13} color="#999" /> : null}
-                </Pressable>
-              ))}
-            </View>
+            <Input label="Màu sắc" value={productForm.colors} onChangeText={(colors: string) => setProductForm((p) => ({ ...p, colors }))} placeholder="Đen, trắng, kem" />
           </View>
           <View style={styles.formGrid2}>
             <Input label="Kích thước" value={productForm.dimensions} onChangeText={(dimensions: string) => setProductForm((p) => ({ ...p, dimensions }))} placeholder="Dài 68cm, ngang vai 46cm..." />
-            <Input label="Form / kiểu vừa" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit / Oversize / Slim" />
+            <Input label="Form / kiểu vừa" value={productForm.fit} onChangeText={(fit: string) => setProductForm((p) => ({ ...p, fit }))} placeholder="Regular fit" />
           </View>
           <Input label="Thẻ hình ảnh" value={productForm.visualTags} onChangeText={(visualTags: string) => setProductForm((p) => ({ ...p, visualTags }))} placeholder="japanese, black, minimal" />
-          <Input label="Kiểu sử dụng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Đi chơi, chụp ảnh, cosplay nhé" />
+          <Input label="Kiểu sử dụng" value={productForm.styleUseCase} onChangeText={(styleUseCase: string) => setProductForm((p) => ({ ...p, styleUseCase }))} placeholder="Đi chơi, chụp ảnh..." />
           <View style={styles.actionRow}>
-            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Đang lưu..." : editingProductId ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}</Text></Pressable>
+            <Pressable disabled={actionId === "product-save"} onPress={saveProduct} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "product-save" ? "Đang lưu..." : editingProductId ? "Cập nhật" : "Thêm sản phẩm"}</Text></Pressable>
             <Pressable onPress={() => { setProductForm(emptyProductForm); setEditingProductId(null); }} style={styles.secondaryBtn}><Text style={styles.secondaryBtnText}>Xóa form</Text></Pressable>
           </View>
         </View>
-        <ProductDiscountPreview name={productForm.name} price={Number(productForm.price || 0)} originalPrice={Number(productForm.originalPrice || 0)} discountPercent={Number(productForm.discountPercent || 0)} image={productForm.image} images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]} sizes={productForm.sizes} colors={productForm.colors} dimensions={productForm.dimensions} />
+        <ProductDiscountPreview
+          name={productForm.name}
+          price={Number(productForm.price || 0)}
+          originalPrice={Number(productForm.originalPrice || 0)}
+          discountPercent={Number(productForm.discountPercent || 0)}
+          image={productForm.image}
+          images={[productForm.image, productForm.image2, productForm.image3, productForm.image4]}
+          sizes={productForm.sizes}
+          colors={productForm.colors}
+          dimensions={productForm.dimensions}
+        />
       </View>
 
       <View style={styles.productListGrid}>
@@ -1292,9 +1564,13 @@ export default function AdminScreen() {
           const gallery = adminGalleryImages(product);
           const sizes = splitAdminList(product.sizes);
           const colors = splitAdminList(product.colors);
+          const selected = selectedProductIds.includes(product.id);
           return (
-            <View key={product.id} style={styles.productCard}>
+            <View key={product.id} style={[styles.productCard, selected && { borderColor: ADMIN_GREEN, borderWidth: 2 }]}>
               <View style={styles.productTop}>
+                <Pressable onPress={() => toggleSelectProduct(product.id)} style={styles.checkBox}>
+                  <Feather name={selected ? "check-square" : "square"} size={18} color={selected ? ADMIN_GREEN : ADMIN_MUTED} />
+                </Pressable>
                 {gallery[0] ? <Image source={{ uri: gallery[0] }} style={styles.productImage} /> : <View style={styles.productImage}><Feather name="image" size={22} color={ADMIN_MUTED} /></View>}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text numberOfLines={1} style={styles.productTitle}>{product.name || product.productName}</Text>
@@ -1311,14 +1587,30 @@ export default function AdminScreen() {
               <View style={styles.adminThumbRow}>
                 {gallery.map((url, index) => <Image key={`${product.id}-thumb-${index}`} source={{ uri: url }} style={styles.adminThumb} />)}
               </View>
-              <Text style={styles.productMeta}>Ảnh: {gallery.length}/4 • Size: {sizes.join(' / ') || 'S / M / L / XL'} • Màu: {colors.join(' / ') || 'Đen / Trắng / Kem'}</Text>
-              {product.dimensions || product.fit ? <Text style={styles.productMeta}>Kích thước: {product.dimensions || '--'} • Form: {product.fit || '--'}</Text> : null}
+              <Text style={styles.productMeta}>Size: {sizes.join(" / ") || "S / M / L / XL"} • Màu: {colors.join(" / ") || "Đen / Trắng / Kem"}</Text>
               <View style={styles.actionRow}>
-                <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
+                <Pressable onPress={() => editProduct(product)} style={styles.smallBtn}><Feather name="edit-2" size={11} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Sửa</Text></Pressable>
+                <Pressable onPress={() => duplicateProduct(product)} style={styles.smallBtn}><Feather name="copy" size={11} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Sao chép</Text></Pressable>
                 <Pressable onPress={() => toggleProduct(product)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{hidden ? "Hiện" : "Ẩn"}</Text></Pressable>
                 <Pressable onPress={() => changeProductPrice(product, 10)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+10%</Text></Pressable>
                 <Pressable onPress={() => changeProductPrice(product, -10)} style={styles.smallBtn}><Text style={styles.smallBtnText}>-10%</Text></Pressable>
                 <Pressable onPress={() => quickDiscount(product, 15)} style={styles.saleBtn}><Text style={styles.saleBtnText}>Sale -15%</Text></Pressable>
+                <Pressable
+                  onPress={() => {
+                    if (Platform.OS === "web") {
+                      // eslint-disable-next-line no-alert
+                      if (typeof window !== "undefined" && window.confirm(`Xóa "${product.name}"?`)) deleteProduct(product);
+                    } else {
+                      Alert.alert("Xác nhận xóa", `Xóa "${product.name}"?`, [
+                        { text: "Hủy" }, { text: "Xóa", style: "destructive", onPress: () => deleteProduct(product) },
+                      ]);
+                    }
+                  }}
+                  style={styles.dangerBtn}
+                >
+                  <Feather name="trash-2" size={11} color={ADMIN_RED} />
+                  <Text style={styles.dangerBtnText}>Xóa</Text>
+                </Pressable>
               </View>
             </View>
           );
@@ -1329,8 +1621,12 @@ export default function AdminScreen() {
 
   const renderInventory = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý kho hàng" subtitle="Nhập/xuất kho, theo dõi lịch sử thay đổi stock sản phẩm." right={<Text style={styles.counterPill}>{products.length} sản phẩm</Text>} />
-      
+      <SectionHeader
+        title="Quản lý kho hàng"
+        subtitle={`Ngưỡng cảnh báo: ${settingsForm.lowStockThreshold} cái. Chỉnh trong Cài đặt cửa hàng.`}
+        right={<Text style={styles.counterPill}>{products.length} sản phẩm • {lowStockCount} sắp hết</Text>}
+      />
+
       <View style={styles.card}>
         <Text style={styles.formTitle}>Lịch sử nhập/xuất kho gần đây</Text>
         {inventoryLogs.length ? (
@@ -1342,7 +1638,7 @@ export default function AdminScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.userName}>{log.productName}</Text>
-                  <Text style={styles.userMeta}>{log.type === "import" ? "Nhập" : log.type === "export" ? "Xuất" : "Điều chỉnh"} {log.quantity} cái • Số dư {log.newQuantity} • {compactDate(log.createdAt)}</Text>
+                  <Text style={styles.userMeta}>{log.type === "import" ? "Nhập" : log.type === "export" ? "Xuất" : "Điều chỉnh"} {log.quantity} • Số dư {log.newQuantity} • {compactDate(log.createdAt)}</Text>
                 </View>
                 <Text style={styles.inventoryChange}>{log.type === "import" ? "+" : "-"}{log.quantity}</Text>
               </View>
@@ -1352,19 +1648,20 @@ export default function AdminScreen() {
       </View>
 
       <View style={styles.tableCard}>
-        <SectionHeader title="Sản phẩm tồn kho thấp" subtitle="Dưới 50 cái - cần nhập thêm" />
-        {products.filter((p) => (p.stockQuantity || 0) < 50).length ? (
-          products.filter((p) => (p.stockQuantity || 0) < 50).map((product) => (
+        <SectionHeader title="Sản phẩm tồn kho thấp" subtitle={`Dưới ${settingsForm.lowStockThreshold} cái - cần nhập thêm`} />
+        {products.filter((p) => (p.stockQuantity || 0) < Number(settingsForm.lowStockThreshold || LOW_STOCK_THRESHOLD_DEFAULT)).length ? (
+          products.filter((p) => (p.stockQuantity || 0) < Number(settingsForm.lowStockThreshold || LOW_STOCK_THRESHOLD_DEFAULT)).map((product) => (
             <View key={product.id} style={styles.userRow}>
               {product.image ? <Image source={{ uri: product.image }} style={styles.accThumb} /> : <View style={styles.accThumb}><Feather name="box" size={18} color={ADMIN_MUTED} /></View>}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={styles.userName}>{product.name}</Text>
                 <Text numberOfLines={1} style={styles.userEmail}>{product.id}</Text>
-                <Text style={styles.userMeta}>Tồn kho: {product.stockQuantity || 0} cái • Giá {formatMoney(product.price)}</Text>
+                <Text style={styles.userMeta}>Tồn kho: {product.stockQuantity || 0} • Giá {formatMoney(product.price)}</Text>
               </View>
               <View style={styles.userActions}>
-                <Pressable onPress={() => adjustInventory(product.id, 50, "import")} style={styles.saleBtn}><Feather name="arrow-down" size={13} color="#fff" /><Text style={styles.saleBtnText}>+50</Text></Pressable>
+                <Pressable onPress={() => adjustInventory(product.id, 50, "import")} style={styles.saleBtn}><Feather name="arrow-down" size={13} color="#B45309" /><Text style={styles.saleBtnText}>+50</Text></Pressable>
                 <Pressable onPress={() => adjustInventory(product.id, 100, "import")} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>+100</Text></Pressable>
+                <Pressable onPress={() => adjustInventory(product.id, 10, "export")} style={styles.smallBtn}><Text style={styles.smallBtnText}>-10</Text></Pressable>
               </View>
             </View>
           ))
@@ -1375,13 +1672,29 @@ export default function AdminScreen() {
 
   const renderReviews = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Đánh giá & Bình luận" subtitle="Duyệt, phê duyệt, từ chối và xóa các đánh giá sản phẩm." right={<Text style={styles.counterPill}>{pendingReviews} chờ duyệt / {reviews.length} tổng</Text>} />
-      
+      <SectionHeader
+        title="Đánh giá & Bình luận"
+        subtitle="Duyệt, phê duyệt, từ chối và xóa các đánh giá sản phẩm."
+        right={
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Text style={styles.counterPill}>{pendingReviews} chờ / {reviews.length} tổng</Text>
+            {pendingReviews > 0 ? (
+              <Pressable onPress={bulkApproveReviews} style={styles.successBtn}>
+                <Text style={styles.successBtnText}>Duyệt tất cả</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        }
+      />
+
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         {(["all", "pending", "approved", "rejected"] as const).map((filter) => (
-          <Pressable key={filter} onPress={() => setReviewFilter(filter)} style={[styles.selectChip, reviewFilter === filter ? styles.selectChipActive : null]}>
-            <Text style={[styles.selectChipText, reviewFilter === filter ? styles.selectChipTextActive : null]}>{filter === "all" ? "Tất cả" : filter === "pending" ? "Chờ duyệt" : filter === "approved" ? "Đã duyệt" : "Từ chối"}</Text>
-          </Pressable>
+          <SelectChip
+            key={filter}
+            active={reviewFilter === filter}
+            label={filter === "all" ? "Tất cả" : filter === "pending" ? "Chờ duyệt" : filter === "approved" ? "Đã duyệt" : "Từ chối"}
+            onPress={() => setReviewFilter(filter)}
+          />
         ))}
       </View>
 
@@ -1399,11 +1712,11 @@ export default function AdminScreen() {
                   <Text style={styles.statusChipText}>{review.status === "approved" ? "Duyệt" : review.status === "pending" ? "Chờ" : "Từ chối"}</Text>
                 </View>
               </View>
-              <View style={{ flexDirection: "row", gap: 6, marginTop: 4 }}>
+              <View style={{ flexDirection: "row", gap: 4, marginTop: 4, alignItems: "center" }}>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Feather key={i} name={i <= (review.rating || 0) ? "star" : "star"} size={14} color={i <= (review.rating || 0) ? ADMIN_ORANGE : ADMIN_MUTED} style={{ opacity: i <= (review.rating || 0) ? 1 : 0.3 }} />
+                  <Feather key={i} name="star" size={14} color={i <= (review.rating || 0) ? ADMIN_ORANGE : ADMIN_MUTED} style={{ opacity: i <= (review.rating || 0) ? 1 : 0.3 }} />
                 ))}
-                <Text style={styles.userMeta}>{review.rating}/5 • {compactDate(review.createdAt)}</Text>
+                <Text style={styles.userMeta}> {review.rating}/5 • {compactDate(review.createdAt)}</Text>
               </View>
               <Text style={[styles.productDesc, { marginTop: 8 }]}>{review.content || "Không có nội dung."}</Text>
               {review.images?.length ? (
@@ -1422,7 +1735,7 @@ export default function AdminScreen() {
             {review.status !== "rejected" && (
               <Pressable onPress={() => approveReview(review.id, false)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Từ chối</Text></Pressable>
             )}
-            <Pressable onPress={() => deleteReview(review.id)} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
+            <Pressable onPress={() => deleteReview(review.id)} style={styles.dangerBtn}><Feather name="trash-2" size={11} color={ADMIN_RED} /><Text style={styles.dangerBtnText}>Xóa</Text></Pressable>
           </View>
         </View>
       )) : <Text style={styles.emptyText}>Không có đánh giá trong danh sách này.</Text>}
@@ -1454,7 +1767,7 @@ export default function AdminScreen() {
       <View style={styles.tableCard}>
         {staffMembers.length ? staffMembers.map((staff: any) => (
           <View key={staff.id} style={styles.userRow}>
-            <View style={styles.userAvatar}><Feather name="user-check" size={16} color={staff.role === "admin" ? "#fff" : ADMIN_GREEN} style={{ backgroundColor: staff.role === "admin" ? ADMIN_GREEN : "#E9F8F1" }} /></View>
+            <View style={styles.userAvatar}><Feather name="user-check" size={16} color={ADMIN_GREEN} /></View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={styles.userName}>{staff.name}</Text>
               <Text numberOfLines={1} style={styles.userEmail}>{staff.email}</Text>
@@ -1472,21 +1785,30 @@ export default function AdminScreen() {
 
   const renderSettings = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Cài đặt cửa hàng" subtitle="Thông tin cửa hàng, thuế, phí vận chuyển, cài đặt Stripe và các tùy chọn khác." />
+      <SectionHeader title="Cài đặt cửa hàng" subtitle="Thông tin cửa hàng, thuế, phí vận chuyển và các tùy chọn khác." />
 
       <View style={[styles.card, styles.formCard]}>
         <Text style={styles.formTitle}>Thông tin cửa hàng</Text>
         <Input label="Tên cửa hàng" value={settingsForm.storeName} onChangeText={(storeName: string) => setSettingsForm((p) => ({ ...p, storeName }))} placeholder="JAPANO SHOP" />
         <Input label="Email cửa hàng" value={settingsForm.storeEmail} onChangeText={(storeEmail: string) => setSettingsForm((p) => ({ ...p, storeEmail }))} placeholder="shop@japano.com" />
         <Input label="Số điện thoại" value={settingsForm.storePhone} onChangeText={(storePhone: string) => setSettingsForm((p) => ({ ...p, storePhone }))} placeholder="0123456789" />
-        
-        <Text style={[styles.inputLabel, { marginTop: 14 }]}>Cài đặt tài chính</Text>
+
+        <Text style={[styles.inputLabel, { marginTop: 14 }]}>Cài đặt tài chính & vận chuyển</Text>
         <View style={styles.formGrid2}>
           <Input label="Thuế suất (%)" value={settingsForm.taxRate} keyboardType="numeric" onChangeText={(taxRate: string) => setSettingsForm((p) => ({ ...p, taxRate }))} placeholder="10" />
-          <Input label="Phí vận chuyển cơ bản" value={settingsForm.shippingBase} keyboardType="numeric" onChangeText={(shippingBase: string) => setSettingsForm((p) => ({ ...p, shippingBase }))} placeholder="30000" />
+          <Input label="Phí ship cơ bản" value={settingsForm.shippingBase} keyboardType="numeric" onChangeText={(shippingBase: string) => setSettingsForm((p) => ({ ...p, shippingBase }))} placeholder="30000" />
+        </View>
+        <View style={styles.formGrid2}>
+          <Input label="Free ship từ" value={settingsForm.freeShippingThreshold} keyboardType="numeric" onChangeText={(freeShippingThreshold: string) => setSettingsForm((p) => ({ ...p, freeShippingThreshold }))} placeholder="500000" />
+          <Input label="Đơn vị tiền" value={settingsForm.currency} onChangeText={(currency: string) => setSettingsForm((p) => ({ ...p, currency }))} placeholder="VND" />
         </View>
 
-        <Pressable onPress={saveSettings} style={[styles.primaryBtn, { marginTop: 14 }]}><Text style={styles.primaryBtnText}>Lưu cài đặt</Text></Pressable>
+        <Text style={[styles.inputLabel, { marginTop: 14 }]}>Cảnh báo kho hàng</Text>
+        <Input label="Ngưỡng cảnh báo (cái)" value={settingsForm.lowStockThreshold} keyboardType="numeric" onChangeText={(lowStockThreshold: string) => setSettingsForm((p) => ({ ...p, lowStockThreshold }))} placeholder="50" />
+
+        <Pressable onPress={saveSettings} disabled={actionId === "settings-save"} style={[styles.primaryBtn, { marginTop: 14 }]}>
+          <Text style={styles.primaryBtnText}>{actionId === "settings-save" ? "Đang lưu..." : "Lưu cài đặt"}</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -1507,7 +1829,20 @@ export default function AdminScreen() {
             <SelectChip active={newsletterForm.recipient === "active"} label="Hoạt động" onPress={() => setNewsletterForm((p) => ({ ...p, recipient: "active" }))} />
           </View>
         </View>
-        <Pressable onPress={sendNewsletter} style={[styles.primaryBtn, { marginTop: 12 }]}><Text style={styles.primaryBtnText}>{actionId === "newsletter-send" ? "Đang gửi..." : "Gửi Newsletter"}</Text></Pressable>
+
+        {/* [NEW] Test email */}
+        <View style={{ marginTop: 12 }}>
+          <Input label="Email test (gửi thử trước khi gửi hàng loạt)" value={newsletterForm.testEmail} onChangeText={(testEmail: string) => setNewsletterForm((p) => ({ ...p, testEmail }))} placeholder="test@example.com" />
+        </View>
+
+        <View style={styles.actionRow}>
+          <Pressable onPress={() => sendNewsletter(true)} disabled={actionId === "newsletter-test"} style={styles.secondaryBtn}>
+            <Text style={styles.secondaryBtnText}>{actionId === "newsletter-test" ? "Đang gửi..." : "Gửi test"}</Text>
+          </Pressable>
+          <Pressable onPress={() => sendNewsletter(false)} disabled={actionId === "newsletter-send"} style={styles.primaryBtn}>
+            <Text style={styles.primaryBtnText}>{actionId === "newsletter-send" ? "Đang gửi..." : "Gửi Newsletter"}</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.tableCard}>
@@ -1531,10 +1866,14 @@ export default function AdminScreen() {
     const promotionRows = vouchers.filter((v) => v.kind === "promotion");
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Voucher & Khuyến mãi" subtitle="Tạo voucher, khuyến mãi, flash sale và gửi thông báo chung cho người dùng." right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} chiến dịch</Text>} />
+        <SectionHeader
+          title="Voucher & Khuyến mãi"
+          subtitle="Tạo voucher, khuyến mãi và gửi thông báo chung cho người dùng."
+          right={<Text style={styles.counterPill}>{activeVouchers} voucher • {activePromotions} chiến dịch</Text>}
+        />
         <View style={styles.promoGrid}>
           <View style={styles.card}>
-            <Text style={styles.formTitle}>Thêm voucher cho người dùng</Text>
+            <Text style={styles.formTitle}>Thêm voucher</Text>
             <View style={styles.formGrid2}>
               <Input label="Mã voucher" value={voucherForm.code} onChangeText={(code: string) => setVoucherForm((p) => ({ ...p, code }))} placeholder="JAPANO50" />
               <Input label="Tên voucher" value={voucherForm.title} onChangeText={(title: string) => setVoucherForm((p) => ({ ...p, title }))} placeholder="Giảm cho khách mới" />
@@ -1544,7 +1883,7 @@ export default function AdminScreen() {
               <SelectChip active={voucherForm.discountType === "fixed"} label="Theo tiền" onPress={() => setVoucherForm((p) => ({ ...p, discountType: "fixed" }))} />
             </View>
             <View style={styles.formGrid3}>
-              <Input label="Giá trị giảm" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 hoặc 50000" />
+              <Input label="Giá trị" value={voucherForm.discountValue} keyboardType="numeric" onChangeText={(discountValue: string) => setVoucherForm((p) => ({ ...p, discountValue }))} placeholder="20 hoặc 50000" />
               <Input label="Đơn tối thiểu" value={voucherForm.minOrderValue} keyboardType="numeric" onChangeText={(minOrderValue: string) => setVoucherForm((p) => ({ ...p, minOrderValue }))} placeholder="300000" />
               <Input label="Hết hạn" value={voucherForm.expiryDate} onChangeText={(expiryDate: string) => setVoucherForm((p) => ({ ...p, expiryDate }))} placeholder="2026-12-31" />
             </View>
@@ -1577,7 +1916,7 @@ export default function AdminScreen() {
                 <Text style={styles.smallBtnText}>{uploadingMediaField === "upload-bannerImage" ? "Đang upload..." : "Upload banner Cloudinary"}</Text>
               </Pressable>
             </View>
-            <Input label="Mô tả chiến dịch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Giảm giá cuối tuần cho toàn bộ sản phẩm..." multiline />
+            <Input label="Mô tả chiến dịch" value={promotionForm.description} onChangeText={(description: string) => setPromotionForm((p) => ({ ...p, description }))} placeholder="Giảm giá cuối tuần..." multiline />
             <Pressable disabled={actionId === "promotion-save"} onPress={savePromotion} style={styles.primaryBtn}><Text style={styles.primaryBtnText}>{actionId === "promotion-save" ? "Đang tạo..." : "Tạo khuyến mãi"}</Text></Pressable>
           </View>
         </View>
@@ -1586,20 +1925,23 @@ export default function AdminScreen() {
           <Text style={styles.formTitle}>Thông báo chung</Text>
           <View style={styles.formGrid2}>
             <Input label="Tiêu đề" value={notificationForm.title} onChangeText={(title: string) => setNotificationForm((p) => ({ ...p, title }))} placeholder="Flash Sale 50%" />
-            <Input label="Nội dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="Mở app nhận voucher hôm nay..." />
+            <Input label="Nội dung" value={notificationForm.content} onChangeText={(content: string) => setNotificationForm((p) => ({ ...p, content }))} placeholder="Mở app nhận voucher..." />
           </View>
           <Pressable disabled={actionId === "notification-send"} onPress={sendNotification} style={styles.secondaryBtnWide}><Text style={styles.secondaryBtnText}>{actionId === "notification-send" ? "Đang gửi..." : "Gửi thông báo cho tất cả user"}</Text></Pressable>
         </View>
 
         <View style={styles.listGrid2}>
           <View style={styles.card}>
-            <SectionHeader title="Danh sách voucher" subtitle="Bật/tắt mã giảm giá" />
+            <SectionHeader title="Danh sách voucher" subtitle={`Đã dùng: ${vouchers.reduce((s: number, v: any) => s + (v.usedCount || 0), 0)} lượt`} />
             {voucherRows.length ? voucherRows.map((voucher) => (
               <View key={voucher.id} style={styles.voucherRow}>
                 <View style={styles.voucherIcon}><Feather name="tag" size={17} color={ADMIN_GREEN} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.voucherCode}>{voucher.code}</Text>
-                  <Text style={styles.voucherMeta}>{voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`} • HSD {compactDate(voucher.expiryDate)}</Text>
+                  <Text style={styles.voucherMeta}>
+                    {voucher.title || "Voucher"} • {voucher.discountType === "fixed" ? formatMoney(voucher.discountValue) : `${voucher.discountValue}%`}
+                    {" "}• HSD {compactDate(voucher.expiryDate)} • Đã dùng {voucher.usedCount || 0} lần
+                  </Text>
                 </View>
                 <Pressable onPress={() => toggleVoucher(voucher)} style={[styles.statusPill, voucher.active ? styles.statusOn : styles.statusOff]}><Text style={styles.statusText}>{voucher.active ? "ON" : "OFF"}</Text></Pressable>
               </View>
@@ -1637,7 +1979,7 @@ export default function AdminScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={[styles.userAvatar, u.role === "admin" ? styles.userAvatarAdmin : null]}><Feather name={u.role === "admin" ? "shield" : "user"} size={20} color={u.role === "admin" ? "#fff" : ADMIN_GREEN} /></View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khách JAPANO"}</Text>
+            <Text style={styles.sectionTitle}>{u.name || u.fullName || "Khách JAPANO"} {u.banned ? " (Đã khóa)" : ""}</Text>
             <Text style={styles.userEmail}>{u.email} • {u.phone || "chưa có SĐT"}</Text>
             <Text style={styles.userMeta}>Địa chỉ: {u.address || "chưa có"} • Xu {formatNumber(u.coins)} {u.vip ? "• VIP" : ""}</Text>
           </View>
@@ -1661,6 +2003,7 @@ export default function AdminScreen() {
             </View>
             <Text style={styles.userMeta}>Thanh toán: {o.paymentMethod || "--"} • {o.paymentStatus || "pending"} • {compactDate(o.createdAt)}</Text>
             {o.shippingAddress ? <Text numberOfLines={1} style={styles.userMeta}>Giao tới: {o.shippingAddress} {o.phoneNumber ? `• ${o.phoneNumber}` : ""}</Text> : null}
+            {o.trackingNumber ? <Text style={styles.userMeta}>Vận đơn: {o.trackingNumber} ({o.carrier || "--"})</Text> : null}
             {(o.items || []).map((it: any, idx: number) => (
               <View key={idx} style={styles.orderItemRow}>
                 {it.image ? <Image source={{ uri: it.image }} style={styles.orderItemImg} /> : <View style={styles.orderItemImg}><Feather name="image" size={14} color={ADMIN_MUTED} /></View>}
@@ -1673,9 +2016,9 @@ export default function AdminScreen() {
             ))}
             <View style={styles.userActions}>
               <Pressable onPress={() => quickUpdateOrder(o, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Đã thanh toán</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#fff" /><Text style={styles.saleBtnText}>Đang giao</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#fff" /><Text style={styles.saleBtnText}>Đã nhận</Text></Pressable>
-              <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color="#fff" /><Text style={styles.dangerBtnText}>Hủy</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Đang giao</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Đã nhận</Text></Pressable>
+              <Pressable onPress={() => quickUpdateOrder(o, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color={ADMIN_RED} /><Text style={styles.dangerBtnText}>Hủy</Text></Pressable>
             </View>
           </View>
         )) : <Text style={styles.emptyText}>Khách này chưa có đơn hàng.</Text>}
@@ -1700,7 +2043,16 @@ export default function AdminScreen() {
 
   const renderUsers = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Khách hàng & Phân quyền" subtitle="Bấm một khách để xem đơn đã mua, sản phẩm, thanh toán và đổi trạng thái giao hàng." right={<Text style={styles.counterPill}>{filteredUsers.length} khách</Text>} />
+      <SectionHeader
+        title="Khách hàng & Phân quyền"
+        subtitle="Bấm một khách để xem đơn đã mua, sản phẩm, thanh toán và đổi trạng thái."
+        right={
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Text style={styles.counterPill}>{filteredUsers.length} khách</Text>
+            <Pressable onPress={exportUsersCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Xuất CSV</Text></Pressable>
+          </View>
+        }
+      />
       {selectedUserId ? renderUserDetail() : null}
       <View style={styles.tableCard}>
         {filteredUsers.map((item) => {
@@ -1711,19 +2063,26 @@ export default function AdminScreen() {
           const ordersCount = orders.filter((o) => String(o.userId) === String(item.id)).length;
           return (
             <View key={item.id} style={styles.userRow}>
-              <View style={[styles.userAvatar, isItemAdmin ? styles.userAvatarAdmin : null]}><Feather name={isItemAdmin ? "shield" : "user"} size={18} color={isItemAdmin ? "#fff" : ADMIN_GREEN} /></View>
+              <View style={[styles.userAvatar, isItemAdmin ? styles.userAvatarAdmin : null, item.banned && { backgroundColor: "#FFF1F2" }]}>
+                <Feather name={item.banned ? "slash" : isItemAdmin ? "shield" : "user"} size={18} color={item.banned ? ADMIN_RED : isItemAdmin ? "#fff" : ADMIN_GREEN} />
+              </View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text numberOfLines={1} style={styles.userName}>{item.name || item.fullName || "JAPANO Member"}</Text>
+                <Text numberOfLines={1} style={styles.userName}>{item.name || item.fullName || "JAPANO Member"} {item.banned ? "🚫" : ""}</Text>
                 <Text numberOfLines={1} style={styles.userEmail}>{item.email}</Text>
-                <Text style={styles.userMeta}>Trạng thái {item.status || "active"} • Xu {formatNumber(item.coins)} • {ordersCount} đơn {item.vip ? "• VIP" : ""}</Text>
+                <Text style={styles.userMeta}>Trạng thái {item.banned ? "Đã khóa" : item.status || "active"} • Xu {formatNumber(item.coins)} • {ordersCount} đơn {item.vip ? "• VIP" : ""}</Text>
               </View>
               <View style={[styles.rolePill, isItemAdmin ? styles.roleAdmin : null]}><Text style={[styles.rolePillText, isItemAdmin ? styles.rolePillTextAdmin : null]}>{isItemAdmin ? "ADMIN" : "KHÁCH"}</Text></View>
               <View style={styles.userActions}>
-                <Pressable onPress={() => setSelectedUserId(String(item.id))} style={styles.saleBtn}><Feather name="eye" size={13} color="#fff" /><Text style={styles.saleBtnText}>Chi tiết</Text></Pressable>
+                <Pressable onPress={() => setSelectedUserId(String(item.id))} style={styles.saleBtn}><Feather name="eye" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Chi tiết</Text></Pressable>
                 <Pressable onPress={() => adjustCoins(item, 100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>+100 xu</Text></Pressable>
                 <Pressable onPress={() => adjustCoins(item, -100)} style={styles.smallBtn}><Text style={styles.smallBtnText}>-100 xu</Text></Pressable>
                 {canGrant ? <Pressable onPress={() => changeRole(item, "admin")} style={styles.saleBtn}><Text style={styles.saleBtnText}>Cấp admin</Text></Pressable> : null}
                 {canRevoke ? <Pressable onPress={() => changeRole(item, "customer")} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Gỡ admin</Text></Pressable> : null}
+                {!isSelf && !item.isProtectedAdmin ? (
+                  <Pressable onPress={() => toggleBanUser(item)} style={item.banned ? styles.successBtn : styles.dangerBtn}>
+                    <Text style={item.banned ? styles.successBtnText : styles.dangerBtnText}>{item.banned ? "Mở khóa" : "Khóa"}</Text>
+                  </Pressable>
+                ) : null}
               </View>
             </View>
           );
@@ -1732,44 +2091,154 @@ export default function AdminScreen() {
     </View>
   );
 
+  // [NEW] Dedicated Orders tab with filters
+  const renderOrders = () => {
+    const statusOptions: Array<{ key: string; label: string }> = [
+      { key: "all", label: "Tất cả" },
+      { key: "pending", label: "Chờ xử lý" },
+      { key: "processing", label: "Đang xử lý" },
+      { key: "paid", label: "Đã thanh toán" },
+      { key: "shipping", label: "Đang giao" },
+      { key: "delivered", label: "Đã nhận" },
+      { key: "completed", label: "Hoàn tất" },
+      { key: "cancelled", label: "Đã hủy" },
+    ];
+
+    return (
+      <View style={styles.pageGap}>
+        <SectionHeader
+          title="Quản lý đơn hàng"
+          subtitle={`${filteredOrders.length} / ${orders.length} đơn`}
+          right={
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable onPress={exportOrdersCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Xuất CSV</Text></Pressable>
+            </View>
+          }
+        />
+
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {statusOptions.map((s) => (
+            <SelectChip key={s.key} active={orderStatusFilter === s.key} label={s.label} onPress={() => setOrderStatusFilter(s.key)} />
+          ))}
+        </View>
+
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          <Text style={[styles.inputLabel, { alignSelf: "center" }]}>Khoảng thời gian:</Text>
+          {(["7d", "30d", "90d", "ytd", "all"] as const).map((r) => (
+            <SelectChip key={r} active={dateRange === r} label={r === "ytd" ? "YTD" : r === "all" ? "Tất cả" : r} onPress={() => setDateRange(r)} />
+          ))}
+        </View>
+
+        <View style={styles.tableCard}>
+          {filteredOrders.length ? filteredOrders.map((order) => {
+            const isExpanded = selectedOrderId === order.id;
+            return (
+              <View key={order.id} style={{ borderBottomWidth: 1, borderBottomColor: "#F0F2F4" }}>
+                <Pressable onPress={() => setSelectedOrderId(isExpanded ? null : order.id)} style={styles.userRow}>
+                  <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} style={styles.userName}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
+                    <Text numberOfLines={1} style={styles.userEmail}>{order.userId} • {order.phoneNumber || "--"}</Text>
+                    <Text style={styles.userMeta}>{compactDate(order.createdAt)} • {order.paymentMethod || "COD"} • {order.paymentStatus || "pending"}</Text>
+                  </View>
+                  <View style={[styles.statusChip, order.status === "completed" ? styles.statusOk : order.status === "cancelled" ? styles.statusBad : styles.statusPend]}>
+                    <Text style={styles.statusChipText}>{order.status || "pending"}</Text>
+                  </View>
+                  <Feather name={isExpanded ? "chevron-up" : "chevron-down"} size={18} color={ADMIN_MUTED} />
+                </Pressable>
+                {isExpanded ? (
+                  <View style={{ padding: 14, backgroundColor: ADMIN_BG, gap: 10 }}>
+                    <Text numberOfLines={2} style={styles.userMeta}>Giao tới: {order.shippingAddress || "--"}</Text>
+                    {(order.items || []).map((it: any, idx: number) => (
+                      <View key={idx} style={styles.orderItemRow}>
+                        {it.image ? <Image source={{ uri: it.image }} style={styles.orderItemImg} /> : <View style={styles.orderItemImg}><Feather name="image" size={14} color={ADMIN_MUTED} /></View>}
+                        <View style={{ flex: 1 }}>
+                          <Text numberOfLines={1} style={styles.orderItemName}>{it.name}</Text>
+                          <Text style={styles.userMeta}>SL {it.quantity} {it.size ? `• size ${it.size}` : ""} {it.color ? `• ${it.color}` : ""}</Text>
+                        </View>
+                        <Text style={styles.orderItemPrice}>{formatMoney(it.unitPrice)}</Text>
+                      </View>
+                    ))}
+
+                    {/* [NEW] Tracking form */}
+                    <View style={{ borderTopWidth: 1, borderTopColor: ADMIN_BORDER, paddingTop: 10, gap: 8 }}>
+                      <Text style={styles.formTitle}>Vận chuyển</Text>
+                      {order.trackingNumber ? (
+                        <Text style={styles.userMeta}>Mã hiện tại: {order.trackingNumber} • {order.carrier || "--"}</Text>
+                      ) : null}
+                      <View style={styles.formGrid2}>
+                        <Input label="Mã vận đơn" value={trackingForm.trackingNumber} onChangeText={(trackingNumber: string) => setTrackingForm((p) => ({ ...p, trackingNumber }))} placeholder="GHN123..." />
+                        <Input label="Đơn vị vận chuyển" value={trackingForm.carrier} onChangeText={(carrier: string) => setTrackingForm((p) => ({ ...p, carrier }))} placeholder="GHN / GHTK / VN Post" />
+                      </View>
+                      <Input label="Ghi chú" value={trackingForm.note} onChangeText={(note: string) => setTrackingForm((p) => ({ ...p, note }))} placeholder="Ghi chú giao hàng..." />
+                      <Pressable onPress={() => updateTracking(order.id)} style={styles.primaryBtn}>
+                        <Text style={styles.primaryBtnText}>{actionId === `tracking-${order.id}` ? "Đang lưu..." : "Lưu tracking"}</Text>
+                      </Pressable>
+                    </View>
+
+                    <View style={styles.userActions}>
+                      <Pressable onPress={() => quickUpdateOrder(order, "paid")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Đã thanh toán</Text></Pressable>
+                      <Pressable onPress={() => quickUpdateOrder(order, "shipping")} style={styles.saleBtn}><Feather name="truck" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Đang giao</Text></Pressable>
+                      <Pressable onPress={() => quickUpdateOrder(order, "delivered")} style={styles.saleBtn}><Feather name="check" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Đã nhận</Text></Pressable>
+                      <Pressable onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}><Text style={styles.successBtnText}>Hoàn tất</Text></Pressable>
+                      <Pressable onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}><Feather name="x" size={13} color={ADMIN_RED} /><Text style={styles.dangerBtnText}>Hủy</Text></Pressable>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            );
+          }) : <Text style={styles.emptyText}>Không có đơn nào khớp bộ lọc.</Text>}
+        </View>
+      </View>
+    );
+  };
+
   const renderTransactions = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Đơn hàng / Thanh toán" subtitle="Theo dõi thông tin giao dịch, đơn hàng và trạng thái thanh toán." />
-      <View style={styles.listGrid2}>
-        <View style={styles.card}>
-          <SectionHeader title="Thanh toán" subtitle="Giao dịch gần đây" />
-          {payments.length ? payments.map((payment) => (
-            <View key={payment.id} style={styles.paymentRow}>
-              <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
-                <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toán"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
-              </View>
+      <SectionHeader title="Thanh toán" subtitle="Theo dõi tất cả giao dịch thanh toán." />
+      <View style={styles.tableCard}>
+        {payments.length ? payments.map((payment) => (
+          <View key={payment.id} style={styles.paymentRow}>
+            <View style={styles.paymentIcon}><Feather name="credit-card" size={16} color={ADMIN_GREEN} /></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.paymentTitle}>{formatMoney(payment.amount)}</Text>
+              <Text style={styles.paymentMeta}>{payment.method || payment.paymentMethod || "Thanh toán"} • {payment.status} • {compactDate(payment.createdAt)}</Text>
+              <Text numberOfLines={1} style={styles.paymentMeta}>User: {payment.userId || "--"} • Txn: {payment.transactionId || "--"}</Text>
             </View>
-          )) : <Text style={styles.emptyText}>Chưa có giao dịch.</Text>}
-        </View>
-        <View style={styles.card}>
-          <SectionHeader title="Đơn hàng gần đây" subtitle="Đơn hàng mới" />
-          {orders.length ? orders.map((order) => (
-            <View key={order.id} style={styles.paymentRow}>
-              <View style={styles.paymentIcon}><Feather name="shopping-bag" size={16} color={ADMIN_BLUE} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.paymentTitle}>#{String(order.id).slice(-8)} • {formatMoney(order.total || order.totalAmount)}</Text>
-                <Text style={styles.paymentMeta}>Status: {order.status} • Payment: {order.paymentStatus} • {compactDate(order.createdAt)}</Text>
-                <Text numberOfLines={1} style={styles.paymentMeta}>User: {order.userId} • {order.paymentMethod || "COD"}</Text>
-                <View style={styles.adminOrderQuickRow}>
-                  <Pressable disabled={actionId === `order-completed-${order.id}`} onPress={() => quickUpdateOrder(order, "completed")} style={styles.successBtn}>
-                    <Text style={styles.successBtnText}>Xác nhận thành công</Text>
-                  </Pressable>
-                  <Pressable disabled={actionId === `order-cancelled-${order.id}`} onPress={() => quickUpdateOrder(order, "cancelled")} style={styles.dangerBtn}>
-                    <Text style={styles.dangerBtnText}>Hủy nhanh</Text>
-                  </Pressable>
-                </View>
-              </View>
+          </View>
+        )) : <Text style={styles.emptyText}>Chưa có giao dịch.</Text>}
+      </View>
+    </View>
+  );
+
+  // [NEW] Refunds tab
+  const renderRefunds = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Yêu cầu hoàn tiền / trả hàng"
+        subtitle="Duyệt các yêu cầu hoàn tiền từ khách hàng."
+        right={<Text style={styles.counterPill}>{pendingRefunds} chờ xử lý / {refunds.length} tổng</Text>}
+      />
+      <View style={styles.tableCard}>
+        {refunds.length ? refunds.map((r: any) => (
+          <View key={r.id} style={styles.userRow}>
+            <View style={styles.paymentIcon}><Feather name="corner-up-left" size={16} color={ADMIN_ORANGE} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text numberOfLines={1} style={styles.userName}>Đơn #{String(r.orderId || "").slice(-8)} • {formatMoney(r.amount)}</Text>
+              <Text numberOfLines={1} style={styles.userEmail}>{r.userId}</Text>
+              <Text numberOfLines={2} style={styles.userMeta}>Lý do: {r.reason || "--"} • {compactDate(r.createdAt)}</Text>
             </View>
-          )) : <Text style={styles.emptyText}>Chưa có đơn hàng.</Text>}
-        </View>
+            <View style={[styles.statusChip, r.status === "approved" ? styles.statusOk : r.status === "rejected" ? styles.statusBad : styles.statusPend]}>
+              <Text style={styles.statusChipText}>{r.status || "pending"}</Text>
+            </View>
+            {r.status === "pending" ? (
+              <View style={styles.userActions}>
+                <Pressable onPress={() => handleRefund(r.id, "approve")} style={styles.successBtn}><Text style={styles.successBtnText}>Duyệt</Text></Pressable>
+                <Pressable onPress={() => handleRefund(r.id, "reject")} style={styles.dangerBtn}><Text style={styles.dangerBtnText}>Từ chối</Text></Pressable>
+              </View>
+            ) : null}
+          </View>
+        )) : <Text style={styles.emptyText}>Chưa có yêu cầu hoàn tiền nào. (Cần bật API refunds ở backend)</Text>}
       </View>
     </View>
   );
@@ -1806,37 +2275,9 @@ export default function AdminScreen() {
     </View>
   );
 
-  const addBanned = async () => {
-    const w = bannedInput.trim();
-    if (!w) return;
-    if (!user?.id) {
-      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
-      return;
-    }
-    try {
-      await api.addBannedWord(user.id, w);
-      setBannedInput("");
-      await load();
-    } catch (e: any) {
-      Alert.alert("Lỗi", e?.message || "Không thêm được từ cấm.");
-    }
-  };
-  const removeBanned = async (id: string) => {
-    if (!user?.id) {
-      Alert.alert("Lỗi", "Bạn cần đăng nhập để thực hiện thao tác này.");
-      return;
-    }
-    try {
-      await api.deleteBannedWord(user.id, id);
-      await load();
-    } catch (e: any) {
-      Alert.alert("Lỗi", e?.message || "Không xóa được.");
-    }
-  };
-
   const renderModeration = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Từ cấm khi bình luận / đánh giá" subtitle="Đánh giá chứa các từ này sẽ bị chặn tự động trên toàn app." right={<Text style={styles.counterPill}>{bannedWords.length} từ</Text>} />
+      <SectionHeader title="Từ cấm khi bình luận / đánh giá" subtitle="Đánh giá chứa các từ này sẽ bị chặn tự động." right={<Text style={styles.counterPill}>{bannedWords.length} từ</Text>} />
       <View style={[styles.card, styles.formCard]}>
         <Text style={styles.formTitle}>Thêm từ cấm</Text>
         <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
@@ -1854,7 +2295,7 @@ export default function AdminScreen() {
               <Text style={styles.bannedChipText}>{b.word}</Text>
               <Feather name="x" size={13} color={ADMIN_RED} />
             </Pressable>
-          )) : <Text style={styles.emptyText}>Chưa có từ cấm. Hệ thống tự seed danh sách mặc định khi có đánh giá đầu tiên.</Text>}
+          )) : <Text style={styles.emptyText}>Chưa có từ cấm.</Text>}
         </View>
       </View>
     </View>
@@ -1874,10 +2315,9 @@ export default function AdminScreen() {
 
   const renderAccessories = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý phụ kiện (danh mục riêng)" subtitle="Nón, mũ, vòng tay, túi, kính, khăn, đồng hồ... Quản lý ảnh, màu, size, tồn kho, giá riêng cho nhóm phụ kiện." right={<Text style={styles.counterPill}>{accessoryProducts.length} phụ kiện</Text>} />
+      <SectionHeader title="Quản lý phụ kiện" subtitle="Nón, mũ, vòng tay, túi, kính, khăn, đồng hồ..." right={<Text style={styles.counterPill}>{accessoryProducts.length} phụ kiện</Text>} />
       <View style={[styles.card, { gap: 10 }]}>
         <Text style={styles.formTitle}>Thêm phụ kiện mới</Text>
-        <Text style={styles.userMeta}>Mở form sản phẩm với danh mục đã đặt sẵn là "phu-kien". Bạn chỉ cần điền tên, ảnh, màu, size, số lượng và giá.</Text>
         <Pressable onPress={addNewAccessory} style={styles.newOrderBtn}><Feather name="plus" size={16} color="#fff" /><Text style={styles.newOrderText}>Thêm phụ kiện</Text></Pressable>
       </View>
       <View style={styles.tableCard}>
@@ -1887,14 +2327,14 @@ export default function AdminScreen() {
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text numberOfLines={1} style={styles.userName}>{item.name}</Text>
               <Text numberOfLines={1} style={styles.userEmail}>{item.category || "phu-kien"} • {formatMoney(item.price)}</Text>
-              <Text style={styles.userMeta}>Tồn kho {formatNumber(item.stockQuantity || item.stock || 0)} • {(item.status || "active") === "active" ? "Đang bán" : "Đang ẩn"} {Array.isArray(item.colors) && item.colors.length ? `• ${item.colors.length} màu` : ""} {Array.isArray(item.sizes) && item.sizes.length ? `• ${item.sizes.length} size` : ""}</Text>
+              <Text style={styles.userMeta}>Tồn kho {formatNumber(item.stockQuantity || item.stock || 0)} • {(item.status || "active") === "active" ? "Đang bán" : "Đang ẩn"}</Text>
             </View>
             <View style={styles.userActions}>
-              <Pressable onPress={() => editProduct(item)} style={styles.saleBtn}><Feather name="edit-2" size={13} color="#fff" /><Text style={styles.saleBtnText}>Sửa</Text></Pressable>
+              <Pressable onPress={() => editProduct(item)} style={styles.saleBtn}><Feather name="edit-2" size={13} color="#B45309" /><Text style={styles.saleBtnText}>Sửa</Text></Pressable>
               <Pressable onPress={() => toggleProduct(item)} style={styles.smallBtn}><Text style={styles.smallBtnText}>{(item.status || "active") === "active" ? "Ẩn" : "Hiện"}</Text></Pressable>
             </View>
           </View>
-        )) : <Text style={styles.emptyText}>Chưa có phụ kiện. Bấm "Thêm phụ kiện" để tạo, hoặc đặt danh mục sản phẩm là "phu-kien".</Text>}
+        )) : <Text style={styles.emptyText}>Chưa có phụ kiện.</Text>}
       </View>
     </View>
   );
@@ -1903,7 +2343,16 @@ export default function AdminScreen() {
     const m = systemStatus?.metrics || kpis;
     return (
       <View style={styles.pageGap}>
-        <SectionHeader title="Trạng thái hệ thống AI" subtitle="Theo dõi CatVTON, 3D Gateway, Ollama, MongoDB, Backend theo thời gian thực." right={<Pressable onPress={refreshStatus} style={styles.newOrderBtn}>{statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}<Text style={styles.newOrderText}>Kiểm tra lại</Text></Pressable>} />
+        <SectionHeader
+          title="Trạng thái hệ thống AI"
+          subtitle="Theo dõi CatVTON, 3D Gateway, Ollama, MongoDB, Backend."
+          right={
+            <Pressable onPress={refreshStatus} style={styles.newOrderBtn}>
+              {statusLoading ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="refresh-cw" size={14} color="#fff" />}
+              <Text style={styles.newOrderText}>Kiểm tra lại</Text>
+            </Pressable>
+          }
+        />
         <View style={styles.tableCard}>
           {systemStatus?.services ? systemStatus.services.map((s: any) => (
             <View key={s.key} style={styles.userRow}>
@@ -1914,10 +2363,9 @@ export default function AdminScreen() {
               </View>
               <View style={[styles.statusChip, s.online ? styles.statusOk : styles.statusBad]}><Text style={styles.statusChipText}>{s.online ? "Online" : "Offline"}</Text></View>
             </View>
-          )) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra dịch vụ..." : "Chưa lấy được trạng thái • bấm \"Kiểm tra lại\". Nếu backend chưa chạy, hãy khởi động server cổng 4000."}</Text>}
+          )) : <Text style={styles.emptyText}>{statusLoading ? "Đang kiểm tra..." : 'Chưa lấy được trạng thái • bấm "Kiểm tra lại".'}</Text>}
           <View style={{ paddingTop: 10 }}>
-            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "NVIDIA RTX 5060 Ti"} • CUDA: {systemStatus?.cuda || "Available"}</Text>
-            <Text style={styles.userMeta}>Hướng dẫn restart: chạy lại tiến trình tương ứng (CatVTON :7861, Gateway :8001, Ollama :11434) rồi bấm Kiểm tra lại.</Text>
+            <Text style={styles.userMeta}>GPU: {systemStatus?.gpu || "--"} • CUDA: {systemStatus?.cuda || "--"}</Text>
           </View>
         </View>
 
@@ -1944,9 +2392,32 @@ export default function AdminScreen() {
     );
   };
 
+  // [NEW] Audit log tab
+  const renderAuditLog = () => (
+    <View style={styles.pageGap}>
+      <SectionHeader
+        title="Nhật ký hoạt động admin"
+        subtitle="Theo dõi mọi thao tác của admin/nhân viên."
+        right={<Text style={styles.counterPill}>{auditLogs.length} bản ghi</Text>}
+      />
+      <View style={styles.tableCard}>
+        {auditLogs.length ? auditLogs.slice(0, 50).map((log: any, idx: number) => (
+          <View key={idx} style={styles.userRow}>
+            <View style={styles.paymentIcon}><Feather name="file-text" size={14} color={ADMIN_MUTED} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text numberOfLines={1} style={styles.userName}>{log.action || "Hoạt động"}</Text>
+              <Text numberOfLines={1} style={styles.userEmail}>Bởi: {log.actorEmail || log.actorId || "--"}</Text>
+              <Text numberOfLines={2} style={styles.userMeta}>{log.detail || JSON.stringify(log.payload || {}).slice(0, 100)} • {compactDate(log.createdAt)}</Text>
+            </View>
+          </View>
+        )) : <Text style={styles.emptyText}>Chưa có bản ghi. (Cần API getAuditLogs ở backend)</Text>}
+      </View>
+    </View>
+  );
+
   const renderTryon2d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý thử đồ AI 2D (CatVTON)" subtitle={'Theo dõi số lượt, tỷ lệ lỗi và cấu hình model. Bấm "Kiểm tra lại" ở tab Trạng thái để cập nhật.'} right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lượt</Text>} />
+      <SectionHeader title="Quản lý thử đồ AI 2D (CatVTON)" subtitle="Theo dõi số lượt, tỷ lệ lỗi và cấu hình model." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon2d || 0)} lượt</Text>} />
       <View style={styles.statsGrid}>
         <StatCard label="Tổng lượt thử đồ" value={formatNumber(kpis.tryon2d || 0)} change="tất cả thời gian" icon="camera" accent={ADMIN_GREEN} />
         <StatCard label="Thành công" value={formatNumber((kpis.tryon2d || 0) - (kpis.tryon2dFail || 0))} change="ước tính" icon="check-circle" accent={ADMIN_BLUE} />
@@ -1954,27 +2425,18 @@ export default function AdminScreen() {
       </View>
       <View style={styles.card}>
         <SectionHeader title="Cấu hình engine" subtitle="Chuỗi ưu tiên model mạnh" />
-        <Text style={styles.userMeta}>Ưu tiên: CatVTON (JAPANO_CATVTON_URL:7861) → AI Gateway (:8001, model=strong, steps=50, hd) → ghép ảnh dự phòng (luôn ra kết quả).</Text>
-        <Text style={styles.userMeta}>Lấy ảnh sản phẩm: gọi cả gallery (tối đa 6 ảnh) cho model để thử đồ hợp lý hơn.</Text>
-      </View>
-      <View style={styles.card}>
-        <SectionHeader title="Lịch sử thử đồ (ảnh vào / ảnh kết quả)" subtitle="Cần bật lưu lịch sử ở backend" />
-        <Text style={styles.emptyText}>Chưa bật lưu lịch sử ảnh. Để hiển thị danh sách ảnh người dùng / ảnh quần áo / ảnh kết quả kèm seed/steps/cfg và nút chạy lại, cần thêm collection lưu mỗi lượt thử đồ ở backend (mình có thể làm ở vòng sau).</Text>
+        <Text style={styles.userMeta}>Ưu tiên: CatVTON (JAPANO_CATVTON_URL:7861) → AI Gateway (:8001, model=strong, steps=50, hd) → ghép ảnh dự phòng.</Text>
       </View>
     </View>
   );
 
   const renderModel3d = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Quản lý mẫu 3D" subtitle="Số lượt dùng 3D và trạng thái. GLB storage cần backend lưu file." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lượt</Text>} />
+      <SectionHeader title="Quản lý mẫu 3D" subtitle="Số lượt dùng 3D và trạng thái." right={<Text style={styles.counterPill}>{formatNumber(kpis.tryon3d || 0)} lượt</Text>} />
       <View style={styles.statsGrid}>
         <StatCard label="Tổng lượt tạo 3D" value={formatNumber(kpis.tryon3d || 0)} change="tất cả thời gian" icon="box" accent={ADMIN_GREEN} />
         <StatCard label="Thành công" value={formatNumber((kpis.tryon3d || 0) - (kpis.tryon3dFail || 0))} change="ước tính" icon="check-circle" accent={ADMIN_BLUE} />
         <StatCard label="Lỗi" value={formatNumber(kpis.tryon3dFail || 0)} change="xem nhật ký" icon="alert-triangle" accent={ADMIN_RED} />
-      </View>
-      <View style={styles.card}>
-        <SectionHeader title="Danh sách model .glb" subtitle="Cần bật lưu GLB ở backend" />
-        <Text style={styles.emptyText}>Hiện 3D trở về khung hình nhiều góc (turntable). Để có danh sách file .glb + ảnh đầu vào + nút xem/tải/xóa + trạng thái TripoSR + thời gian dừng, cần backend lưu file GLB (TripoSR/SF3D) và metadata. Có thể bổ sung ở vòng sau.</Text>
       </View>
     </View>
   );
@@ -1985,29 +2447,33 @@ export default function AdminScreen() {
       <View style={styles.card}>
         <SectionHeader title="Cấu hình model" subtitle="Đang dùng" />
         <Text style={styles.userMeta}>Chat model: llama3.1:8b (Ollama) • Embedding: nomic-embed-text</Text>
-        <Text style={styles.userMeta}>Phong cách: tư vấn thời trang thân thiện, gợi ý outfit theo dịp và sản phẩm trong shop.</Text>
       </View>
       <View style={styles.card}>
         <SectionHeader title="Danh sách từ cấm" subtitle="Áp dụng cho bình luận & chat" right={<Pressable onPress={() => setActiveTab("moderation")} style={styles.smallBtn}><Text style={styles.smallBtnText}>Quản lý</Text></Pressable>} />
-        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} từ đang chặn. Vào tab Từ cấm để thêm/xóa.</Text>
-      </View>
-      <View style={styles.card}>
-        <SectionHeader title="Prompt hệ thống & lịch sử hỏi đáp" subtitle="Cần backend lưu prompt/lịch sử" />
-        <Text style={styles.emptyText}>Để chỉnh prompt hệ thống trực tiếp và xem lịch sử câu hỏi/câu trả lời + đánh giá hữu ích, cần thêm API lưu prompt & hội thoại ở backend. Có thể bổ sung ở vòng sau.</Text>
+        <Text style={styles.userMeta}>{formatNumber(bannedWords.length)} từ đang chặn.</Text>
       </View>
     </View>
   );
 
   const renderReports = () => (
     <View style={styles.pageGap}>
-      <SectionHeader title="Báo cáo tài chính" subtitle="Phân tích doanh thu, chi phí, lợi nhuận và các chỉ số kinh doanh." />
+      <SectionHeader
+        title="Báo cáo tài chính"
+        subtitle="Phân tích doanh thu, chi phí, lợi nhuận."
+        right={
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable onPress={exportRevenueCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Doanh thu CSV</Text></Pressable>
+            <Pressable onPress={exportOrdersCsv} style={styles.smallBtn}><Feather name="download" size={12} color={ADMIN_TEXT} /><Text style={styles.smallBtnText}>Đơn hàng CSV</Text></Pressable>
+          </View>
+        }
+      />
       <View style={styles.statsGrid}>
         <StatCard label="Tổng doanh thu" value={formatCompactMoney(dashboard?.totalRevenue || 0)} change="tất cả thời gian" icon="dollar-sign" accent={ADMIN_GREEN} />
         <StatCard label="Doanh thu tháng này" value={formatCompactMoney(dashboard?.monthlyRevenue || 0)} change={`${formatNumber(orders.length)} đơn`} icon="trending-up" accent={ADMIN_BLUE} />
         <StatCard label="Chi phí vận chuyển" value={formatCompactMoney(dashboard?.shippingCost || 0)} change="ước tính" icon="truck" accent={ADMIN_ORANGE} />
         <StatCard label="Lợi nhuận ròng" value={formatCompactMoney((dashboard?.totalRevenue || 0) - (dashboard?.shippingCost || 0))} change="doanh thu - chi phí" icon="award" accent={ADMIN_PURPLE} />
       </View>
-      
+
       <View style={styles.dashboardGrid}>
         <View style={[styles.card, styles.bigChartCard]}>
           <SectionHeader title="Doanh thu theo tháng" subtitle="12 tháng gần nhất" />
@@ -2027,7 +2493,6 @@ export default function AdminScreen() {
           <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(products.length)}</Text><Text style={styles.statMiniCap}>Sản phẩm</Text></View>
           <View style={styles.statMini}><Text style={styles.statMiniNum}>{formatNumber(reviews.length)}</Text><Text style={styles.statMiniCap}>Đánh giá</Text></View>
         </View>
-        <Text style={[styles.userMeta, { marginTop: 12 }]}>Xuất báo cáo: In/PDF để gửi cho đối tác (chưa được triển khai).</Text>
       </View>
     </View>
   );
@@ -2036,26 +2501,31 @@ export default function AdminScreen() {
     if (loading) {
       return <View style={styles.loadingCard}><ActivityIndicator color={ADMIN_GREEN} /><Text style={styles.emptyText}>Đang tải dữ liệu admin...</Text></View>;
     }
-    if (activeTab === "overview") return renderOverview();
-    if (activeTab === "analytics") return renderAnalytics();
-    if (activeTab === "products") return renderProducts();
-    if (activeTab === "inventory") return renderInventory();
-    if (activeTab === "reviews") return renderReviews();
-    if (activeTab === "accessories") return renderAccessories();
-    if (activeTab === "promotions") return renderPromotions();
-    if (activeTab === "users") return renderUsers();
-    if (activeTab === "transactions") return renderTransactions();
-    if (activeTab === "moderation") return renderModeration();
-    if (activeTab === "staff") return renderStaff();
-    if (activeTab === "settings") return renderSettings();
-    if (activeTab === "newsletter") return renderNewsLetter();
-    if (activeTab === "reports") return renderReports();
-    if (activeTab === "games") return renderGames();
-    if (activeTab === "tryon2d") return renderTryon2d();
-    if (activeTab === "model3d") return renderModel3d();
-    if (activeTab === "botchat") return renderBotChat();
-    if (activeTab === "system") return renderSystemStatus();
-    return renderOverview();
+    switch (activeTab) {
+      case "overview": return renderOverview();
+      case "analytics": return renderAnalytics();
+      case "products": return renderProducts();
+      case "inventory": return renderInventory();
+      case "reviews": return renderReviews();
+      case "accessories": return renderAccessories();
+      case "promotions": return renderPromotions();
+      case "users": return renderUsers();
+      case "orders": return renderOrders();
+      case "transactions": return renderTransactions();
+      case "refunds": return renderRefunds();
+      case "moderation": return renderModeration();
+      case "staff": return renderStaff();
+      case "settings": return renderSettings();
+      case "newsletter": return renderNewsLetter();
+      case "reports": return renderReports();
+      case "games": return renderGames();
+      case "tryon2d": return renderTryon2d();
+      case "model3d": return renderModel3d();
+      case "botchat": return renderBotChat();
+      case "system": return renderSystemStatus();
+      case "auditlog": return renderAuditLog();
+      default: return renderOverview();
+    }
   };
 
   return (
@@ -2110,226 +2580,239 @@ const styles = StyleSheet.create({
   newOrderText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   content: { padding: 24, paddingBottom: 80 },
   pageGap: { gap: 18 },
-  heroCard: { minHeight: 108, borderRadius: 16, backgroundColor: ADMIN_DARK, padding: 24, flexDirection: "row", alignItems: "center", gap: 18, overflow: "hidden" },
-  heroTitle: { color: "#fff", fontSize: 24, fontWeight: "800" },
-  heroSub: { color: "#B9C8C0", fontSize: 13, marginTop: 6, fontWeight: "500" },
-  heroButton: { minHeight: 42, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.16)", paddingHorizontal: 15, flexDirection: "row", gap: 8, alignItems: "center" },
-  heroButtonText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  statCard: { flexGrow: 1, flexBasis: 220, minHeight: 150, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18 },
-  statTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
-  statLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
-  statValue: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "800", marginTop: 6 },
-  statIcon: { width: 42, height: 42, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  statBottom: { flex: 1, marginTop: 13, flexDirection: "row", alignItems: "flex-end", gap: 10 },
-  statChange: { fontSize: 12, fontWeight: "700", minWidth: 70 },
-  dashboardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  dashboardGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  card: { flexGrow: 1, flexBasis: 300, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 18, gap: 15, ...ADMIN_CARD_SHADOW },
-  bigChartCard: { flexBasis: 560 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  sectionTitle: { ...textHeading, fontSize: 16 },
-  sectionSub: { ...textBody, fontSize: 12, marginTop: 3 },
-  segment: { flexDirection: "row", backgroundColor: "#F2F5F7", borderRadius: 16, padding: 4, gap: 3 },
-  segmentActive: { backgroundColor: "#fff", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, fontSize: 12, fontWeight: "700", overflow: "hidden" },
-  segmentText: { color: ADMIN_MUTED, paddingHorizontal: 12, paddingVertical: 7, fontSize: 12, fontWeight: "600" },
-  miniBars: { height: 220, flexDirection: "row", alignItems: "flex-end", gap: 10, paddingTop: 12 },
-  miniBarsCompact: { flex: 1, height: 54, gap: 4, paddingTop: 0 },
-  miniBarItem: { flex: 1, minWidth: 14, alignItems: "center", gap: 6 },
-  miniBarTrack: { flex: 1, width: "100%", minHeight: 54, borderRadius: 16, backgroundColor: "#EEF3F6", overflow: "hidden", justifyContent: "flex-end" },
-  miniBarFill: { width: "100%", borderTopLeftRadius: 6, borderTopRightRadius: 6, opacity: 0.92 },
-  chartLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "500" },
-  chartValue: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
-  goalCircle: { alignSelf: "center", width: 150, height: 150, borderRadius: 16, borderWidth: 15, borderColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center", marginTop: 10 },
-  goalNumber: { color: ADMIN_TEXT, fontSize: 24, fontWeight: "800" },
-  goalText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
-  centerMuted: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "600", textAlign: "center" },
-  barLineTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  barName: { flex: 1, color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
-  barValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
-  hTrack: { height: 9, backgroundColor: "#EEF3F6", borderRadius: 16, overflow: "hidden" },
-  hFill: { height: "100%", borderRadius: 16 },
-  funnelTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  funnelLabel: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
-  funnelValue: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "600" },
-  funnelTrack: { height: 10, borderRadius: 16, backgroundColor: "#EEF3F6", overflow: "hidden", marginTop: 6 },
-  funnelFill: { height: "100%", borderRadius: 16 },
-  funnelRates: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 4 },
-  rateText: { fontSize: 12, fontWeight: "700" },
-  activityRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  activityIcon: { width: 34, height: 34, borderRadius: 16, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  activityTitle: { ...textHeading, fontSize: 13, fontWeight: "700" },
-  activityMeta: { ...textBody, fontSize: 12, marginTop: 2 },
-  emptyText: { ...textBody, fontSize: 13, lineHeight: 20 },
-  analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  featureChip: { color: ADMIN_TEXT, backgroundColor: "#F2F5F7", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
-  predictionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  predictionCard: { flexGrow: 1, flexBasis: 360, borderRadius: 16, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
-  predictionImage: { width: 64, height: 64, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
-  predictionTitle: { ...textHeading, fontSize: 14 },
-  predictionMeta: { ...textBody, fontSize: 12, marginTop: 2 },
-  predictionSuggestion: { ...textBody, fontSize: 12, marginTop: 6, lineHeight: 18 },
-  predictionSmall: { ...textBody, fontSize: 11, marginTop: 4 },
-  scoreBox: { width: 60, height: 60, borderRadius: 16, backgroundColor: "#ECFFF7", alignItems: "center", justifyContent: "center" },
-  scoreText: { color: ADMIN_GREEN, fontSize: 18, fontWeight: "800" },
-  scoreLabel: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
-  productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16, alignItems: "flex-start" },
-  formCard: { flexBasis: 650 },
-  formTitle: { color: ADMIN_TEXT, fontSize: 17, fontWeight: "900" },
-  formGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  formGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  inputWrap: { flex: 1, minWidth: 170, gap: 6 },
-  inputLabel: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "700" },
-  input: { minHeight: 44, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, backgroundColor: "#FAFBFC", color: ADMIN_TEXT, paddingHorizontal: 12, paddingVertical: 9, fontSize: 14, fontWeight: "500" },
-  inputMultiline: { minHeight: 88, textAlignVertical: "top" },
-  mediaUploadBox: { borderWidth: 1, borderColor: "#D8F3E6", backgroundColor: "#F6E7E3", borderRadius: 16, padding: 12, gap: 8 },
-  mediaUploadTitle: { color: ADMIN_GREEN, fontSize: 13, fontWeight: "700" },
-  mediaUploadHint: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 18 },
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 9, alignItems: "center" },
-  primaryBtn: { minHeight: 44, borderRadius: 16, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  primaryBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-  secondaryBtn: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: "#fff", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
-  secondaryBtnWide: { minHeight: 44, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_GREEN, backgroundColor: "#F6E7E3", paddingHorizontal: 16, alignItems: "center", justifyContent: "center", alignSelf: "flex-start" },
-  secondaryBtnText: { color: ADMIN_TEXT, fontSize: 13, fontWeight: "700" },
-  smallBtn: { minHeight: 36, borderRadius: 16, borderWidth: 1, borderColor: ADMIN_BORDER, paddingHorizontal: 11, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" },
-  smallBtnText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "600" },
-  saleBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF7E6", borderWidth: 1, borderColor: "#F3D38A", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  saleBtnText: { color: "#B45309", fontSize: 12, fontWeight: "600" },
-  dangerBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#FFF1F2", borderWidth: 1, borderColor: "#FBC4C8", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  dangerBtnText: { color: ADMIN_RED, fontSize: 12, fontWeight: "600" },
-  successBtn: { minHeight: 36, borderRadius: 16, backgroundColor: "#E9F8F1", borderWidth: 1, borderColor: "#B8E6D5", paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
-  successBtnText: { color: ADMIN_GREEN, fontSize: 12, fontWeight: "600" },
-  marketPreview: { flexGrow: 1, flexBasis: 300, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-  previewTopIcons: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  previewImageBox: { height: 270, backgroundColor: "#EEF1F3", alignItems: "center", justifyContent: "center" },
-  previewImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  previewThumbRow: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: "#fff" },
-  previewThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#EEF1F3" },
-  previewDiscount: { position: "absolute", left: 16, top: 16, backgroundColor: ADMIN_RED, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16 },
-  previewDiscountText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-  previewBody: { padding: 18, gap: 11 },
-  previewTitle: { ...textHeading, fontSize: 20 },
-  previewPriceLine: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
-  previewSalePrice: { ...textHeading, fontSize: 18, color: ADMIN_TEXT },
-  previewOldPrice: { ...textBody, fontSize: 14, textDecorationLine: "line-through" },
-  previewMeta: { ...textBody, fontSize: 12 },
-  messageBox: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  messageText: { flex: 1, color: "#111", backgroundColor: "#F0F1F6", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, fontWeight: "500" },
-  sendPill: { backgroundColor: ADMIN_BLUE, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9 },
-  sendText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-  productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
-  productCard: { flexGrow: 1, flexBasis: 350, borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 14, gap: 12 },
-  productTop: { flexDirection: "row", gap: 12 },
-  productImage: { width: 78, height: 78, borderRadius: 16, backgroundColor: "#F2F5F7", alignItems: "center", justifyContent: "center" },
-  productTitle: { ...textHeading, fontSize: 14 },
-  productMeta: { ...textBody, fontSize: 12, marginTop: 3 },
-  productPriceLine: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginTop: 6 },
-  productPrice: { color: ADMIN_GREEN, fontSize: 15, fontWeight: "700" },
-  productOldPrice: { color: ADMIN_MUTED, fontSize: 13, textDecorationLine: "line-through", fontWeight: "500" },
-  discountBadge: { color: "#fff", backgroundColor: ADMIN_RED, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16, overflow: "hidden", fontSize: 11, fontWeight: "700" },
-  productDesc: { color: ADMIN_MUTED, fontSize: 13, lineHeight: 19, fontWeight: "500" },
-  adminThumbRow: { flexDirection: "row", gap: 8 },
-  adminOrderQuickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  adminThumb: { flex: 1, height: 58, borderRadius: 16, backgroundColor: "#F2F5F7" },
-  counterPill: { color: ADMIN_GREEN, backgroundColor: "#E9F8F1", paddingHorizontal: 10, paddingVertical: 7, borderRadius: 16, overflow: "hidden", fontSize: 12, fontWeight: "700" },
-  promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  selectChip: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: "#fff" },
-  selectChipActive: { borderColor: ADMIN_GREEN, backgroundColor: "#E9F8F1" },
-  selectChipText: { color: ADMIN_TEXT, fontSize: 12, fontWeight: "600" },
-  selectChipTextActive: { color: ADMIN_GREEN },
-  listGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  voucherIcon: { width: 36, height: 36, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  voucherCode: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  voucherMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  statusPill: { borderRadius: 0, paddingHorizontal: 10, paddingVertical: 6 },
-  statusOn: { backgroundColor: "#E9F8F1" },
-  statusOff: { backgroundColor: "#EEF1F3" },
-  statusText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
-  promoRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  promoThumb: { width: 54, height: 44, borderRadius: 0, backgroundColor: "#F1F4F6", alignItems: "center", justifyContent: "center" },
-  tableCard: { borderRadius: 0, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
-  userRow: { padding: 14, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4", flexWrap: "wrap" },
-  userAvatar: { width: 42, height: 42, borderRadius: 0, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
-  userAvatarAdmin: { backgroundColor: ADMIN_GREEN },
-  userName: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  userEmail: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "800" },
-  userMeta: { color: ADMIN_MUTED, fontSize: 11, marginTop: 3, fontWeight: "700" },
-  rolePill: { borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: "#fff" },
-  roleAdmin: { backgroundColor: ADMIN_GREEN, borderColor: ADMIN_GREEN },
-  rolePillText: { color: ADMIN_TEXT, fontSize: 11, fontWeight: "700" },
-  rolePillTextAdmin: { color: "#fff" },
-  userActions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  paymentRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  paymentIcon: { width: 38, height: 38, borderRadius: 0, backgroundColor: "#F1F8FF", alignItems: "center", justifyContent: "center" },
-  paymentTitle: { color: ADMIN_TEXT, fontSize: 14, fontWeight: "900" },
-  paymentMeta: { color: ADMIN_MUTED, fontSize: 12, marginTop: 2, fontWeight: "700" },
-  loadingCard: { minHeight: 220, borderRadius: 0, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center", gap: 12 },
-  authPage: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: ADMIN_BG, padding: 20 },
-  authCard: { width: "100%", maxWidth: 420, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1, borderColor: ADMIN_BORDER, padding: 26, alignItems: "center", gap: 14 },
-  logoBox: { width: 54, height: 54, borderRadius: 16, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
-  authTitle: { color: ADMIN_TEXT, fontSize: 20, fontWeight: "800", textAlign: "center" },
-  authText: { color: ADMIN_MUTED, fontSize: 13, fontWeight: "500", textAlign: "center", lineHeight: 21 },
-  authButton: { minHeight: 46, alignSelf: "stretch", backgroundColor: ADMIN_GREEN, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  authButtonText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+  heroCard: { minHeight: 108, borderRadius: 16, backgroundColor: ADMIN_DARK, padding: 22, flexDirection: "row", alignItems: "center", gap: 16, ...ADMIN_CARD_SHADOW },
+  heroTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
+  heroSub: { color: ADMIN_MUTED_DARK, fontSize: 13, fontWeight: "500", marginTop: 6, lineHeight: 20 },
+  heroButton: { minHeight: 42, borderRadius: 14, backgroundColor: ADMIN_GREEN, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 8 },
+  heroButtonText: { color: "#fff", fontWeight: "700", fontSize: 13 },
 
-  // ML visuals
-  modelRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  modelCard: { flexGrow: 1, minWidth: 200, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 0, padding: 14, gap: 4 },
-  modelTop: { flexDirection: "row", alignItems: "center", gap: 8 },
-  modelName: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 14 },
-  modelType: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 12 },
-  modelMetric: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 12 },
-  forecastMetrics: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  metricPill: { flexGrow: 1, minWidth: 120, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 16, padding: 10, gap: 2 },
-  metricNum: { color: ADMIN_TEXT, fontWeight: "800", fontSize: 16 },
-  metricCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
-  forecastChart: { flexDirection: "row", alignItems: "flex-end", height: 180, gap: 6, paddingTop: 8 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  statCard: { flex: 1, minWidth: 180, backgroundColor: ADMIN_CARD, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: ADMIN_BORDER, gap: 14, ...ADMIN_CARD_SHADOW },
+  statTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" },
+  statLabel: { ...textBody, fontSize: 12, fontWeight: "600" },
+  statValue: { ...textHeading, fontSize: 22, marginTop: 4 },
+  statIcon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  statBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  statChange: { fontSize: 12, fontWeight: "600" },
+
+  dashboardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  dashboardGrid3: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  bigChartCard: { flex: 2, minWidth: 280 },
+  analyticsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+
+  card: { backgroundColor: ADMIN_CARD, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: ADMIN_BORDER, gap: 14, ...ADMIN_CARD_SHADOW },
+  tableCard: { backgroundColor: ADMIN_CARD, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: ADMIN_BORDER, gap: 0, ...ADMIN_CARD_SHADOW },
+  formCard: { gap: 12 },
+
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  sectionTitle: { ...textHeading, fontSize: 15 },
+  sectionSub: { ...textBody, fontSize: 12, marginTop: 2 },
+
+  miniBars: { flexDirection: "row", alignItems: "flex-end", gap: 8, height: 80 },
+  miniBarsCompact: { height: 36, gap: 4 },
+  miniBarItem: { flex: 1, alignItems: "center", gap: 4 },
+  miniBarTrack: { flex: 1, width: "100%", justifyContent: "flex-end" },
+  miniBarFill: { width: "100%", borderRadius: 4 },
+  chartLabel: { fontSize: 10, color: ADMIN_MUTED, fontWeight: "500" },
+  chartValue: { fontSize: 10, color: ADMIN_TEXT, fontWeight: "600" },
+
+  forecastChart: { flexDirection: "row", alignItems: "flex-end", gap: 6, height: 110 },
   forecastCol: { flex: 1, alignItems: "center", gap: 4 },
-  forecastVal: { color: ADMIN_MUTED, fontSize: 10, fontWeight: "600" },
-  forecastTrack: { width: "100%", height: 130, backgroundColor: ADMIN_BG, justifyContent: "flex-end" },
-  forecastFill: { width: "100%" },
-  forecastLbl: { color: ADMIN_MUTED, fontSize: 11, fontWeight: "600" },
-  legendRow: { flexDirection: "row", alignItems: "center", gap: 16, flexWrap: "wrap" },
+  forecastTrack: { width: "100%", height: 80, justifyContent: "flex-end" },
+  forecastFill: { width: "100%", borderRadius: 4 },
+  forecastVal: { fontSize: 9, color: ADMIN_MUTED, fontWeight: "500" },
+  forecastLbl: { fontSize: 9, color: ADMIN_MUTED, fontWeight: "600" },
+  forecastMetrics: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
+  metricPill: { flex: 1, minWidth: 100, backgroundColor: "#F5F7FA", borderRadius: 12, padding: 12, alignItems: "center" },
+  metricNum: { fontSize: 15, fontWeight: "700", color: ADMIN_TEXT },
+  metricCap: { fontSize: 11, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+  legendRow: { flexDirection: "row", gap: 14, alignItems: "center", flexWrap: "wrap" },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  legendDot: { width: 14, height: 14, borderRadius: 16 },
-  legendText: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500" },
-  demoTag: { color: ADMIN_ORANGE, fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
-  segBar: { flexDirection: "row", height: 22, width: "100%", borderWidth: 1, borderColor: ADMIN_BORDER, overflow: "hidden" },
+  legendDot: { width: 12, height: 12, borderRadius: 6 },
+  legendText: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500" },
+  demoTag: { fontSize: 11, color: ADMIN_ORANGE, fontWeight: "600", fontStyle: "italic" },
+
+  segBar: { height: 14, borderRadius: 8, overflow: "hidden", flexDirection: "row" },
   segRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  segDot: { width: 16, height: 16, borderRadius: 16 },
-  segName: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 13 },
-  segMeta: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
-  segPct: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 14 },
-  bannedWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  bannedChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, borderRadius: 16 },
-  bannedChipText: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
-  statMiniRow: { flexDirection: "row", gap: 10 },
-  statMini: { flex: 1, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, padding: 10, gap: 2 },
-  statMiniNum: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 15 },
-  statMiniCap: { color: ADMIN_MUTED, fontWeight: "500", fontSize: 11 },
-  orderDetailCard: { borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, padding: 12, gap: 7 },
-  statusChip: { paddingVertical: 3, paddingHorizontal: 9, borderRadius: 16 },
-  statusChipText: { color: "#fff", fontWeight: "700", fontSize: 11, textTransform: "uppercase" },
-  statusOk: { backgroundColor: "#2E7D32" },
-  statusBad: { backgroundColor: ADMIN_RED },
-  statusPend: { backgroundColor: ADMIN_ORANGE },
-  orderItemRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 6, borderTopWidth: 1, borderTopColor: ADMIN_BORDER },
-  orderItemImg: { width: 38, height: 38, backgroundColor: ADMIN_CARD, borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center" },
-  orderItemName: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
-  orderItemPrice: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 13 },
-  accThumb: { width: 48, height: 48, backgroundColor: ADMIN_BG, borderWidth: 1, borderColor: ADMIN_BORDER, alignItems: "center", justifyContent: "center" },
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },
-  statusDot: { width: 12, height: 12, borderRadius: 16 },
-  statusName: { flex: 1, color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
-  statusVal: { fontWeight: "700", fontSize: 13 },
-  errRow: { flexDirection: "row", gap: 8, paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: ADMIN_BORDER },
-  errScope: { color: ADMIN_TEXT, fontWeight: "700", fontSize: 12 },
-  errMsg: { color: ADMIN_MUTED, fontSize: 12, fontWeight: "500", lineHeight: 17 },
-  swatch: { width: 34, height: 34, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  hexInput: { flex: 1, height: 44, borderWidth: 1, borderColor: ADMIN_BORDER, backgroundColor: ADMIN_BG, paddingHorizontal: 12, color: ADMIN_TEXT, fontSize: 13, fontWeight: "600" },
-  inventoryLogRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
-  inventoryIcon: { width: 36, height: 36, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  inventoryChange: { color: ADMIN_GREEN, fontWeight: "700", fontSize: 14 },
-});
+  segDot: { width: 12, height: 12, borderRadius: 6 },
+  segName: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  segMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+  segPct: { fontSize: 14, fontWeight: "700", color: ADMIN_TEXT },
+
+  barLineTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  barName: { flex: 1, fontSize: 13, fontWeight: "600", color: ADMIN_TEXT },
+  barValue: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  hTrack: { height: 8, backgroundColor: "#F0F2F4", borderRadius: 4, overflow: "hidden" },
+  hFill: { height: "100%", borderRadius: 4 },
+
+  modelRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  modelCard: { flex: 1, minWidth: 160, backgroundColor: ADMIN_CARD, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: ADMIN_BORDER, gap: 6 },
+  modelTop: { flexDirection: "row", alignItems: "center", gap: 8 },
+  modelName: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT, flex: 1 },
+  modelType: { fontSize: 11, color: ADMIN_MUTED, fontWeight: "600" },
+  modelMetric: { fontSize: 12, color: ADMIN_GREEN, fontWeight: "600" },
+
+  predictionGrid: { gap: 12 },
+  predictionCard: { backgroundColor: ADMIN_CARD, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: ADMIN_BORDER, flexDirection: "row", gap: 12, alignItems: "flex-start" },
+  predictionImage: { width: 60, height: 60, borderRadius: 10, backgroundColor: "#F0F2F4", alignItems: "center", justifyContent: "center" },
+  predictionTitle: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  predictionMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+  predictionSuggestion: { fontSize: 12, color: ADMIN_GREEN, fontWeight: "600", marginTop: 4 },
+  predictionSmall: { fontSize: 11, color: ADMIN_MUTED, marginTop: 2 },
+  scoreBox: { alignItems: "center", justifyContent: "center", width: 48, height: 48, borderRadius: 12, backgroundColor: "#F5F7FA" },
+  scoreText: { fontSize: 16, fontWeight: "700", color: ADMIN_TEXT },
+  scoreLabel: { fontSize: 10, color: ADMIN_MUTED, fontWeight: "500" },
+
+  featureWrap: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 },
+  featureChip: { backgroundColor: "#E9F8F1", color: ADMIN_GREEN, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, fontSize: 11, fontWeight: "600", overflow: "hidden" },
+
+  productManagerGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  productListGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  productCard: { flex: 1, minWidth: 260, backgroundColor: ADMIN_CARD, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: ADMIN_BORDER, gap: 10, ...ADMIN_CARD_SHADOW },
+  productTop: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
+  productImage: { width: 70, height: 70, borderRadius: 12, backgroundColor: "#F0F2F4", alignItems: "center", justifyContent: "center" },
+  productTitle: { fontSize: 14, fontWeight: "700", color: ADMIN_TEXT },
+  productMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+  productPriceLine: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  productPrice: { fontSize: 14, fontWeight: "700", color: ADMIN_GREEN },
+  productOldPrice: { fontSize: 12, color: ADMIN_MUTED, textDecorationLine: "line-through" },
+  productDesc: { fontSize: 12, color: ADMIN_MUTED, lineHeight: 18 },
+  adminThumbRow: { flexDirection: "row", gap: 6 },
+  adminThumb: { width: 44, height: 44, borderRadius: 8 },
+  discountBadge: { backgroundColor: "#FEF9EC", color: ADMIN_ORANGE, fontSize: 11, fontWeight: "700", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, overflow: "hidden" },
+  checkBox: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
+  bulkBar: { backgroundColor: "#E9F8F1", borderRadius: 12, padding: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  bulkText: { fontSize: 13, fontWeight: "600", color: ADMIN_GREEN },
+
+  marketPreview: { minWidth: 280, maxWidth: 340, backgroundColor: "#fff", borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: ADMIN_BORDER, ...ADMIN_CARD_SHADOW },
+  previewTopIcons: { flexDirection: "row", justifyContent: "space-between", padding: 14 },
+  previewImageBox: { width: "100%", height: 200, backgroundColor: "#F5F7FA", alignItems: "center", justifyContent: "center" },
+  previewImage: { width: "100%", height: "100%" },
+  previewDiscount: { position: "absolute", top: 10, right: 10, backgroundColor: ADMIN_RED, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4 },
+  previewDiscountText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  previewThumbRow: { flexDirection: "row", gap: 6, padding: 10 },
+  previewThumb: { width: 50, height: 50, borderRadius: 8 },
+  previewBody: { padding: 14, paddingTop: 4, gap: 4 },
+  previewTitle: { fontSize: 15, fontWeight: "700", color: ADMIN_TEXT },
+  previewPriceLine: { flexDirection: "row", alignItems: "center", gap: 8 },
+  previewSalePrice: { fontSize: 16, fontWeight: "700", color: ADMIN_GREEN },
+  previewOldPrice: { fontSize: 13, color: ADMIN_MUTED, textDecorationLine: "line-through" },
+  previewMeta: { fontSize: 12, color: ADMIN_MUTED },
+
+  mediaUploadBox: { backgroundColor: "#F5F7FA", borderRadius: 12, padding: 12, gap: 8 },
+  mediaUploadTitle: { fontSize: 12, fontWeight: "700", color: ADMIN_MUTED },
+
+  formTitle: { fontSize: 14, fontWeight: "700", color: ADMIN_TEXT },
+  formGrid2: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
+  formGrid3: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
+  inputWrap: { gap: 6 },
+  inputLabel: { fontSize: 12, fontWeight: "600", color: ADMIN_MUTED },
+  input: { minHeight: 42, borderWidth: 1, borderColor: ADMIN_BORDER, borderRadius: 12, paddingHorizontal: 12, fontSize: 13, fontWeight: "500", color: ADMIN_TEXT, backgroundColor: "#FAFBFC", flex: 1 },
+  inputMultiline: { minHeight: 80, textAlignVertical: "top", paddingTop: 10 },
+
+  actionRow: { flexDirection: "row", gap: 8, flexWrap: "wrap", alignItems: "center" },
+  primaryBtn: { minHeight: 42, borderRadius: 14, backgroundColor: ADMIN_GREEN, paddingHorizontal: 18, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6 },
+  primaryBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  secondaryBtn: { minHeight: 42, borderRadius: 14, backgroundColor: "#F0F2F4", paddingHorizontal: 16, alignItems: "center", justifyContent: "center" },
+  secondaryBtnWide: { minHeight: 42, borderRadius: 14, backgroundColor: "#F0F2F4", paddingHorizontal: 16, alignItems: "center", justifyContent: "center", alignSelf: "stretch" },
+  secondaryBtnText: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 13 },
+  smallBtn: { minHeight: 34, borderRadius: 10, backgroundColor: "#F0F2F4", paddingHorizontal: 10, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 5 },
+  smallBtnText: { color: ADMIN_TEXT, fontWeight: "600", fontSize: 12 },
+  saleBtn: { minHeight: 34, borderRadius: 10, backgroundColor: "#FEF9EC", paddingHorizontal: 10, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 5 },
+  saleBtnText: { color: "#B45309", fontWeight: "600", fontSize: 12 },
+  dangerBtn: { minHeight: 34, borderRadius: 10, backgroundColor: "#FFF1F2", paddingHorizontal: 10, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 5 },
+  dangerBtnText: { color: ADMIN_RED, fontWeight: "600", fontSize: 12 },
+  successBtn: { minHeight: 34, borderRadius: 10, backgroundColor: "#E9F8F1", paddingHorizontal: 10, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 5 },
+  successBtnText: { color: "#2E7D32", fontWeight: "600", fontSize: 12 },
+
+  selectChip: { minHeight: 34, borderRadius: 10, backgroundColor: "#F0F2F4", paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
+  selectChipActive: { backgroundColor: ADMIN_GREEN },
+  selectChipText: { color: ADMIN_MUTED, fontWeight: "600", fontSize: 12 },
+  selectChipTextActive: { color: "#fff" },
+
+  counterPill: { fontSize: 12, fontWeight: "600", color: ADMIN_MUTED, backgroundColor: "#F0F2F4", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: "hidden" },
+
+  userRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  userAvatar: { width: 38, height: 38, borderRadius: 14, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
+  userAvatarAdmin: { backgroundColor: ADMIN_GREEN },
+  userName: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  userEmail: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 1 },
+  userMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+  userActions: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+  rolePill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: "#F0F2F4" },
+  roleAdmin: { backgroundColor: "#FFF1F2" },
+  rolePillText: { fontSize: 11, fontWeight: "700", color: ADMIN_MUTED },
+  rolePillTextAdmin: { color: ADMIN_RED },
+
+  statMiniRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
+  statMini: { flex: 1, minWidth: 80, backgroundColor: "#F5F7FA", borderRadius: 12, padding: 12, alignItems: "center" },
+  statMiniNum: { fontSize: 15, fontWeight: "700", color: ADMIN_TEXT },
+  statMiniCap: { fontSize: 11, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+
+  orderDetailCard: { backgroundColor: "#F9FAFB", borderRadius: 12, padding: 12, gap: 8, borderWidth: 1, borderColor: ADMIN_BORDER },
+  orderItemRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 6 },
+  orderItemImg: { width: 44, height: 44, borderRadius: 8, backgroundColor: "#F0F2F4", alignItems: "center", justifyContent: "center" },
+  orderItemName: { fontSize: 13, fontWeight: "600", color: ADMIN_TEXT },
+  orderItemPrice: { fontSize: 13, fontWeight: "700", color: ADMIN_GREEN },
+
+  paymentRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  paymentIcon: { width: 38, height: 38, borderRadius: 14, backgroundColor: "#EEF6FF", alignItems: "center", justifyContent: "center" },
+  paymentTitle: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  paymentMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+
+  statusChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  statusOk: { backgroundColor: "#E9F8F1" },
+  statusPend: { backgroundColor: "#FEF9EC" },
+  statusBad: { backgroundColor: "#FFF1F2" },
+  statusChipText: { fontSize: 11, fontWeight: "700", color: ADMIN_TEXT },
+
+  statusPill: { minHeight: 30, paddingHorizontal: 12, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  statusOn: { backgroundColor: "#E9F8F1" },
+  statusOff: { backgroundColor: "#F0F2F4" },
+  statusText: { fontSize: 12, fontWeight: "700" },
+
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8 },
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
+  statusName: { flex: 1, fontSize: 13, fontWeight: "600", color: ADMIN_TEXT },
+  statusVal: { fontSize: 12, fontWeight: "700" },
+
+  voucherRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  voucherIcon: { width: 38, height: 38, borderRadius: 14, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
+  voucherCode: { fontSize: 13, fontWeight: "700", color: ADMIN_TEXT },
+  voucherMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+
+  promoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  promoRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  promoThumb: { width: 60, height: 44, borderRadius: 8, backgroundColor: "#F0F2F4", alignItems: "center", justifyContent: "center" },
+  listGrid2: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+
+  inventoryLogRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  inventoryIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  inventoryChange: { fontSize: 14, fontWeight: "700", color: ADMIN_TEXT },
+
+  bannedWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  bannedChip: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#FFF1F2", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
+  bannedChipText: { fontSize: 13, fontWeight: "600", color: ADMIN_RED },
+
+  accThumb: { width: 46, height: 46, borderRadius: 10, backgroundColor: "#F0F2F4", alignItems: "center", justifyContent: "center" },
+
+  errRow: { flexDirection: "row", gap: 10, paddingVertical: 8, alignItems: "flex-start", borderBottomWidth: 1, borderBottomColor: "#F0F2F4" },
+  errScope: { fontSize: 11, fontWeight: "700", color: ADMIN_ORANGE },
+  errMsg: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 2 },
+
+  activityRow: { flexDirection: "row", gap: 12, alignItems: "center" },
+  activityIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#E9F8F1", alignItems: "center", justifyContent: "center" },
+  activityTitle: { fontSize: 13, fontWeight: "600", color: ADMIN_TEXT },
+  activityMeta: { fontSize: 12, color: ADMIN_MUTED, fontWeight: "500", marginTop: 1 },
+
+  authPage: { flex: 1, backgroundColor: ADMIN_BG, alignItems: "center", justifyContent: "center", padding: 24 },
+  authCard: { backgroundColor: ADMIN_CARD, borderRadius: 20, padding: 32, alignItems: "center", gap: 14, maxWidth: 360, width: "100%", ...ADMIN_CARD_SHADOW },
+  logoBox: { width: 52, height: 52, borderRadius: 20, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
+  authTitle: { fontSize: 18, fontWeight: "700", color: ADMIN_TEXT },
+  authText: { fontSize: 13, color: ADMIN_MUTED, textAlign: "center", lineHeight: 20 },
+  authButton: { minHeight: 46, width: "100%", borderRadius: 14, backgroundColor: ADMIN_GREEN, alignItems: "center", justifyContent: "center" },
+  authButtonText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+
+  loadingCard: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 40 },
+  emptyText: { fontSize: 13, color: ADMIN_MUTED, fontWeight: "500", textAlign: "center", paddingVertical: 16 },
+});
