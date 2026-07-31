@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ghi đè riêng cho debug build. Khai báo networkSecurityConfig khiến Android bỏ
+  qua android:usesCleartextTraffic của debug/AndroidManifest.xml, nên bản debug
+  cần tự khai báo lại cleartext (Metro dev server dùng http://127.0.0.1:8081)
+  cộng với trust-anchor riêng cho sandbox VNPay như bản main.
+-->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system"/>
+    </trust-anchors>
+  </base-config>
+  <domain-config>
+    <domain includeSubdomains="true">vnpayment.vn</domain>
+    <trust-anchors>
+      <certificates src="@raw/vnpay_ca"/>
+      <certificates src="system"/>
+    </trust-anchors>
+  </domain-config>
+</network-security-config>

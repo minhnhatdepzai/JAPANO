@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAPANO · Admin</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">ジ</div><div><b>JAPANO</b><small>CỔNG QUẢN TRỊ</small></div></div>
+    <nav class="nav" id="nav">
+      <div class="grp">Tổng quan</div>
+      <a data-route="dashboard" class="on"><span class="ic">▦</span>Bảng điều khiển</a>
+      <div class="grp">Bán hàng</div>
+      <a data-route="orders"><span class="ic">🧾</span>Đơn hàng<span class="tag" id="nav-orders">0</span></a>
+      <a data-route="payments"><span class="ic">💳</span>Thanh toán trực tuyến<span class="tag" id="nav-payments">0</span></a>
+      <a data-route="returns"><span class="ic">↩</span>Trả hàng & hoàn tiền<span class="tag" id="nav-returns">0</span></a>
+      <a data-route="products"><span class="ic">👘</span>Sản phẩm<span class="tag" id="nav-products">0</span></a>
+      <a data-route="reviews"><span class="ic">⭐</span>Đánh giá<span class="tag" id="nav-reviews">0</span></a>
+      <a data-route="moderation"><span class="ic">🛡️</span>Kiểm duyệt AI<span class="tag" id="nav-moderation">0</span></a>
+      <a data-route="users"><span class="ic">👥</span>Người dùng<span class="tag" id="nav-users">0</span></a>
+      <div class="grp">Nội dung</div>
+      <a data-route="japan"><span class="ic">🗾</span>Khám phá Nhật Bản<span class="tag" id="nav-japan">0</span></a>
+      <a data-route="notifications"><span class="ic">📣</span>Thông báo</a>
+      <a data-route="categories"><span class="ic">🗂️</span>Danh mục</a>
+      <a data-route="vouchers"><span class="ic">🎟️</span>Mã giảm giá</a>
+      <a data-route="flagcards"><span class="ic">🚩</span>Thẻ địa danh<span class="tag" id="nav-flagcards">0</span></a>
+      <a data-route="banners"><span class="ic">🖼️</span>Ảnh quảng bá</a>
+      <div class="grp">Hệ thống</div>
+      <a data-route="settings"><span class="ic">⚙️</span>Cài đặt</a>
+    </nav>
+    <div class="sidefoot">
+      <div class="st"><span class="dot g" id="s-mongo"></span>MongoDB <span class="faint" style="margin-left:auto" id="s-mongo-t">đã kết nối</span></div>
+      <div class="st"><span class="dot g" id="s-cloud"></span>Cloudinary <span class="faint" style="margin-left:auto" id="s-cloud-t">đã kết nối</span></div>
+      <div class="st"><span class="dot g" id="s-ai"></span>Cổng AI <span class="faint" style="margin-left:auto" id="s-ai-t">trực tuyến</span></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="header">
+      <div>
+        <h1 id="pageTitle">Bảng điều khiển</h1>
+      </div>
+      <div class="search"><span>🔍</span><input id="globalSearch" placeholder="Tìm đơn hàng, sản phẩm, người dùng…"></div>
+      <div class="hspace"></div>
+      <button class="apibtn" id="apiToggle" title="Kiểm tra lại kết nối API"><span class="dot g" id="apiDot"></span><span id="apiText">API trực tuyến</span></button>
+      <div class="hicon" id="refreshBtn" title="Làm mới ngay">🔄</div>
+      <div class="hicon" id="bellBtn">🔔<span class="n"></span></div>
+      <div class="who"><div class="av">A</div><div><div class="nm" id="whoName">Quản trị JAPANO</div><div class="rl" id="whoEmail">Quản trị viên</div></div><button class="iconbtn" id="logoutBtn" title="Đăng xuất">⏻</button></div>
+    </header>
+
+    <div class="content">
+      <div id="banner"></div>
+      <div id="content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="authgate" id="authGate">
+  <form class="authgate-card" id="authGateForm">
+    <div class="authgate-mark">ジ</div>
+    <h2>Đăng nhập quản trị</h2>
+    <p class="authgate-sub">Chỉ tài khoản có quyền quản trị viên mới vào được trang này.</p>
+    <div class="field"><label>Email</label><input class="inp" type="email" id="authGateEmail" autocomplete="username" required></div>
+    <div class="field"><label>Mật khẩu</label><input class="inp" type="password" id="authGatePassword" autocomplete="current-password" required></div>
+    <div class="authgate-error" id="authGateError"></div>
+    <button type="submit" class="btn p blk" id="authGateSubmit">Đăng nhập</button>
+  </form>
+</div>
+<div class="toasts" id="toasts"></div>
+<script src="js/core.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/views-commerce.js"></script>
+<script src="js/views-content.js"></script>
+<script src="js/actions.js"></script>
+</body>
+</html>
+

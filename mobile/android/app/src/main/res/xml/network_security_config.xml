@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sandbox VNPay (sandbox.vnpayment.vn) trình chứng chỉ qua CA trung gian
+  "ZeroSSL ECC DV SSL CA 2", ký bởi root mới "Sectigo Public Server
+  Authentication Root E46" (phát hành 2025). Root này chưa kịp có trong kho
+  chứng chỉ hệ thống của nhiều máy Android đời cũ/tầm trung (ví dụ Android 11
+  trên MIUI), khiến WebView báo "certificate authority is not trusted" dù
+  chứng chỉ hợp lệ. Khai báo CA trung gian làm trust anchor riêng cho đúng
+  domain sandbox này để không phải nới lỏng SSL cho toàn bộ ứng dụng.
+-->
+<network-security-config>
+  <domain-config>
+    <domain includeSubdomains="true">vnpayment.vn</domain>
+    <trust-anchors>
+      <certificates src="@raw/vnpay_ca"/>
+      <certificates src="system"/>
+    </trust-anchors>
+  </domain-config>
+</network-security-config>
