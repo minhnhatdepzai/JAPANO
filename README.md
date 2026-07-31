@@ -9,7 +9,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)
 
 > [!IMPORTANT]
-> JAPANO hiện là **full-stack demo/research prototype**, chưa phải hệ thống production. Backend và Admin chưa có xác thực/RBAC phía server; Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính mặc định nằm trong file JSON cục bộ.
+Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính mặc định nằm trong file JSON cục bộ.
 
 ## Mục lục
 
@@ -57,7 +57,6 @@ Lần chạy đầu, backend tự tạo catalog và dữ liệu demo nếu chưa
 - Loyalty riêng của JAPANO: VIP theo doanh số tháng và bộ sưu tập 7 Flagcard địa danh Nhật Bản.
 - Review verified-purchase, moderation chống lách từ nhạy cảm, reaction hữu ích/không hữu ích và media tùy chọn.
 - Dữ liệu hành chính Việt Nam gồm 34 tỉnh/thành và 3.321 phường/xã.
-- Core backend, Admin, recommendation và bot fallback chạy được không cần GPU.
 
 ## Kiến trúc hệ thống
 
@@ -295,17 +294,6 @@ Sau khi chạy:
 - API: <http://localhost:4100/api>
 - API health: <http://localhost:4100/api/health>
 
-Lần đầu backend tự seed dữ liệu demo. Có thể chạy backend riêng bằng:
-
-```bash
-./start-backend.sh
-```
-
-Trên Windows:
-
-```bat
-start-backend.bat
-```
 
 ### 4. Chạy Android
 
@@ -402,7 +390,7 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 
 | Biến | Mục đích |
 |---|---|
-| `MONGODB_URI`, `MONGODB_DB` | Đồng bộ dữ liệu/cloud views tùy chọn |
+| `MONGODB_URI`, `MONGODB_DB` |
 | `CLOUDINARY_URL` | Upload logo và media review |
 
 ### Payment
@@ -453,12 +441,6 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 JAPANO_API_URL=http://127.0.0.1:4200 npm run verify
 ```
 
-Seed khi DB kiểm thử đang trống:
-
-```bash
-npm run verify -- --seed
-```
-
 ## API chính
 
 | Method | Endpoint | Chức năng |
@@ -498,7 +480,7 @@ japano/
 │   ├── routes/                 # REST routes theo domain
 │   ├── lib/                    # Commerce, AI, analytics, recommendation
 │   ├── test/                   # node:test suites
-│   ├── data/db.json            # JSON source of truth mặc định
+│   ├── data/db.json            
 │   ├── fashn_service.py        # FASHN + FLUX.2 service
 │   ├── motion_service.py       # One-to-All service
 │   └── catvton_service.py      # Optional CatVTON service
@@ -542,34 +524,5 @@ Kiểm tra cả AI stack:
 npm run verify:ai
 ```
 
-Test suite hiện bao phủ recommendation provenance, cache isolation, next-item transition, causal ranker diagnostics, feedback âm, bot model trace, analytics, payment/VIP, Flagcard, moderation và dữ liệu hành chính.
-
-## Giới hạn hiện tại
-
-- Admin chưa có màn login; các mutation endpoint chưa có server-side authentication/authorization.
-- Mobile login/register hiện lưu local bằng AsyncStorage, chưa có JWT/session/password verification.
-- Một số wrapper mobile cho camera, try-on, goals, Japan community và return vẫn fallback về demo user; cần chuẩn hóa identity trước production.
-- JSON là source of truth mặc định; chưa có transaction database hoặc horizontal scaling.
-- Stripe chỉ nhận test keys và VNPay dùng sandbox/demo configuration.
-- Notification hiện là record trong shared state, chưa tích hợp FCM/APNs push.
-- AI checkpoints và Python environments không nằm trong repo và không được cài bởi npm.
-- Recommendation SSM/GNN/mLSTM là lightweight inspired implementations; chưa có offline NDCG/Recall benchmark.
-- Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
-- Trước production cần thêm auth/RBAC, rate limiting, request validation, secret management, migrations, audit log, observability và CI/CD.
-
-## Trước khi push lên GitHub
-
-```bash
-npm run check
-git status
-git check-ignore .env.server
-```
-
-Đảm bảo:
-
-- `.env.server`, API keys, model weights, runtime output và customer data không được stage.
-- Chỉ `.env.example` được commit làm mẫu cấu hình.
-- `backend/data/db.json` không chứa dữ liệu người dùng thật.
-- Không commit virtual environments, `node_modules`, APK/build output hoặc video/ảnh runtime.
-- Kiểm tra lại staged files bằng `git diff --cached`.
+Test suite hiện bao phủ recommendation provenance, cache isolation, next-item transition, causal ranker diagnostics, feedback, bot model trace, analytics, payment/VIP, Flagcard, moderation và dữ liệu hành chính.
 
