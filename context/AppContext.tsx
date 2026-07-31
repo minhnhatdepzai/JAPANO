@@ -39,6 +39,7 @@ type AppState = {
   clearCart: () => void;
   checkout: (paymentMethod: string, extra?: Partial<Order>) => Promise<void>;
   toggleWishlist: (p: Product) => void;
+  removeFromWishlist: (p: Product) => void;
   addGeneratedImage: (image: GeneratedImage) => void;
   addSearchTerm: (term: string) => void;
   recordView: (productId: string) => void;
@@ -112,6 +113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const persist = async (key: string, value: unknown) => AsyncStorage.setItem(key, JSON.stringify(value));
 
+  const productIdentity = (product: any) => String(product?.id || product?.slug || product?._id || product?.sku || product?.name || '').trim();
   const isCurrentSession = (sessionVersion: number) => sessionVersion === sessionRef.current;
 
   const hydrateRemote = async (nextUser: NonNullable<User>, sessionVersion = sessionRef.current) => {
@@ -355,11 +357,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const toggleWishlist = (p: Product) => {
     if (!requireLogin('Bạn cần đăng nhập để lưu danh sách yêu thích.')) return;
-    const exists = wishlist.some((item) => item.id === p.id);
-    const next = exists ? wishlist.filter((item) => item.id !== p.id) : [...wishlist, p];
-    setWishlist(next); persist(KEYS.wishlist, next).catch(() => null);
+    const id = productIdentity(p);
+    const exists = wishlist.some((item) => productIdentity(item) === id);
+    const next = exists ? wishlist.filter((item) => productIdentity(item) !== id) : [...wishlist.filter((item) => productIdentity(item) !== id), p];
+    setWishlist(next);
+    persist(KEYS.wishlist, next).catch(() => null);
     if (user?.id) api.saveWishlist(user.id, next).catch(() => null);
     if (exists) toastWishlistOff(p?.name || 'Sản phẩm'); else toastWishlistOn(p?.name || 'Sản phẩm');
+  };
+
+  const removeFromWishlist = (p: Product) => {
+    const id = productIdentity(p);
+    const next = wishlist.filter((item) => productIdentity(item) !== id);
+    if (next.length === wishlist.length) return;
+    setWishlist(next);
+    persist(KEYS.wishlist, next).catch(() => null);
+    if (user?.id) api.saveWishlist(user.id, next).catch(() => null);
+    toastWishlistOff(p?.name || 'Sản phẩm');
   };
 
   const addGeneratedImage = (image: GeneratedImage) => { const next = [image, ...generatedImages].slice(0, 80); setGeneratedImages(next); persist(KEYS.images, next).catch(() => null); if (user?.id) api.saveGeneratedImage({ userId: user.id, ...image }).catch(() => null); };
@@ -383,7 +397,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AppState>(() => ({
     ready, user, isLoggedIn: Boolean(user?.id), theme, themes, cart, wishlist, generatedImages, orders, searchHistory, recentlyViewed,
     login, register, forgotPassword, logout, updateProfile, upgradeToVip, payStripeCheckout, setTheme, updateTheme, importTheme,
-    addToCart, removeFromCart, clearCart, checkout, toggleWishlist, addGeneratedImage, addSearchTerm, recordView, requireLogin,
+    addToCart, removeFromCart, clearCart, checkout, toggleWishlist, removeFromWishlist, addGeneratedImage, addSearchTerm, recordView, requireLogin,
     formatCurrency: (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value),
   }), [ready, user, theme, themes, cart, wishlist, generatedImages, orders, searchHistory, recentlyViewed]);
 

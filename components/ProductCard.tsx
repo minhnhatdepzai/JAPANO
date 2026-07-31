@@ -7,6 +7,10 @@ import { useApp } from '../context/AppContext';
 import { fontFamily, radius, scaleFont, shadow } from '../lib/styles';
 import { SafeImage } from './SafeImage';
 
+function productIdentity(product: any) {
+  return String(product?.id || product?.slug || product?._id || product?.sku || product?.name || '').trim();
+}
+
 export function ProductCard({ product, compact = false }: { product: Product; compact?: boolean }) {
   const { theme, formatCurrency, wishlist, toggleWishlist } = useApp();
   const scale = useRef(new Animated.Value(1)).current;
@@ -15,7 +19,7 @@ export function ProductCard({ product, compact = false }: { product: Product; co
     Animated.timing(fade, { toValue: 1, duration: 380, useNativeDriver: Platform.OS !== 'web' }).start();
   }, [fade]);
   const animatePress = (toValue: number) => Animated.spring(scale, { toValue, useNativeDriver: Platform.OS !== 'web', speed: 22, bounciness: 7 }).start();
-  const liked = wishlist.some((p) => p.id === product.id);
+  const liked = wishlist.some((item) => productIdentity(item) === productIdentity(product));
   const originalPrice = Number((product as any).originalPrice || 0);
   const hasDiscount = originalPrice > Number(product.price || 0);
   const discountPercent = Number((product as any).discountPercent || (hasDiscount ? Math.round((1 - Number(product.price || 0) / originalPrice) * 100) : 0));
