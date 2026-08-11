@@ -1,27 +1,72 @@
-node_modules/
-dist/
-build/
-.next/
-.nuxt/
-out/
-coverage/
-.cache/
-.vite/
-.parcel-cache/
-.turbo/
+# Node.js dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/build/
+**/.next/
+**/.nuxt/
+**/.vite/
+**/.turbo/
+**/.parcel-cache/
+**/coverage/
+
+# Package-manager cache
+**/.npm/
+**/.pnpm-store/
+**/.yarn/cache/
+
+# Secrets và cấu hình theo máy
+.env
+.env.*
+!.env.example
+*.backup-*
+
+# Repository/cache tạm tạo trong lúc khôi phục workspace
+/JAPANO/
+/.git-broken-*/
+
+# Cấu hình riêng của shell, editor và công cụ trên máy phát triển
+/.bash_profile
+/.bashrc
+/.gitconfig
+/.gitmodules
+/.idea
+/.mcp.json
+/.profile
+/.ripgreprc
+/.vscode
+/.zprofile
+/.zshrc
+**/.vscode/
+
+# Python cache và virtual environment
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.venv/
+**/venv/
+**/env/
+*.pyc
+*.pyo
+*.pyd
+
+# Java, Gradle và Android build
+**/.gradle/
+**/target/
+**/.cxx/
+**/local.properties
+
+# Dữ liệu runtime/backup cục bộ
+backend/data/migration-backups/
+
+# Cache và file tạm
+**/.cache/
+**/tmp/
+**/temp/
+.expo/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-tmp/
-temp/
-*.tmp
+
+# Hệ điều hành
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
-.venv/
-venv/
-__pycache__/
-*.pyc

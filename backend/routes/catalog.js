@@ -21,10 +21,13 @@ module.exports = function registerCatalogRoutes(api, ctx) {
     if (!mongoEnabled()) return;
     try {
       const db = await getDb();
-      const docs = await db.collection('products').find({}).toArray();
+      const docs = await db.collection('product_media').find({ type: 'image' }).sort({ productId: 1, position: 1 }).toArray();
       const map = new Map();
       for (const doc of docs) {
-        if (Array.isArray(doc.images) && doc.images.length) map.set(doc.slug, doc.images.map((image) => image.url).filter(Boolean));
+        const productId = String(doc.productId || '');
+        if (!productId || !doc.url) continue;
+        if (!map.has(productId)) map.set(productId, []);
+        map.get(productId).push(doc.url);
       }
       cloudProductImages = map;
       cloudProductImagesLoadedAt = Date.now();
@@ -43,7 +46,7 @@ module.exports = function registerCatalogRoutes(api, ctx) {
     const reviewCount = approvedReviews.length;
     const rating = reviewCount ? Math.round(approvedReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviewCount * 10) / 10 : 0;
     const sold = (state.orders || []).filter(successfulLiveOrder).reduce((total, order) => total + (order.items || []).filter((item) => String(item.slug || item.productId) === String(product.slug)).reduce((sum, item) => sum + Number(item.qty || 0), 0), 0);
-    const cloudImages = cloudProductImages.get(product.slug);
+    const cloudImages = cloudProductImages.get(String(product.id)) || cloudProductImages.get(String(product.slug));
     return {
       ...product,
       images: cloudImages && cloudImages.length ? cloudImages : product.images,

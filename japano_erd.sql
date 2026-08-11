@@ -621,17 +621,20 @@ INSERT INTO `categories` (`id`, `name`, `kanji`) VALUES
   ('cosplay', 'Cosplay', 'コス');
 
 INSERT INTO `users` (`id`, `name`, `email`, `role`, `status`, `orders_count`, `spent`, `tryons`, `vip`, `joined_at`) VALUES
-  ('u1', 'Trần Minh', 'tran.minh@japano.vn', 'admin', 'active', 4, 5640000, 0, 'Mới', 1781588172477),
-  ('u2', 'Nguyễn Thu Hà', 'nguyen.thu.ha@japano.vn', 'staff', 'active', 3, 2200000, 1, 'Mới', 1779255372477),
-  ('u3', 'Lê Quốc Bảo', 'le.quoc.bao@japano.vn', 'staff', 'active', 4, 2170000, 2, 'Mới', 1776922572477),
-  ('u4', 'Phạm Mỹ Linh', 'pham.my.linh@japano.vn', 'customer', 'active', 3, 670000, 3, 'Thành viên', 1774589772477),
-  ('u5', 'Hoàng Anh Tú', 'hoang.anh.tu@japano.vn', 'customer', 'active', 4, 5930000, 4, 'Thành viên', 1772256972477),
-  ('u6', 'Đặng Khánh Vy', 'đang.khanh.vy@japano.vn', 'customer', 'active', 2, 1470000, 0, 'Thành viên', 1769924172477),
-  ('u7', 'Vũ Hải Nam', 'vu.hai.nam@japano.vn', 'customer', 'locked', 3, 2300000, 1, 'Thành viên', 1767591372477),
-  ('u8', 'Bùi Ngọc Ánh', 'bui.ngoc.anh@japano.vn', 'customer', 'active', 2, 730000, 2, 'VIP', 1765258572477),
-  ('u9', 'Đỗ Gia Huy', 'đo.gia.huy@japano.vn', 'customer', 'active', 3, 2570000, 3, 'VIP', 1762925772477),
-  ('u10', 'Lý Cẩm Tú', 'ly.cam.tu@japano.vn', 'customer', 'active', 2, 2610000, 4, 'VIP', 1760592972477),
-  ('demo-minh', 'Trần Minh', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784162249095),
+  ('u1', 'Trần Minh', 'tran.minh@japano.vn', 'admin', 'active', 4, 5520000, 0, 'Thành viên', 1781588172477),
+  ('u2', 'Nguyễn Thu Hà', 'nguyen.thu.ha@japano.vn', 'staff', 'active', 3, 2140000, 1, 'Thành viên', 1779255372477),
+  ('u3', 'Lê Quốc Bảo', 'le.quoc.bao@japano.vn', 'staff', 'active', 4, 2050000, 2, 'Thành viên', 1776922572477),
+  ('u4', 'Phạm Mỹ Linh', 'pham.my.linh@japano.vn', 'customer', 'active', 3, 640000, 3, 'Thành viên', 1774589772477),
+  ('u5', 'Hoàng Anh Tú', 'hoang.anh.tu@japano.vn', 'customer', 'active', 4, 5810000, 4, 'Thành viên', 1772256972477),
+  ('u6', 'Đặng Khánh Vy', 'đang.khanh.vy@japano.vn', 'customer', 'active', 2, 1440000, 0, 'Thành viên', 1769924172477),
+  ('u7', 'Vũ Hải Nam', 'vu.hai.nam@japano.vn', 'customer', 'locked', 3, 2210000, 1, 'Thành viên', 1767591372477),
+  ('u8', 'Bùi Ngọc Ánh', 'bui.ngoc.anh@japano.vn', 'customer', 'active', 2, 700000, 2, 'Thành viên', 1765258572477),
+  ('u9', 'Đỗ Gia Huy', 'đo.gia.huy@japano.vn', 'customer', 'active', 3, 2480000, 3, 'Thành viên', 1762925772477),
+  ('u10', 'Lý Cẩm Tú', 'ly.cam.tu@japano.vn', 'customer', 'active', 2, 2580000, 4, 'Thành viên', 1760592972477),
+  ('demo-minh', 'Test', 't@test.com', 'customer', 'active', 13, 11805000, 0, 'VIP', 1784162249095),
+  ('admin-1784883154949', 'Quản trị viên JAPANO', 'admin@japano.vn', 'super_admin', 'active', 2, 1290000, 0, 'Thành viên', 1784883155012),
+  ('u-1784883377086-fma6ou', 'Lê Minh Nhật', 'nhat@gmail.com', 'super_admin', 'active', 2, 931000, 0, 'Thành viên', 1784883377086),
+  ('u-1784886327902-2s55kn', 'Smoke Test Customer', NULL, 'customer', 'active', 0, 0, 0, 'Thành viên', 1784886328291),
   ('codex-e2e', 'codex-e2e', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1783922576844),
   ('codex-e2e-final', 'codex-e2e-final', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1783923811011),
   ('codex-always-repose-proof', 'codex-always-repose-proof', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1783929417836),
@@ -640,10 +643,11 @@ INSERT INTO `users` (`id`, `name`, `email`, `role`, `status`, `orders_count`, `s
   ('qa-accessory-v2', 'qa-accessory-v2', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1783939475987),
   ('ban@japano.vn', 'ban@japano.vn', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784137348968),
   ('guest', 'guest', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784138417748),
-  ('verify-user', 'verify-user', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784552301757);
+  ('verify-user', 'verify-user', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784552301757),
+  ('u-1784882707878-lypbq5', 'u-1784882707878-lypbq5', NULL, 'customer', 'active', 0, 0, 0, 'Mới', 1784882729755);
 
 INSERT INTO `vouchers` (`code`, `type`, `value`, `min_order`, `expiry`, `usage_limit`, `used`, `active`) VALUES
-  ('THU20', 'percent', 20, 500000, '2027-12-31', 500, 132, 1),
+  ('THU20', 'percent', 20, 500000, '2027-12-31', 500, 133, 1),
   ('FREESHIP', 'amount', 30000, 0, '2027-11-30', 1000, 411, 1),
   ('VIP100', 'amount', 100000, 1500000, '2027-12-15', 200, 57, 0),
   ('JAPANO10', 'percent', 0, 0, NULL, 0, 0, 0),
@@ -658,7 +662,27 @@ INSERT INTO `banners` (`id`, `title`, `img`, `link`, `active`, `sort_order`) VAL
 INSERT INTO `notifications` (`id`, `title`, `body`, `type`, `action`, `reach`, `at`) VALUES
   ('n0', '🚩 Sưu tầm 7 Flagcard — nhận ngay voucher 50%!', 'Mỗi đơn hàng đủ điều kiện tặng 1 thẻ địa danh Nhật Bản. Đủ bộ 7 thẻ, giảm ngay 50% mọi sản phẩm. Chạm để xem trước bộ thẻ.', 'Khuyến mãi', 'flagcard-intro', 10, 1783919172477),
   ('n1', 'Ưu đãi Thu — giảm 20% Haori', 'Cách tân tủ đồ mùa lá đỏ, dùng mã THU20', 'Khuyến mãi', NULL, 10, 1783913772477),
-  ('n2', 'Bảo trì hệ thống 02:00–03:00', 'App có thể gián đoạn ngắn để nâng cấp.', 'Hệ thống', NULL, 10, 1783748172477);
+  ('n2', 'Bảo trì hệ thống 02:00–03:00', 'App có thể gián đoạn ngắn để nâng cấp.', 'Hệ thống', NULL, 10, 1783748172477),
+  ('notif-1784887388698-g9mkw1', 'Đặt hàng thành công · #JP240754', 'Đơn 1.010.000đ đã được ghi nhận, cảm ơn bạn đã mua sắm tại JAPANO.', 'Đơn hàng', 'order:o1784887388697', 1, 1784887388698),
+  ('notif-1784887405580-gve3l1', 'Yêu cầu huỷ đơn #JP240754', 'Yêu cầu của bạn đang chờ cửa hàng xem xét.', 'Đơn hàng', 'order:o1784887388697', 1, 1784887405580),
+  ('notif-1784887663739-zt2mfb', 'Đơn #JP240754 đã được huỷ', 'Yêu cầu huỷ đơn của bạn đã được chấp nhận.', 'Đơn hàng', NULL, 1, 1784887663739),
+  ('notif-1784887771583-yv4ir4', 'Đặt hàng thành công · #JP240755', 'Đơn 1.320.000đ đã được ghi nhận, cảm ơn bạn đã mua sắm tại JAPANO.', 'Đơn hàng', 'order:o1784887771581', 1, 1784887771583),
+  ('notif-1784887798003-a3i9pe', 'Đơn hàng #JP240755', 'Đơn của bạn đã được xác nhận.', 'Đơn hàng', 'order:o1784887771581', 1, 1784887798003),
+  ('notif-1784887802115-ykobj9', 'Đơn hàng #JP240755', 'Đơn của bạn đang được giao.', 'Đơn hàng', 'order:o1784887771581', 1, 1784887802115),
+  ('notif-1784887804243-9yb6y0', 'Đơn hàng #JP240755', 'Đơn của bạn đã giao thành công.', 'Đơn hàng', 'order:o1784887771581', 1, 1784887804243),
+  ('notif-1784889865825-0hwia0', 'Test', 'Demo notification all', 'Hệ thống', NULL, 14, 1784889865825),
+  ('notif-1784991440404-ulecrm', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1784991440404),
+  ('notif-1784992371610-kfuj6u', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1784992371610),
+  ('notif-1784992371670-tooeax', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1784992371670),
+  ('notif-1784993287846-q9vany', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1784993287846),
+  ('notif-1785035374561-zehpry', 'Đặt hàng thành công · #JP240756', 'Đơn 3.432.000đ đã được ghi nhận, cảm ơn bạn đã mua sắm tại JAPANO.', 'Đơn hàng', 'order:o1785035374560', 1, 1785035374561),
+  ('notif-1785035423633-o0v1sz', 'Yêu cầu huỷ đơn #JP240756', 'Yêu cầu của bạn đang chờ cửa hàng xem xét.', 'Đơn hàng', 'order:o1785035374560', 1, 1785035423633),
+  ('notif-1785035459823-lo4rp7', 'Đơn #JP240756 đã được huỷ', 'Yêu cầu huỷ đơn của bạn đã được chấp nhận, đang hoàn tiền qua cổng thanh toán.', 'Đơn hàng', 'order:o1785035374560', 1, 1785035459823),
+  ('notif-1785035461102-cn1z8y', 'Đã hoàn tiền đơn #JP240756', 'Số tiền 3.432.000đ đã được hoàn.', 'Đơn hàng', 'order:o1785035374560', 1, 1785035461102),
+  ('notif-1785314287526-esawa5', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1785314287526),
+  ('notif-1785327528605-hki4w5', 'Đã thêm vào yêu thích', 'Áo choàng Haori dáng dài đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:haori-dang-dai', 1, 1785327528605),
+  ('notif-1785640248417-y5ct6o', 'Đã thêm vào yêu thích', 'Kimono truyền thống Hồng đang chờ bạn trong danh sách yêu thích.', 'Yêu thích', 'product:kimono-hong', 1, 1785640248417),
+  ('notif-1785896243218-glu31c', '8/5', 'hôm nay báo cáo', 'Hệ thống', NULL, 14, 1785896243218);
 
 INSERT INTO `flagcards` (`id`, `sort_order`, `glyph`, `accent`, `title`, `japanese`, `region`, `summary`, `formation_history`, `legend`, `outfit_style`, `outfit_reason`, `source_url`, `active`) VALUES
   ('fushimi-inari', 1, '⛩️', '#D64A2D', 'Fushimi Inari Taisha', '伏見稲荷大社', 'Kyoto', 'Con đường hàng nghìn cổng torii đỏ dẫn lên núi Inari — biểu tượng của lời cầu thịnh vượng.', 'Đền được gia tộc Hata dâng thờ thần lúa gạo và sake từ thế kỷ VIII. Khi thương nghiệp phát triển, Inari dần được cầu nguyện cho sự thịnh vượng trong kinh doanh.', 'Cáo kitsune được xem là sứ giả của Inari. Chìa khóa trong miệng tượng cáo tượng trưng cho chìa khóa kho lúa — nguồn của cải và no đủ.', 'Nhật cổ đỏ–trắng', 'Tông đỏ–trắng đồng điệu với torii nhưng vẫn tôn chủ thể.', 'https://kyoto.travel/en/destinations/fushimi-inaritaisha-shrine/', 1),
@@ -855,14 +879,14 @@ INSERT INTO `product_images` (`product_id`, `url`, `position`) VALUES
 
 INSERT INTO `product_variants` (`product_id`, `color_name`, `color_hex`, `size`, `sku`, `stock`) VALUES
   ('p1', 'Sumi', '#1A1410', 'S', 'KIMONOH-SU-S', 0),
-  ('p1', 'Sumi', '#1A1410', 'M', 'KIMONOH-SU-M', 5),
-  ('p1', 'Sumi', '#1A1410', 'L', 'KIMONOH-SU-L', 10),
+  ('p1', 'Sumi', '#1A1410', 'M', 'KIMONOH-SU-M', 0),
+  ('p1', 'Sumi', '#1A1410', 'L', 'KIMONOH-SU-L', 7),
   ('p1', 'Shu', '#A33A2F', 'S', 'KIMONOH-SH-S', 7),
   ('p1', 'Shu', '#A33A2F', 'M', 'KIMONOH-SH-M', 12),
   ('p1', 'Shu', '#A33A2F', 'L', 'KIMONOH-SH-L', 17),
   ('p1', 'Shu', '#A33A2F', 'XL', 'KIMONOH-SH-XL', 22),
   ('p2', 'Sumi', '#1A1410', 'S', 'YUKATAX-SU-S', 11),
-  ('p2', 'Sumi', '#1A1410', 'M', 'YUKATAX-SU-M', 16),
+  ('p2', 'Sumi', '#1A1410', 'M', 'YUKATAX-SU-M', 15),
   ('p2', 'Sumi', '#1A1410', 'L', 'YUKATAX-SU-L', 21),
   ('p2', 'Sumi', '#1A1410', 'XL', 'YUKATAX-SU-XL', 26),
   ('p2', 'Shu', '#A33A2F', 'S', 'YUKATAX-SH-S', 18),
@@ -1035,7 +1059,7 @@ INSERT INTO `product_variants` (`product_id`, `color_name`, `color_hex`, `size`,
   ('p20', 'Aizome', '#243244', 'L', 'KIEMGO-AI-L', 28),
   ('p20', 'Aizome', '#243244', 'XL', 'KIEMGO-AI-XL', 33),
   ('p21', 'Sumi', '#1A1410', 'S', 'FURINA-SU-S', 15),
-  ('p21', 'Sumi', '#1A1410', 'M', 'FURINA-SU-M', 20),
+  ('p21', 'Sumi', '#1A1410', 'M', 'FURINA-SU-M', 18),
   ('p21', 'Sumi', '#1A1410', 'L', 'FURINA-SU-L', 25),
   ('p21', 'Shu', '#A33A2F', 'S', 'FURINA-SH-S', 22),
   ('p21', 'Shu', '#A33A2F', 'M', 'FURINA-SH-M', 27),
@@ -1228,8 +1252,8 @@ INSERT INTO `profiles` (`user_id`, `gender`, `skin_tone`, `occasion`, `budget`, 
   ('u4', 'Nữ', 'Sáng', 'Đi chơi', 1450000, 165, 60, 'XL', 1783661772477),
   ('u5', 'Unisex', 'Trung bình', 'Đi học/đi làm', 1700000, 168, 64, 'S', 1783575372477),
   ('u6', 'Nữ', 'Sáng', 'Đi chơi', 1950000, 171, 68, 'M', 1783488972477),
-  ('demo-minh', NULL, NULL, NULL, NULL, 165, NULL, NULL, 1784630227904),
-  ('verify-user', NULL, NULL, 'Đi làm', 1500000, NULL, NULL, NULL, 1784552301777);
+  ('demo-minh', NULL, NULL, NULL, NULL, 165, 40, NULL, 1785896289986),
+  ('verify-user', NULL, NULL, 'Đi làm', 1500000, NULL, NULL, NULL, 1785327528626);
 
 INSERT INTO `profile_styles` (`user_id`, `style`) VALUES
   ('u1', 'Nhật cổ'),
@@ -1299,7 +1323,14 @@ INSERT INTO `orders` (`id`, `code`, `user_id`, `customer_name`, `customer_email`
   ('o1784623762896', 'JP240746', 'demo-minh', 'Trần Minh', 'ban@japano.vn', '0909060686', '123, Phường An Bình, Thành phố Cần Thơ', '31150', 'Phường An Bình', '92', 'Thành phố Cần Thơ', 1290000, 64500, 0, 64500, 'VNPAY5', 1255500, 30000, 'VNPay', 'vnpay', 'paid', 'JP240746', 'VND', 'confirmed', 'mobile', 1784623762896),
   ('o1784625155471', 'JP240747', 'demo-minh', 'Trần Minh', 'ban@japano.vn', '0909090906', '123, Phường Bình Thuỷ, Thành phố Cần Thơ', '31168', 'Phường Bình Thuỷ', '92', 'Thành phố Cần Thơ', 1290000, 64500, 0, 64500, 'VNPAY5', 1255500, 30000, 'VNPay', 'vnpay', 'pending', 'JP240747', 'VND', 'pending_payment', 'mobile', 1784625155471),
   ('o1784625616396', 'JP240748', 'demo-minh', 'Trần Minh', 'ban@japano.vn', '0908980986', '122, Phường Bình Thuỷ, Thành phố Cần Thơ', '31168', 'Phường Bình Thuỷ', '92', 'Thành phố Cần Thơ', 1290000, 64500, 0, 64500, 'VNPAY5', 1255500, 30000, 'VNPay', 'vnpay', 'pending', 'JP240748', 'VND', 'pending_payment', 'mobile', 1784625616396),
-  ('o1784631853615', 'JP240749', 'demo-minh', 'Lê Minh Nhật', 'ban@japano.vn', '0909090909', '45, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 4470000, 30000, 30000, 0, 'FREESHIP', 4470000, 30000, 'COD', 'cod', 'unpaid', '—', 'vnd', 'pending', 'mobile', 1784631853615);
+  ('o1784631853615', 'JP240749', 'demo-minh', 'Lê Minh Nhật', 'ban@japano.vn', '0909090909', '45, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 4470000, 30000, 30000, 0, 'FREESHIP', 4470000, 30000, 'COD', 'cod', 'unpaid', '—', 'vnd', 'pending', 'mobile', 1784631853615),
+  ('o1784712524868', 'JP240750', 'demo-minh', 'Trần Minh', 'ban@japano.vn', '0909090909', '45 Phường Thới An, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 1290000, 322500, 258000, 64500, 'THU20', 997500, 30000, 'VNPay', 'vnpay', 'paid', 'JP240750', 'VND', 'confirmed', 'mobile', 1784712524868),
+  ('o1784712720613', 'JP240751', 'demo-minh', 'Trần Minh', 'ban@japano.vn', '0909090909', '45 Phường Thới An, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 1890000, 189000, 0, 189000, 'STRIPE10', 1731000, 30000, 'Stripe', 'stripe', 'paid', 'pi_3TvwVQ46LydUHMTH059F5cic', 'vnd', 'completed', 'mobile', 1784712720613),
+  ('o1784882886299', 'JP240752', 'u-1784883377086-fma6ou', 'Lê Minh Nhật', NULL, '0707193002', '123, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 980000, 49000, 0, 49000, 'VNPAY5', 961000, 30000, 'VNPay', 'vnpay', 'paid', 'pi_3TwemR46LydUHMTH0Dtceun3', 'VND', 'confirmed', 'mobile', 1784882886299),
+  ('o1784883438125', 'JP240753', 'u-1784883377086-fma6ou', 'Lê Minh Nhật', 'nhat@gmail.com', '0707193002', '123, Phường Thới An, Thành phố Hồ Chí Minh', '26773', 'Phường Thới An', '79', 'Thành phố Hồ Chí Minh', 1890000, 0, 0, 0, NULL, 1920000, 30000, 'COD', 'cod', 'unpaid', '—', 'vnd', 'pending', 'mobile', 1784883438125),
+  ('o1784887388697', 'JP240754', 'admin-1784883154949', 'Quản trị viên JAPANO', 'admin@japano.vn', '0707193002', '123, Phường An Khê, Thành phố Đà Nẵng', '20305', 'Phường An Khê', '48', 'Thành phố Đà Nẵng', 980000, 0, 0, 0, NULL, 1010000, 30000, 'COD', 'cod', 'unpaid', '—', 'vnd', 'cancelled', 'mobile', 1784887388697),
+  ('o1784887771581', 'JP240755', 'admin-1784883154949', 'Quản trị viên JAPANO', 'admin@japano.vn', '0707193002', '123, Đặc khu Hoàng Sa, Thành phố Đà Nẵng', '20333', 'Đặc khu Hoàng Sa', '48', 'Thành phố Đà Nẵng', 1290000, 0, 0, 0, NULL, 1320000, 30000, 'COD', 'cod', 'paid', '—', 'vnd', 'completed', 'mobile', 1784887771581),
+  ('o1785035374560', 'JP240756', 'admin-1784883154949', 'Quản trị viên JAPANO', 'admin@japano.vn', '0909090909', '111, Đặc khu Cát Hải, Thành phố Hải Phòng', '11914', 'Đặc khu Cát Hải', '31', 'Thành phố Hải Phòng', 3780000, 378000, 0, 378000, 'STRIPE10', 3432000, 30000, 'Stripe', 'stripe', 'refunded', 'pi_3TxIRX46LydUHMTH0E6nXToY', 'vnd', 'returned', 'mobile', 1785035374560);
 
 INSERT INTO `order_items` (`order_id`, `product_slug`, `name`, `color_name`, `color_hex`, `size`, `qty`, `price`) VALUES
   ('o1', 'haori-dang-dai', 'Áo choàng Haori dáng dài', 'Sumi', '#33261d', 'S', 1, 1350000),
@@ -1381,7 +1412,14 @@ INSERT INTO `order_items` (`order_id`, `product_slug`, `name`, `color_name`, `co
   ('o1784625155471', 'yukata-xanh', 'Yukata vải bông xanh đen', 'Mực', '#1A1410', 'M', 1, 1290000),
   ('o1784625616396', 'yukata-xanh', 'Yukata vải bông xanh đen', 'Mực', '#1A1410', 'M', 1, 1290000),
   ('o1784631853615', 'yukata-xanh', 'Yukata vải bông xanh đen', 'Mực', '#1A1410', 'M', 2, 1290000),
-  ('o1784631853615', 'kimono-hong', 'Kimono truyền thống Hồng', 'Mực', '#1A1410', 'M', 1, 1890000);
+  ('o1784631853615', 'kimono-hong', 'Kimono truyền thống Hồng', 'Mực', '#1A1410', 'M', 1, 1890000),
+  ('o1784712524868', 'yukata-xanh', 'Yukata vải bông xanh đen', 'Chàm', '#1A1410', 'S', 1, 1290000),
+  ('o1784712720613', 'kimono-hong', 'Kimono truyền thống Hồng', 'Mực', '#1A1410', 'M', 1, 1890000),
+  ('o1784882886299', 'furina', 'Trang phục hóa thân Furina', 'Mực', '#1A1410', 'M', 1, 980000),
+  ('o1784883438125', 'kimono-hong', 'Kimono truyền thống Hồng', 'Mực', '#1A1410', 'M', 1, 1890000),
+  ('o1784887388697', 'furina', 'Trang phục hóa thân Furina', 'Mực', '#1A1410', 'M', 1, 980000),
+  ('o1784887771581', 'yukata-xanh', 'Yukata vải bông xanh đen', 'Mực', '#1A1410', 'M', 1, 1290000),
+  ('o1785035374560', 'kimono-hong', 'Kimono truyền thống Hồng', 'Sumi', '#1A1410', 'L', 2, 1890000);
 
 INSERT INTO `order_history` (`order_id`, `status`, `at`) VALUES
   ('o1', 'pending', 1783748172477),
@@ -1530,7 +1568,29 @@ INSERT INTO `order_history` (`order_id`, `status`, `at`) VALUES
   ('o1784623762896', 'paid', 1784625548234),
   ('o1784625155471', 'pending_payment', 1784625155471),
   ('o1784625616396', 'pending_payment', 1784625616396),
-  ('o1784631853615', 'pending', 1784631853615);
+  ('o1784631853615', 'pending', 1784631853615),
+  ('o1784712524868', 'pending_payment', 1784712524868),
+  ('o1784712524868', 'paid', 1784712655927),
+  ('o1784712720613', 'pending_payment', 1784712720613),
+  ('o1784712720613', 'paid', 1784712723186),
+  ('o1784712720613', 'shipping', 1784715444100),
+  ('o1784712720613', 'completed', 1784715445292),
+  ('o1784882886299', 'confirmed', 1784882886299),
+  ('o1784883438125', 'pending', 1784883438125),
+  ('o1784887388697', 'pending', 1784887388697),
+  ('o1784887388697', 'cancel_requested', 1784887405580),
+  ('o1784887388697', 'cancelled', 1784887663739),
+  ('o1784887771581', 'pending', 1784887771581),
+  ('o1784887771581', 'confirmed', 1784887798003),
+  ('o1784887771581', 'shipping', 1784887802115),
+  ('o1784887771581', 'completed', 1784887804243),
+  ('o1784887771581', 'paid', 1784887804243),
+  ('o1785035374560', 'pending_payment', 1785035374560),
+  ('o1785035374560', 'paid', 1785035378069),
+  ('o1785035374560', 'cancel_requested', 1785035423632),
+  ('o1785035374560', 'cancelled', 1785035459823),
+  ('o1785035374560', 'refunded', 1785035461097),
+  ('o1785035374560', 'return_refunded', 1785035461101);
 
 INSERT INTO `payments` (`id`, `code`, `order_id`, `user_id`, `provider`, `method`, `status`, `amount`, `original_amount`, `discount`, `voucher_discount`, `payment_discount`, `promotion_code`, `currency`, `transaction_code`, `payment_intent_id`, `checkout_session_id`, `refundable`, `amount_subtotal`, `paid_at`, `charge_id`, `receipt_url`, `created_at`, `updated_at`) VALUES
   ('pay-migrated-o1', 'PAY-JP240700', 'o1', 'u1', 'stripe-seed', 'Stripe', 'paid', 1970000, NULL, 0, 0, 0, NULL, 'vnd', 'pi_seed_0001', 'pi_seed_0001', NULL, 0, NULL, NULL, NULL, NULL, 1783748172477, 1783748172477),
@@ -1561,35 +1621,141 @@ INSERT INTO `payments` (`id`, `code`, `order_id`, `user_id`, `provider`, `method
   ('pay-1784539452366', 'PAY-JP240745-452366', 'o1784539452366', 'demo-minh', 'stripe', 'Stripe', 'paid', 831000, 920000, 89000, 0, 89000, 'STRIPE10', 'vnd', 'pi_3TvDQm46LydUHMTH1O5YAysw', 'pi_3TvDQm46LydUHMTH1O5YAysw', NULL, 1, NULL, 1784539454896, 'ch_3TvDQm46LydUHMTH1yWxTmLU', 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKL7S99IGMgZXo_o1uIo6LBYtZN6_XA0FCrpC652slIxxXgBHN-PLLzH_i4tPUOXPO4OJsjPjqSAOKeeW', 1784539452366, 1784539454896),
   ('pay-1784623762896', 'PAY-JP240746-762896', 'o1784623762896', 'demo-minh', 'vnpay', 'VNPay', 'paid', 1255500, 1320000, 64500, 0, 64500, 'VNPAY5', 'VND', 'JP240746', NULL, NULL, 1, NULL, 1784625548234, NULL, NULL, 1784623762896, 1784625548234),
   ('pay-1784625155471', 'PAY-JP240747-155471', 'o1784625155471', 'demo-minh', 'vnpay', 'VNPay', 'pending', 1255500, 1320000, 64500, 0, 64500, 'VNPAY5', 'VND', 'JP240747', NULL, NULL, 0, NULL, NULL, NULL, NULL, 1784625155471, 1784625437554),
-  ('pay-1784625616396', 'PAY-JP240748-616396', 'o1784625616396', 'demo-minh', 'vnpay', 'VNPay', 'pending', 1255500, 1320000, 64500, 0, 64500, 'VNPAY5', 'VND', 'JP240748', NULL, NULL, 0, NULL, NULL, NULL, NULL, 1784625616396, 1784625616397);
+  ('pay-1784625616396', 'PAY-JP240748-616396', 'o1784625616396', 'demo-minh', 'vnpay', 'VNPay', 'pending', 1255500, 1320000, 64500, 0, 64500, 'VNPAY5', 'VND', 'JP240748', NULL, NULL, 0, NULL, NULL, NULL, NULL, 1784625616396, 1784625616397),
+  ('pay-1784712524872', 'PAY-JP240750-524872', 'o1784712524868', 'demo-minh', 'vnpay', 'VNPay', 'paid', 997500, 1320000, 322500, 258000, 64500, 'VNPAY5', 'VND', 'JP240750', NULL, NULL, 1, NULL, 1784712655927, NULL, NULL, 1784712524872, 1784712655927),
+  ('pay-1784712720614', 'PAY-JP240751-720614', 'o1784712720613', 'demo-minh', 'stripe', 'Stripe', 'paid', 1731000, 1920000, 189000, 0, 189000, 'STRIPE10', 'vnd', 'pi_3TvwVQ46LydUHMTH059F5cic', 'pi_3TvwVQ46LydUHMTH059F5cic', NULL, 1, NULL, 1784712723186, 'ch_3TvwVQ46LydUHMTH0Ee5cXQJ', 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKJKcgtMGMganI4NdQSo6LBY4DDot4AYcQz1DgDDGXLHOYZCNIZuwaJm-AVygo8vjjlTc7kso1aU1MIWb', 1784712720614, 1784712723186),
+  ('pay-1784882886300', 'PAY-JP240752-886300', 'o1784882886299', 'u-1784883377086-fma6ou', 'vnpay', 'VNPay', 'paid', 961000, 1010000, 49000, 0, 49000, 'VNPAY5', 'vnd', 'pi_3TwemR46LydUHMTH0Dtceun3', 'pi_3TwemR46LydUHMTH0Dtceun3', NULL, 1, NULL, 1784882913514, 'ch_3TwemR46LydUHMTH085M7CgU', 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKOHNjNMGMgbsH3QCIQk6LBYvEIC4BFGN7cvP-YKgG1MnH8wdf2OiJSOqaASY4UeC5d7LjpWdA_wU1NLm', 1784882886300, 1784882913514),
+  ('pay-1785035375214', 'PAY-JP240756-375214', 'o1785035374560', 'admin-1784883154949', 'stripe', 'Stripe', 'refunded', 3432000, 3810000, 378000, 0, 378000, 'STRIPE10', 'vnd', 'pi_3TxIRX46LydUHMTH0E6nXToY', 'pi_3TxIRX46LydUHMTH0E6nXToY', NULL, 1, NULL, 1785035378069, 'ch_3TxIRX46LydUHMTH08LVDHlF', 'https://pay.stripe.com/receipts/payment/CAcaFwoVYWNjdF8xVFdDU2s0Nkx5ZFVITVRIKPH0ldMGMgba8KkttBw6LBZnQWQz0AHTB9mt3SZLta9f_fbS0Bg6Ozcna3o_zUa6ZsWbZsQ_Wv7w91ZT', 1785035375214, 1785035461097);
 
 INSERT INTO `return_requests` (`id`, `code`, `order_id`, `user_id`, `payment_id`, `status`, `reason`, `note`, `admin_note`, `amount`, `currency`, `refund_id`, `refund_status`, `created_at`, `updated_at`) VALUES
-  ('ret-1784194939560', 'RTN-JP240739-39560', 'o1784194860381', 'demo-minh', 'pay-1784194860381', 'refunded', 'Kiểm thử quy trình trả hàng Stripe', 'E2E tự động: sản phẩm còn nguyên vẹn.', NULL, 111000, 'vnd', 're_3TtlnV46LydUHMTH0Apc9O77', 'succeeded', 1784194939560, 1784194940649);
+  ('ret-1784194939560', 'RTN-JP240739-39560', 'o1784194860381', 'demo-minh', 'pay-1784194860381', 'refunded', 'Kiểm thử quy trình trả hàng Stripe', 'E2E tự động: sản phẩm còn nguyên vẹn.', NULL, 111000, 'vnd', 're_3TtlnV46LydUHMTH0Apc9O77', 'succeeded', 1784194939560, 1784194940649),
+  ('ret-1784887405580', 'CXL-JP240754-05580', 'o1784887388697', 'admin-1784883154949', NULL, 'received', 'Đặt nhầm sản phẩm/địa chỉ', NULL, NULL, 1010000, 'vnd', NULL, NULL, 1784887405580, 1784887676035),
+  ('ret-1785035423632', 'CXL-JP240756-23632', 'o1785035374560', 'admin-1784883154949', 'pay-1785035375214', 'refunded', 'Tìm được giá tốt hơn', 'Acb', NULL, 3432000, 'vnd', 're_3TxIRX46LydUHMTH0s1N3mrb', 'succeeded', 1785035423632, 1785035461101);
 
 INSERT INTO `return_request_items` (`return_request_id`, `product_slug`, `name`, `size`, `color_name`, `qty`, `price`) VALUES
-  ('ret-1784194939560', 'vo-tat', 'Vớ tất cổ cao', 'M', 'Sumi', 1, 90000);
+  ('ret-1784194939560', 'vo-tat', 'Vớ tất cổ cao', 'M', 'Sumi', 1, 90000),
+  ('ret-1784887405580', 'furina', 'Trang phục hóa thân Furina', 'M', 'Mực', 1, 980000),
+  ('ret-1785035423632', 'kimono-hong', 'Kimono truyền thống Hồng', 'L', 'Sumi', 2, 1890000);
 
 INSERT INTO `return_request_timeline` (`return_request_id`, `status`, `at`, `refund_id`, `note`) VALUES
   ('ret-1784194939560', 'requested', 1784194939560, NULL, NULL),
   ('ret-1784194939560', 'approved', 1784194939564, NULL, NULL),
   ('ret-1784194939560', 'received', 1784194939569, NULL, NULL),
-  ('ret-1784194939560', 'refunded', 1784194940649, 're_3TtlnV46LydUHMTH0Apc9O77', NULL);
+  ('ret-1784194939560', 'refunded', 1784194940649, 're_3TtlnV46LydUHMTH0Apc9O77', NULL),
+  ('ret-1784887405580', 'requested', 1784887405580, NULL, NULL),
+  ('ret-1784887405580', 'approved', 1784887663739, NULL, NULL),
+  ('ret-1784887405580', 'received', 1784887676035, NULL, NULL),
+  ('ret-1785035423632', 'requested', 1785035423632, NULL, NULL),
+  ('ret-1785035423632', 'approved', 1785035459823, NULL, NULL),
+  ('ret-1785035423632', 'refunded', 1785035461097, 're_3TxIRX46LydUHMTH0s1N3mrb', NULL),
+  ('ret-1785035423632', 'refunded', 1785035461101, NULL, 'Huỷ đơn đã thanh toán trực tuyến — hoàn tiền qua cổng thanh toán');
 
 INSERT INTO `payment_refunds` (`id`, `payment_id`, `amount`, `currency`, `status`, `reason`, `failure_reason`, `return_request_id`, `created_at`, `updated_at`) VALUES
-  ('re_3TtlnV46LydUHMTH0Apc9O77', 'pay-1784194860381', 111000, 'vnd', 'succeeded', 'requested_by_customer', NULL, 'ret-1784194939560', 1784194939000, 1784194940649);
+  ('re_3TtlnV46LydUHMTH0Apc9O77', 'pay-1784194860381', 111000, 'vnd', 'succeeded', 'requested_by_customer', NULL, 'ret-1784194939560', 1784194939000, 1784194940649),
+  ('re_3TxIRX46LydUHMTH0s1N3mrb', 'pay-1785035375214', 3432000, 'vnd', 'succeeded', 'requested_by_customer', NULL, 'ret-1785035423632', 1785035460000, 1785035461097);
 
 -- (không có dữ liệu cho carts)
 
 -- (không có dữ liệu cho cart_items)
 
--- (không có dữ liệu cho reviews)
+INSERT INTO `reviews` (`id`, `product_slug`, `user_id`, `order_id`, `order_code`, `rating`, `comment`, `media_url`, `media_kind`, `status`, `created_at`, `updated_at`) VALUES
+  ('review-seed-kimono-hong-u5', 'kimono-hong', 'u5', 'o15', 'JP240714', 5, 'Vải mềm, lên dáng chuẩn, hoa văn đẹp đúng như hình. Mặc đi lễ hội ai cũng khen.', NULL, NULL, 'approved', 1774323372477, 1784715524685),
+  ('review-seed-kimono-hong-demo-minh', 'kimono-hong', 'demo-minh', 'o1784162249095', 'JP240736', 4, 'Kimono đẹp, màu hồng nhã. Trừ 1 sao vì phần eo hơi rộng so với mình, nên chọn kỹ size.', NULL, NULL, 'approved', 1784710424057, 1784889751279),
+  ('review-seed-yukata-xanh-u10', 'yukata-xanh', 'u10', 'o20', 'JP240719', 5, 'Yukata cotton mát, xanh đen rất sang. Đóng gói cẩn thận, giao đúng hẹn.', NULL, NULL, 'approved', 1770849372477, 1784715523613),
+  ('review-seed-yukata-xanh-demo-minh', 'yukata-xanh', 'demo-minh', 'o1784162249095', 'JP240736', 4, 'Chất ổn trong tầm giá, đường may gọn gàng. Giao chậm hơn dự kiến một hôm nhưng shop báo trước nên vẫn ok.', NULL, NULL, 'approved', 1784507849095, 1784715513934),
+  ('review-seed-haori-dang-dai-u1', 'haori-dang-dai', 'u1', 'o1', 'JP240700', 5, 'Haori dáng dài khoác ngoài cực chất, phối với áo trơn là đẹp. Rất đáng tiền.', NULL, NULL, 'approved', 1784180172477, 1784180172477),
+  ('review-seed-haori-dang-dai-u5', 'haori-dang-dai', 'u5', 'o25', 'JP240724', 4, 'Form dài thanh thoát, vải dày dặn. Màu ngoài thực tế trầm hơn hình một chút.', NULL, NULL, 'approved', 1767418572477, 1784715520898),
+  ('review-seed-cardigan-dai-u7', 'cardigan-dai', 'u7', 'o7', 'JP240706', 5, 'Áo len mềm, ấm, dáng dài che được nhiều khuyết điểm. Đi làm hay dạo phố đều hợp.', NULL, NULL, 'approved', 1780011372477, 1780011372477),
+  ('review-seed-cardigan-dai-u1', 'cardigan-dai', 'u1', 'o31', 'JP240730', 3, 'Cardigan đẹp và dễ phối, nhưng chất hơi xù nhẹ sau lần giặt đầu. Nên giặt tay cho bền.', NULL, NULL, 'approved', 1763595372477, 1784715522212),
+  ('review-seed-so-mi-trang-u7', 'so-mi-trang', 'u7', 'o7', 'JP240706', 5, 'Sơ mi trắng basic mà form đẹp, vải không bị mỏng lộ. Sẽ ủng hộ thêm.', NULL, NULL, 'approved', 1779752172477, 1779752172477),
+  ('review-seed-blazer-kaki-u1', 'blazer-kaki', 'u1', 'o11', 'JP240710', 5, 'Blazer kaki lịch sự, cổ đứng tôn dáng. Mặc đi làm được đồng nghiệp khen nhiều.', NULL, NULL, 'approved', 1777232172477, 1777232172477),
+  ('review-seed-ao-len-co-lo-u1', 'ao-len-co-lo', 'u1', 'o1', 'JP240700', 4, 'Áo cổ lọ ấm, ôm vừa người. Mùa đông mặc trong áo khoác rất hợp, màu be dễ phối.', NULL, NULL, 'approved', 1784266572477, 1784715514868),
+  ('review-seed-guoc-geta-u9', 'guoc-geta', 'u9', 'o9', 'JP240708', 5, 'Guốc gỗ chắc chắn, đi êm hơn mình nghĩ. Chụp ảnh cùng yukata rất lên hình.', NULL, NULL, 'approved', 1778708172477, 1778708172477),
+  ('review-seed-mu-nhat-u3', 'mu-nhat', 'u3', 'o3', 'JP240702', 4, 'Mũ bo đội vừa đầu, form giữ tốt. Chất lượng ổn so với giá.', NULL, NULL, 'approved', 1782790572477, 1782790572477),
+  ('review-seed-du-nhat-u8', 'du-nhat', 'u8', 'o8', 'JP240707', 5, 'Dù đẹp, khung chắc, che nắng che mưa đều tốt. Cầm đi chụp ảnh rất xịn.', NULL, NULL, 'approved', 1779316572477, 1779316572477),
+  ('review-seed-gang-tay-u3', 'gang-tay', 'u3', 'o13', 'JP240712', 5, 'Găng len ấm, co giãn tốt, dùng điện thoại vẫn cảm ứng được. Rất đáng mua.', NULL, NULL, 'approved', 1775626572477, 1775626572477),
+  ('review-seed-yumeko-u5', 'yumeko', 'u5', 'o5', 'JP240704', 5, 'Bộ cosplay Yumeko chi tiết đẹp, may kỹ. Đi sự kiện được nhiều người xin chụp ảnh.', NULL, NULL, 'approved', 1781141772477, 1781141772477),
+  ('review-seed-furina-u9', 'furina', 'u9', 'o19', 'JP240718', 4, 'Cosplay Furina màu chuẩn, phụ kiện đầy đủ. Váy hơi dày nên mặc lâu hơi nóng nhưng nhìn rất đẹp.', NULL, NULL, 'approved', 1771630572477, 1784715524126),
+  ('review-seed-kiem-go-u4', 'kiem-go', 'u4', 'o14', 'JP240713', 5, 'Kiếm gỗ làm đạo cụ chắc tay, đường vân gỗ đẹp. Giao nhanh, đóng gói kỹ.', NULL, NULL, 'approved', 1775018172477, 1775018172477),
+  ('review-seed-kep-no-u3', 'kep-no', 'u3', 'o23', 'JP240722', 5, 'Kẹp nơ xinh, giữ tóc chắc. Nhỏ gọn mà tạo điểm nhấn dễ thương.', NULL, NULL, 'approved', 1768764972477, 1784715523095),
+  ('review-seed-yae-miko-u3', 'yae-miko', 'u3', 'o13', 'JP240712', 4, 'Trang phục Yae Miko đẹp, lên đồ chuẩn nhân vật. Cần là ủi nhẹ trước khi mặc cho phẳng.', NULL, NULL, 'approved', 1775626572477, 1775626572477),
+  ('review-1784887974577-xct5b', 'yukata-xanh', 'admin-1784883154949', 'o1784887771581', 'JP240755', 5, 'Ok, sản phẩm tốt', NULL, NULL, 'approved', 1784887974577, 1784889748482);
 
--- (không có dữ liệu cho review_reactions)
+INSERT INTO `review_reactions` (`id`, `review_id`, `user_id`, `value`, `updated_at`) VALUES
+  ('reaction-seed-review-seed-kimono-hong-u5-0', 'review-seed-kimono-hong-u5', 'u1', 'helpful', 1774326972477),
+  ('reaction-seed-review-seed-kimono-hong-u5-1', 'review-seed-kimono-hong-u5', 'u2', 'helpful', 1774326972477),
+  ('reaction-seed-review-seed-kimono-hong-u5-nh', 'review-seed-kimono-hong-u5', 'u3', 'not_helpful', 1774326972477),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-0', 'review-seed-kimono-hong-demo-minh', 'u1', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-1', 'review-seed-kimono-hong-demo-minh', 'u2', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-2', 'review-seed-kimono-hong-demo-minh', 'u3', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-3', 'review-seed-kimono-hong-demo-minh', 'u4', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-4', 'review-seed-kimono-hong-demo-minh', 'u5', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-kimono-hong-demo-minh-5', 'review-seed-kimono-hong-demo-minh', 'u6', 'helpful', 1784714024057),
+  ('reaction-seed-review-seed-yukata-xanh-u10-0', 'review-seed-yukata-xanh-u10', 'u1', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-u10-1', 'review-seed-yukata-xanh-u10', 'u2', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-u10-2', 'review-seed-yukata-xanh-u10', 'u3', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-u10-3', 'review-seed-yukata-xanh-u10', 'u4', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-u10-4', 'review-seed-yukata-xanh-u10', 'u5', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-u10-5', 'review-seed-yukata-xanh-u10', 'u6', 'helpful', 1770852972477),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-0', 'review-seed-yukata-xanh-demo-minh', 'u1', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-1', 'review-seed-yukata-xanh-demo-minh', 'u2', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-2', 'review-seed-yukata-xanh-demo-minh', 'u3', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-3', 'review-seed-yukata-xanh-demo-minh', 'u4', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-4', 'review-seed-yukata-xanh-demo-minh', 'u5', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-yukata-xanh-demo-minh-5', 'review-seed-yukata-xanh-demo-minh', 'u6', 'helpful', 1784511449095),
+  ('reaction-seed-review-seed-haori-dang-dai-u1-0', 'review-seed-haori-dang-dai-u1', 'u2', 'helpful', 1784183772477),
+  ('reaction-seed-review-seed-haori-dang-dai-u1-1', 'review-seed-haori-dang-dai-u1', 'u3', 'helpful', 1784183772477),
+  ('reaction-seed-review-seed-haori-dang-dai-u1-2', 'review-seed-haori-dang-dai-u1', 'u4', 'helpful', 1784183772477),
+  ('reaction-seed-review-seed-haori-dang-dai-u1-3', 'review-seed-haori-dang-dai-u1', 'u5', 'helpful', 1784183772477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-0', 'review-seed-haori-dang-dai-u5', 'u1', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-1', 'review-seed-haori-dang-dai-u5', 'u2', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-2', 'review-seed-haori-dang-dai-u5', 'u3', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-3', 'review-seed-haori-dang-dai-u5', 'u4', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-4', 'review-seed-haori-dang-dai-u5', 'u6', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-haori-dang-dai-u5-5', 'review-seed-haori-dang-dai-u5', 'u7', 'helpful', 1767422172477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-0', 'review-seed-cardigan-dai-u7', 'u1', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-1', 'review-seed-cardigan-dai-u7', 'u2', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-2', 'review-seed-cardigan-dai-u7', 'u3', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-3', 'review-seed-cardigan-dai-u7', 'u4', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-4', 'review-seed-cardigan-dai-u7', 'u5', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u7-5', 'review-seed-cardigan-dai-u7', 'u6', 'helpful', 1780014972477),
+  ('reaction-seed-review-seed-cardigan-dai-u1-0', 'review-seed-cardigan-dai-u1', 'u2', 'helpful', 1763598972477),
+  ('reaction-seed-review-seed-cardigan-dai-u1-1', 'review-seed-cardigan-dai-u1', 'u3', 'helpful', 1763598972477),
+  ('reaction-seed-review-seed-so-mi-trang-u7-0', 'review-seed-so-mi-trang-u7', 'u1', 'helpful', 1779755772477),
+  ('reaction-seed-review-seed-so-mi-trang-u7-1', 'review-seed-so-mi-trang-u7', 'u2', 'helpful', 1779755772477),
+  ('reaction-seed-review-seed-so-mi-trang-u7-2', 'review-seed-so-mi-trang-u7', 'u3', 'helpful', 1779755772477),
+  ('reaction-seed-review-seed-blazer-kaki-u1-0', 'review-seed-blazer-kaki-u1', 'u2', 'helpful', 1777235772477),
+  ('reaction-seed-review-seed-blazer-kaki-u1-1', 'review-seed-blazer-kaki-u1', 'u3', 'helpful', 1777235772477),
+  ('reaction-seed-review-seed-ao-len-co-lo-u1-0', 'review-seed-ao-len-co-lo-u1', 'u2', 'helpful', 1784270172477),
+  ('reaction-seed-review-seed-ao-len-co-lo-u1-1', 'review-seed-ao-len-co-lo-u1', 'u3', 'helpful', 1784270172477),
+  ('reaction-seed-review-seed-ao-len-co-lo-u1-2', 'review-seed-ao-len-co-lo-u1', 'u4', 'helpful', 1784270172477),
+  ('reaction-seed-review-seed-ao-len-co-lo-u1-3', 'review-seed-ao-len-co-lo-u1', 'u5', 'helpful', 1784270172477),
+  ('reaction-seed-review-seed-ao-len-co-lo-u1-4', 'review-seed-ao-len-co-lo-u1', 'u6', 'helpful', 1784270172477),
+  ('reaction-seed-review-seed-guoc-geta-u9-0', 'review-seed-guoc-geta-u9', 'u1', 'helpful', 1778711772477),
+  ('reaction-seed-review-seed-guoc-geta-u9-1', 'review-seed-guoc-geta-u9', 'u2', 'helpful', 1778711772477),
+  ('reaction-seed-review-seed-mu-nhat-u3-0', 'review-seed-mu-nhat-u3', 'u1', 'helpful', 1782794172477),
+  ('reaction-seed-review-seed-mu-nhat-u3-1', 'review-seed-mu-nhat-u3', 'u2', 'helpful', 1782794172477),
+  ('reaction-seed-review-seed-mu-nhat-u3-2', 'review-seed-mu-nhat-u3', 'u4', 'helpful', 1782794172477),
+  ('reaction-seed-review-seed-du-nhat-u8-0', 'review-seed-du-nhat-u8', 'u1', 'helpful', 1779320172477),
+  ('reaction-seed-review-seed-gang-tay-u3-0', 'review-seed-gang-tay-u3', 'u1', 'helpful', 1775630172477),
+  ('reaction-seed-review-seed-gang-tay-u3-nh', 'review-seed-gang-tay-u3', 'u2', 'not_helpful', 1775630172477),
+  ('reaction-seed-review-seed-yumeko-u5-0', 'review-seed-yumeko-u5', 'u1', 'helpful', 1781145372477),
+  ('reaction-seed-review-seed-furina-u9-0', 'review-seed-furina-u9', 'u1', 'helpful', 1771634172477),
+  ('reaction-seed-review-seed-furina-u9-1', 'review-seed-furina-u9', 'u2', 'helpful', 1771634172477),
+  ('reaction-seed-review-seed-furina-u9-nh', 'review-seed-furina-u9', 'u3', 'not_helpful', 1771634172477),
+  ('reaction-seed-review-seed-yae-miko-u3-0', 'review-seed-yae-miko-u3', 'u1', 'helpful', 1775630172477),
+  ('reaction-seed-review-seed-yae-miko-u3-nh', 'review-seed-yae-miko-u3', 'u2', 'not_helpful', 1775630172477),
+  ('reaction-1784888009250', 'review-1784887974577-xct5b', 'admin-1784883154949', 'helpful', 1784888009250);
 
--- (không có dữ liệu cho moderation_samples)
+INSERT INTO `moderation_samples` (`id`, `review_id`, `label`, `normalized_text`, `source`, `updated_at`) VALUES
+  ('sample-1784710774139-x6c', NULL, 'rejected', 'shop lua dao vcl dume', 'auto-community', 1784710774139),
+  ('sample-1784710774168-0l7', NULL, 'rejected', 'nen them quan c c an hai', 'auto-community', 1784710774168),
+  ('sample-1784713835901-vnu', NULL, 'rejected', 'ditconmemay cai shop', 'auto-community', 1784713835901),
+  ('sample-1784780821852-fms', NULL, 'rejected', 'shop lua dao vcl dume', 'auto-community', 1784780821852);
 
 INSERT INTO `voucher_redemptions` (`id`, `code`, `user_id`, `order_id`, `discount`, `redeemed_at`) VALUES
-  ('redeem-o1784631853615', 'FREESHIP', 'demo-minh', 'o1784631853615', 30000, 1784631853615);
+  ('redeem-o1784631853615', 'FREESHIP', 'demo-minh', 'o1784631853615', 30000, 1784631853615),
+  ('redeem-o1784712524868', 'THU20', 'demo-minh', 'o1784712524868', 322500, 1784712524868);
 
 INSERT INTO `flagcard_collections` (`id`, `user_id`, `created_at`, `updated_at`) VALUES
   ('flags-demo-minh', 'demo-minh', 1784206908261, 1784540414640);
@@ -1875,7 +2041,154 @@ INSERT INTO `interactions` (`id`, `user_id`, `product_slug`, `type`, `value`, `c
   ('goal-i-1784632482421', 'demo-minh', 'kimono-hong', 'goal', 1, 1784632482421, 'mobile'),
   ('i17846504766851fhy2', 'ban@japano.vn', 'kimono-hong', 'view', 1, 1784650476685, 'mobile'),
   ('i1784651461100y8nou', 'ban@japano.vn', 'khoac-nhat', 'view', 1, 1784651461100, 'mobile'),
-  ('i17846514708272hwp6', 'ban@japano.vn', 'blazer-kaki', 'view', 1, 1784651470827, 'mobile');
+  ('i17846514708272hwp6', 'ban@japano.vn', 'blazer-kaki', 'view', 1, 1784651470827, 'mobile'),
+  ('i1784711666831eezne', 'ban@japano.vn', 'furina', 'view', 1, 1784711666831, 'mobile'),
+  ('i1784711668375dcjhc', 'ban@japano.vn', 'furina', 'view', 1, 1784711668375, 'mobile'),
+  ('goal-i-1784711737653', 'demo-minh', 'yukata-xanh', 'goal', 1, 1784711737653, 'mobile'),
+  ('goal-i-1784711770961', 'demo-minh', 'yukata-xanh', 'goal', 1, 1784711770961, 'mobile'),
+  ('chat-i-1784711903988-0', 'demo-minh', 'cardigan-dai', 'chat', 1, 1784711903988, 'mobile'),
+  ('chat-i-1784711903988-1', 'demo-minh', 'so-mi-trang', 'chat', 1, 1784711903988, 'mobile'),
+  ('chat-i-1784711903988-2', 'demo-minh', 'kimono-hong', 'chat', 1, 1784711903988, 'mobile'),
+  ('chat-i-1784711936224-0', 'demo-minh', 'vo-tat', 'chat', 1, 1784711936224, 'mobile'),
+  ('i1784711942839ltrvp', 'ban@japano.vn', 'vo-tat', 'wishlist', 1, 1784711942839, 'mobile'),
+  ('chat-i-1784711946807-0', 'demo-minh', 'cardigan-dai', 'chat', 1, 1784711946807, 'mobile'),
+  ('chat-i-1784711946807-1', 'demo-minh', 'so-mi-trang', 'chat', 1, 1784711946807, 'mobile'),
+  ('chat-i-1784711946807-2', 'demo-minh', 'kimono-hong', 'chat', 1, 1784711946807, 'mobile'),
+  ('chat-i-1784711946807-3', 'demo-minh', 'blazer-kaki', 'chat', 1, 1784711946807, 'mobile'),
+  ('i1784712062731fsrjm', 'ban@japano.vn', 'yukata-xanh', 'view', 1, 1784712062731, 'mobile'),
+  ('tryon-i-1784712474221', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1784712474221, 'mobile'),
+  ('i1784712492631q420w', 'ban@japano.vn', 'yukata-xanh', 'cart', 1, 1784712492631, 'mobile'),
+  ('i1784712669031wy62v', 'ban@japano.vn', 'yukata-xanh', 'cart', 1, 1784712669031, 'mobile'),
+  ('i178471267233646cdm', 'ban@japano.vn', 'yukata-xanh', 'cart', 2, 1784712672336, 'mobile'),
+  ('i1784712672685wje7v', 'ban@japano.vn', 'yukata-xanh', 'cart', 3, 1784712672685, 'mobile'),
+  ('i1784712673517aehhj', 'ban@japano.vn', 'yukata-xanh', 'cart', 4, 1784712673517, 'mobile'),
+  ('i17847126742177tadh', 'ban@japano.vn', 'yukata-xanh', 'cart', 3, 1784712674217, 'mobile'),
+  ('i1784712675641tfq6d', 'ban@japano.vn', 'yukata-xanh', 'cart', 2, 1784712675641, 'mobile'),
+  ('i1784712676762dum8c', 'ban@japano.vn', 'yukata-xanh', 'cart', 1, 1784712676762, 'mobile'),
+  ('i1784712677692qbfsa', 'ban@japano.vn', 'yukata-xanh', 'cart', 1, 1784712677692, 'mobile'),
+  ('i17847126820170kdy6', 'ban@japano.vn', 'kimono-hong', 'view', 1, 1784712682017, 'mobile'),
+  ('i17847126833166dgzx', 'ban@japano.vn', 'kimono-hong', 'cart', 1, 1784712683316, 'mobile'),
+  ('i178488272975527x0p', 'u-1784882707878-lypbq5', 'kimono-hong', 'view', 1, 1784882729755, 'mobile'),
+  ('i1784882741555hmuvv', 'u-1784882707878-lypbq5', 'guoc-geta', 'view', 1, 1784882741555, 'mobile'),
+  ('i1784882742040p740a', 'u-1784882707878-lypbq5', 'kimono-hong', 'wishlist', 1, 1784882742040, 'mobile'),
+  ('i178488274476591dkh', 'u-1784882707878-lypbq5', 'guoc-geta', 'wishlist', 1, 1784882744765, 'mobile'),
+  ('i1784882747567i0k3l', 'u-1784882707878-lypbq5', 'furina', 'wishlist', 1, 1784882747567, 'mobile'),
+  ('i17848827485704yy57', 'u-1784882707878-lypbq5', 'yukata-xanh', 'wishlist', 1, 1784882748570, 'mobile'),
+  ('i17848827545403l3p2', 'u-1784882707878-lypbq5', 'furina', 'view', 1, 1784882754540, 'mobile'),
+  ('i1784882766390a7lq3', 'u-1784882707878-lypbq5', 'furina', 'cart', 1, 1784882766390, 'mobile'),
+  ('i1784882923558xh1s7', 'u-1784882707878-lypbq5', 'furina', 'view', 1, 1784882923558, 'mobile'),
+  ('i17848834279579ctk4', 'u-1784883377086-fma6ou', 'kimono-hong', 'view', 1, 1784883427957, 'mobile'),
+  ('i1784883431283kcerw', 'u-1784883377086-fma6ou', 'kimono-hong', 'cart', 1, 1784883431283, 'mobile'),
+  ('i1784885189956xcz23', 'u-1784883377086-fma6ou', 'kimono-hong', 'view', 1, 1784885189956, 'mobile'),
+  ('i1784885190845s3ch1', 'u-1784883377086-fma6ou', 'kimono-hong', 'view', 1, 1784885190845, 'mobile'),
+  ('i1784887356943k12rn', 'admin-1784883154949', 'furina', 'view', 1, 1784887356943, 'mobile'),
+  ('i1784887361228p1t3n', 'admin-1784883154949', 'furina', 'cart', 1, 1784887361228, 'mobile'),
+  ('i1784887751073ind7i', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784887751073, 'mobile'),
+  ('i1784887752491y18jo', 'admin-1784883154949', 'yukata-xanh', 'cart', 1, 1784887752491, 'mobile'),
+  ('i1784888004894fe0f6', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784888004894, 'mobile'),
+  ('i1784889318446xk1c3', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784889318446, 'mobile'),
+  ('i1784889419914qntgx', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784889419914, 'mobile'),
+  ('i17848894205043o3bm', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784889420504, 'mobile'),
+  ('i1784889422600lvix7', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784889422600, 'mobile'),
+  ('i17849508496498tuuf', 'admin-1784883154949', 'cardigan-dai', 'view', 1, 1784950849649, 'mobile'),
+  ('tryon-i-1784951050781', 'demo-minh', 'cardigan-dai', 'tryon', 1, 1784951050781, 'mobile'),
+  ('i1784952146060zmosh', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784952146060, 'mobile'),
+  ('i17849530253920lh8b', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784953025392, 'mobile'),
+  ('i1784953026289jzy79', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784953026289, 'mobile'),
+  ('i1784953027665mw5t3', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784953027665, 'mobile'),
+  ('i1784954581549q2v6s', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784954581549, 'mobile'),
+  ('tryon-i-1784954721018', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1784954721018, 'mobile'),
+  ('i1784974363710oe4bg', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1784974363710, 'mobile'),
+  ('tryon-i-1784974491012', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1784974491012, 'mobile'),
+  ('i1784991253726yx0ti', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1784991253726, 'mobile'),
+  ('i178499144040388e05', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1784991440403, 'mobile'),
+  ('chat-i-1784991440458-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1784991440458, 'mobile'),
+  ('chat-i-1784991440458-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1784991440458, 'mobile'),
+  ('chat-i-1784991440458-2', 'verify-user', 'kimono-hong', 'chat', 1, 1784991440458, 'mobile'),
+  ('chat-i-1784991440458-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1784991440458, 'mobile'),
+  ('i1784992075468uo0h8', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1784992075468, 'mobile'),
+  ('i1784992076383aappm', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1784992076383, 'mobile'),
+  ('i1784992077806ahu4t', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1784992077806, 'mobile'),
+  ('i1784992371609gga46', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1784992371609, 'mobile'),
+  ('chat-i-1784992371665-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1784992371665, 'mobile'),
+  ('chat-i-1784992371665-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1784992371665, 'mobile'),
+  ('chat-i-1784992371665-2', 'verify-user', 'kimono-hong', 'chat', 1, 1784992371665, 'mobile'),
+  ('chat-i-1784992371665-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1784992371665, 'mobile'),
+  ('i1784992371670d9ew8', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1784992371670, 'mobile'),
+  ('chat-i-1784992371710-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1784992371710, 'mobile'),
+  ('chat-i-1784992371710-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1784992371710, 'mobile'),
+  ('chat-i-1784992371710-2', 'verify-user', 'kimono-hong', 'chat', 1, 1784992371710, 'mobile'),
+  ('chat-i-1784992371710-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1784992371710, 'mobile'),
+  ('tryon-i-1784992529548', 'verify-user', 'haori-dang-dai', 'tryon', 1, 1784992529548, 'mobile'),
+  ('goal-i-1784992595576', 'verify-user', 'haori-dang-dai', 'goal', 1, 1784992595576, 'mobile'),
+  ('i1784993287846fdr2v', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1784993287846, 'mobile'),
+  ('chat-i-1784993287902-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1784993287902, 'mobile'),
+  ('chat-i-1784993287902-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1784993287902, 'mobile'),
+  ('chat-i-1784993287902-2', 'verify-user', 'kimono-hong', 'chat', 1, 1784993287902, 'mobile'),
+  ('chat-i-1784993287902-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1784993287902, 'mobile'),
+  ('i17850333435849awfh', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785033343584, 'mobile'),
+  ('tryon-i-1785033641392', 'demo-minh', 'kimono-hong', 'tryon', 1, 1785033641392, 'mobile'),
+  ('i17850341744302lqib', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034174430, 'mobile'),
+  ('i1785034182831bjjta', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034182831, 'mobile'),
+  ('i1785034186907bfmja', 'admin-1784883154949', 'kimono-hong', 'cart', 1, 1785034186907, 'mobile'),
+  ('i1785034333648ev61j', 'admin-1784883154949', 'kimono-hong', 'cart', 2, 1785034333648, 'mobile'),
+  ('i1785034529885j94ga', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034529885, 'mobile'),
+  ('i1785034534944pdqke', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034534944, 'mobile'),
+  ('i17850345398435dzk3', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034539843, 'mobile'),
+  ('i1785034548495fxz5z', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034548495, 'mobile'),
+  ('i178503481878240vpd', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034818782, 'mobile'),
+  ('i1785034996814n7nh2', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785034996814, 'mobile'),
+  ('i1785035212334gnmhn', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785035212334, 'mobile'),
+  ('i1785035214207z56md', 'admin-1784883154949', 'kimono-hong', 'cart', 1, 1785035214207, 'mobile'),
+  ('i17850353022914kpfa', 'admin-1784883154949', 'kimono-hong', 'cart', 2, 1785035302291, 'mobile'),
+  ('i1785035306647puzfq', 'admin-1784883154949', 'kimono-hong', 'cart', 1, 1785035306647, 'mobile'),
+  ('i1785035307353detkb', 'admin-1784883154949', 'kimono-hong', 'cart', 1, 1785035307353, 'mobile'),
+  ('i17850358482080x1zp', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785035848208, 'mobile'),
+  ('i1785036997627iujqh', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785036997627, 'mobile'),
+  ('i17853001846159c78e', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785300184615, 'mobile'),
+  ('i17853002450205uxt6', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785300245020, 'mobile'),
+  ('tryon-i-1785300664442', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785300664442, 'mobile'),
+  ('i178530125986442ows', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785301259864, 'mobile'),
+  ('tryon-i-1785301618522', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785301618522, 'mobile'),
+  ('i1785313829176v4u85', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785313829176, 'mobile'),
+  ('tryon-i-1785314068628', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785314068628, 'mobile'),
+  ('i1785314287526amm7s', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1785314287526, 'mobile'),
+  ('chat-i-1785314287585-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1785314287585, 'mobile'),
+  ('chat-i-1785314287585-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1785314287585, 'mobile'),
+  ('chat-i-1785314287585-2', 'verify-user', 'kimono-hong', 'chat', 1, 1785314287585, 'mobile'),
+  ('chat-i-1785314287585-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1785314287585, 'mobile'),
+  ('i1785327528605sdcjx', 'verify-user', 'haori-dang-dai', 'wishlist', 1, 1785327528605, 'mobile'),
+  ('chat-i-1785327528660-0', 'verify-user', 'yukata-xanh', 'chat', 1, 1785327528660, 'mobile'),
+  ('chat-i-1785327528660-1', 'verify-user', 'dong-phuc-thuy-thu', 'chat', 1, 1785327528660, 'mobile'),
+  ('chat-i-1785327528660-2', 'verify-user', 'kimono-hong', 'chat', 1, 1785327528660, 'mobile'),
+  ('chat-i-1785327528660-3', 'verify-user', 'haori-dang-dai', 'chat', 1, 1785327528660, 'mobile'),
+  ('i17855962817627rohm', 'admin-1784883154949', 'cardigan-dai', 'view', 1, 1785596281762, 'mobile'),
+  ('i17855963209905zv1o', 'admin-1784883154949', 'cardigan-dai', 'cart', 1, 1785596320990, 'mobile'),
+  ('i1785597105607kfjol', 'admin-1784883154949', 'cardigan-dai', 'cart', 1, 1785597105607, 'mobile'),
+  ('i1785597115638vjtqn', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785597115638, 'mobile'),
+  ('i178559838905721k60', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598389057, 'mobile'),
+  ('i1785598399253rkipu', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598399253, 'mobile'),
+  ('i1785598410515nwuaz', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598410515, 'mobile'),
+  ('i1785598444621krtp4', 'admin-1784883154949', 'blazer-kaki', 'view', 1, 1785598444621, 'mobile'),
+  ('i1785598468795lhzrw', 'admin-1784883154949', 'cardigan-dai', 'view', 1, 1785598468795, 'mobile'),
+  ('i1785598648538yfrpl', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598648538, 'mobile'),
+  ('i1785598660512p454l', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598660512, 'mobile'),
+  ('i1785598672441boat6', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785598672441, 'mobile'),
+  ('i1785638099321iwd20', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785638099321, 'mobile'),
+  ('tryon-i-1785638830344', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785638830344, 'mobile'),
+  ('tryon-i-1785639029923', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785639029923, 'mobile'),
+  ('i1785639169742nw59m', 'admin-1784883154949', 'dong-phuc-thuy-thu', 'view', 1, 1785639169742, 'mobile'),
+  ('tryon-i-1785639215200', 'demo-minh', 'dong-phuc-thuy-thu', 'tryon', 1, 1785639215200, 'mobile'),
+  ('tryon-i-1785639325018', 'demo-minh', 'dong-phuc-thuy-thu', 'tryon', 1, 1785639325018, 'mobile'),
+  ('i17856402437214oy8d', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785640243721, 'mobile'),
+  ('i17856402444250bec6', 'admin-1784883154949', 'kimono-hong', 'view', 1, 1785640244425, 'mobile'),
+  ('i1785640248417ed5x5', 'admin-1784883154949', 'kimono-hong', 'wishlist', 1, 1785640248417, 'mobile'),
+  ('i1785849549937kxj58', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785849549937, 'mobile'),
+  ('tryon-i-1785849608536', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785849608536, 'mobile'),
+  ('i1785849623783nh2gg', 'admin-1784883154949', 'cardigan-dai', 'view', 1, 1785849623783, 'mobile'),
+  ('tryon-i-1785849669669', 'demo-minh', 'cardigan-dai', 'tryon', 1, 1785849669669, 'mobile'),
+  ('i1785895568186l7yhm', 'admin-1784883154949', 'yukata-xanh', 'view', 1, 1785895568186, 'mobile'),
+  ('tryon-i-1785895618614', 'demo-minh', 'yukata-xanh', 'tryon', 1, 1785895618614, 'mobile');
 
 INSERT INTO `chats` (`id`, `user_id`, `role`, `message`, `created_at`) VALUES
   ('chat-1783936617114', 'demo-minh', 'user', 'hi', 1783936617114),
@@ -1913,7 +2226,25 @@ INSERT INTO `chats` (`id`, `user_id`, `role`, `message`, `created_at`) VALUES
   ('chat-1784539948520', 'demo-minh', 'user', 'Giá vé du lịch', 1784539948520),
   ('chat-1784539948520-ai', 'demo-minh', 'assistant', 'Bạn muốn hỏi giá sản phẩm nào? Cho mình tên hoặc loại đồ (vd: kimono, haori, phụ kiện) nhé.', 1784539948521),
   ('chat-1784552301793', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1784552301793),
-  ('chat-1784552301793-ai', 'verify-user', 'assistant', 'Mình tìm được 1 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784552301794);
+  ('chat-1784552301793-ai', 'verify-user', 'assistant', 'Mình tìm được 1 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784552301794),
+  ('chat-1784711903988', 'demo-minh', 'user', 'Hello', 1784711903988),
+  ('chat-1784711903988-ai', 'demo-minh', 'assistant', 'Hôm nay bạn thế nào? Mình là Ori 織. Bạn kể mình nghe tâm trạng hoặc dịp sắp tới, mình sẽ gợi ý món phù hợp trong shop — bạn có thể thêm giỏ và mua ngay trong botchat.', 1784711903989),
+  ('chat-1784711936224', 'demo-minh', 'user', 'Tôi nặng 50kg cao 1?6 thì mặc đồ gì hợp để đi Tokyo', 1784711936224),
+  ('chat-1784711936224-ai', 'demo-minh', 'assistant', 'Tokyo hợp cho chuyến đi kết hợp hiện đại và truyền thống: Asakusa–Sensō-ji, Ueno, Meiji Jingū, Shibuya, Shinjuku và các khu mua sắm như Ginza hoặc Harajuku. Nên gom điểm theo khu vì thành phố rất rộng; dùng thẻ IC cho tàu nội đô và tránh giờ cao điểm nếu mang hành lý lớn.', 1784711936225),
+  ('chat-1784711946807', 'demo-minh', 'user', 'Cần đổi mood', 1784711946807),
+  ('chat-1784711946807-ai', 'demo-minh', 'assistant', 'Mình chưa có đủ dữ kiện để trả lời chính xác câu này. Bạn có thể hỏi lại theo chủ đề cụ thể hơn — ví dụ tên trang phục Nhật, thành phố muốn đến, mùa du lịch, cách di chuyển, món ăn, văn hóa, hoặc nhu cầu phối đồ. Trong lúc đó, đây là vài món hợp gu của bạn:', 1784711946808),
+  ('chat-1784991440458', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1784991440458),
+  ('chat-1784991440458-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784991440459),
+  ('chat-1784992371665', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1784992371665),
+  ('chat-1784992371665-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784992371666),
+  ('chat-1784992371710', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1784992371710),
+  ('chat-1784992371710-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784992371711),
+  ('chat-1784993287902', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1784993287902),
+  ('chat-1784993287902-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1784993287903),
+  ('chat-1785314287585', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1785314287585),
+  ('chat-1785314287585-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1785314287586),
+  ('chat-1785327528660', 'verify-user', 'user', 'Gợi ý đồ tối giản để đi làm', 1785327528660),
+  ('chat-1785327528660-ai', 'verify-user', 'assistant', 'Mình tìm được 4 món trong nhóm Áo truyền thống hợp với câu hỏi của bạn:', 1785327528661);
 
 INSERT INTO `chat_product_refs` (`chat_id`, `product_slug`) VALUES
   ('chat-1783937458499-ai', 'kimono-hong'),
@@ -1951,7 +2282,39 @@ INSERT INTO `chat_product_refs` (`chat_id`, `product_slug`) VALUES
   ('chat-1784539895194-ai', 'so-mi-trang'),
   ('chat-1784539895194-ai', 'kimono-hong'),
   ('chat-1784539895194-ai', 'haori-dang-dai'),
-  ('chat-1784552301793-ai', 'yukata-xanh');
+  ('chat-1784552301793-ai', 'yukata-xanh'),
+  ('chat-1784711903988-ai', 'cardigan-dai'),
+  ('chat-1784711903988-ai', 'so-mi-trang'),
+  ('chat-1784711903988-ai', 'kimono-hong'),
+  ('chat-1784711936224-ai', 'vo-tat'),
+  ('chat-1784711946807-ai', 'cardigan-dai'),
+  ('chat-1784711946807-ai', 'so-mi-trang'),
+  ('chat-1784711946807-ai', 'kimono-hong'),
+  ('chat-1784711946807-ai', 'blazer-kaki'),
+  ('chat-1784991440458-ai', 'yukata-xanh'),
+  ('chat-1784991440458-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1784991440458-ai', 'kimono-hong'),
+  ('chat-1784991440458-ai', 'haori-dang-dai'),
+  ('chat-1784992371665-ai', 'yukata-xanh'),
+  ('chat-1784992371665-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1784992371665-ai', 'kimono-hong'),
+  ('chat-1784992371665-ai', 'haori-dang-dai'),
+  ('chat-1784992371710-ai', 'yukata-xanh'),
+  ('chat-1784992371710-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1784992371710-ai', 'kimono-hong'),
+  ('chat-1784992371710-ai', 'haori-dang-dai'),
+  ('chat-1784993287902-ai', 'yukata-xanh'),
+  ('chat-1784993287902-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1784993287902-ai', 'kimono-hong'),
+  ('chat-1784993287902-ai', 'haori-dang-dai'),
+  ('chat-1785314287585-ai', 'yukata-xanh'),
+  ('chat-1785314287585-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1785314287585-ai', 'kimono-hong'),
+  ('chat-1785314287585-ai', 'haori-dang-dai'),
+  ('chat-1785327528660-ai', 'yukata-xanh'),
+  ('chat-1785327528660-ai', 'dong-phuc-thuy-thu'),
+  ('chat-1785327528660-ai', 'kimono-hong'),
+  ('chat-1785327528660-ai', 'haori-dang-dai');
 
 INSERT INTO `tryon_history` (`id`, `user_id`, `product_slug`, `engine`, `created_at`) VALUES
   ('tryon-1783922576844', 'codex-e2e', 'kimono-hong', 'flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity', 1783922576844),
@@ -1981,7 +2344,23 @@ INSERT INTO `tryon_history` (`id`, `user_id`, `product_slug`, `engine`, `created
   ('tryon-1784545278299', 'demo-minh', 'cardigan-dai', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784545278299),
   ('tryon-1784550081133', 'demo-minh', 'cardigan-dai', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784550081133),
   ('tryon-1784626798861', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784626798861),
-  ('tryon-1784629626209', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784629626209);
+  ('tryon-1784629626209', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784629626209),
+  ('tryon-1784712474221', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory', 1784712474221),
+  ('tryon-1784951050781', 'demo-minh', 'cardigan-dai', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1784951050781),
+  ('tryon-1784954721018', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1784954721018),
+  ('tryon-1784974491012', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1784974491012),
+  ('tryon-1784992529548', 'verify-user', 'haori-dang-dai', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1784992529548),
+  ('tryon-1785033641392', 'demo-minh', 'kimono-hong', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1785033641392),
+  ('tryon-1785300664442', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1785300664442),
+  ('tryon-1785301618522', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1785301618522),
+  ('tryon-1785314068628', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1785314068628),
+  ('tryon-1785638830344', 'demo-minh', 'yukata-xanh', 'flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning', 1785638830344),
+  ('tryon-1785639029923', 'demo-minh', 'yukata-xanh', 'fashn-vton-1.5+adaptive-low-memory', 1785639029923),
+  ('tryon-1785639215200', 'demo-minh', 'dong-phuc-thuy-thu', 'fashn-vton-1.5+adaptive-low-memory', 1785639215200),
+  ('tryon-1785639325018', 'demo-minh', 'dong-phuc-thuy-thu', 'fashn-vton-1.5+adaptive-low-memory', 1785639325018),
+  ('tryon-1785849608536', 'demo-minh', 'yukata-xanh', 'fashn-vton-1.5+adaptive-low-memory', 1785849608536),
+  ('tryon-1785849669669', 'demo-minh', 'cardigan-dai', 'fashn-vton-1.5+adaptive-low-memory', 1785849669669),
+  ('tryon-1785895618614', 'demo-minh', 'yukata-xanh', 'fashn-vton-1.5+adaptive-low-memory', 1785895618614);
 
 INSERT INTO `tryon_accessories` (`tryon_id`, `product_slug`) VALUES
   ('tryon-1783938237451', 'mu-nhat'),
@@ -1990,37 +2369,38 @@ INSERT INTO `tryon_accessories` (`tryon_id`, `product_slug`) VALUES
   ('tryon-1783939475987', 'du-nhat');
 
 INSERT INTO `goals` (`id`, `user_id`, `product_slug`, `age`, `height_cm`, `current_weight_kg`, `target_weight_kg`, `monthly_income`, `fixed_expenses`, `current_savings`, `target_months`, `plan`, `created_at`, `updated_at`) VALUES
-  ('goal-demo-minh-kimono-hong', 'demo-minh', 'kimono-hong', 25, 165, 65, 60, 15000000, 11000000, 200000, 6, '{"saving":{"productId":"kimono-hong","productName":"Kimono truyền thống Hồng","targetPrice":1890000,"currentSavings":200000,"gap":1690000,"progressPercent":10.6,"disposableIncome":4000000,"monthlySaving":480000,"weeklySaving":110855,"requestedMonths":6,"estimatedMonths":4,"feasibleByRequestedDate":true,"milestones":[{"milestone":25,"amount":472500,"reached":false},{"milestone":50,"amount":945000,"reached":false},{"milestone":75,"amount":1417500,"reached":false},{"milestone":100,"amount":1890000,"reached":false}],"actions":["Tách tự động 480.000₫ ngay sau ngày nhận thu nhập.","Giới hạn khoảng 110.855₫ mỗi tuần cho quỹ “Kimono truyền thống Hồng”.","Mỗi cuối tuần ghi lại một khoản đã tránh chi tiêu bốc đồng và chuyển đúng số đó vào quỹ."]},"wellness":{"status":"gradual-loss","currentBmi":23.9,"targetBmi":22,"targetWeightKg":60,"lossKg":5,"weeklyRateKg":0.5,"estimatedWeeks":10,"activityMinutesPerWeek":150,"strengthDaysPerWeek":2,"safetyMessage":"Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.","habits":["Bắt đầu bằng 20–30 phút đi bộ nhanh, 5 ngày/tuần; tăng dần theo thể lực.","Tập sức mạnh toàn thân 2 ngày/tuần, có ngày nghỉ xen kẽ.","Giữ bữa ăn đều đặn, ưu tiên rau, đạm phù hợp và nước; không nhịn ăn để “bù”.","Theo dõi giấc ngủ, năng lượng và mức vận động; cân tối đa 1 lần/tuần nếu việc cân không gây căng thẳng."],"sources":["https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html","https://www.who.int/initiatives/behealthy/physical-activity"]},"coaching":{"motivation":"Mục tiêu không phải ép mình thay đổi thật nhanh, mà là xây thói quen đủ bền để bạn tự tin mặc Kimono truyền thống Hồng và vẫn giữ ngân sách an toàn.","identityStatement":"Tôi là người chăm sóc cơ thể bằng lựa chọn nhỏ, đồng thời chi tiêu có kế hoạch.","implementationIntentions":["Nếu vừa nhận thu nhập, tôi sẽ chuyển tiền vào quỹ mua sắm trước khi mở ứng dụng giải trí.","Nếu bỏ lỡ một buổi vận động, tôi sẽ quay lại bằng 10 phút đi bộ trong ngày kế tiếp.","Nếu muốn mua bốc đồng, tôi sẽ chờ 24 giờ và kiểm tra lại quỹ mục tiêu."],"obstaclePlans":["Tuần bận: giảm thời lượng mỗi buổi nhưng giữ nhịp xuất hiện.","Chi phí bất ngờ: ưu tiên quỹ khẩn cấp và kéo dài hạn mua thay vì vay để mua đồ.","Tâm trạng xuống: chọn một hành động nhỏ có thể làm trong 5 phút, không tự trách."],"weeklyFocus":"Mỗi tuần chỉ nâng một thói quen: vận động, bữa ăn đều, ngủ hoặc tiết kiệm.","reflectionQuestion":"Tuần này hành động nhỏ nào giúp bạn vừa khoẻ hơn vừa gần mục tiêu mua sắm hơn?","engine":"SMART + implementation-intentions + habit-stacking"},"methodology":["SMART goals","Implementation intentions","Habit stacking","Self-compassion","Progress milestones"],"disclaimer":"Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."}', 1784162335805, 1784632482421);
+  ('goal-demo-minh-kimono-hong', 'demo-minh', 'kimono-hong', 25, 165, 65, 60, 15000000, 11000000, 200000, 6, '{"saving":{"productId":"kimono-hong","productName":"Kimono truyền thống Hồng","targetPrice":1890000,"currentSavings":200000,"gap":1690000,"progressPercent":10.6,"disposableIncome":4000000,"monthlySaving":480000,"weeklySaving":110855,"requestedMonths":6,"estimatedMonths":4,"feasibleByRequestedDate":true,"milestones":[{"milestone":25,"amount":472500,"reached":false},{"milestone":50,"amount":945000,"reached":false},{"milestone":75,"amount":1417500,"reached":false},{"milestone":100,"amount":1890000,"reached":false}],"actions":["Tách tự động 480.000₫ ngay sau ngày nhận thu nhập.","Giới hạn khoảng 110.855₫ mỗi tuần cho quỹ “Kimono truyền thống Hồng”.","Mỗi cuối tuần ghi lại một khoản đã tránh chi tiêu bốc đồng và chuyển đúng số đó vào quỹ."]},"wellness":{"status":"gradual-loss","currentBmi":23.9,"targetBmi":22,"targetWeightKg":60,"lossKg":5,"weeklyRateKg":0.5,"estimatedWeeks":10,"activityMinutesPerWeek":150,"strengthDaysPerWeek":2,"safetyMessage":"Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.","habits":["Bắt đầu bằng 20–30 phút đi bộ nhanh, 5 ngày/tuần; tăng dần theo thể lực.","Tập sức mạnh toàn thân 2 ngày/tuần, có ngày nghỉ xen kẽ.","Giữ bữa ăn đều đặn, ưu tiên rau, đạm phù hợp và nước; không nhịn ăn để “bù”.","Theo dõi giấc ngủ, năng lượng và mức vận động; cân tối đa 1 lần/tuần nếu việc cân không gây căng thẳng."],"sources":["https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html","https://www.who.int/initiatives/behealthy/physical-activity"]},"coaching":{"motivation":"Mục tiêu không phải ép mình thay đổi thật nhanh, mà là xây thói quen đủ bền để bạn tự tin mặc Kimono truyền thống Hồng và vẫn giữ ngân sách an toàn.","identityStatement":"Tôi là người chăm sóc cơ thể bằng lựa chọn nhỏ, đồng thời chi tiêu có kế hoạch.","implementationIntentions":["Nếu vừa nhận thu nhập, tôi sẽ chuyển tiền vào quỹ mua sắm trước khi mở ứng dụng giải trí.","Nếu bỏ lỡ một buổi vận động, tôi sẽ quay lại bằng 10 phút đi bộ trong ngày kế tiếp.","Nếu muốn mua bốc đồng, tôi sẽ chờ 24 giờ và kiểm tra lại quỹ mục tiêu."],"obstaclePlans":["Tuần bận: giảm thời lượng mỗi buổi nhưng giữ nhịp xuất hiện.","Chi phí bất ngờ: ưu tiên quỹ khẩn cấp và kéo dài hạn mua thay vì vay để mua đồ.","Tâm trạng xuống: chọn một hành động nhỏ có thể làm trong 5 phút, không tự trách."],"weeklyFocus":"Mỗi tuần chỉ nâng một thói quen: vận động, bữa ăn đều, ngủ hoặc tiết kiệm.","reflectionQuestion":"Tuần này hành động nhỏ nào giúp bạn vừa khoẻ hơn vừa gần mục tiêu mua sắm hơn?","engine":"SMART + implementation-intentions + habit-stacking"},"methodology":["SMART goals","Implementation intentions","Habit stacking","Self-compassion","Progress milestones"],"disclaimer":"Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."}', 1784162335805, 1784632482421),
+  ('goal-demo-minh-yukata-xanh', 'demo-minh', 'yukata-xanh', 25, 165, 65, 60, 15000000, 11000000, 200000, 6, '{"saving":{"productId":"yukata-xanh","productName":"Yukata vải bông xanh đen","targetPrice":1290000,"currentSavings":200000,"gap":1090000,"progressPercent":15.5,"disposableIncome":4000000,"monthlySaving":480000,"weeklySaving":110855,"requestedMonths":6,"estimatedMonths":3,"feasibleByRequestedDate":true,"milestones":[{"milestone":25,"amount":322500,"reached":false},{"milestone":50,"amount":645000,"reached":false},{"milestone":75,"amount":967500,"reached":false},{"milestone":100,"amount":1290000,"reached":false}],"actions":["Tách tự động 480.000₫ ngay sau ngày nhận thu nhập.","Giới hạn khoảng 110.855₫ mỗi tuần cho quỹ “Yukata vải bông xanh đen”.","Mỗi cuối tuần ghi lại một khoản đã tránh chi tiêu bốc đồng và chuyển đúng số đó vào quỹ."]},"wellness":{"status":"gradual-loss","currentBmi":23.9,"targetBmi":22,"targetWeightKg":60,"lossKg":5,"weeklyRateKg":0.5,"estimatedWeeks":10,"activityMinutesPerWeek":150,"strengthDaysPerWeek":2,"safetyMessage":"Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.","habits":["Bắt đầu bằng 20–30 phút đi bộ nhanh, 5 ngày/tuần; tăng dần theo thể lực.","Tập sức mạnh toàn thân 2 ngày/tuần, có ngày nghỉ xen kẽ.","Giữ bữa ăn đều đặn, ưu tiên rau, đạm phù hợp và nước; không nhịn ăn để “bù”.","Theo dõi giấc ngủ, năng lượng và mức vận động; cân tối đa 1 lần/tuần nếu việc cân không gây căng thẳng."],"sources":["https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html","https://www.who.int/initiatives/behealthy/physical-activity"]},"coaching":{"motivation":"Mục tiêu không phải ép mình thay đổi thật nhanh, mà là xây thói quen đủ bền để bạn tự tin mặc Yukata vải bông xanh đen và vẫn giữ ngân sách an toàn.","identityStatement":"Tôi là người chăm sóc cơ thể bằng lựa chọn nhỏ, đồng thời chi tiêu có kế hoạch.","implementationIntentions":["Nếu vừa nhận thu nhập, tôi sẽ chuyển tiền vào quỹ mua sắm trước khi mở ứng dụng giải trí.","Nếu bỏ lỡ một buổi vận động, tôi sẽ quay lại bằng 10 phút đi bộ trong ngày kế tiếp.","Nếu muốn mua bốc đồng, tôi sẽ chờ 24 giờ và kiểm tra lại quỹ mục tiêu."],"obstaclePlans":["Tuần bận: giảm thời lượng mỗi buổi nhưng giữ nhịp xuất hiện.","Chi phí bất ngờ: ưu tiên quỹ khẩn cấp và kéo dài hạn mua thay vì vay để mua đồ.","Tâm trạng xuống: chọn một hành động nhỏ có thể làm trong 5 phút, không tự trách."],"weeklyFocus":"Mỗi tuần chỉ nâng một thói quen: vận động, bữa ăn đều, ngủ hoặc tiết kiệm.","reflectionQuestion":"Tuần này hành động nhỏ nào giúp bạn vừa khoẻ hơn vừa gần mục tiêu mua sắm hơn?","engine":"SMART + implementation-intentions + habit-stacking"},"methodology":["SMART goals","Implementation intentions","Habit stacking","Self-compassion","Progress milestones"],"disclaimer":"Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."}', 1784711737653, 1784711770961),
+  ('goal-verify-user-haori-dang-dai', 'verify-user', 'haori-dang-dai', 25, 165, 65, 60, 15000000, 11000000, 200000, 6, '{"saving":{"productId":"haori-dang-dai","productName":"Áo choàng Haori dáng dài","targetPrice":1350000,"currentSavings":200000,"gap":1150000,"progressPercent":14.8,"disposableIncome":4000000,"monthlySaving":480000,"weeklySaving":110855,"requestedMonths":6,"estimatedMonths":3,"feasibleByRequestedDate":true,"milestones":[{"milestone":25,"amount":337500,"reached":false},{"milestone":50,"amount":675000,"reached":false},{"milestone":75,"amount":1012500,"reached":false},{"milestone":100,"amount":1350000,"reached":false}],"actions":["Tách tự động 480.000₫ ngay sau ngày nhận thu nhập.","Giới hạn khoảng 110.855₫ mỗi tuần cho quỹ “Áo choàng Haori dáng dài”.","Mỗi cuối tuần ghi lại một khoản đã tránh chi tiêu bốc đồng và chuyển đúng số đó vào quỹ."]},"wellness":{"status":"gradual-loss","currentBmi":23.9,"targetBmi":22,"targetWeightKg":60,"lossKg":5,"weeklyRateKg":0.5,"estimatedWeeks":10,"activityMinutesPerWeek":150,"strengthDaysPerWeek":2,"safetyMessage":"Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.","habits":["Bắt đầu bằng 20–30 phút đi bộ nhanh, 5 ngày/tuần; tăng dần theo thể lực.","Tập sức mạnh toàn thân 2 ngày/tuần, có ngày nghỉ xen kẽ.","Giữ bữa ăn đều đặn, ưu tiên rau, đạm phù hợp và nước; không nhịn ăn để “bù”.","Theo dõi giấc ngủ, năng lượng và mức vận động; cân tối đa 1 lần/tuần nếu việc cân không gây căng thẳng."],"sources":["https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html","https://www.who.int/initiatives/behealthy/physical-activity"]},"coaching":{"motivation":"Tôi muốn mua áo choàng Haori dáng dài để tăng cường sức khỏe và tự tin hơn trong cuộc sống hàng ngày. Việc này không chỉ giúp tôi cải thiện ngoại hình mà còn hỗ trợ mục tiêu tài chính của mình.","identityStatement":"Tôi là một người trưởng thành có trách nhiệm với bản thân, biết cách quản lý thu chi hợp lý và duy trì lối sống lành mạnh.","implementationIntentions":["Nếu tôi nhận được lương vào thứ Sáu, tôi sẽ tách tự động 480.000 VND vào quỹ ''Áo choàng Haori dáng dài''.","Nếu tôi cảm thấy muốn mua sắm không cần thiết vào cuối tuần, tôi sẽ giới hạn khoảng 110.855 VND cho quỹ này và chuyển số tiền đó vào ngay khi có thể.","Nếu tôi gặp khó khăn trong việc duy trì chế độ ăn uống lành mạnh, tôi sẽ ghi lại một khoản đã tránh chi tiêu bốc đồng mỗi tuần và chuyển đúng số đó vào quỹ."],"obstaclePlans":["Nếu tôi cảm thấy mệt mỏi hoặc bận rộn, tôi sẽ tập trung vào các bài tập sức mạnh nhẹ nhàng hơn trong ngày.","Nếu tôi không thể ăn đủ bữa theo kế hoạch, tôi sẽ uống thêm nước và giữ tinh thần lạc quan, biết rằng việc duy trì thói quen lành mạnh là một quá trình.","Nếu tôi cảm thấy căng thẳng khi cân nặng, tôi sẽ tập trung vào sức khỏe tâm lý và năng lượng tích cực thay vì số cân."],"weeklyFocus":"Tuần này, tôi sẽ tập trung vào việc duy trì chế độ ăn uống lành mạnh và tăng cường hoạt động thể chất. Tôi sẽ ghi lại các khoản chi tiêu không cần thiết để chuyển tiền vào quỹ.","reflectionQuestion":"Trong tuần qua, tôi đã thực hiện những thay đổi nào trong lối sống của mình? Điều gì đã giúp tôi tiến gần hơn đến mục tiêu và điều gì khiến tôi gặp khó khăn?","engine":"qwen2.5:7b + safety-rules"},"methodology":["SMART goals","Implementation intentions","Habit stacking","Self-compassion","Progress milestones"],"disclaimer":"Lộ trình chỉ hỗ trợ lập kế hoạch thói quen và ngân sách, không thay thế tư vấn y tế, dinh dưỡng hoặc tài chính cá nhân."}', 1784992595576, 1784992595576);
 
 INSERT INTO `ai_descriptions` (`product_slug`, `generated_at`, `headline`, `visual_summary`, `styling_tip`, `purchase_reason`, `confidence`, `engine`) VALUES
-  ('yukata-xanh', 1784631824813, 'Yukata Xanh Đen Tinh Tế - Phong Cách Nhật Bản Cho Mọi Khoảnh Khắc Mùa Hè', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.', 'Kết hợp cùng obi đơn giản để tạo vẻ ngoài truyền thống, hoặc mặc riêng với giày dép thoải mái cho những chuyến đi ngắn ngày.', 'Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', '95', 'thi-giac-san-pham'),
-  ('kimono-hong', 1784650549952, 'Kimono truyền thống Hồng - Tinh hoa mùa xuân Nhật Bản', 'Áo kimono màu hồng pastel rực rỡ với họa tiết hoa đào, hoa cúc và mây trắng tinh tế. Dải thắt lưng tím đậm điểm xuyến họa tiết truyền thống, viền cổ đỏ tươi tạo điểm nhấn sang trọng.', 'Kết hợp đơn giản với phụ kiện nhỏ như vòng cổ mỏng hoặc túi xách nhỏ để tôn lên vẻ thanh lịch. Dùng trong các buổi tiệc gia đình hoặc lễ hội truyền thống sẽ rất nổi bật.', 'Sản phẩm dễ phối đồ, mang đến vẻ đẹp tinh tế cho mọi dịp đặc biệt. Thiết kế độc đáo kết hợp giữa nét cổ điển và hiện đại.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'thi-giac-san-pham'),
-  ('cardigan-dai', 1784545184208, 'Áo len khoác dáng dài - Phong cách Nhật Bản cho mọi phong cách', 'Áo len màu hồng pastel dáng dài, cổ chữ V rộng rãi, tay dài ôm nhẹ. Chất liệu mềm mại với đường viền gân dọc tinh tế. Kết hợp cùng áo thun trắng in chữ và chân váy đen, tạo vẻ thanh lịch nhưng vẫn năng động trong không gian công sở', 'Chọn áo thun trắng đơn giản kết hợp với chân váy ngắn hoặc quần jeans ống loe để tạo vẻ ngoài trẻ trung. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc túi xách tay để tăng điểm nhấn', 'Áo len khoác dáng dài này là lựa chọn hoàn hảo cho những ai yêu thích sự đơn giản nhưng vẫn muốn nổi bật. Thiết kế dễ phối đồ và phù hợp với nhiều dịp, từ công sở đến các buổi gặp gỡ bạn bè', 'Cao', 'thi-giac-san-pham'),
-  ('furina', 1783930516299, 'Cosplay Furina: Blue & Gold Elegance for Events', 'Hình ảnh hai người mẫu mặc trang phục cosplay màu xanh đậm và vàng kim với mũ vương miện bằng kim loại, găng tay trắng, phụ kiện trang sức lấp lánh. Chi tiết cận cảnh mũ vương miện, trang sức kim loại và mi giả nguyên bản được hiển thị rõ ràng. Thương hiệu ''喵屋'' xuất hiện ở góc dưới phải.', 'Kết hợp với phụ kiện đơn giản để tạo điểm nhấn cho các sự kiện đặc biệt, hoặc phối cùng trang phục tối giản để tôn lên vẻ sang trọng của bộ trang phục.', 'Thiết kế tinh tế theo phong cách Nhật Bản, màu sắc nổi bật và tính ứng dụng cao cho nhiều dịp khác nhau.', 'High', 'qwen3-vl:8b'),
+  ('yukata-xanh', 1785301160621, 'Yukata xanh đen - Tinh hoa mùa hè Nhật Bản trong từng đường nét', 'Bức ảnh trưng bày Yukata vải bông xanh đen với họa tiết hoa anh đào trắng và tím nhạt, điểm nhấn là dải thắt lưng trắng phối dây xanh dương. Người mặc cầm quạt giấy truyền thống, tóc búi cao trang trí hoa cài đầu, tạo dáng trong không gian phòng榻榻米 truyền thống với cửa shoji gỗ và tranh treo tường.', 'Chọn màu xanh đen làm điểm nhấn cho mùa hè, kết hợp với trang sức nhỏ hoặc hoa cài đầu để tăng vẻ thanh lịch. Dùng quạt giấy truyền thống khi ra ngoài để giữ nét cổ điển.', 'Yukata vải bông xanh đen mang đến cảm giác thoải mái và phong cách Nhật Bản thuần khiết, phù hợp cho những dịp lễ hội hoặc dạo phố mùa hè mà không cần lo lắng về thời tiết.', '95', 'thi-giac-san-pham'),
+  ('kimono-hong', 1785037034406, 'Kimono truyền thống Hồng — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
+  ('cardigan-dai', 1785596354938, 'Áo len khoác dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món áo khoác và trang phục phối nhiều lớp có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
+  ('furina', 1784887476956, 'Trang phục hóa thân Furina — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món trang phục hóa thân theo nhân vật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
   ('ao-len-cardigan', 1783934013805, 'Áo len dệt kim cardigan — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tiêu đề, danh mục và ảnh catalog, mẫu này có phom mềm, dễ mặc nhiều lớp và hợp thời tiết mát.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món áo khoác và trang phục layer có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả nền từ dữ liệu catalog; không suy đoán chất liệu không có trong dữ liệu.', 'catalog-grounded-fallback'),
   ('khoac-nhat', 1784651504430, 'Áo khoác Nhật Bản mùa - Tinh hoa lễ hội trên nền đỏ rực', 'Áo khoác haori truyền thống Nhật Bản với nền vải đỏ tươi nổi bật, điểm nhấn là chữ ''祭'' (lễ hội) lớn trang trí giữa ngực. Xung quanh là họa tiết tròn xoáy, hoa văn hình học và đường viền sóng trắng tinh tế, tạo nên vẻ đẹp cổ điển nhưng trẻ trung.', 'Dùng làm layer thêm vào bộ đồ thường ngày, kết hợp với quần jeans hoặc váy ngắn để tạo phong cách trẻ trung. Hoặc phối cùng trang phục truyền thống Nhật Bản cho dịp lễ hội.', 'Áo khoác này mang đến vẻ đẹp tinh tế của văn hóa Nhật Bản, dễ dàng phối đồ và phù hợp cho nhiều dịp từ công sở đến dạo phố.', '95%', 'thi-giac-san-pham'),
   ('so-mi-trang', 1784206464545, 'Sơ mi trắng tay ngắn — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có đường nét gọn giúp tổng thể chỉn chu nhưng vẫn dễ phối.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món trang phục mặc hằng ngày có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
-  ('haori-dang-dai', 1784197159179, 'Áo choàng Haori dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món áo khoác và trang phục phối nhiều lớp có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
+  ('haori-dang-dai', 1784992573853, 'Áo choàng Haori dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.', 'Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.', 'Phù hợp nếu bạn muốn một món áo khoác và trang phục phối nhiều lớp có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
   ('giay-dep', 1784626104154, 'Dép quai Nhật — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.', 'Dùng làm điểm nhấn cuối cùng cho bộ trang phục tối giản; giữ các món còn lại cùng một bảng màu.', 'Phù hợp nếu bạn muốn một món phụ kiện hoàn thiện bộ trang phục có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback'),
-  ('blazer-kaki', 1784651509055, 'Áo khoác kaki dáng dài - Tinh tế từ phong cách Nhật Bản', 'Áo khoác màu be dịu nhẹ với cổ áo đứng thanh lịch, thiết kế 2 hàng nút tròn chắc chắn. Tay áo có viền kẻ sọc trắng đen khi cuộn lên, chất liệu mềm mại phù hợp công sở. Phối cùng áo trắng và quần jeans tạo vẻ năng động, tinh tế.', 'Kết hợp với áo trắng đơn giản và quần jeans ống rộng để tạo vẻ thanh lịch, năng động. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc đồng hồ để tăng điểm nhấn.', 'Dễ phối đồ với nhiều phong cách từ công sở đến dạo phố, mang đến sự tự tin mỗi ngày', '95%', 'thi-giac-san-pham');
+  ('blazer-kaki', 1784651509055, 'Áo khoác kaki dáng dài - Tinh tế từ phong cách Nhật Bản', 'Áo khoác màu be dịu nhẹ với cổ áo đứng thanh lịch, thiết kế 2 hàng nút tròn chắc chắn. Tay áo có viền kẻ sọc trắng đen khi cuộn lên, chất liệu mềm mại phù hợp công sở. Phối cùng áo trắng và quần jeans tạo vẻ năng động, tinh tế.', 'Kết hợp với áo trắng đơn giản và quần jeans ống rộng để tạo vẻ thanh lịch, năng động. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc đồng hồ để tăng điểm nhấn.', 'Dễ phối đồ với nhiều phong cách từ công sở đến dạo phố, mang đến sự tự tin mỗi ngày', '95%', 'thi-giac-san-pham'),
+  ('guoc-geta', 1784882861554, 'Guốc gỗ Geta — một điểm nhấn Nhật dễ đưa vào tủ đồ', 'Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.', 'Dùng làm điểm nhấn cuối cùng cho bộ trang phục tối giản; giữ các món còn lại cùng một bảng màu.', 'Phù hợp nếu bạn muốn một món phụ kiện hoàn thiện bộ trang phục có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.', 'Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.', 'catalog-grounded-fallback');
 
 -- ai_description_details: nối qua product_slug (UNIQUE) để lấy đúng id cha
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Màu xanh đen sang trọng, họa tiết hoa trắng và tím nhạt tinh tế' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Chất liệu vải bông mềm mại, thoáng khí cho mùa hè' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế tối giản theo phong cách Nhật Bản, dễ phối đồ với nhiều dịp' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Phù hợp cho các buổi dạo phố, tiệc trà hoặc tham quan văn hóa' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Màu hồng dịu nhẹ làm nền cho những bông hoa rực rỡ - đào, cúc, hồng môn' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Dải thắt lưng tím với họa tiết cầu kỳ và dây buộc đỏ truyền thống' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế phù hợp cho các dịp lễ hội, sự kiện trang trọng' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Dáng dài ôm vừa vặn, phù hợp mọi dáng người' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Màu hồng pastel dịu mắt, dễ phối đồ' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế đơn giản nhưng tinh tế theo phong cách Nhật Bản' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Phù hợp cho cả công việc và dạo phố' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Mũ vương miện bằng kim loại toàn bộ' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Phụ kiện trang sức kim loại lấp lánh' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Mi giả nguyên bản đi kèm' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Tông màu xanh đậm kết hợp vàng kim' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
-INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế theo phong cách thời trang Nhật Bản' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Vải bông mềm mại, màu xanh đen nền nã' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Họa tiết hoa anh đào trắng phối tím nhạt, trang trí điểm vàng nhỏ' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Dải thắt lưng trắng rộng, dây xanh dương thắt nơ' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Quạt giấy truyền thống cầm tay, phù hợp với phong cách Yukata' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Phối đồ đơn giản, dễ dàng kết hợp với phụ kiện Nhật Bản' FROM `ai_descriptions` WHERE `product_slug` = 'yukata-xanh';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế thuộc nhóm trang phục truyền thống Nhật, bám đúng tên sản phẩm “Kimono truyền thống Hồng”.' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Tông hồng tạo cá tính rõ mà vẫn dễ phối với màu trung tính.' FROM `ai_descriptions` WHERE `product_slug` = 'kimono-hong';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế thuộc nhóm áo khoác và trang phục phối nhiều lớp, bám đúng tên sản phẩm “Áo len khoác dáng dài”.' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu.' FROM `ai_descriptions` WHERE `product_slug` = 'cardigan-dai';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế thuộc nhóm trang phục hóa thân theo nhân vật, bám đúng tên sản phẩm “Trang phục hóa thân Furina”.' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Điểm nhìn chính là tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Tông xanh tạo cá tính rõ mà vẫn dễ phối với màu trung tính.' FROM `ai_descriptions` WHERE `product_slug` = 'furina';
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế thuộc nhóm áo khoác và trang phục layer, bám đúng tên sản phẩm “Áo len dệt kim cardigan”.' FROM `ai_descriptions` WHERE `product_slug` = 'ao-len-cardigan';
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Điểm nhìn chính là phom mềm, dễ mặc nhiều lớp và hợp thời tiết mát.' FROM `ai_descriptions` WHERE `product_slug` = 'ao-len-cardigan';
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu.' FROM `ai_descriptions` WHERE `product_slug` = 'ao-len-cardigan';
@@ -2042,6 +2422,9 @@ INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, '2 hàng nút tròn đồng bộ tạo điểm nhấn sang trọng' FROM `ai_descriptions` WHERE `product_slug` = 'blazer-kaki';
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Tay áo có viền kẻ sọc trắng đen khi cuộn lên' FROM `ai_descriptions` WHERE `product_slug` = 'blazer-kaki';
 INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Chất liệu mềm mại, phù hợp công sở và dạo phố' FROM `ai_descriptions` WHERE `product_slug` = 'blazer-kaki';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Thiết kế thuộc nhóm phụ kiện hoàn thiện bộ trang phục, bám đúng tên sản phẩm “Guốc gỗ Geta”.' FROM `ai_descriptions` WHERE `product_slug` = 'guoc-geta';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Điểm nhìn chính là tỉ lệ gọn gàng, dễ làm điểm nhấn cho nhiều bộ trang phục.' FROM `ai_descriptions` WHERE `product_slug` = 'guoc-geta';
+INSERT INTO `ai_description_details` (`ai_description_id`, `detail`) SELECT `id`, 'Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu.' FROM `ai_descriptions` WHERE `product_slug` = 'guoc-geta';
 
 INSERT INTO `japan_spot_reviews` (`id`, `place`, `prefecture`, `user_id`, `user_name`, `rating`, `comment`, `media_url`, `media_kind`, `created_at`) VALUES
   ('jspot-review-1784644821964-ss6t2', 'Kênh Otaru', 'Hokkaido', 'demo-minh', 'Trần Minh', 5, 'Rất đẹp, đèn vàng tuyệt vời', NULL, NULL, 1784644821964);

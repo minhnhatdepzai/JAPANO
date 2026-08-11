@@ -1,86 +1,155 @@
 const fs = require('fs');
 const path = require('path');
-const { emptyState, seededState } = require('../seed');
+const { seededState } = require('../seed');
 const { getDb, mongoEnabled } = require('./mongo');
 const { logger } = require('./logger');
+const {
+  normalizeState,
+  loadStateFromCollections,
+  persistStateToCollections,
+  ensureMongoIndexes,
+  dropLegacyCollections,
+  repairLegacyReferences,
+  relationshipErrors,
+} = require('./mongoCollections');
 
-// MongoDB, khi cấu hình MONGODB_URI, trở thành nơi lưu trữ bền lâu dùng chung
-// (nhiều máy/nhiều lần khởi động cùng thấy một state) thay vì chỉ 1 file JSON
-// trên đúng 1 máy. Đây là bản "mirror" state hiện có dưới dạng 1 document duy
-// nhất — giữ nguyên toàn bộ API đồng bộ (read/write/update) mà mọi route đang
-// dùng, không cần viết lại sang truy vấn theo từng collection (việc đó là một
-// đợt tái cấu trúc lớn hơn nhiều, để dành cho giai đoạn sau).
-const MONGO_COLLECTION = 'app_state';
-const MONGO_DOC_ID = 'main';
+// Thông tin xác thực KHÔNG được rời khỏi máy chủ. Trước đây GET /api/state và
+// GET /api/admin/live trả nguyên mảng users, nên trang quản trị nhận đủ 17 hash
+// bcrypt lẫn resetCodeHash rồi ghi vào localStorage của trình duyệt — bất kỳ ai
+// mở devtools trên máy đó, hoặc bất kỳ lỗ hổng XSS nào trong trang quản trị,
+// đều lấy được. Riêng resetCodeHash là sha256 không muối của một mã 6 chữ số:
+// dò hết một triệu khả năng chỉ mất vài giây, tức là chiếm được tài khoản.
+//
+// Hai nửa của cách sửa phải đi cùng nhau:
+//   · scrubUsers()          — lọc ở chiều RA (dùng trong routes/health.js)
+//   · preserveCredentials() — khôi phục ở chiều VÀO. Vì 'users' không nằm trong
+//     SERVER_MANAGED_FIELDS, trang quản trị vẫn gửi trả cả mảng users qua
+//     PUT /api/state; nếu chỉ lọc chiều ra thì lần lưu kế tiếp sẽ ghi đè mất
+//     toàn bộ mật khẩu và không ai đăng nhập được nữa.
+// googleId nằm trong danh sách này vì nó LÀ một thông tin xác thực: ai đặt
+// được googleId của một tài khoản thì đăng nhập được vào tài khoản đó bằng
+// Google. Chặn passwordHash mà bỏ ngỏ googleId thì coi như không chặn gì.
+const CREDENTIAL_FIELDS = Object.freeze(['passwordHash', 'resetCodeHash', 'resetCodeExpiresAt', 'googleId']);
 
-async function loadFromMongo() {
-  if (!mongoEnabled()) return null;
-  try {
-    const db = await getDb();
-    const doc = await db.collection(MONGO_COLLECTION).findOne({ _id: MONGO_DOC_ID });
-    if (!doc) return null;
-    const { _id, _syncedAt, ...state } = doc;
-    return state;
-  } catch (error) {
-    logger.warn({ err: error }, 'Không đọc được state từ MongoDB — dùng file JSON cục bộ.');
-    return null;
-  }
+function scrubUsers(users) {
+  return (users || []).map((user) => {
+    const safe = { ...user };
+    for (const field of CREDENTIAL_FIELDS) delete safe[field];
+    return safe;
+  });
 }
 
-function persistToMongoAsync(state) {
-  if (!mongoEnabled()) return;
-  getDb()
-    .then((db) => db.collection(MONGO_COLLECTION).replaceOne(
-      { _id: MONGO_DOC_ID },
-      { _id: MONGO_DOC_ID, ...state, _syncedAt: Date.now() },
-      { upsert: true },
-    ))
-    .catch((error) => logger.warn({ err: error }, 'Không đồng bộ được state lên MongoDB (vẫn lưu file cục bộ bình thường).'));
+function preserveCredentials(currentUsers, incomingUsers) {
+  if (!Array.isArray(incomingUsers)) return currentUsers;
+  const byId = new Map((currentUsers || []).map((user) => [String(user.id), user]));
+  return incomingUsers.map((incoming) => {
+    const existing = byId.get(String(incoming.id));
+    if (!existing) return incoming;
+    const merged = { ...incoming };
+    for (const field of CREDENTIAL_FIELDS) {
+      if (existing[field] === undefined) delete merged[field];
+      else merged[field] = existing[field];
+    }
+    return merged;
+  });
 }
 
-const SERVER_MANAGED_FIELDS = Object.freeze(['orders', 'interactions', 'searchLogs', 'pushTokens', 'profiles', 'chats', 'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections', 'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts', 'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists']);
+const SERVER_MANAGED_FIELDS = Object.freeze([
+  'orders', 'interactions', 'searchLogs', 'pushTokens', 'profiles', 'chats',
+  'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections',
+  'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts',
+  'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists',
+]);
 
+// read() sao chép sâu toàn bộ state cho MỖI lời gọi (68 điểm gọi trong routes/)
+// nên đây là hot path tốn CPU nhất của backend. structuredClone của Node nhanh
+// hơn vòng JSON.parse(JSON.stringify(...)) khoảng 35% trên db hiện tại
+// (~1.53ms → ~1.00ms) mà giữ nguyên ngữ nghĩa cho dữ liệu thuần JSON.
 function clone(value) {
-  return JSON.parse(JSON.stringify(value));
+  return structuredClone(value);
 }
 
-function normalizeState(input) {
-  const defaults = emptyState();
-  const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
-  const normalized = { ...defaults, ...source };
-  normalized.shop = { ...defaults.shop, ...(source.shop || {}) };
-  normalized.integrations = { ...defaults.integrations, ...(source.integrations || {}) };
-  for (const key of ['categories', 'products', 'orders', 'users', 'notifications', 'vouchers', 'banners', 'flagcards', ...SERVER_MANAGED_FIELDS]) {
-    normalized[key] = Array.isArray(source[key]) ? source[key] : clone(defaults[key]);
-  }
-  normalized.flagcardConfig = { ...defaults.flagcardConfig, ...(source.flagcardConfig || {}) };
-  normalized.schemaVersion = Math.max(5, Number(source.schemaVersion || 0));
-  normalized.seeded = Boolean(source.seeded || normalized.products.length);
-  return normalized;
+// Tên cũ được giữ làm API tương thích cho các script nội bộ. Hàm này hiện ghi
+// thẳng vào các collection nguồn, không còn tạo projection hay app_state.
+async function syncMongoViews(db, state) {
+  await persistStateToCollections(db, normalizeState(state));
+  await ensureMongoIndexes(db);
 }
 
 function createStore(filePath) {
   const resolved = path.resolve(filePath);
   const directory = path.dirname(resolved);
-  if (!fs.existsSync(directory)) fs.mkdirSync(directory, { recursive: true });
+  let useMongo = mongoEnabled();
+  let mongoState = null;
+  let mongoReady = false;
+  let persistQueue = Promise.resolve();
+  let persistTimer = null;
 
-  function write(state) {
+  if (!useMongo && !fs.existsSync(directory)) fs.mkdirSync(directory, { recursive: true });
+
+  function readFileState() {
+    try {
+      return normalizeState(JSON.parse(fs.readFileSync(resolved, 'utf8')));
+    } catch {
+      return normalizeState(seededState());
+    }
+  }
+
+  function writeFile(state) {
     const normalized = normalizeState(state);
     const temporary = `${resolved}.${process.pid}.tmp`;
     fs.writeFileSync(temporary, JSON.stringify(normalized, null, 2));
     fs.renameSync(temporary, resolved);
-    persistToMongoAsync(normalized);
     return normalized;
   }
 
+  // MongoDB is an optional primary store in deployed environments.  Keep a
+  // durable local copy when it becomes unavailable so a broken remote URI
+  // cannot take down the demo/Admin during a presentation.
+  function activateFileFallback(state, error) {
+    const fallback = normalizeState(state || mongoState || readFileState());
+    useMongo = false;
+    mongoReady = false;
+    mongoState = null;
+    writeFile(fallback);
+    logger.warn({ err: error }, 'MongoDB không khả dụng; chuyển sang dữ liệu JSON cục bộ.');
+    return fallback;
+  }
+
+  function assertValid(state) {
+    const errors = relationshipErrors(state);
+    if (!errors.length) return;
+    const error = new Error(`Dữ liệu vi phạm liên kết: ${errors.slice(0, 4).join('; ')}`);
+    error.status = 409;
+    error.code = 'INVALID_RELATIONSHIP';
+    error.details = errors;
+    throw error;
+  }
+
+  function scheduleMongoPersistence() {
+    const snapshot = clone(mongoState);
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      persistQueue = persistQueue
+        .then(async () => persistStateToCollections(await getDb(), snapshot))
+        .catch((error) => activateFileFallback(snapshot, error));
+    }, 40);
+  }
+
+  function write(state) {
+    if (!useMongo) return writeFile(state);
+    const normalized = normalizeState(state);
+    assertValid(normalized);
+    mongoState = normalized;
+    scheduleMongoPersistence();
+    return clone(mongoState);
+  }
+
   function read() {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(resolved, 'utf8'));
-      return normalizeState(parsed);
-    } catch (error) {
-      const initial = seededState();
-      return write(initial);
-    }
+    if (!useMongo) return readFileState();
+    // initialize() hoàn tất trước app.listen; fallback chỉ bảo vệ module boot.
+    return clone(mongoState || readFileState());
   }
 
   function replaceFromAdmin(incoming) {
@@ -96,72 +165,93 @@ function createStore(filePath) {
     for (const field of SERVER_MANAGED_FIELDS) {
       if (!Object.prototype.hasOwnProperty.call(incoming, field)) merged[field] = current[field];
     }
-    // Giao dịch Stripe/refund chỉ được thay đổi bởi API server sau khi đối
-    // chiếu Stripe. Admin state cũ không được ghi đè các mã PI/re_ mới.
     merged.payments = current.payments;
     merged.returnRequests = current.returnRequests;
-    if (Array.isArray(incoming.orders)) {
-      const currentOrders = new Map(current.orders.map((order) => [String(order.id), order]));
-      const incomingIds = new Set(incoming.orders.map((order) => String(order.id)));
-      merged.orders = incoming.orders.map((order) => {
-        const saved = currentOrders.get(String(order.id));
-        if (!saved) return order;
-        const stripeManaged = /stripe/i.test(String(saved.payment?.method || saved.payment?.provider || ''));
-        const history = [...(saved.history || []), ...(order.history || [])].filter((entry, index, list) =>
-          list.findIndex((candidate) => `${candidate.s}|${candidate.at}|${candidate.refundId || ''}` === `${entry.s}|${entry.at}|${entry.refundId || ''}`) === index);
-        const serverTerminal = ['refunded', 'refund_pending'].includes(String(saved.payment?.status || '')) || saved.status === 'returned';
-        return {
-          ...saved,
-          ...order,
-          status: serverTerminal ? saved.status : order.status,
-          payment: stripeManaged ? saved.payment : { ...saved.payment, ...(order.payment || {}) },
-          returnStatus: saved.returnStatus,
-          returnRequest: saved.returnRequest,
-          history,
-        };
-      }).concat(current.orders.filter((order) => !incomingIds.has(String(order.id))));
-    }
-    // Đơn hàng chỉ thay đổi qua API trạng thái/checkout/webhook. Một bản giao
-    // diện quản trị mở từ trước tuyệt đối không được ghi đè hay xoá đơn mới.
     merged.orders = current.orders;
     merged.flagcardConfig = { ...current.flagcardConfig, ...(incoming.flagcardConfig || {}) };
-    merged.schemaVersion = Math.max(5, Number(current.schemaVersion || 0), Number(incoming.schemaVersion || 0));
+    merged.users = preserveCredentials(current.users, incoming.users);
     return write(merged);
   }
 
   function update(mutator) {
     const current = read();
     const result = mutator(current);
-    const next = result && typeof result === 'object' ? result : current;
-    return write(next);
+    return write(result && typeof result === 'object' ? result : current);
   }
 
-  if (!fs.existsSync(resolved)) write(seededState());
-  else {
-    const current = read();
-    // Persist schema migrations so old admin state gains server-managed collections.
-    write(current);
+  async function initialize() {
+    if (!useMongo || mongoReady) return false;
+    try {
+      const db = await getDb();
+      if (!db) throw new Error('MongoDB không khả dụng');
+      const legacy = await db.collection('app_state').findOne({ _id: 'main' });
+      const normalizedProductCount = await db.collection('product_details').countDocuments({});
+      let migrated = false;
+
+      if (legacy && normalizedProductCount === 0) {
+        const { _id, _updatedAt, _syncedAt, ...legacyState } = legacy;
+        const repaired = repairLegacyReferences(legacyState);
+        mongoState = normalizeState(repaired.state);
+        await persistStateToCollections(db, mongoState);
+        const verified = await loadStateFromCollections(db);
+        const verificationErrors = relationshipErrors(verified);
+        if (verificationErrors.length || verified.products.length !== mongoState.products.length || verified.orders.length !== mongoState.orders.length) {
+          throw new Error(`Migration collection-first không đạt kiểm tra: ${verificationErrors.join('; ') || 'sai số lượng dữ liệu'}`);
+        }
+        await dropLegacyCollections(db);
+        mongoState = verified;
+        migrated = true;
+        if (repaired.report.length) logger.warn({ repairs: repaired.report }, 'Đã sửa tham chiếu mồ côi khi bỏ app_state.');
+      } else if (normalizedProductCount > 0) {
+        mongoState = await loadStateFromCollections(db);
+        // app_state cũ có thể còn sót sau một lần migration bị ngắt ở bước cuối.
+        if (legacy) await dropLegacyCollections(db);
+      } else {
+        const repaired = repairLegacyReferences(readFileState());
+        mongoState = normalizeState(repaired.state);
+        await persistStateToCollections(db, mongoState);
+        migrated = true;
+      }
+
+      await ensureMongoIndexes(db);
+      mongoReady = true;
+      return migrated;
+    } catch (error) {
+      // Chỉ hạ xuống JSON khi MongoDB thực sự không truy cập được. Lỗi migration
+      // hoặc dữ liệu Mongo không hợp lệ vẫn phải làm boot thất bại để tránh che
+      // mất một lỗi toàn vẹn dữ liệu bằng một nguồn dữ liệu khác.
+      if (!mongoEnabled()) {
+        activateFileFallback(mongoState || readFileState(), error);
+        return false;
+      }
+      throw error;
+    }
   }
 
-  // Gọi đúng 1 lần lúc khởi động, trước khi mở cổng lắng nghe (xem server.js).
-  // Chỉ ghi đè file cục bộ nếu Mongo thực sự có dữ liệu MỚI HƠN — tránh một lần
-  // khởi động với Mongo trống/lỗi kết nối xoá mất dữ liệu cục bộ đang có.
-  async function hydrateFromMongoIfNewer() {
-    const remote = await loadFromMongo();
-    if (!remote) return false;
-    const local = read();
-    const newestOf = (state) => Math.max(
-      0,
-      ...(state.orders || []).map((o) => Number(o.createdAt || 0)),
-      ...(state.interactions || []).map((i) => Number(i.createdAt || 0)),
-    );
-    if (newestOf(remote) <= newestOf(local)) return false;
-    write(remote);
-    logger.info('Đã nạp state mới hơn từ MongoDB lúc khởi động.');
-    return true;
+  async function flush() {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      const snapshot = clone(mongoState);
+      persistQueue = persistQueue.then(async () => persistStateToCollections(await getDb(), snapshot));
+    }
+    await persistQueue;
   }
 
-  return { filePath: resolved, read, write, update, replaceFromAdmin, hydrateFromMongoIfNewer };
+  if (!useMongo && !fs.existsSync(resolved)) writeFile(seededState());
+  if (!useMongo && fs.existsSync(resolved)) writeFile(readFileState());
+
+  return {
+    filePath: resolved,
+    get storage() { return useMongo ? 'mongodb-collections' : 'json'; },
+    read,
+    write,
+    update,
+    replaceFromAdmin,
+    initialize,
+    hydrateFromMongoIfNewer: initialize,
+    flush,
+  };
 }
 
-module.exports = { SERVER_MANAGED_FIELDS, normalizeState, createStore };
+module.exports = { SERVER_MANAGED_FIELDS, CREDENTIAL_FIELDS, scrubUsers, normalizeState, createStore, syncMongoViews };

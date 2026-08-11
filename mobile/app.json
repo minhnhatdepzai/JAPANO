@@ -24,9 +24,6 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
-    "web": {
-      "bundler": "metro"
-    },
     "plugins": [
       "expo-router",
       "expo-font",
@@ -46,7 +43,27 @@
           "isAccessMediaLocationEnabled": false
         }
       ],
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#C8452F",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "notification": {
+      "iosDisplayInForeground": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      },
+      "google": {
+        "androidClientId": "818888909731-ef99sfuk4784soea0c7fca922u2gkcfg.apps.googleusercontent.com",
+        "iosClientId": "",
+        "webClientId": ""
+      }
+    }
   }
 }

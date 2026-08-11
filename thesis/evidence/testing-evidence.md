@@ -2,6 +2,8 @@
 
 Status: verified by direct file reads and by executing the real test command. All numbers in this file are copied from actual command output — none are estimated.
 
+> **SUPERSEDED NUMBERS — recount 2026-08.** This file is a point-in-time snapshot. The codebase has since grown: the real count is now **6 test files / 50 test cases (50 pass, 0 fail)**, not 5 files / 46 cases. The added coverage is `backend/test/gpu-queue.test.js` (3 cases) plus 1 new case in `analytics-recommend.test.js`. The thesis chapters and appendices use the corrected figures; see `thesis/appendices/phu-luc-c-ghi-chu-pham-vi.md` section C.1. Everything else in this file (per-file breakdown of the original 5 files, coverage gaps, honest summary) remains accurate.
+
 ## 1. Test files inventory
 
 A repository-wide search for `*.test.js`, `*.test.ts`, `*.spec.*` (excluding `node_modules`) found **exactly 5 test files, all under `backend/test/`**. No test files exist under `mobile/`, `admin/`, or anywhere else in the repo.

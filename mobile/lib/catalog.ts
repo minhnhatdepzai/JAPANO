@@ -58,6 +58,52 @@ export function isOutOfStock(product: Product, color?: string, size?: string): b
   return stock !== null && stock <= 0;
 }
 
+// --- Giá theo biến thể (màu + kích cỡ) --------------------------------------
+// Phải khớp từng quy tắc với backend/lib/pricing.js, nếu không giá khách thấy
+// sẽ khác giá máy chủ tính khi đặt hàng. `variant.price` là TUỲ CHỌN: thiếu
+// hoặc <= 0 thì dùng giá chung của sản phẩm.
+//
+// Máy chủ vẫn là nơi quyết định cuối cùng — app hiển thị cho khách xem, còn
+// routes/orders.js tự tính lại đơn giá khi tạo đơn.
+
+function matchVariant(product: Product, color?: string, size?: string) {
+  const variants = product.variants;
+  if (!variants || !variants.length) return null;
+  const colorName = color || 'Mặc định';
+  const sizeName = size || 'M';
+  return variants.find(v => String(v.colorName || 'Mặc định') === colorName && String(v.size || 'M') === sizeName)
+    || variants.find(v => String(v.size || 'M') === sizeName)
+    || null;
+}
+
+const ownPrice = (variant: any): number | null => {
+  const price = Number(variant?.price);
+  return Number.isFinite(price) && price > 0 ? price : null;
+};
+
+/** Đơn giá thực tế cho một lựa chọn màu+size. */
+export function variantPrice(product: Product, color?: string, size?: string): number {
+  return ownPrice(matchVariant(product, color, size)) ?? Math.max(0, Number(product.price) || 0);
+}
+
+/** Giá gạch ngang tương ứng — chỉ giữ khi vẫn cao hơn giá đang bán. */
+export function variantOldPrice(product: Product, color?: string, size?: string): number | null {
+  const current = variantPrice(product, color, size);
+  const old = Number(product.old || 0);
+  return old > current ? old : null;
+}
+
+/** Khoảng giá của cả sản phẩm — để danh sách hiện "từ X" khi các biến thể lệch giá. */
+export function priceRange(product: Product): { min:number; max:number; varies:boolean } {
+  const base = Math.max(0, Number(product.price) || 0);
+  const variants = product.variants;
+  if (!variants || !variants.length) return { min: base, max: base, varies: false };
+  const prices = variants.map(v => ownPrice(v) ?? base);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return { min, max, varies: min !== max };
+}
+
 export const CATEGORIES = [
   { key:'all', label:'Tất cả', kanji:'' },
   { key:'ao-truyen-thong', label:'Áo truyền thống', kanji:'着物' },

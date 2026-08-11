@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -8,8 +8,9 @@ import { SmartImage } from '../components/SmartImage';
 import { JapanMap } from '../components/JapanMap';
 import { useCatalog } from '../lib/data';
 import { JapanSpot, PHOTO_ATTRIBUTION, PREFECTURE_VIDEO, prefecturesInRegion, regionsList, spotsInPrefecture } from '../lib/japanSpots';
-import { getJapanSpotReviews, getJapanSpotSuggestions, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion } from '../lib/api';
+import { getJapanSpotReviews, getJapanSpotSuggestions, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion, SpotRewardConfig } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useToast } from '../lib/toast';
 import { MediaAttachPicker, ReviewMediaPlayer } from '../components/MediaAttach';
 import { ReviewMediaPick } from '../lib/media';
 import { C, F } from '../theme/tokens';
@@ -193,6 +194,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 
 function ReviewsBox({ place, prefecture }: { place: string; prefecture: string }) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [reviews, setReviews] = useState<JapanSpotReview[]>([]);
   const [average, setAverage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -206,14 +208,15 @@ function ReviewsBox({ place, prefecture }: { place: string; prefecture: string }
 
   const submit = async () => {
     if (sending) return;
-    if (comment.trim().length < 3) { Alert.alert('Thiếu nội dung', 'Viết vài dòng cảm nhận của bạn về địa điểm này nhé.'); return; }
+    if (comment.trim().length < 3) { toast({ message: 'Viết vài dòng cảm nhận của bạn về địa điểm này nhé.', kind: 'error' }); return; }
     setSending(true);
     try {
       await postJapanSpotReview({ place, prefecture, rating, comment: comment.trim(), userName: user?.name, media: media?.dataUri, mediaKind: media?.kind });
       setComment(''); setRating(5); setMedia(null);
+      toast('Đã gửi đánh giá địa điểm, cảm ơn bạn ✓');
       load();
     } catch (e: any) {
-      Alert.alert('Chưa gửi được', e?.message || 'Vui lòng thử lại.');
+      toast({ message: e?.message || 'Chưa gửi được, vui lòng thử lại.', kind: 'error' });
     } finally { setSending(false); }
   };
 
@@ -251,45 +254,112 @@ function ReviewsBox({ place, prefecture }: { place: string; prefecture: string }
   );
 }
 
+// Đóng góp địa điểm chụp ảnh mới — có thưởng thật để khuyến khích cộng đồng
+// cùng xây danh sách địa điểm đẹp của Nhật Bản. Mức thưởng lấy từ backend
+// (lib/communityRewards.js) chứ không ghi cứng trong app.
+const REWARD_LABEL: Record<string, string> = {
+  pending: 'Đang chờ cửa hàng duyệt',
+  approved: 'Đã duyệt · đã nhận thưởng',
+  rejected: 'Chưa được duyệt',
+};
+
 function SuggestionBox({ prefecture }: { prefecture: string }) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
   const [suggestions, setSuggestions] = useState<JapanSpotSuggestion[]>([]);
+  const [reward, setReward] = useState<SpotRewardConfig | null>(null);
+  const [place, setPlace] = useState('');
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const load = () => { setLoading(true); getJapanSpotSuggestions(prefecture).then(setSuggestions).catch(() => undefined).finally(() => setLoading(false)); };
-  useEffect(load, [prefecture]);
+  const load = () => {
+    setLoading(true);
+    getJapanSpotSuggestions(prefecture, user?.id || '')
+      .then(data => { setSuggestions(data.suggestions); setReward(data.rewardConfig); })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [prefecture, user?.id]);
 
   const submit = async () => {
     if (sending) return;
-    if (text.trim().length < 3) { Alert.alert('Thiếu nội dung', 'Mô tả ngắn gọn địa điểm bạn muốn đề xuất.'); return; }
+    if (!user?.id) { toast({ message: 'Đăng nhập để gửi đóng góp và nhận thưởng nhé.', kind: 'error' }); router.push('/login'); return; }
+    if (text.trim().length < 3) { toast({ message: 'Mô tả ngắn gọn địa điểm bạn muốn đề xuất.', kind: 'error' }); return; }
     setSending(true);
     try {
-      await postJapanSpotSuggestion({ prefecture, suggestion: text.trim(), userName: user?.name });
-      setText('');
+      await postJapanSpotSuggestion({ prefecture, place: place.trim(), suggestion: text.trim(), userName: user?.name, userId: user.id });
+      setText(''); setPlace('');
+      toast({
+        message: reward ? `Đã gửi đóng góp! Được duyệt là bạn nhận ${reward.label}.` : 'Đã gửi đóng góp, cảm ơn bạn!',
+        kind: 'success',
+        durationMs: 5000,
+      });
       load();
     } catch (e: any) {
-      Alert.alert('Chưa gửi được', e?.message || 'Vui lòng thử lại.');
+      toast({ message: e?.message || 'Chưa gửi được, vui lòng thử lại.', kind: 'error' });
     } finally { setSending(false); }
   };
 
+  const mine = suggestions.filter(s => s.mine);
+
   return (
     <View style={st.suggestBox}>
-      <Text style={st.suggestTitle}>Bạn biết địa điểm đẹp khác ở {prefecture}?</Text>
-      <Text style={st.suggestSub}>Gửi gợi ý để JAPANO bổ sung vào danh sách — cảm ơn bạn đã đóng góp!</Text>
+      <Text style={st.suggestTitle}>Bạn biết địa điểm chụp ảnh đẹp khác ở {prefecture}?</Text>
+      <Text style={st.suggestSub}>Cùng xây bản đồ địa điểm đẹp của Nhật Bản cho cả cộng đồng JAPANO.</Text>
+      {!!reward && (
+        <View style={st.rewardBanner}>
+          <Ionicons name="gift" size={19} color="#8A6518" />
+          <View style={{ flex: 1 }}>
+            <Text style={st.rewardBannerTitle}>Đóng góp được duyệt → nhận {reward.amount.toLocaleString('vi-VN')}₫</Text>
+            <Text style={st.rewardBannerBody}>Voucher giảm {reward.amount.toLocaleString('vi-VN')}₫ cho đơn từ {reward.minOrder.toLocaleString('vi-VN')}₫, hạn dùng {reward.validityDays} ngày. Mỗi địa điểm hợp lệ được thưởng một lần.</Text>
+          </View>
+        </View>
+      )}
+      <TextInput
+        value={place} onChangeText={setPlace}
+        placeholder="Tên địa điểm (ví dụ: Cầu Kintai)"
+        placeholderTextColor={C.muted}
+        style={[st.suggestInput, { minHeight: 44 }]}
+      />
       <TextInput
         value={text} onChangeText={setText} multiline
-        placeholder={`Ví dụ: tên địa điểm, khu vực trong ${prefecture}, vì sao đáng đến…`}
+        placeholder={`Ở đâu trong ${prefecture}, chụp đẹp nhất lúc nào, đi tới bằng cách gì…`}
         placeholderTextColor={C.muted}
-        style={st.suggestInput}
+        style={[st.suggestInput, { marginTop: 8 }]}
       />
-      <Btn label={sending ? 'Đang gửi…' : 'Gửi đề xuất'} variant="ghost" onPress={() => { if (!sending) void submit(); }} style={{ marginTop: 8 }} />
+      <Btn label={sending ? 'Đang gửi…' : 'Gửi đóng góp để nhận thưởng'} onPress={() => { if (!sending) void submit(); }} style={{ marginTop: 8 }} />
       {loading && <ActivityIndicator color={C.shu} style={{ marginTop: 10 }} />}
+      {!loading && !!mine.length && (
+        <View style={{ marginTop: 12 }}>
+          <Text style={st.suggestListTitle}>Đóng góp của bạn</Text>
+          {mine.map(s => {
+            const status = s.reward?.status || 'pending';
+            return (
+              <View key={s.id} style={[st.suggestItem, status === 'approved' && st.suggestItemOk]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons
+                    name={status === 'approved' ? 'checkmark-circle' : status === 'rejected' ? 'close-circle' : 'time-outline'}
+                    size={14}
+                    color={status === 'approved' ? '#1F6B44' : status === 'rejected' ? C.danger : C.muted}
+                  />
+                  <Text style={st.suggestStatus}>{REWARD_LABEL[status]}</Text>
+                </View>
+                <Text style={st.suggestItemText}>{s.suggestion}</Text>
+                {status === 'approved' && !!s.reward?.voucherCode && (
+                  <Text selectable style={st.suggestVoucher}>Mã của bạn: {s.reward.voucherCode} · giảm {Number(s.reward.amount || 0).toLocaleString('vi-VN')}₫</Text>
+                )}
+                {status === 'rejected' && !!s.reward?.note && <Text style={st.suggestNote}>{s.reward.note}</Text>}
+              </View>
+            );
+          })}
+        </View>
+      )}
       {!loading && !!suggestions.length && (
         <View style={{ marginTop: 12 }}>
           <Text style={st.suggestListTitle}>Đề xuất từ cộng đồng</Text>
-          {suggestions.map(s => (
+          {suggestions.filter(s => !s.mine).map(s => (
             <View key={s.id} style={st.suggestItem}>
               <Text style={st.suggestItemName}>{s.userName}</Text>
               <Text style={st.suggestItemText}>{s.suggestion}</Text>
@@ -354,6 +424,13 @@ const st = StyleSheet.create({
   suggestInput: { minHeight: 60, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, textAlignVertical: 'top' },
   suggestListTitle: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1, color: C.shuDeep, marginBottom: 6 },
   suggestItem: { backgroundColor: '#fff', borderRadius: 10, padding: 9, marginBottom: 6 },
+  suggestItemOk: { borderWidth: 1, borderColor: '#CBE3CC', backgroundColor: '#F4FAF4' },
   suggestItemName: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   suggestItemText: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.ink, marginTop: 2 },
+  suggestStatus: { fontFamily: F.bodyB, fontSize: 10.5, color: C.muted },
+  suggestVoucher: { fontFamily: F.bodyX, fontSize: 11, color: '#1F6B44', marginTop: 5 },
+  suggestNote: { fontFamily: F.body, fontSize: 10.5, lineHeight: 16, color: C.muted, marginTop: 4 },
+  rewardBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: '#FBF1DA', borderWidth: 1, borderColor: '#EBD6A3', borderRadius: 12, padding: 11, marginBottom: 10 },
+  rewardBannerTitle: { fontFamily: F.bodyB, fontSize: 12, color: '#7A5A15' },
+  rewardBannerBody: { fontFamily: F.body, fontSize: 10.5, lineHeight: 16, color: '#8A6518', marginTop: 3 },
 });

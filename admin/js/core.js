@@ -227,11 +227,93 @@ async function bootstrap(){
   $('#pageTitle').textContent=TITLES.dashboard;
   try{DB=await requestJSON('/state',6000);NET_OK=true;}
   catch(e){DB=load();NET_OK=false;}
-  await Promise.all([refreshHealth(false),refreshAnalytics(false)]);
+  await Promise.all([refreshHealth(false),refreshAnalytics(false),loadPolicy()]);
   refreshChrome();renderView();}
 let _liveSyncBusy=false;
 let _stripeSyncAt=0;
 let _vnpaySyncAt=0;
+let _liveSignature='';
+
+/* ---------- CHUÔNG BÁO SỰ KIỆN TRỰC TIẾP ----------------------------------
+ * Trang quản trị vẫn tự làm mới dữ liệu mỗi 3 giây, nhưng trước đây không hề
+ * báo cho người trực biết vừa có gì xảy ra — đơn mới, yêu cầu trả hàng, đánh
+ * giá chờ duyệt cứ lặng lẽ hiện ra giữa bảng. Ở đây so sánh dữ liệu mới với
+ * lần đồng bộ trước để bật thanh thông báo và đếm số việc chưa xem trên chuông.
+ * Lần đồng bộ ĐẦU TIÊN chỉ ghi nhận mốc, không báo — nếu không mỗi lần mở
+ * trang sẽ nổ hàng chục thông báo về những việc đã cũ. */
+const ADMIN_FEED_KEY='japano_admin_feed_v1';
+let ADMIN_SEEN=null;
+let ADMIN_FEED=[];
+let ADMIN_UNREAD=0;
+function loadAdminFeed(){
+  try{const raw=JSON.parse(localStorage.getItem(ADMIN_FEED_KEY)||'null');ADMIN_FEED=Array.isArray(raw?.items)?raw.items:[];ADMIN_UNREAD=Number(raw?.unread)||0;}
+  catch(e){ADMIN_FEED=[];ADMIN_UNREAD=0;}
+}
+loadAdminFeed();
+function saveAdminFeed(){
+  try{localStorage.setItem(ADMIN_FEED_KEY,JSON.stringify({items:ADMIN_FEED.slice(0,80),unread:ADMIN_UNREAD}));}catch(e){}
+}
+function pushAdminEvent(entry){
+  ADMIN_FEED.unshift({...entry,at:Date.now(),id:'ev'+Date.now()+Math.random().toString(36).slice(2,6)});
+  ADMIN_FEED=ADMIN_FEED.slice(0,80);
+  ADMIN_UNREAD+=1;
+  saveAdminFeed();
+  toast(entry.text,entry.tone||'info');
+  // Cập nhật số trên chuông ngay lập tức, không đợi vòng đồng bộ kế tiếp.
+  refreshChrome();
+}
+function markAdminFeedRead(){ADMIN_UNREAD=0;saveAdminFeed();refreshChrome();}
+function snapshotIds(){
+  return {
+    orders:new Set((DB.orders||[]).map(o=>String(o.id))),
+    // Trạng thái đi kèm để bắt được cả chuyển bước, không chỉ bản ghi mới.
+    orderStatus:new Map((DB.orders||[]).map(o=>[String(o.id),String(o.status)])),
+    returns:new Map((DB.returnRequests||[]).map(r=>[String(r.id),String(r.status)])),
+    reviews:new Set((DB.reviews||[]).filter(r=>r.status==='pending').map(r=>String(r.id))),
+    payments:new Map((DB.payments||[]).map(p=>[String(p.id),String(p.status)])),
+  };
+}
+function detectAdminEvents(){
+  const now=snapshotIds();
+  if(!ADMIN_SEEN){ADMIN_SEEN=now;return;}
+  for(const order of DB.orders||[]){
+    const id=String(order.id);
+    if(!ADMIN_SEEN.orders.has(id)){
+      pushAdminEvent({kind:'order',route:'orders',refId:id,tone:'ok',text:`🧾 Đơn mới #${order.code} · ${money(order.total)} · ${order.customer?.name||'Khách'}`});
+      continue;
+    }
+    const before=ADMIN_SEEN.orderStatus.get(id);
+    if(before&&before!==String(order.status)&&order.status==='completed'){
+      pushAdminEvent({kind:'order',route:'orders',refId:id,tone:'ok',text:`✅ Khách đã xác nhận nhận hàng đơn #${order.code}`});
+    }
+  }
+  for(const request of DB.returnRequests||[]){
+    const id=String(request.id);
+    const before=ADMIN_SEEN.returns.get(id);
+    const label=request.kind==='cancel'?'huỷ đơn':'trả hàng';
+    if(before===undefined){
+      pushAdminEvent({kind:'return',route:'returns',refId:id,tone:'info',text:`↩ Yêu cầu ${label} mới ${request.code} · ${money(request.amount||0)} — cần duyệt`});
+    }else if(before!==String(request.status)&&request.status==='shipped_back'){
+      pushAdminEvent({kind:'return',route:'returns',refId:id,tone:'info',text:`📦 Khách đã gửi hàng về cho ${request.code} — chờ nhận & kiểm hàng`});
+    }
+  }
+  for(const review of DB.reviews||[]){
+    if(review.status==='pending'&&!ADMIN_SEEN.reviews.has(String(review.id))){
+      pushAdminEvent({kind:'review',route:'reviews',refId:String(review.id),tone:'info',text:`⭐ Đánh giá mới chờ kiểm duyệt từ ${review.userName||review.userId}`});
+    }
+  }
+  for(const payment of DB.payments||[]){
+    const before=ADMIN_SEEN.payments.get(String(payment.id));
+    if(before&&before!=='paid'&&payment.status==='paid'){
+      pushAdminEvent({kind:'payment',route:'payments',refId:String(payment.id),tone:'ok',text:`💳 Thanh toán thành công ${payment.code} · ${money(payment.amount||0)}`});
+    }
+    if(before&&before!=='failed'&&payment.status==='failed'){
+      pushAdminEvent({kind:'payment',route:'payments',refId:String(payment.id),tone:'err',text:`⚠ Thanh toán thất bại ${payment.code} — kiểm tra lại giao dịch`});
+    }
+  }
+  ADMIN_SEEN=now;
+}
+
 async function syncLiveSales(render=true){
   if(STAFF_ONLY||_liveSyncBusy||document.hidden||$('#overlay')?.classList.contains('show'))return;
   _liveSyncBusy=true;
@@ -247,9 +329,20 @@ async function syncLiveSales(render=true){
       await fetch(API+'/vnpay/reconcile',{method:'POST'}).catch(()=>null);
     }
     const live=await requestJSON('/admin/live',5000);
+    // Nhịp 3 giây này chạy suốt phiên làm việc, nhưng dữ liệu vận hành thì phần
+    // lớn thời gian KHÔNG đổi. Trước đây mỗi nhịp đều: nén cả DB (~400KB) vào
+    // localStorage, dựng lại toàn bộ DOM của view, rồi gọi thêm một lượt
+    // analytics — tốn CPU và làm mất vị trí cuộn/ô đang nhập. So dấu vân tay
+    // của gói dữ liệu trước khi làm những việc đó; không đổi thì chỉ cập nhật
+    // đèn trạng thái kết nối.
+    const signature=JSON.stringify(live);
+    NET_OK=true;
+    if(signature===_liveSignature){refreshChrome();return;}
+    _liveSignature=signature;
     for(const key of ['orders','payments','returnRequests','interactions','carts','reviews','reviewReactions','users'])if(Array.isArray(live[key]))DB[key]=live[key];
     if(live.shop)DB.shop={...DB.shop,...live.shop};
-    NET_OK=true;localStorage.setItem(LS,JSON.stringify(DB));refreshChrome();
+    detectAdminEvents();
+    localStorage.setItem(LS,JSON.stringify(DB));refreshChrome();
     if(render&&['dashboard','orders','payments','returns','reviews','users'].includes(state.route))renderView();
     if(state.route==='dashboard')void refreshAnalytics(true);
   }catch(e){NET_OK=false;refreshChrome();}
@@ -281,9 +374,16 @@ function findProductForItem(item={}){
 }
 function orderItemKey(item){const p=findProductForItem(item);return String(p?.id||p?.slug||item.productId||item.slug||item.sku||item.name||'unknown');}
 
-const ORD={pending:{t:'Chờ xử lý',c:'b-amber'},pending_payment:{t:'Chờ thanh toán',c:'b-amber'},confirmed:{t:'Đã xác nhận',c:'b-blue'},shipping:{t:'Đang giao',c:'b-blue'},completed:{t:'Hoàn tất',c:'b-green'},returned:{t:'Đã trả hàng',c:'b-violet'},cancelled:{t:'Đã huỷ',c:'b-red'}};
+// Vòng đời đơn: "Đã giao" do ĐƠN VỊ VẬN CHUYỂN xác nhận, "Khách đã nhận" do
+// CHÍNH KHÁCH xác nhận trong app — hai bước khác nhau, xem
+// backend/lib/fulfillmentPolicy.js (nguồn sự thật của quy trình).
+const ORD={pending:{t:'Chờ xác nhận',c:'b-amber'},pending_payment:{t:'Chờ thanh toán',c:'b-amber'},confirmed:{t:'Đã xác nhận',c:'b-blue'},shipping:{t:'Đang giao',c:'b-blue'},delivered:{t:'Đã giao · chờ khách xác nhận',c:'b-amber'},completed:{t:'Khách đã nhận',c:'b-green'},returned:{t:'Đã trả hàng',c:'b-violet'},cancelled:{t:'Đã huỷ',c:'b-red'}};
 const PAY={paid:{t:'Đã thanh toán',c:'b-green'},pending:{t:'Đang chờ thanh toán',c:'b-amber'},unpaid:{t:'Chưa TT',c:'b-gray'},refund_pending:{t:'Đang hoàn tiền',c:'b-amber'},partially_refunded:{t:'Hoàn một phần',c:'b-blue'},refunded:{t:'Đã hoàn tiền',c:'b-violet'},failed:{t:'Thất bại',c:'b-red'},cancelled:{t:'Đã huỷ',c:'b-gray'},succeeded:{t:'Thành công',c:'b-green'}};
-const RET={requested:{t:'Chờ duyệt',c:'b-amber'},approved:{t:'Đã duyệt',c:'b-blue'},received:{t:'Đã nhận hàng',c:'b-green'},refund_pending:{t:'Đang hoàn tiền',c:'b-amber'},refunded:{t:'Đã hoàn tiền',c:'b-violet'},refund_failed:{t:'Hoàn tiền lỗi',c:'b-red'},rejected:{t:'Từ chối',c:'b-red'},cancelled:{t:'Đã huỷ',c:'b-gray'}};
+const RET={requested:{t:'Chờ duyệt',c:'b-amber'},approved:{t:'Đã duyệt · chờ khách gửi',c:'b-blue'},shipped_back:{t:'Khách đã gửi về',c:'b-blue'},received:{t:'Đã nhận & kiểm hàng',c:'b-green'},refund_pending:{t:'Đang hoàn tiền',c:'b-amber'},refunded:{t:'Đã hoàn tiền',c:'b-violet'},refund_failed:{t:'Hoàn tiền lỗi',c:'b-red'},rejected:{t:'Từ chối',c:'b-red'},cancelled:{t:'Đã huỷ',c:'b-gray'}};
+// Bước hợp lệ kế tiếp của đơn — khớp ORDER_STATUS_FLOW ở backend để nút bấm
+// trên giao diện không bao giờ tạo ra một lệnh mà server sẽ từ chối.
+const ORDER_NEXT={pending_payment:['pending'],pending:['confirmed'],confirmed:['shipping'],shipping:['delivered','completed'],delivered:['completed'],completed:[],cancelled:[],returned:[]};
+const ORDER_STEP_LABEL={pending:'Xác nhận đơn',confirmed:'Bàn giao vận chuyển',shipping:'Đơn vị VC đã giao',delivered:'Xác nhận thay khách',completed:'Hoàn tất'};
 const PST={published:{t:'Đang bán',c:'b-green'},hidden:{t:'Đã ẩn',c:'b-gray'},draft:{t:'Nháp',c:'b-amber'},out:{t:'Hết hàng',c:'b-red'}};
 const ROLE={super_admin:{t:'Super Admin',c:'b-red'},admin:{t:'Admin',c:'b-violet'},staff:{t:'Nhân viên',c:'b-blue'},customer:{t:'Khách',c:'b-gray'}};
 const badge=(m,k)=>`<span class="bdg ${m[k]?.c||'b-gray'}"><span class="d"></span>${m[k]?.t||k}</span>`;
@@ -338,6 +438,9 @@ function refreshChrome(){
   $('#nav-users').textContent=DB.users.length;
   if($('#nav-japan'))$('#nav-japan').textContent=JAPAN?((JAPAN.reviews||[]).length+(JAPAN.suggestions||[]).length):0;
   $('#nav-flagcards').textContent=(DB.flagcardCollections||[]).length;
+  // Chuông hiện số việc mới chưa xem; 0 thì ẩn hẳn chấm đỏ.
+  const bellCount=$('#bellCount');
+  if(bellCount){bellCount.textContent=ADMIN_UNREAD>99?'99+':String(ADMIN_UNREAD);bellCount.style.display=ADMIN_UNREAD?'grid':'none';}
   const dot=(id,on,tid,ontxt,offtxt)=>{const e=$(id);e.className='dot '+(on===true?'g':on===false?'r':'a');$(tid).textContent=on===true?ontxt:on===false?offtxt:'chưa rõ';};
   dot('#s-mongo',HEALTH.mongo,'#s-mongo-t','đã kết nối','mất kết nối');
   dot('#s-cloud',HEALTH.cloudinary,'#s-cloud-t','đã kết nối','mất kết nối');
@@ -356,11 +459,22 @@ const TITLES={dashboard:'Bảng điều khiển',orders:'Quản lý đơn hàng'
 function go(route){state.route=route;document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.route===route));
   $('#pageTitle').textContent=TITLES[route];refreshChrome();
   $('#content').innerHTML=skeleton(route);
+  // Nhịp đồng bộ nay bỏ qua lượt làm mới analytics khi dữ liệu vận hành không
+  // đổi, nên lúc mở lại Bảng điều khiển phải tự nạp một lượt để số liệu và cờ
+  // "Dữ liệu thật/cũ" luôn đúng ngay khi vào trang.
+  if(route==='dashboard')void refreshAnalytics(true);
   if(route==='japan')void loadJapan();
+  if(route==='returns'&&!POLICY)void loadPolicy().then(()=>{if(state.route==='returns')renderView();});
   if(route==='moderation')void loadModeration();
   clearTimeout(go._t);go._t=setTimeout(()=>renderView(),route==='dashboard'?520:380);}
 let JAPAN=null,JAPAN_STATUS='idle',MOD=null,MOD_STATUS='idle';
-async function loadJapan(){JAPAN_STATUS='loading';try{JAPAN=await requestJSON('/japan-spots/admin',8000);JAPAN_STATUS='ready';}catch(e){JAPAN_STATUS='error';}if(state.route==='japan')renderView();}
+// Quy trình giao–nhận–đổi/trả và mức thưởng đóng góp địa điểm đều lấy từ máy
+// chủ, không ghi cứng ở đây — sửa chính sách một chỗ là mọi nơi đổi theo.
+let POLICY=null,SPOT_REWARD=null;
+async function loadPolicy(){
+  try{POLICY=(await requestJSON('/policies/fulfillment',6000)).policy;}catch(e){POLICY=null;}
+}
+async function loadJapan(){JAPAN_STATUS='loading';try{JAPAN=await requestJSON('/japan-spots/admin',8000);SPOT_REWARD=JAPAN.rewardConfig||SPOT_REWARD;JAPAN_STATUS='ready';}catch(e){JAPAN_STATUS='error';}if(state.route==='japan')renderView();}
 async function loadModeration(){MOD_STATUS='loading';try{MOD=await requestJSON('/reviews/admin',8000);MOD_STATUS='ready';}catch(e){MOD_STATUS='error';}if(state.route==='moderation')renderView();}
 document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.route)));
 
@@ -384,7 +498,18 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
   const p=DB.products.find(x=>x.name.toLowerCase().includes(q)); if(p){go('products');return;}
   const o=DB.orders.find(x=>x.code.toLowerCase().includes(q)||x.customer.name.toLowerCase().includes(q)); if(o){go('orders');return;}
   toast('Không tìm thấy kết quả cho "'+e.target.value+'"','info');}});
-$('#bellBtn').addEventListener('click',()=>go('notifications'));
+// Chuông mở luôn dòng sự kiện vừa xảy ra (đơn mới, yêu cầu trả hàng, đánh giá
+// chờ duyệt…) thay vì nhảy sang trang soạn thông báo — người trực cần biết
+// "vừa có việc gì" trước, muốn soạn thông báo cho khách thì bấm nút bên dưới.
+function adminFeedDrawer(){
+  const rows=ADMIN_FEED.length?ADMIN_FEED.map(item=>`<div class="feedrow" onclick="closeModal();A.openFeedItem('${esc(item.route||'')}','${esc(item.refId||'')}')">
+    <div class="feedtext">${esc(item.text)}</div><div class="faint" style="font-size:10.5px;margin-top:3px">${ago(item.at)} trước</div></div>`).join('')
+    :'<div class="faint" style="font-size:12px;padding:16px">Chưa có sự kiện nào. Đơn hàng, yêu cầu trả hàng và đánh giá mới sẽ hiện tại đây ngay khi phát sinh.</div>';
+  return `<div class="mh"><div><h3>Hoạt động vừa diễn ra</h3><div class="faint" style="font-size:11.5px">${ADMIN_FEED.length} sự kiện gần nhất · tự cập nhật mỗi 3 giây</div></div><div class="x" onclick="closeModal()">✕</div></div>
+  <div class="mb" style="padding:0">${rows}</div>
+  <div class="mf"><button class="btn" onclick="closeModal();A.clearFeed()">Xoá danh sách</button><button class="btn p" onclick="closeModal();go('notifications')">📣 Soạn thông báo cho khách</button></div>`;
+}
+$('#bellBtn').addEventListener('click',()=>{markAdminFeedRead();openDrawer(adminFeedDrawer());});
 $('#refreshBtn').addEventListener('click',()=>{
   const btn=$('#refreshBtn');btn.style.opacity='.5';
   Promise.all([syncLiveSales(true),state.route==='dashboard'?refreshAnalytics(true):Promise.resolve()])

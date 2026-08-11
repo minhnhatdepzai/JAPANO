@@ -13,4 +13,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// JAPANO chỉ build cho điện thoại (Android/iOS). Trang quản trị là web riêng ở
+// thư mục admin/, không dùng React Native — nên ở đây không còn mục tiêu "web"
+// và cũng không cần shim thay thế các gói native (Stripe SDK, camera, WebView...).
+config.resolver.platforms = ['android', 'ios', 'native'];
+
 module.exports = config;

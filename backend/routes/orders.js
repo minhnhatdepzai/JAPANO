@@ -3,6 +3,7 @@
 // tra cứu đơn. Cũng export các helper cho 2 module thanh toán dùng lại.
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { findPayment, findReturnRequest } = require('../lib/paymentLookup');
+const { findVariant, unitPrice } = require('../lib/pricing');
 
 const PAYMENT_PROMOS = {
   stripe: { code: 'STRIPE10', percent: 10, label: 'Ưu đãi thanh toán thẻ Stripe 10%' },
@@ -31,19 +32,14 @@ function normalizedOrderItems(state, inputItems) {
       colorHex: item.colorHex || product?.colorHex || '#1A1410',
       size: item.size || 'M',
       qty,
-      price: Number(product?.price ?? item.price) || 0,
+      // Giá LUÔN tính lại ở máy chủ theo đúng màu+size khách chọn — không tin
+      // con số client gửi lên. Biến thể có giá riêng thì ăn giá riêng, không
+      // thì lấy giá sản phẩm (xem lib/pricing.js).
+      price: product
+        ? unitPrice(product, item.colorName || item.color, item.size)
+        : Number(item.price) || 0,
     };
   }).filter((item) => item.productId && item.price >= 0);
-}
-
-// Biến thể khớp theo màu+size; sản phẩm không khai báo variants (ảnh minh hoạ,
-// phụ kiện cũ) thì bỏ qua kiểm tra tồn kho thay vì chặn nhầm.
-function findVariant(product, colorName, size) {
-  const variants = Array.isArray(product?.variants) ? product.variants : [];
-  if (!variants.length) return null;
-  return variants.find((v) => String(v.colorName || 'Mặc định') === String(colorName) && String(v.size || 'M') === String(size))
-    || variants.find((v) => String(v.size || 'M') === String(size))
-    || null;
 }
 
 function assertStockAvailable(state, items, httpError) {
@@ -216,7 +212,7 @@ function makeCreateOrderInState({ httpError, validateVoucher, vipDiscountForSele
 }
 
 module.exports = function registerOrdersRoutes(api, ctx) {
-  const { read, write, httpError, requireAuth } = ctx;
+  const { read, write, httpError, requireAuth, reconcileGoalRewards, pushNotification } = ctx;
   const createOrderInState = makeCreateOrderInState(ctx);
 
   // Tạo đơn COD từ app mobile. Giá/voucher luôn được tính lại từ catalog server.
@@ -226,6 +222,8 @@ module.exports = function registerOrdersRoutes(api, ctx) {
     try {
       const state = read();
       const result = createOrderInState(state, { ...req.body, userId: req.user.id });
+      // Mua đúng món đã tích đủ quỹ = mục tiêu hoàn thành trọn vẹn (lib/goalFund.js).
+      if (reconcileGoalRewards) reconcileGoalRewards(state, Date.now(), pushNotification);
       write(state);
       res.json({ ok: true, ...result });
       if (!result.duplicate) {
@@ -240,11 +238,23 @@ module.exports = function registerOrdersRoutes(api, ctx) {
     }
   });
 
+  // Một đơn nhiều món có thể có NHIỀU yêu cầu trả hàng (mỗi lần trả một vài
+  // món khác nhau), nên trả về cả danh sách. `returnRequest` là yêu cầu mới
+  // nhất, giữ lại cho các màn hình cũ chỉ đọc một yêu cầu.
   api.get('/orders/:id', (req, res) => {
     const state = read();
     const order = state.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
     if (!order) return res.status(404).json({ ok: false, message: 'Không tìm thấy đơn hàng.' });
-    res.json({ ok: true, order, payment: findPayment(state, order.id) || null, returnRequest: findReturnRequest(state, order.id) || null });
+    const returnRequests = (state.returnRequests || [])
+      .filter((item) => String(item.orderId) === String(order.id))
+      .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
+    res.json({
+      ok: true,
+      order,
+      payment: findPayment(state, order.id) || null,
+      returnRequest: findReturnRequest(state, order.id) || null,
+      returnRequests,
+    });
   });
 
   return { createOrderInState };

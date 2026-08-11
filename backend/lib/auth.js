@@ -113,6 +113,25 @@ function requireStaff(req, res, next) {
   });
 }
 
+// Chặn IDOR cho các endpoint nhận userId từ URL/query. Trước đây một số route
+// (hồ sơ phong cách kèm chiều cao/cân nặng, wishlist, bộ sưu tập thẻ kèm mã
+// voucher cá nhân, hạng VIP) tin thẳng userId do client gửi lên và không hề xác
+// thực — chỉ cần đổi số trong URL là đọc/ghi được dữ liệu của người khác, mà
+// các tài khoản seed lại mang id dễ đoán như 'u1', 'u2'.
+//
+// pickUserId nhận req và trả về userId mà lời gọi đang nhắm tới; nhân viên trở
+// lên vẫn xem được dữ liệu khách hàng để hỗ trợ vận hành.
+function requireSelfOrStaff(pickUserId) {
+  return function guard(req, res, next) {
+    requireAuth(req, res, () => {
+      const target = String(pickUserId(req) || '').trim();
+      if (!target) return res.status(400).json({ ok: false, message: 'Thiếu mã khách hàng.' });
+      if (String(req.user.id) === target || roleAtLeast(req.user?.role, 'staff')) return next();
+      res.status(403).json({ ok: false, message: 'Bạn chỉ xem được dữ liệu của chính mình.' });
+    });
+  };
+}
+
 // Chạy trong migration lúc boot: JAPANO_ADMIN_EMAIL/PASSWORD trong .env.server
 // tạo (hoặc thăng hạng) đúng một tài khoản super_admin gốc. Không đụng mật
 // khẩu đã có sẵn để không âm thầm ghi đè mật khẩu admin đã tự đổi.
@@ -140,5 +159,6 @@ function ensureAdminSeeded(state) {
 
 module.exports = {
   hashPassword, verifyPassword, passwordStrength, signToken, verifyToken, roleAtLeast, ROLE_RANK,
-  requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, tokenFromHeader, ensureAdminSeeded,
+  requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, requireSelfOrStaff,
+  tokenFromHeader, ensureAdminSeeded,
 };

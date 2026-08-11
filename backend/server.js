@@ -35,14 +35,18 @@ const {
   ensureFlagcardState, awardFlagcardForOrder, reconcileFlagRewards, flagcardCollectionView,
   validateVoucher, getOrCreateCollection, ensureRewardVoucher,
 } = require('./lib/flagcards');
+const { GOAL_FUND_CONFIG, reconcileGoalRewards } = require('./lib/goalFund');
+const { SPOT_REWARD_CONFIG } = require('./lib/communityRewards');
+const { FULFILLMENT_POLICY, autoCompleteDeliveredOrders } = require('./lib/fulfillmentPolicy');
 const { httpError } = require('./lib/httpError');
 const { stripe, stripeEnabled, STRIPE_PUBLISHABLE_KEY, STRIPE_MERCHANT_DISPLAY_NAME, STRIPE_WEBHOOK_SECRET } = require('./lib/stripeClient');
 const { STRIPE_CURRENCY } = require('./lib/stripeMoney');
 const { vnpayEnabled } = require('./lib/vnpaySign');
 const { cloudinary, cloudinaryEnabled, cloudinaryHealth, uploadReviewMedia, uploadReturnPhotos } = require('./lib/cloudinaryMedia');
 const { FORCE_REPOSE } = require('./lib/tryonConfig');
-const { requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, roleAtLeast, ensureAdminSeeded } = require('./lib/auth');
+const { requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, requireSelfOrStaff, roleAtLeast, ensureAdminSeeded } = require('./lib/auth');
 const { makeSendPushToUser, makeSendPushToAll } = require('./lib/push');
+const { makeMailNotifier } = require('./lib/emails');
 const { pushNotification } = require('./lib/notify');
 
 const PORT = Number(process.env.PORT || 4100);
@@ -99,6 +103,8 @@ function runMigration(state) {
   ensureFlagcardState(state);
   reconcileFlagRewards(state);
   reconcileVipState(state);
+  autoCompleteDeliveredOrders(state, Date.now());
+  reconcileGoalRewards(state, Date.now(), pushNotification);
   state.payments ||= [];
   state.returnRequests ||= [];
   if (state.shop && state.shop.vnpay === undefined) state.shop.vnpay = true;
@@ -188,11 +194,15 @@ const ctx = {
   getHomeRecommendations, runPillow, analyzePortrait, buildGoalPlan, enhanceCoaching,
   composeOutfit, todaysOutfit, adviseSize, styleRecommendation, chatbot,
   runAccessoryPipeline, accessoryKind,
-  requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, roleAtLeast,
+  requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, requireSelfOrStaff, roleAtLeast,
   pushNotification,
+  GOAL_FUND_CONFIG, reconcileGoalRewards, SPOT_REWARD_CONFIG, FULFILLMENT_POLICY,
 };
 ctx.sendPushToUser = makeSendPushToUser(ctx);
 ctx.sendPushToAll = makeSendPushToAll(ctx);
+// Email giao dịch (cảnh báo đăng nhập, biên nhận thanh toán, xác nhận hoàn
+// tiền) — cùng kiểu factory đọc state như push ở trên. Xem lib/emails.js.
+Object.assign(ctx, makeMailNotifier(ctx));
 
 const { makeStripeHelpers } = require('./routes/paymentsStripe');
 const {
@@ -201,7 +211,13 @@ const {
 } = makeStripeHelpers(ctx);
 
 const app = express();
-app.use(cors());
+// CORS mở cho mọi origin — hợp lý khi chạy dev/demo (app di động và trang quản
+// trị gọi từ nhiều địa chỉ khác nhau). Khi triển khai thật, đặt
+// JAPANO_ALLOWED_ORIGINS="https://admin.japano.vn,https://japano.vn" để chỉ cho
+// phép đúng origin của mình.
+const ALLOWED_ORIGINS = String(process.env.JAPANO_ALLOWED_ORIGINS || '')
+  .split(',').map((origin) => origin.trim()).filter(Boolean);
+app.use(cors(ALLOWED_ORIGINS.length ? { origin: ALLOWED_ORIGINS } : {}));
 // CSP tắt vì admin là JS thuần không build step, chưa audit hết chuỗi
 // innerHTML động trong admin/js/*.js — các header bảo mật khác của helmet vẫn bật.
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -311,12 +327,10 @@ app.use((err, req, res, _next) => {
 process.on('unhandledRejection', (error) => captureError(error, { stage: 'unhandledRejection' }));
 process.on('uncaughtException', (error) => captureError(error, { stage: 'uncaughtException' }));
 
-// Hydrate từ MongoDB (nếu cấu hình và có dữ liệu mới hơn) rồi mới chạy migration
-// và mở cổng lắng nghe — request đầu tiên luôn thấy state đã đầy đủ/mới nhất.
+// Khi có MONGODB_URI, các collection MongoDB là nguồn dữ liệu chính. Store JOIN
+// các collection thành state tương thích trước khi mở cổng; không dùng app_state.
 async function boot() {
-  await stateStore.hydrateFromMongoIfNewer().catch((error) => {
-    logger.warn({ err: error }, 'Bỏ qua hydrate từ MongoDB, dùng file JSON cục bộ.');
-  });
+  await stateStore.initialize();
   update(runMigration);
 
   const server = app.listen(PORT, () => {
@@ -324,9 +338,34 @@ async function boot() {
     console.log('  ─────────────────────────────');
     console.log('  API      : http://localhost:' + PORT + '/api');
     console.log('  Admin    : http://localhost:' + PORT + '/  (hoặc /admin)');
-    console.log('  Dữ liệu  : ' + DB_FILE);
+    console.log('  Dữ liệu  : ' + (stateStore.storage.startsWith('mongodb') ? `MongoDB collections (${process.env.MONGODB_DB || 'japano'})` : DB_FILE));
     console.log('  Mobile   : đặt API_BASE = http://<IP-máy>:' + PORT + ' (Android emulator: http://10.0.2.2:' + PORT + ')\n');
   });
+
+  // Khách không bấm "Đã nhận hàng" thì đơn không thể treo mãi ở trạng thái "đơn
+  // vị vận chuyển đã giao" — cửa sổ đổi/trả sẽ không bao giờ bắt đầu đếm. Quét
+  // mỗi giờ để tự chốt đúng theo mốc trong lib/fulfillmentPolicy.js.
+  const autoConfirmTimer = setInterval(() => {
+    try {
+      update((state) => {
+        const completed = autoCompleteDeliveredOrders(state, Date.now(), (order) => {
+          if (!order.userId) return;
+          pushNotification(state, {
+            userId: order.userId,
+            title: `Đơn hàng #${order.code} đã tự động hoàn tất`,
+            body: 'Bạn chưa xác nhận nhận hàng nên hệ thống đã tự chốt đơn. Nếu có vấn đề, hãy gửi yêu cầu đổi/trả.',
+            type: 'Đơn hàng',
+            action: `order:${order.id}`,
+          });
+        });
+        if (completed.length) reconcileGoalRewards(state, Date.now(), pushNotification);
+        return state;
+      });
+    } catch (error) {
+      captureError(error, { stage: 'auto-confirm-delivered-orders' });
+    }
+  }, 60 * 60 * 1000);
+  autoConfirmTimer.unref?.();
 
   // Điện thoại có thể đóng request khi người dùng rời màn hình trong lúc server
   // đang trả ảnh base64 lớn. Đây là ngắt kết nối phía client, không phải lỗi làm

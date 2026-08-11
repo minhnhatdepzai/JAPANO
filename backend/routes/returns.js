@@ -1,27 +1,41 @@
-// Yêu cầu huỷ đơn (trước khi giao) và trả hàng/hoàn tiền (sau khi giao) + cập
-// nhật trạng thái đơn (admin). Cả hai loại yêu cầu dùng chung một hàng đợi
-// (returnRequests, phân biệt bằng field kind: 'cancel' | 'return') để admin
-// duyệt/từ chối tại một chỗ — huỷ trước-giao không cần ảnh, trả-sau-giao bắt
-// buộc ảnh minh chứng. Dùng cả issueStripeRefund lẫn issueVnpayRefund tuỳ
-// cổng thanh toán; đơn COD hoàn tiền thủ công vì không có cổng để gọi API.
+// Vòng đời đơn hàng (giao → khách nhận → xác nhận) và toàn bộ quy trình
+// huỷ/đổi/trả/hoàn tiền. Quy trình chuẩn và các mốc thời gian nằm ở
+// lib/fulfillmentPolicy.js — file này chỉ thực thi đúng theo đó.
+//
+// Huỷ đơn (trước khi bàn giao vận chuyển) và trả hàng (sau khi khách đã nhận)
+// dùng chung một hàng đợi returnRequests, phân biệt bằng field kind
+// ('cancel' | 'return'). Trả hàng hỗ trợ TRẢ TỪNG SẢN PHẨM trong đơn nhiều món:
+// mỗi yêu cầu mang danh sách items riêng, tiền hoàn tính theo lib/refundMath.js.
+// Dùng cả issueStripeRefund lẫn issueVnpayRefund tuỳ cổng thanh toán; đơn COD
+// hoàn tiền thủ công vì không có cổng để gọi API.
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { findPayment, findReturnRequest } = require('../lib/paymentLookup');
 const { makeStripeHelpers } = require('./paymentsStripe');
 const { makeVnpayHelpers } = require('./paymentsVnpay');
 const { pushNotification } = require('../lib/notify');
-
-const PRE_SHIP_STATUSES = ['pending', 'pending_payment', 'confirmed'];
+const { resolveSelection, computeRefund, returnableItems, allItemsRefunded } = require('../lib/refundMath');
+const {
+  FULFILLMENT_POLICY, ORDER_STATUS_FLOW, PRE_SHIP_STATUSES, RETURNABLE_ORDER_STATUSES,
+  RETURN_WINDOW_DAYS, SHIP_BACK_DAYS, returnWindowMs, returnWindowStartedAt,
+} = require('../lib/fulfillmentPolicy');
 
 module.exports = function registerReturnsRoutes(api, ctx) {
   const {
     read, update, httpError, reconcileFlagRewards, flagcardCollectionView, vipStatus,
-    requireAuth, requireAdmin, sendPushToUser, uploadReturnPhotos,
+    requireAuth, requireAdmin, sendPushToUser, uploadReturnPhotos, reconcileGoalRewards,
+    sendRefundNotice,
   } = ctx;
   const { issueStripeRefund } = makeStripeHelpers(ctx);
   const { issueVnpayRefund } = makeVnpayHelpers(ctx);
 
+  // Quy trình chuẩn để app và trang quản trị hiển thị đúng một nội dung.
+  api.get('/policies/fulfillment', (req, res) => res.json({ ok: true, policy: FULFILLMENT_POLICY }));
+
   function activeRequestFor(state, orderId) {
     return (state.returnRequests || []).find((item) => item.orderId === orderId && !['rejected', 'cancelled', 'refunded'].includes(item.status));
+  }
+  function activeCancelFor(state, orderId) {
+    return (state.returnRequests || []).find((item) => item.orderId === orderId && item.kind === 'cancel' && !['rejected', 'cancelled', 'refunded'].includes(item.status));
   }
 
   // Đơn COD chưa từng thu tiền trước khi giao — huỷ trước-giao thì không có gì
@@ -29,6 +43,10 @@ module.exports = function registerReturnsRoutes(api, ctx) {
   // hàng, nên huỷ trước-giao vẫn phải hoàn tiền qua đúng cổng đã thanh toán.
   function needsGatewayRefund(payment) {
     return Boolean(payment) && ['stripe', 'vnpay'].includes(payment.provider) && ['paid', 'partially_refunded'].includes(payment.status);
+  }
+
+  function remainingRefundable(payment, order) {
+    return Math.max(0, Number(payment?.amount ?? order?.total ?? 0) - Number(payment?.refundedAmount || 0) - Number(payment?.pendingRefundAmount || 0));
   }
 
   async function attemptGatewayRefund(returnRequest) {
@@ -40,12 +58,20 @@ module.exports = function registerReturnsRoutes(api, ctx) {
       : issueStripeRefund(returnRequest.paymentId, refundArgs);
   }
 
+  function itemSummary(items) {
+    return (items || []).map((item) => `${item.name} ×${item.qty}`).join(', ');
+  }
+
+  // Mọi đường hoàn tiền (huỷ đơn, trả hàng, hoàn thủ công cho COD) đều kết thúc
+  // ở đây, nên đây là chỗ duy nhất cần gắn email xác nhận hoàn tiền.
   function markRefunded(returnRequestId, note) {
     let updated = null;
+    let mailPayload = null;
     update((next) => {
       const rr = findReturnRequest(next, returnRequestId);
       if (!rr) return next;
       const now = Date.now();
+      const wasRefunded = rr.status === 'refunded';
       rr.status = 'refunded';
       rr.updatedAt = now;
       rr.timeline.push({ s: 'refunded', at: now, note });
@@ -55,11 +81,24 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         order.returnRequest = { id: rr.id, code: rr.code, status: 'refunded', kind: rr.kind };
         order.history ||= [];
         order.history.push({ s: 'return_refunded', at: now });
+        // Chỉ khi MỌI sản phẩm trong đơn đã được trả và hoàn tiền thì bản thân
+        // đơn hàng mới chuyển sang "đã trả hàng" — trả một phần thì đơn vẫn giữ
+        // trạng thái hoàn tất để lịch sử mua hàng của khách không bị sai.
+        if (rr.kind === 'return' && allItemsRefunded(next, order)) {
+          order.status = 'returned';
+          order.history.push({ s: 'returned', at: now });
+        }
       }
-      pushNotification(next, { userId: rr.userId, title: `Đã hoàn tiền đơn #${rr.orderCode}`, body: `Số tiền ${Number(rr.amount).toLocaleString('vi-VN')}đ đã được hoàn.`, type: 'Đơn hàng', action: `order:${rr.orderId}` });
+      const scope = rr.coversWholeOrder ? 'toàn bộ đơn' : itemSummary(rr.items);
+      pushNotification(next, { userId: rr.userId, title: `Đã hoàn tiền đơn #${rr.orderCode}`, body: `Số tiền ${Number(rr.amount).toLocaleString('vi-VN')}đ (${scope}) đã được hoàn về phương thức bạn đã thanh toán.`, type: 'Đơn hàng', action: `order:${rr.orderId}` });
+      if (!wasRefunded) mailPayload = { returnRequest: rr, order, manual: Boolean(rr.codManualRefund) };
       updated = rr;
       return next;
     });
+    // Gửi ngoài update() — mutator chạy đồng bộ, còn gửi thư là bất đồng bộ.
+    if (mailPayload && sendRefundNotice) {
+      void sendRefundNotice(mailPayload.returnRequest.userId, mailPayload);
+    }
     return updated;
   }
 
@@ -81,8 +120,71 @@ module.exports = function registerReturnsRoutes(api, ctx) {
     return updated;
   }
 
-  // Huỷ đơn — chỉ khi đơn CHƯA giao (chưa "đang giao"/"đã giao"). Luôn cần lý
-  // do và luôn phải admin duyệt (không tự huỷ ngay) theo đúng yêu cầu nghiệp vụ.
+  // ---- Khách xem trước những gì mình còn có thể trả -------------------------
+  api.get('/orders/:id/returnable', requireAuth, (req, res) => {
+    try {
+      const state = read();
+      const order = state.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
+      if (!order) throw httpError(404, 'Không tìm thấy đơn hàng.');
+      if (String(order.userId || order.customer?.id || '') !== req.user.id) throw httpError(403, 'Bạn không có quyền xem đơn hàng này.');
+      const startedAt = returnWindowStartedAt(order);
+      const deadline = startedAt ? startedAt + returnWindowMs() : 0;
+      res.json({
+        ok: true,
+        items: returnableItems(state, order),
+        window: { days: RETURN_WINDOW_DAYS, startedAt, deadline, expired: Boolean(deadline) && Date.now() > deadline },
+        eligible: RETURNABLE_ORDER_STATUSES.includes(String(order.status)),
+      });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không tải được danh sách sản phẩm có thể trả.' });
+    }
+  });
+
+  // ---- Khách xác nhận đã nhận hàng ----------------------------------------
+  // Bên thứ ba (đơn vị vận chuyển) báo "đã giao" → đơn ở trạng thái delivered.
+  // Chính khách mới là người chốt "đúng hàng, đã nhận" để đơn sang completed và
+  // mở cửa sổ đổi/trả. Không xác nhận thì lib/fulfillmentPolicy tự chốt sau hạn.
+  api.post('/orders/:id/confirm-received', requireAuth, (req, res) => {
+    try {
+      let response = null;
+      update((state) => {
+        const order = state.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
+        if (!order) throw httpError(404, 'Không tìm thấy đơn hàng.');
+        if (String(order.userId || order.customer?.id || '') !== req.user.id) throw httpError(403, 'Bạn không có quyền xác nhận đơn hàng này.');
+        if (order.status === 'completed') throw httpError(409, 'Đơn hàng này đã được xác nhận nhận hàng.');
+        if (order.status !== 'delivered') throw httpError(400, 'Chỉ xác nhận được khi đơn vị vận chuyển đã báo giao hàng thành công.');
+        const now = Date.now();
+        order.status = 'completed';
+        order.completedAt = now;
+        order.confirmedReceivedAt = now;
+        order.history ||= [];
+        order.history.push({ s: 'completed', at: now, note: 'Khách xác nhận đã nhận hàng' });
+        if (order.payment?.method === 'COD' && order.payment.status !== 'paid') {
+          order.payment.status = 'paid';
+          order.payment.paidAt ||= now;
+          order.history.push({ s: 'paid', at: now });
+        }
+        pushNotification(state, {
+          userId: order.userId,
+          title: `Đã xác nhận nhận hàng · #${order.code}`,
+          body: `Cảm ơn bạn! Bạn có ${RETURN_WINDOW_DAYS} ngày để yêu cầu đổi/trả nếu sản phẩm chưa ưng ý.`,
+          type: 'Đơn hàng',
+          action: `order:${order.id}`,
+        });
+        reconcileFlagRewards(state);
+        if (reconcileGoalRewards) reconcileGoalRewards(state, now, pushNotification);
+        response = { order };
+        return state;
+      });
+      res.json({ ok: true, ...response });
+      void sendPushToUser(response.order.userId, { title: `Đã xác nhận nhận hàng · #${response.order.code}`, body: `Bạn có ${RETURN_WINDOW_DAYS} ngày để yêu cầu đổi/trả.`, data: { orderId: response.order.id, type: 'order-status' } });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không xác nhận được đơn hàng.' });
+    }
+  });
+
+  // Huỷ đơn — chỉ khi đơn CHƯA bàn giao đơn vị vận chuyển. Luôn cần lý do và
+  // luôn phải cửa hàng duyệt (không tự huỷ ngay) theo đúng chính sách.
   api.post('/orders/:id/cancel-request', requireAuth, (req, res) => {
     try {
       let response = null;
@@ -91,7 +193,7 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         const order = state.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
         if (!order) throw httpError(404, 'Không tìm thấy đơn hàng.');
         if (String(order.userId || order.customer?.id || '') !== req.user.id) throw httpError(403, 'Bạn không có quyền huỷ đơn hàng này.');
-        if (!PRE_SHIP_STATUSES.includes(String(order.status))) throw httpError(400, 'Đơn đang được giao hoặc đã giao — vui lòng dùng "Đổi/Trả hàng" thay vì huỷ.');
+        if (!PRE_SHIP_STATUSES.includes(String(order.status))) throw httpError(400, 'Đơn đã bàn giao đơn vị vận chuyển hoặc đã giao — vui lòng dùng "Đổi/Trả hàng" thay vì huỷ.');
         if (activeRequestFor(state, order.id)) throw httpError(409, 'Đơn đã có yêu cầu đang chờ xử lý.');
         const reason = String(req.body?.reason || '').trim();
         if (!reason) throw httpError(400, 'Vui lòng nhập lý do huỷ đơn.');
@@ -111,7 +213,8 @@ module.exports = function registerReturnsRoutes(api, ctx) {
           note: String(req.body?.note || '').trim().slice(0, 1000),
           photos: [],
           items: order.items.map((item) => ({ productId: item.productId, slug: item.slug, name: item.name, size: item.size, colorName: item.colorName, qty: item.qty, price: item.price })),
-          amount: Math.max(0, Number(payment?.amount ?? order.total) - Number(payment?.refundedAmount || 0) - Number(payment?.pendingRefundAmount || 0)),
+          coversWholeOrder: true,
+          amount: remainingRefundable(payment, order),
           currency: payment?.currency || STRIPE_CURRENCY,
           createdAt: now,
           updatedAt: now,
@@ -133,16 +236,19 @@ module.exports = function registerReturnsRoutes(api, ctx) {
     }
   });
 
-  // Trả hàng/hoàn tiền — chỉ sau khi đã giao ("completed"). Bắt buộc lý do +
-  // ít nhất 1 ảnh minh chứng. Nhận cả COD lẫn Stripe/VNPay (COD hoàn tiền thủ
-  // công vì không có cổng thanh toán để gọi API hoàn tự động).
+  // Trả hàng/hoàn tiền — sau khi hàng đã tới tay khách (delivered/completed).
+  // Bắt buộc lý do + ít nhất 1 ảnh minh chứng. Khách chọn TỪNG SẢN PHẨM muốn
+  // trả (body.items); bỏ trống thì mặc định trả toàn bộ phần chưa yêu cầu.
+  // Nhận cả COD lẫn Stripe/VNPay (COD hoàn tiền thủ công vì không có cổng).
   api.post('/orders/:id/returns', requireAuth, async (req, res) => {
     try {
       const snapshot = read();
       const order0 = snapshot.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
       if (!order0) throw httpError(404, 'Không tìm thấy đơn hàng.');
       if (String(order0.userId || order0.customer?.id || '') !== req.user.id) throw httpError(403, 'Bạn không có quyền yêu cầu trả đơn hàng này.');
-      if (order0.status !== 'completed') throw httpError(400, 'Chỉ có thể yêu cầu trả hàng sau khi đơn đã giao thành công.');
+      if (!RETURNABLE_ORDER_STATUSES.includes(String(order0.status))) {
+        throw httpError(400, 'Chỉ yêu cầu trả hàng được sau khi đơn đã được giao tới bạn.');
+      }
       const reason = String(req.body?.reason || '').trim();
       if (!reason) throw httpError(400, 'Vui lòng chọn lý do trả hàng.');
       const rawPhotos = Array.isArray(req.body?.photos) ? req.body.photos : [];
@@ -154,14 +260,20 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         state.returnRequests ||= [];
         const order = state.orders.find((item) => item.id === order0.id);
         if (!order) throw httpError(404, 'Không tìm thấy đơn hàng.');
-        if (activeRequestFor(state, order.id)) throw httpError(409, 'Đơn đã có yêu cầu đang chờ xử lý.');
-        const elapsed = Date.now() - Number(order.completedAt || order.history?.find((item) => item.s === 'completed')?.at || order.createdAt);
-        if (elapsed > 30 * 86400000) throw httpError(400, 'Đơn đã quá thời hạn đổi trả 30 ngày.');
+        if (activeCancelFor(state, order.id)) throw httpError(409, 'Đơn đang có yêu cầu huỷ chờ xử lý.');
+        const startedAt = returnWindowStartedAt(order);
+        if (startedAt && Date.now() - startedAt > returnWindowMs()) {
+          throw httpError(400, `Đơn đã quá thời hạn đổi trả ${RETURN_WINDOW_DAYS} ngày.`);
+        }
         const payment = findPayment(state, order.id);
         const isCod = String(order.payment?.method || '').toUpperCase() === 'COD';
         if (!isCod && (!payment || !['stripe', 'vnpay'].includes(payment.provider) || !['paid', 'partially_refunded'].includes(payment.status))) {
           throw httpError(400, 'Không tìm thấy giao dịch thanh toán hợp lệ cho đơn này.');
         }
+        const selection = resolveSelection(state, order, req.body?.items, httpError);
+        const refund = computeRefund(state, order, selection);
+        const remaining = remainingRefundable(payment, order);
+        const amount = Math.min(refund.amount, remaining || refund.amount);
         const now = Date.now();
         const request = {
           id: `ret-${now}`,
@@ -177,19 +289,22 @@ module.exports = function registerReturnsRoutes(api, ctx) {
           note: String(req.body?.note || '').trim().slice(0, 1000),
           photos,
           codManualRefund: isCod,
-          items: order.items.map((item) => ({ productId: item.productId, slug: item.slug, name: item.name, size: item.size, colorName: item.colorName, qty: item.qty, price: item.price })),
-          amount: Math.max(0, Number(payment?.amount ?? order.total) - Number(payment?.refundedAmount || 0) - Number(payment?.pendingRefundAmount || 0)),
+          items: selection.map((item) => ({ productId: item.productId, slug: item.slug, name: item.name, size: item.size, colorName: item.colorName, qty: item.qty, price: item.price })),
+          coversWholeOrder: refund.coversWholeOrder,
+          refundBreakdown: refund.breakdown,
+          amount,
           currency: payment?.currency || STRIPE_CURRENCY,
           createdAt: now,
           updatedAt: now,
-          timeline: [{ s: 'requested', at: now }],
+          shipBackDeadline: null,
+          timeline: [{ s: 'requested', at: now, note: itemSummary(selection) }],
         };
         state.returnRequests.push(request);
         order.returnStatus = request.status;
         order.returnRequest = { id: request.id, code: request.code, status: request.status, kind: 'return' };
         order.history ||= [];
         order.history.push({ s: 'return_requested', at: now, returnRequestId: request.id });
-        pushNotification(state, { userId: order.userId, title: `Yêu cầu trả hàng #${order.code}`, body: 'Yêu cầu của bạn đang chờ cửa hàng xem xét.', type: 'Đơn hàng', action: `order:${order.id}` });
+        pushNotification(state, { userId: order.userId, title: `Yêu cầu trả hàng #${order.code}`, body: `${itemSummary(selection)} — yêu cầu đang chờ cửa hàng xem xét.`, type: 'Đơn hàng', action: `order:${order.id}` });
         response = { returnRequest: request, order, payment };
         return state;
       });
@@ -197,6 +312,69 @@ module.exports = function registerReturnsRoutes(api, ctx) {
       void sendPushToUser(response.order.userId, { title: `Yêu cầu trả hàng #${response.order.code}`, body: 'Đang chờ cửa hàng xem xét.', data: { orderId: response.order.id, type: 'return-request' } });
     } catch (error) {
       res.status(error.status || 500).json({ ok: false, message: error.message || 'Không tạo được yêu cầu trả hàng.' });
+    }
+  });
+
+  // ---- Khách gửi hàng về (bước bên thứ ba của chiều ngược) ------------------
+  // Tách riêng với bước "cửa hàng đã nhận": mã vận đơn chứng minh đơn vị vận
+  // chuyển đã nhận kiện hàng, còn hàng về tới kho lại là việc của cửa hàng.
+  api.post('/returns/:id/ship-back', requireAuth, (req, res) => {
+    try {
+      let response = null;
+      update((state) => {
+        const rr = findReturnRequest(state, req.params.id);
+        if (!rr) throw httpError(404, 'Không tìm thấy yêu cầu.');
+        if (String(rr.userId) !== req.user.id) throw httpError(403, 'Bạn không có quyền cập nhật yêu cầu này.');
+        if (rr.kind !== 'return') throw httpError(400, 'Yêu cầu huỷ đơn không có bước gửi hàng về.');
+        if (rr.status !== 'approved') throw httpError(400, 'Chỉ khai báo được sau khi cửa hàng duyệt yêu cầu trả hàng.');
+        const carrier = String(req.body?.carrier || '').trim();
+        const trackingCode = String(req.body?.trackingCode || '').trim();
+        if (!carrier) throw httpError(400, 'Vui lòng nhập tên đơn vị vận chuyển.');
+        if (trackingCode.length < 4) throw httpError(400, 'Vui lòng nhập mã vận đơn chiều về.');
+        const now = Date.now();
+        rr.status = 'shipped_back';
+        rr.updatedAt = now;
+        rr.shipBack = { carrier: carrier.slice(0, 80), trackingCode: trackingCode.slice(0, 60), note: String(req.body?.note || '').trim().slice(0, 300), at: now };
+        rr.timeline.push({ s: 'shipped_back', at: now, note: `${carrier} · ${trackingCode}` });
+        const order = state.orders.find((item) => item.id === rr.orderId);
+        if (order) {
+          order.returnStatus = rr.status;
+          order.returnRequest = { id: rr.id, code: rr.code, status: rr.status, kind: rr.kind };
+        }
+        pushNotification(state, { userId: rr.userId, title: `Đã ghi nhận vận đơn trả hàng #${rr.orderCode}`, body: `${carrier} · ${trackingCode}. Cửa hàng sẽ kiểm hàng ngay khi nhận được.`, type: 'Đơn hàng', action: `order:${rr.orderId}` });
+        response = { returnRequest: rr, order };
+        return state;
+      });
+      res.json({ ok: true, ...response });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không cập nhật được vận đơn trả hàng.' });
+    }
+  });
+
+  // ---- Khách tự rút yêu cầu khi chưa được duyệt ----------------------------
+  api.post('/returns/:id/withdraw', requireAuth, (req, res) => {
+    try {
+      let response = null;
+      update((state) => {
+        const rr = findReturnRequest(state, req.params.id);
+        if (!rr) throw httpError(404, 'Không tìm thấy yêu cầu.');
+        if (String(rr.userId) !== req.user.id) throw httpError(403, 'Bạn không có quyền rút yêu cầu này.');
+        if (rr.status !== 'requested') throw httpError(400, 'Chỉ rút được khi yêu cầu chưa được cửa hàng xử lý.');
+        const now = Date.now();
+        rr.status = 'cancelled';
+        rr.updatedAt = now;
+        rr.timeline.push({ s: 'cancelled', at: now, note: 'Khách tự rút yêu cầu' });
+        const order = state.orders.find((item) => item.id === rr.orderId);
+        if (order) {
+          order.returnStatus = rr.status;
+          order.returnRequest = { id: rr.id, code: rr.code, status: rr.status, kind: rr.kind };
+        }
+        response = { returnRequest: rr, order };
+        return state;
+      });
+      res.json({ ok: true, ...response });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không rút được yêu cầu.' });
     }
   });
 
@@ -209,7 +387,7 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         const snapshot = read();
         const returnRequest = findReturnRequest(snapshot, req.params.id);
         if (!returnRequest) throw httpError(404, 'Không tìm thấy yêu cầu.');
-        if (!['received', 'refund_failed'].includes(returnRequest.status)) throw httpError(400, 'Cần xác nhận đã nhận hàng trả về trước khi hoàn tiền.');
+        if (!['received', 'refund_failed'].includes(returnRequest.status)) throw httpError(400, 'Cần xác nhận đã nhận và kiểm hàng trả về trước khi hoàn tiền.');
 
         if (returnRequest.codManualRefund) {
           // COD không đi qua cổng thanh toán nên không có API để gọi — admin
@@ -289,8 +467,10 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         if (!returnRequest) throw httpError(404, 'Không tìm thấy yêu cầu.');
         const from = {
           approve: ['requested'],
-          reject: ['requested', 'approved'],
-          receive: ['approved'],
+          reject: ['requested', 'approved', 'shipped_back'],
+          // Nhận hàng: bình thường sau khi khách khai vận đơn, nhưng khách mang
+          // trực tiếp tới cửa hàng thì bỏ qua bước vận chuyển vẫn hợp lệ.
+          receive: ['approved', 'shipped_back'],
           cancel: ['requested'],
         }[action];
         if (!from.includes(returnRequest.status)) throw httpError(400, `Không thể ${action} khi yêu cầu ở trạng thái ${returnRequest.status}.`);
@@ -317,12 +497,20 @@ module.exports = function registerReturnsRoutes(api, ctx) {
           pushNotification(next, { userId: returnRequest.userId, title: `${label} #${returnRequest.orderCode} bị từ chối`, body, type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
           pendingPush = { title: `${label} #${returnRequest.orderCode} bị từ chối`, body };
         } else {
-          // approve (kind=return) → chờ khách gửi hàng về; receive → đã nhận hàng, sẵn sàng hoàn tiền; cancel → khách tự rút yêu cầu.
+          // approve (kind=return) → chờ khách gửi hàng về; receive → shop đã
+          // nhận & kiểm hàng đạt, sẵn sàng hoàn tiền; cancel → khách rút yêu cầu.
           returnRequest.status = action === 'approve' ? 'approved' : action === 'receive' ? 'received' : 'cancelled';
           returnRequest.timeline.push({ s: returnRequest.status, at: now, note: adminNote });
           if (action === 'approve') {
-            pushNotification(next, { userId: returnRequest.userId, title: `Yêu cầu trả hàng #${returnRequest.orderCode} đã được duyệt`, body: 'Vui lòng gửi hàng về cửa hàng theo hướng dẫn.', type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
-            pendingPush = { title: `Yêu cầu trả hàng #${returnRequest.orderCode} đã được duyệt`, body: 'Vui lòng gửi hàng về cửa hàng theo hướng dẫn.' };
+            returnRequest.shipBackDeadline = now + SHIP_BACK_DAYS * 86400000;
+            const body = `Vui lòng gửi ${itemSummary(returnRequest.items)} về cửa hàng trong ${SHIP_BACK_DAYS} ngày và nhập mã vận đơn trong ứng dụng.`;
+            pushNotification(next, { userId: returnRequest.userId, title: `Yêu cầu trả hàng #${returnRequest.orderCode} đã được duyệt`, body, type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
+            pendingPush = { title: `Yêu cầu trả hàng #${returnRequest.orderCode} đã được duyệt`, body };
+          }
+          if (action === 'receive') {
+            const body = 'Cửa hàng đã nhận và kiểm hàng trả về. Khoản hoàn tiền sẽ được xử lý ngay.';
+            pushNotification(next, { userId: returnRequest.userId, title: `Đã nhận hàng trả về #${returnRequest.orderCode}`, body, type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
+            pendingPush = { title: `Đã nhận hàng trả về #${returnRequest.orderCode}`, body };
           }
         }
         if (order) {
@@ -340,22 +528,33 @@ module.exports = function registerReturnsRoutes(api, ctx) {
   });
 
   const ORDER_STATUS_LABELS = {
-    confirmed: 'đã được xác nhận',
-    shipping: 'đang được giao',
-    completed: 'đã giao thành công',
+    confirmed: 'đã được cửa hàng xác nhận',
+    shipping: 'đã được bàn giao cho đơn vị vận chuyển',
+    delivered: 'đã được đơn vị vận chuyển giao tới bạn',
+    completed: 'đã hoàn tất',
     cancelled: 'đã bị huỷ',
     returned: 'đã hoàn trả',
   };
   api.patch('/orders/:id', requireAdmin, (req, res) => {
     let response;
     let statusChanged = false;
+    let failure = null;
     const state = update((next) => {
       const order = next.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
       if (!order) return next;
       const now = Date.now();
       if (req.body?.status && req.body.status !== order.status) {
-        order.status = String(req.body.status);
+        const target = String(req.body.status);
+        const allowed = ORDER_STATUS_FLOW[String(order.status)] || [];
+        // Quy trình một chiều: không cho nhảy cóc hay lùi trạng thái, để lịch sử
+        // đơn luôn kể đúng những gì đã thực sự xảy ra.
+        if (!allowed.includes(target)) {
+          failure = `Không thể chuyển đơn từ "${order.status}" sang "${target}". Bước hợp lệ tiếp theo: ${allowed.join(', ') || 'không còn bước nào'}.`;
+          return next;
+        }
+        order.status = target;
         statusChanged = true;
+        if (order.status === 'delivered') order.deliveredAt ||= now;
         if (order.status === 'completed') order.completedAt ||= now;
         order.history ||= [];
         order.history.push({ s: order.status, at: now });
@@ -379,12 +578,17 @@ module.exports = function registerReturnsRoutes(api, ctx) {
       }
       if (statusChanged && order.userId) {
         const label = ORDER_STATUS_LABELS[order.status] || `chuyển sang "${order.status}"`;
-        pushNotification(next, { userId: order.userId, title: `Đơn hàng #${order.code}`, body: `Đơn của bạn ${label}.`, type: 'Đơn hàng', action: `order:${order.id}` });
+        const extra = order.status === 'delivered'
+          ? ' Vui lòng kiểm hàng và bấm "Đã nhận hàng" trong ứng dụng.'
+          : order.status === 'completed' ? ` Bạn có ${RETURN_WINDOW_DAYS} ngày để yêu cầu đổi/trả.` : '';
+        pushNotification(next, { userId: order.userId, title: `Đơn hàng #${order.code}`, body: `Đơn của bạn ${label}.${extra}`, type: 'Đơn hàng', action: `order:${order.id}` });
       }
       const reconciled = reconcileFlagRewards(next);
+      if (reconcileGoalRewards) reconcileGoalRewards(next, now, pushNotification);
       response = { order, award: reconciled.awards.find((item) => item.orderId === order.id) || order.flagcardAward || null };
       return next;
     });
+    if (failure) return res.status(400).json({ ok: false, message: failure });
     if (!response) return res.status(404).json({ ok: false, message: 'Không tìm thấy đơn hàng.' });
     if (statusChanged && response.order.userId) {
       const label = ORDER_STATUS_LABELS[response.order.status] || `chuyển sang "${response.order.status}"`;

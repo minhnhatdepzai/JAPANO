@@ -4,10 +4,12 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
   const {
     read, update, ensureFlagcardState, reconcileFlagRewards, flagcardCollectionView,
     getOrCreateCollection, ensureRewardVoucher, validateVoucher, VIP_CONFIG, vipStatus,
+    requireSelfOrStaff,
   } = ctx;
 
-  // Bộ sưu tập Flagcard lịch sử + voucher cá nhân.
-  api.get('/flagcards/collection/:userId', (req, res) => {
+  // Bộ sưu tập Flagcard lịch sử + voucher cá nhân — voucher là tài sản có giá
+  // trị thật nên chỉ chính chủ (hoặc nhân viên) mới được xem.
+  api.get('/flagcards/collection/:userId', requireSelfOrStaff((req) => req.params.userId), (req, res) => {
     res.json({ ok: true, ...flagcardCollectionView(read(), String(req.params.userId)) });
   });
   api.get('/flagcards-program', (req, res) => {
@@ -49,9 +51,8 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
 
   // Hạng VIP được suy ra từ các đơn đã thanh toán/hoàn tất trong từng tháng.
   // Trạng thái luôn tính tại thời điểm gọi nên ngày hết hạn không thể bị cache cũ.
-  api.get('/vip/status/:userId', (req, res) => {
+  api.get('/vip/status/:userId', requireSelfOrStaff((req) => req.params.userId), (req, res) => {
     const userId = String(req.params.userId || '').trim();
-    if (!userId) return res.status(400).json({ ok: false, message: 'Thiếu mã khách hàng.' });
     res.json({ ok: true, config: VIP_CONFIG, status: vipStatus(read(), userId) });
   });
 

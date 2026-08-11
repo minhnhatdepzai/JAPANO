@@ -12,6 +12,19 @@ const CATS = [
 ];
 
 const SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL'];
+const DEFAULT_DISCOUNT_RULES = [{
+  id: 'discount-vip-10',
+  code: 'JAPANO-VIP10',
+  name: 'Thành viên VIP giảm 10%',
+  scope: 'vip',
+  type: 'percent',
+  value: 10,
+  maxUnitsPerOrder: 1,
+  qualificationType: 'monthly_spend',
+  qualificationValue: 5_000_000,
+  validityDays: 30,
+  active: true,
+}];
 const NAMES = ['Trần Minh', 'Nguyễn Thu Hà', 'Lê Quốc Bảo', 'Phạm Mỹ Linh', 'Hoàng Anh Tú', 'Đặng Khánh Vy', 'Vũ Hải Nam', 'Bùi Ngọc Ánh', 'Đỗ Gia Huy', 'Lý Cẩm Tú'];
 const ADDR = ['123 Lê Lợi, P. Bến Nghé, HCM', '45 Bà Triệu, P. Hoàn Kiếm, Hà Nội', '78 Trần Phú, P. Hải Châu, Đà Nẵng', '12 Nguyễn Huệ, P. Bến Nghé, HCM', '90 Cầu Giấy, P. Cầu Giấy, Hà Nội'];
 const PRODUCT_ASSET_DIR = path.join(__dirname, '..', 'mobile', 'assets', 'products');
@@ -101,6 +114,7 @@ function emptyState() {
     addresses: [],
     wishlists: [],
     notifications: [],
+    discountRules: JSON.parse(JSON.stringify(DEFAULT_DISCOUNT_RULES)),
     vouchers: [],
     flagcards: JSON.parse(JSON.stringify(FLAGCARDS)),
     flagcardCollections: [],

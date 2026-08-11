@@ -11,11 +11,17 @@
     "backend": "npm --workspace backend start",
     "backend:dev": "npm --workspace backend run dev",
     "mobile": "npm --workspace mobile start",
-    "mobile:web": "npm --workspace mobile run web",
     "check": "npm --workspace backend test && npm --workspace mobile run typecheck",
     "dev:android": "./start-all.sh",
+    "media:cloudinary:sync": "node backend/scripts/syncProductsToCloud.js",
+    "db:mongo:migrate": "node backend/scripts/migrateToMongoCollections.js",
+    "db:mongo:sync": "node backend/scripts/syncMongoViews.js",
+    "db:erd:drawio": "node backend/scripts/generateMongoErdDrawio.js",
     "verify": "node scripts/verify.mjs",
-    "verify:ai": "node scripts/verify.mjs --ai"
+    "verify:ai": "node scripts/verify.mjs --ai",
+    "mail:test": "npm --workspace backend run mail:test --",
+    "setup:auth": "node scripts/setup-google-email.mjs",
+    "db:verify": "npm --workspace backend run db:verify"
   },
   "engines": {
     "node": ">=20"

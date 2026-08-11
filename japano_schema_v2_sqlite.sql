@@ -1,599 +1,435 @@
 -- JAPANO — ERD v2 (DDL SQLite) — schema chuẩn hoá.
 PRAGMA foreign_keys = OFF;
 
-CREATE TABLE `currencies` (
-  `code` VARCHAR(10),
-  `name` VARCHAR(60) NOT NULL,
-  `symbol` VARCHAR(10),
-  PRIMARY KEY (`code`)
+CREATE TABLE `Categories` (
+  `CategoryID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `CategoryName` VARCHAR(150) NOT NULL,
+  `Kanji` VARCHAR(40),
+  `Slug` VARCHAR(80) NOT NULL,
+  `Description` VARCHAR(255),
+  `ParentID` BIGINT,
+  UNIQUE (`Slug`),
+  FOREIGN KEY (`ParentID`) REFERENCES `Categories`(`CategoryID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `categories` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `slug` VARCHAR(80) NOT NULL,
-  `name` VARCHAR(150) NOT NULL,
-  `kanji` VARCHAR(40),
-  `parent_id` BIGINT,
-  UNIQUE (`slug`),
-  FOREIGN KEY (`parent_id`) REFERENCES `categories`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Products` (
+  `ProductID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `CategoryID` BIGINT NOT NULL,
+  `ProductName` VARCHAR(190) NOT NULL,
+  `Kanji` VARCHAR(40),
+  `Slug` VARCHAR(120) NOT NULL,
+  `Brand` VARCHAR(80),
+  `Price` BIGINT NOT NULL,
+  `OldPrice` BIGINT,
+  `Description` TEXT,
+  `Story` TEXT,
+  `Status` VARCHAR(20) NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  UNIQUE (`Slug`),
+  CHECK (Price >= 0),
+  FOREIGN KEY (`CategoryID`) REFERENCES `Categories`(`CategoryID`) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE `products` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `slug` VARCHAR(120) NOT NULL,
-  `name` VARCHAR(190) NOT NULL,
-  `kanji` VARCHAR(40),
-  `brand` VARCHAR(80),
-  `base_price` BIGINT NOT NULL,
-  `old_price` BIGINT,
-  `currency_code` VARCHAR(10) NOT NULL,
-  `status` VARCHAR(20) NOT NULL,
-  `description` TEXT,
-  `story` TEXT,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME,
-  UNIQUE (`slug`),
-  CHECK (base_price >= 0),
-  FOREIGN KEY (`currency_code`) REFERENCES `currencies`(`code`) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE `Images` (
+  `ImageID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ProductID` BIGINT NOT NULL,
+  `Url` VARCHAR(500) NOT NULL,
+  `Position` INT NOT NULL,
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `product_categories` (
-  `product_id` BIGINT NOT NULL,
-  `category_id` BIGINT NOT NULL,
-  PRIMARY KEY (`product_id`, `category_id`),
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Colors` (
+  `ColorID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ColorName` VARCHAR(60) NOT NULL,
+  `ColorCode` VARCHAR(16)
 );
 
-CREATE TABLE `product_images` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `product_id` BIGINT NOT NULL,
-  `url` VARCHAR(500) NOT NULL,
-  `position` INT NOT NULL,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Sizes` (
+  `SizeID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `SizeName` VARCHAR(20) NOT NULL,
+  `SortOrder` INT NOT NULL,
+  UNIQUE (`SizeName`)
 );
 
-CREATE TABLE `product_variants` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `product_id` BIGINT NOT NULL,
-  `color_name` VARCHAR(60) NOT NULL,
-  `color_hex` VARCHAR(16),
-  `size` VARCHAR(20) NOT NULL,
-  `sku` VARCHAR(60) NOT NULL,
-  `price` BIGINT,
-  `stock` INT NOT NULL,
-  `reserved` INT NOT NULL,
-  UNIQUE (`sku`),
-  UNIQUE (`product_id`, `color_name`, `size`),
-  CHECK (stock >= 0),
-  CHECK (reserved >= 0),
-  CHECK (reserved <= stock),
-  CHECK (price IS NULL OR price >= 0),
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `ProductVariants` (
+  `VariantID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ProductID` BIGINT NOT NULL,
+  `ColorID` BIGINT NOT NULL,
+  `SizeID` BIGINT NOT NULL,
+  `SKU` VARCHAR(60) NOT NULL,
+  `Price` BIGINT,
+  `StockQuantity` INT NOT NULL,
+  `Reserved` INT NOT NULL,
+  `Status` VARCHAR(20) NOT NULL,
+  UNIQUE (`SKU`),
+  UNIQUE (`ProductID`, `ColorID`, `SizeID`),
+  CHECK (StockQuantity >= 0),
+  CHECK (Reserved >= 0),
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`ColorID`) REFERENCES `Colors`(`ColorID`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  FOREIGN KEY (`SizeID`) REFERENCES `Sizes`(`SizeID`) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE `inventory_movements` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `variant_id` BIGINT NOT NULL,
-  `delta` INT NOT NULL,
-  `reason` VARCHAR(30) NOT NULL,
-  `order_id` BIGINT,
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`variant_id`) REFERENCES `product_variants`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Users` (
+  `UserID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `FullName` VARCHAR(150) NOT NULL,
+  `Email` VARCHAR(190),
+  `PasswordHash` VARCHAR(255),
+  `Phone` VARCHAR(40),
+  `Role` VARCHAR(20) NOT NULL,
+  `Status` VARCHAR(20) NOT NULL,
+  `StripeCustomerID` VARCHAR(60),
+  `ResetCodeHash` VARCHAR(64),
+  `ResetCodeExpiresAt` DATETIME,
+  `CreatedAt` DATETIME NOT NULL,
+  UNIQUE (`Email`)
 );
 
-CREATE TABLE `users` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `name` VARCHAR(150) NOT NULL,
-  `email` VARCHAR(190),
-  `phone` VARCHAR(40),
-  `password_hash` VARCHAR(255),
-  `role` VARCHAR(20) NOT NULL,
-  `status` VARCHAR(20) NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`email`)
+CREATE TABLE `Addresses` (
+  `AddressID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `RecipientName` VARCHAR(150) NOT NULL,
+  `Phone` VARCHAR(40) NOT NULL,
+  `Street` VARCHAR(255) NOT NULL,
+  `Ward` VARCHAR(120),
+  `Province` VARCHAR(120),
+  `IsDefault` BOOLEAN NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `addresses` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `recipient_name` VARCHAR(150) NOT NULL,
-  `phone` VARCHAR(40) NOT NULL,
-  `street` VARCHAR(255) NOT NULL,
-  `ward_code` VARCHAR(20),
-  `ward` VARCHAR(120),
-  `province_code` VARCHAR(20),
-  `province` VARCHAR(120),
-  `is_default` BOOLEAN NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Profiles` (
+  `ProfileID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `Gender` VARCHAR(30),
+  `SkinTone` VARCHAR(60),
+  `Styles` VARCHAR(255),
+  `Occasion` VARCHAR(120),
+  `Budget` BIGINT,
+  `HeightCm` INT,
+  `WeightKg` INT,
+  `UsualSize` VARCHAR(20),
+  `UpdatedAt` DATETIME,
+  UNIQUE (`UserID`),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `profiles` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `gender` VARCHAR(30),
-  `skin_tone` VARCHAR(60),
-  `occasion` VARCHAR(120),
-  `budget` BIGINT,
-  `height_cm` INT,
-  `weight_kg` INT,
-  `usual_size` VARCHAR(20),
-  `updated_at` DATETIME,
-  UNIQUE (`user_id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `CartItems` (
+  `CartID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `VariantID` BIGINT NOT NULL,
+  `Quantity` INT NOT NULL,
+  `AddedAt` DATETIME NOT NULL,
+  UNIQUE (`UserID`, `VariantID`),
+  CHECK (Quantity > 0),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`VariantID`) REFERENCES `ProductVariants`(`VariantID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `profile_styles` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `profile_id` BIGINT NOT NULL,
-  `position` INT NOT NULL,
-  `style` VARCHAR(80) NOT NULL,
-  UNIQUE (`profile_id`, `position`),
-  FOREIGN KEY (`profile_id`) REFERENCES `profiles`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Wishlist` (
+  `WishlistID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `ProductID` BIGINT NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  UNIQUE (`UserID`, `ProductID`),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `carts` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT,
-  `session_token` VARCHAR(64),
-  `updated_at` DATETIME NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Orders` (
+  `OrderID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `DiscountID` BIGINT,
+  `PaymentID` BIGINT,
+  `OrderCode` VARCHAR(40) NOT NULL,
+  `OrderDate` DATETIME NOT NULL,
+  `OrderStatus` VARCHAR(30) NOT NULL,
+  `RecipientName` VARCHAR(150) NOT NULL,
+  `PhoneNumber` VARCHAR(40) NOT NULL,
+  `ShippingAddress` VARCHAR(255) NOT NULL,
+  `Subtotal` BIGINT NOT NULL,
+  `DiscountAmount` BIGINT NOT NULL,
+  `ShippingFee` BIGINT NOT NULL,
+  `TotalAmount` BIGINT NOT NULL,
+  `Source` VARCHAR(30),
+  `CancelReason` VARCHAR(255),
+  UNIQUE (`OrderCode`),
+  CHECK (TotalAmount >= 0),
+  CHECK (DiscountAmount >= 0),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`DiscountID`) REFERENCES `DiscountCodes`(`DiscountID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`PaymentID`) REFERENCES `Payments`(`PaymentID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `cart_items` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `cart_id` BIGINT NOT NULL,
-  `variant_id` BIGINT NOT NULL,
-  `quantity` INT NOT NULL,
-  `added_at` DATETIME NOT NULL,
-  UNIQUE (`cart_id`, `variant_id`),
-  CHECK (quantity > 0),
-  FOREIGN KEY (`cart_id`) REFERENCES `carts`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`variant_id`) REFERENCES `product_variants`(`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE `OrderItems` (
+  `OrderItemID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `OrderID` BIGINT NOT NULL,
+  `VariantID` BIGINT,
+  `ProductName` VARCHAR(190) NOT NULL,
+  `ColorName` VARCHAR(60),
+  `SizeName` VARCHAR(20),
+  `Quantity` INT NOT NULL,
+  `UnitPrice` BIGINT NOT NULL,
+  `LineTotal` BIGINT NOT NULL,
+  CHECK (Quantity > 0),
+  FOREIGN KEY (`OrderID`) REFERENCES `Orders`(`OrderID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`VariantID`) REFERENCES `ProductVariants`(`VariantID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `wishlists` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `product_id` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`user_id`, `product_id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Payments` (
+  `PaymentID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `PaymentMethod` VARCHAR(40) NOT NULL,
+  `Provider` VARCHAR(20) NOT NULL,
+  `PaymentStatus` VARCHAR(20) NOT NULL,
+  `Amount` BIGINT NOT NULL,
+  `Currency` VARCHAR(10) NOT NULL,
+  `TransactionID` VARCHAR(120),
+  `PaidAt` DATETIME,
+  `CreatedAt` DATETIME NOT NULL
 );
 
-CREATE TABLE `vouchers` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `code` VARCHAR(40) NOT NULL,
-  `type` VARCHAR(20) NOT NULL,
-  `value` INT NOT NULL,
-  `min_order` BIGINT NOT NULL,
-  `max_discount` BIGINT,
-  `usage_limit` INT,
-  `per_user_limit` INT,
-  `used_count` INT NOT NULL,
-  `starts_at` DATETIME,
-  `expires_at` DATETIME,
-  `active` BOOLEAN NOT NULL,
-  UNIQUE (`code`),
-  CHECK (value >= 0),
-  CHECK (min_order >= 0)
+CREATE TABLE `DiscountCodes` (
+  `DiscountID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Code` VARCHAR(40) NOT NULL,
+  `DiscountType` VARCHAR(20) NOT NULL,
+  `DiscountValue` INT NOT NULL,
+  `MinOrderAmount` BIGINT NOT NULL,
+  `MaxDiscountAmount` BIGINT,
+  `UsageLimit` INT,
+  `UsedCount` INT NOT NULL,
+  `PerUserLimit` INT,
+  `StartDate` DATETIME,
+  `ExpiryDate` DATETIME,
+  `Status` VARCHAR(20) NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  UNIQUE (`Code`),
+  CHECK (DiscountValue > 0),
+  CHECK (UsedCount >= 0)
 );
 
-CREATE TABLE `payment_promotions` (
-  `code` VARCHAR(40),
-  `provider` VARCHAR(20) NOT NULL,
-  `type` VARCHAR(20) NOT NULL,
-  `value` INT NOT NULL,
-  `active` BOOLEAN NOT NULL,
-  PRIMARY KEY (`code`),
-  CHECK (value >= 0)
+CREATE TABLE `VipMemberships` (
+  `VipID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `QualifyingPeriod` CHAR(7) NOT NULL,
+  `QualifiedSpend` BIGINT NOT NULL,
+  `Threshold` BIGINT NOT NULL,
+  `DiscountPercent` INT NOT NULL,
+  `DiscountedUnits` INT NOT NULL,
+  `Status` VARCHAR(20) NOT NULL,
+  `StartedAt` DATETIME NOT NULL,
+  `ExpiresAt` DATETIME NOT NULL,
+  UNIQUE (`UserID`, `QualifyingPeriod`),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `orders` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `code` VARCHAR(40) NOT NULL,
-  `user_id` BIGINT,
-  `status` VARCHAR(30) NOT NULL,
-  `shipping_address_id` BIGINT,
-  `ship_recipient` VARCHAR(150) NOT NULL,
-  `ship_phone` VARCHAR(40) NOT NULL,
-  `ship_street` VARCHAR(255) NOT NULL,
-  `ship_ward_code` VARCHAR(20),
-  `ship_ward` VARCHAR(120),
-  `ship_province_code` VARCHAR(20),
-  `ship_province` VARCHAR(120),
-  `contact_email` VARCHAR(190),
-  `subtotal` BIGINT NOT NULL,
-  `discount_total` BIGINT NOT NULL,
-  `shipping_fee` BIGINT NOT NULL,
-  `grand_total` BIGINT NOT NULL,
-  `currency_code` VARCHAR(10) NOT NULL,
-  `source` VARCHAR(30),
-  `placed_at` DATETIME NOT NULL,
-  `cancelled_at` DATETIME,
-  `cancel_reason` VARCHAR(255),
-  UNIQUE (`code`),
-  CHECK (subtotal >= 0),
-  CHECK (discount_total >= 0),
-  CHECK (shipping_fee >= 0),
-  CHECK (grand_total >= 0),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`shipping_address_id`) REFERENCES `addresses`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`currency_code`) REFERENCES `currencies`(`code`) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE `ReturnRequests` (
+  `ReturnID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `OrderID` BIGINT NOT NULL,
+  `UserID` BIGINT,
+  `PaymentID` BIGINT,
+  `ReturnCode` VARCHAR(60) NOT NULL,
+  `Kind` VARCHAR(10) NOT NULL,
+  `ReturnStatus` VARCHAR(30) NOT NULL,
+  `Reason` VARCHAR(255),
+  `Note` TEXT,
+  `Amount` BIGINT NOT NULL,
+  `CodManualRefund` BOOLEAN NOT NULL,
+  `RefundedAt` DATETIME,
+  `CreatedAt` DATETIME NOT NULL,
+  `UpdatedAt` DATETIME,
+  UNIQUE (`ReturnCode`),
+  FOREIGN KEY (`OrderID`) REFERENCES `Orders`(`OrderID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`PaymentID`) REFERENCES `Payments`(`PaymentID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `order_items` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `order_id` BIGINT NOT NULL,
-  `variant_id` BIGINT,
-  `product_id` BIGINT,
-  `name_snapshot` VARCHAR(190) NOT NULL,
-  `color_snapshot` VARCHAR(60),
-  `size_snapshot` VARCHAR(20),
-  `unit_price` BIGINT NOT NULL,
-  `quantity` INT NOT NULL,
-  `line_total` BIGINT NOT NULL,
-  CHECK (quantity > 0),
-  CHECK (unit_price >= 0),
-  CHECK (line_total >= 0),
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`variant_id`) REFERENCES `product_variants`(`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `ReturnImages` (
+  `ReturnImageID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ReturnID` BIGINT NOT NULL,
+  `Url` VARCHAR(500) NOT NULL,
+  `Position` INT NOT NULL,
+  FOREIGN KEY (`ReturnID`) REFERENCES `ReturnRequests`(`ReturnID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `order_discounts` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `order_id` BIGINT NOT NULL,
-  `source_type` VARCHAR(20) NOT NULL,
-  `voucher_id` BIGINT,
-  `promotion_code` VARCHAR(40),
-  `amount` BIGINT NOT NULL,
-  CHECK (amount >= 0),
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`voucher_id`) REFERENCES `vouchers`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`promotion_code`) REFERENCES `payment_promotions`(`code`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Reviews` (
+  `ReviewID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ProductID` BIGINT NOT NULL,
+  `UserID` BIGINT NOT NULL,
+  `OrderID` BIGINT,
+  `Rating` TINYINT NOT NULL,
+  `Comment` TEXT,
+  `MediaUrl` VARCHAR(500),
+  `MediaKind` VARCHAR(10),
+  `ReviewStatus` VARCHAR(20) NOT NULL,
+  `ReviewDate` DATETIME NOT NULL,
+  UNIQUE (`ProductID`, `UserID`, `OrderID`),
+  CHECK (Rating BETWEEN 1 AND 5),
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`OrderID`) REFERENCES `Orders`(`OrderID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `order_status_history` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `order_id` BIGINT NOT NULL,
-  `from_status` VARCHAR(30),
-  `to_status` VARCHAR(30) NOT NULL,
-  `changed_by` BIGINT,
-  `note` VARCHAR(255),
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`changed_by`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `ReviewReactions` (
+  `ReactionID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ReviewID` BIGINT NOT NULL,
+  `UserID` BIGINT NOT NULL,
+  `Value` VARCHAR(20) NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  UNIQUE (`ReviewID`, `UserID`),
+  FOREIGN KEY (`ReviewID`) REFERENCES `Reviews`(`ReviewID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `payments` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `code` VARCHAR(60) NOT NULL,
-  `order_id` BIGINT NOT NULL,
-  `provider` VARCHAR(20) NOT NULL,
-  `method` VARCHAR(40),
-  `status` VARCHAR(20) NOT NULL,
-  `amount` BIGINT NOT NULL,
-  `currency_code` VARCHAR(10) NOT NULL,
-  `transaction_code` VARCHAR(120),
-  `paid_at` DATETIME,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`code`),
-  CHECK (amount >= 0),
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`currency_code`) REFERENCES `currencies`(`code`) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE `Interactions` (
+  `InteractionID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `ProductID` BIGINT,
+  `Type` VARCHAR(30) NOT NULL,
+  `Value` INT NOT NULL,
+  `Source` VARCHAR(30),
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `return_requests` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `code` VARCHAR(60) NOT NULL,
-  `order_id` BIGINT NOT NULL,
-  `user_id` BIGINT,
-  `payment_id` BIGINT,
-  `status` VARCHAR(30) NOT NULL,
-  `reason` VARCHAR(255),
-  `note` TEXT,
-  `amount` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`code`),
-  CHECK (amount >= 0),
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`payment_id`) REFERENCES `payments`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `AIChat` (
+  `ChatID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `Content` TEXT,
+  `IsClientSend` BOOLEAN NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `return_request_items` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `return_request_id` BIGINT NOT NULL,
-  `order_item_id` BIGINT NOT NULL,
-  `quantity` INT NOT NULL,
-  CHECK (quantity > 0),
-  FOREIGN KEY (`return_request_id`) REFERENCES `return_requests`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`order_item_id`) REFERENCES `order_items`(`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE `AIDescriptions` (
+  `DescriptionID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `ProductID` BIGINT NOT NULL,
+  `Headline` VARCHAR(255),
+  `VisualSummary` TEXT,
+  `StylingTip` TEXT,
+  `PurchaseReason` TEXT,
+  `Confidence` VARCHAR(10),
+  `Engine` VARCHAR(60),
+  `GeneratedAt` DATETIME NOT NULL,
+  UNIQUE (`ProductID`),
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `refunds` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `payment_id` BIGINT NOT NULL,
-  `return_request_id` BIGINT,
-  `amount` BIGINT NOT NULL,
-  `status` VARCHAR(20) NOT NULL,
-  `reason` VARCHAR(120),
-  `created_at` DATETIME NOT NULL,
-  CHECK (amount > 0),
-  FOREIGN KEY (`payment_id`) REFERENCES `payments`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`return_request_id`) REFERENCES `return_requests`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `TryOnHistory` (
+  `TryOnID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `ProductID` BIGINT,
+  `Engine` VARCHAR(190),
+  `ResultUrl` VARCHAR(500),
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `voucher_redemptions` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `voucher_id` BIGINT NOT NULL,
-  `user_id` BIGINT,
-  `order_id` BIGINT NOT NULL,
-  `discount_amount` BIGINT NOT NULL,
-  `redeemed_at` DATETIME NOT NULL,
-  UNIQUE (`voucher_id`, `order_id`),
-  CHECK (discount_amount >= 0),
-  FOREIGN KEY (`voucher_id`) REFERENCES `vouchers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `Goals` (
+  `GoalID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `ProductID` BIGINT,
+  `MonthlyIncome` BIGINT,
+  `FixedExpenses` BIGINT,
+  `CurrentSavings` BIGINT,
+  `TargetMonths` INT,
+  `MonthlySaving` BIGINT,
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`ProductID`) REFERENCES `Products`(`ProductID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `reviews` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `product_id` BIGINT NOT NULL,
-  `user_id` BIGINT NOT NULL,
-  `order_id` BIGINT,
-  `rating` TINYINT NOT NULL,
-  `comment` TEXT,
-  `media_url` VARCHAR(500),
-  `media_kind` VARCHAR(10),
-  `status` VARCHAR(20) NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`user_id`, `product_id`),
-  CHECK (rating BETWEEN 1 AND 5),
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Flagcards` (
+  `FlagcardID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Slug` VARCHAR(80) NOT NULL,
+  `Title` VARCHAR(190) NOT NULL,
+  `Japanese` VARCHAR(190),
+  `Region` VARCHAR(120),
+  `Summary` TEXT,
+  `SortOrder` INT,
+  `Active` BOOLEAN NOT NULL,
+  UNIQUE (`Slug`)
 );
 
-CREATE TABLE `review_reactions` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `review_id` BIGINT NOT NULL,
-  `user_id` BIGINT NOT NULL,
-  `value` VARCHAR(20) NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  UNIQUE (`review_id`, `user_id`),
-  FOREIGN KEY (`review_id`) REFERENCES `reviews`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `FlagcardCollections` (
+  `CollectionID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT NOT NULL,
+  `CompletedAt` DATETIME,
+  `RewardVoucherCode` VARCHAR(40),
+  `CreatedAt` DATETIME NOT NULL,
+  `UpdatedAt` DATETIME,
+  UNIQUE (`UserID`),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `moderation_samples` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `review_id` BIGINT,
-  `label` VARCHAR(30),
-  `normalized_text` TEXT,
-  `source` VARCHAR(30),
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`review_id`) REFERENCES `reviews`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `FlagcardAwards` (
+  `AwardID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `CollectionID` BIGINT NOT NULL,
+  `FlagcardID` BIGINT,
+  `OrderID` BIGINT,
+  `AwardedAt` DATETIME NOT NULL,
+  `Source` VARCHAR(40),
+  FOREIGN KEY (`CollectionID`) REFERENCES `FlagcardCollections`(`CollectionID`) ON UPDATE CASCADE ON DELETE CASCADE,
+  FOREIGN KEY (`FlagcardID`) REFERENCES `Flagcards`(`FlagcardID`) ON UPDATE CASCADE ON DELETE SET NULL,
+  FOREIGN KEY (`OrderID`) REFERENCES `Orders`(`OrderID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `interactions` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT,
-  `product_id` BIGINT,
-  `type` VARCHAR(30) NOT NULL,
-  `value` INT NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  `source` VARCHAR(30),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `JapanSpotReviews` (
+  `SpotReviewID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `Place` VARCHAR(190) NOT NULL,
+  `Prefecture` VARCHAR(120) NOT NULL,
+  `Rating` TINYINT NOT NULL,
+  `Comment` TEXT,
+  `MediaUrl` VARCHAR(500),
+  `ReviewStatus` VARCHAR(20) NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  CHECK (Rating BETWEEN 1 AND 5),
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `chats` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT,
-  `role` VARCHAR(20) NOT NULL,
-  `message` TEXT,
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+CREATE TABLE `JapanSpotSuggestions` (
+  `SuggestionID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `Prefecture` VARCHAR(120) NOT NULL,
+  `Suggestion` TEXT,
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE TABLE `chat_product_refs` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `chat_id` BIGINT NOT NULL,
-  `product_id` BIGINT,
-  FOREIGN KEY (`chat_id`) REFERENCES `chats`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Notifications` (
+  `NotificationID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `UserID` BIGINT,
+  `Title` VARCHAR(255),
+  `Content` TEXT,
+  `Type` VARCHAR(60),
+  `Action` VARCHAR(120),
+  `IsRead` BOOLEAN NOT NULL,
+  `CreatedAt` DATETIME NOT NULL,
+  FOREIGN KEY (`UserID`) REFERENCES `Users`(`UserID`) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE `tryon_history` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT,
-  `product_id` BIGINT,
-  `engine` VARCHAR(190),
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
+CREATE TABLE `Banners` (
+  `BannerID` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `Title` VARCHAR(190),
+  `Image` VARCHAR(500),
+  `Link` VARCHAR(255),
+  `Active` BOOLEAN NOT NULL,
+  `SortOrder` INT
 );
 
-CREATE TABLE `tryon_accessories` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `tryon_id` BIGINT NOT NULL,
-  `product_id` BIGINT,
-  FOREIGN KEY (`tryon_id`) REFERENCES `tryon_history`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE TABLE `goals` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `product_id` BIGINT,
-  `monthly_income` BIGINT,
-  `fixed_expenses` BIGINT,
-  `current_savings` BIGINT,
-  `target_months` INT,
-  `plan` JSON,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE TABLE `ai_descriptions` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `product_id` BIGINT NOT NULL,
-  `headline` VARCHAR(255),
-  `visual_summary` TEXT,
-  `styling_tip` TEXT,
-  `purchase_reason` TEXT,
-  `confidence` VARCHAR(10),
-  `engine` VARCHAR(60),
-  `generated_at` DATETIME NOT NULL,
-  UNIQUE (`product_id`),
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `ai_description_details` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `ai_description_id` BIGINT NOT NULL,
-  `detail` VARCHAR(500) NOT NULL,
-  FOREIGN KEY (`ai_description_id`) REFERENCES `ai_descriptions`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `flagcards` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `slug` VARCHAR(80) NOT NULL,
-  `sort_order` INT,
-  `title` VARCHAR(190) NOT NULL,
-  `japanese` VARCHAR(190),
-  `region` VARCHAR(120),
-  `summary` TEXT,
-  `active` BOOLEAN NOT NULL,
-  UNIQUE (`slug`)
-);
-
-CREATE TABLE `flagcard_facts` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `flagcard_id` BIGINT NOT NULL,
-  `fact` VARCHAR(255) NOT NULL,
-  FOREIGN KEY (`flagcard_id`) REFERENCES `flagcards`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `flagcard_checkins` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `flagcard_id` BIGINT NOT NULL,
-  `name` VARCHAR(120) NOT NULL,
-  `tip` VARCHAR(255),
-  FOREIGN KEY (`flagcard_id`) REFERENCES `flagcards`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `flagcard_recommended_products` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `flagcard_id` BIGINT NOT NULL,
-  `product_id` BIGINT NOT NULL,
-  UNIQUE (`flagcard_id`, `product_id`),
-  FOREIGN KEY (`flagcard_id`) REFERENCES `flagcards`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `flagcard_collections` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `user_id` BIGINT NOT NULL,
-  `created_at` DATETIME NOT NULL,
-  `updated_at` DATETIME,
-  UNIQUE (`user_id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE `flagcard_collection_awards` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `collection_id` BIGINT NOT NULL,
-  `flagcard_id` BIGINT,
-  `order_id` BIGINT,
-  `awarded_at` DATETIME NOT NULL,
-  `source` VARCHAR(40),
-  UNIQUE (`collection_id`, `flagcard_id`),
-  FOREIGN KEY (`collection_id`) REFERENCES `flagcard_collections`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  FOREIGN KEY (`flagcard_id`) REFERENCES `flagcards`(`id`) ON UPDATE CASCADE ON DELETE SET NULL,
-  FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE TABLE `japan_spot_reviews` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `place` VARCHAR(190) NOT NULL,
-  `prefecture` VARCHAR(120) NOT NULL,
-  `user_id` BIGINT,
-  `rating` TINYINT NOT NULL,
-  `comment` TEXT,
-  `media_url` VARCHAR(500),
-  `media_kind` VARCHAR(10),
-  `created_at` DATETIME NOT NULL,
-  CHECK (rating BETWEEN 1 AND 5),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE TABLE `japan_spot_suggestions` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `prefecture` VARCHAR(120) NOT NULL,
-  `user_id` BIGINT,
-  `suggestion` TEXT,
-  `created_at` DATETIME NOT NULL,
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE CASCADE ON DELETE SET NULL
-);
-
-CREATE TABLE `notifications` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `title` VARCHAR(255),
-  `body` TEXT,
-  `type` VARCHAR(60),
-  `action` VARCHAR(120),
-  `reach` INT,
-  `created_at` DATETIME NOT NULL
-);
-
-CREATE TABLE `banners` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `title` VARCHAR(190),
-  `image` VARCHAR(500),
-  `link` VARCHAR(255),
-  `active` BOOLEAN NOT NULL,
-  `sort_order` INT
-);
-
-CREATE TABLE `shop_settings` (
-  `id` TINYINT,
-  `name` VARCHAR(150),
-  `hotline` VARCHAR(40),
-  `email` VARCHAR(150),
-  `address` VARCHAR(255),
-  `ship_fee` BIGINT,
-  `cod` BOOLEAN,
-  `stripe` BOOLEAN,
-  `vnpay` BOOLEAN,
-  `logo_url` VARCHAR(500),
-  PRIMARY KEY (`id`)
-);
-
-CREATE TABLE `flagcard_config` (
-  `id` TINYINT,
-  `active` BOOLEAN,
-  `qualifying_order_min` BIGINT,
-  `required_cards` INT,
-  `reward_percent` INT,
-  `reward_validity_days` INT,
-  PRIMARY KEY (`id`)
-);
-
-CREATE TABLE `integration_settings` (
-  `id` TINYINT,
-  `mongo` BOOLEAN,
-  `cloudinary` BOOLEAN,
-  `ai` BOOLEAN,
-  PRIMARY KEY (`id`)
+CREATE TABLE `ShopSettings` (
+  `SettingID` TINYINT,
+  `ShopName` VARCHAR(150),
+  `Hotline` VARCHAR(40),
+  `Email` VARCHAR(150),
+  `Address` VARCHAR(255),
+  `ShipFee` BIGINT,
+  `Cod` BOOLEAN,
+  `Stripe` BOOLEAN,
+  `Vnpay` BOOLEAN,
+  `LogoUrl` VARCHAR(500),
+  PRIMARY KEY (`SettingID`)
 );
 
 PRAGMA foreign_keys = ON;

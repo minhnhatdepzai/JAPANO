@@ -1,5 +1,7 @@
 // Sức khoẻ hệ thống, cấu hình cửa hàng, seed/reset dữ liệu demo, và báo cáo
 // phân tích (analytics) cho dashboard admin.
+const { scrubUsers } = require('../lib/store');
+
 module.exports = function registerHealthRoutes(api, ctx) {
   const {
     read, write, update, invalidateCache, stateStore, getRecommendationDiagnostics,
@@ -17,20 +19,27 @@ module.exports = function registerHealthRoutes(api, ctx) {
       seeded: state.seeded,
       time: Date.now(),
       port: PORT,
-      database: { type: 'json', connected: true, file: stateStore.filePath },
+      database: stateStore.storage.startsWith('mongodb')
+        ? { type: 'mongodb', model: 'collection-first', connected: mongoStatus.online, database: process.env.MONGODB_DB || 'japano' }
+        : { type: 'json', connected: true, file: stateStore.filePath },
       integrations: { mongo: mongoStatus.online, cloudinary: cloudinaryStatus.online, ai: true, localPreview: false, stripe: stripeEnabled(), vnpay: vnpayEnabled() },
       cloudinary: cloudinaryStatus,
       mongo: mongoStatus,
       vip: VIP_CONFIG,
-      features: ['revenue-ensemble', 'demand-momentum', 'kmeans', 'rfm-churn', 'market-basket', 'hybrid-recommender', 'selective-ssm-sequence', 'lightgcn-user-item', 'autoregressive-next-item', 'adaptive-moe-ranking', 'pairwise-ranking', 'mlstm-style-chat-memory', 'semantic-chat-routing', 'grounded-chat-retrieval', 'behavior-search-learning', 'negative-feedback-learning', 'live-cart-state', 'product-video', 'shared-brand-logo', 'vietnam-34-provinces-3321-wards', 'verified-purchase-reviews', 'semantic-review-moderation', 'review-reactions', 'fashn-vton-1.5', 'flux2-pose-transfer', 'flux2-accessory-refine', 'one-to-all-animation-1.3b-v1', 'resource-guarded-video-generation', 'adaptive-repose-main-subject', 'tryon-quality-gate', 'accessory-quality-gate', 'single-subject-pose-lock', 'pose-accessories', 'product-vision', 'shopping-wellness-goals', 'historical-flagcards', 'flagcard-reward-voucher', 'stripe-test-checkout', 'stripe-card-discount', 'stripe-refunds', 'vnpay-sandbox-checkout', 'vnpay-refunds', 'return-refund-workflow'],
+      features: ['revenue-ensemble', 'demand-momentum', 'kmeans', 'rfm-churn', 'market-basket', 'hybrid-recommender', 'selective-ssm-sequence', 'lightgcn-user-item', 'autoregressive-next-item', 'adaptive-moe-ranking', 'pairwise-ranking', 'mlstm-style-chat-memory', 'semantic-chat-routing', 'grounded-chat-retrieval', 'behavior-search-learning', 'negative-feedback-learning', 'live-cart-state', 'product-video', 'shared-brand-logo', 'vietnam-34-provinces-3321-wards', 'verified-purchase-reviews', 'semantic-review-moderation', 'review-reactions', 'fashn-vton-1.5', 'flux2-pose-transfer', 'flux2-accessory-refine', 'one-to-all-animation-1.3b-v1', 'resource-guarded-video-generation', 'adaptive-repose-main-subject', 'tryon-quality-gate', 'accessory-quality-gate', 'single-subject-pose-lock', 'pose-accessories', 'product-vision', 'shopping-wellness-goals', 'historical-flagcards', 'flagcard-reward-voucher', 'stripe-test-checkout', 'stripe-card-discount', 'stripe-refunds', 'vnpay-sandbox-checkout', 'vnpay-refunds', 'return-refund-workflow', 'per-item-partial-returns', 'carrier-confirmed-delivery', 'customer-confirmed-receipt', 'return-ship-back-tracking', 'published-fulfillment-policy', 'goal-savings-fund', 'goal-completion-voucher', 'community-spot-contribution-reward'],
       stripe: { enabled: stripeEnabled(), mode: stripeEnabled() ? 'test' : 'disabled', currency: STRIPE_CURRENCY },
       vnpay: { enabled: vnpayEnabled(), mode: vnpayEnabled() ? 'test' : 'disabled', currency: 'VND' },
       tryon: { forceRepose: FORCE_REPOSE, gpuBusy: tryonGpuBusy() },
     });
   });
 
-  // toàn bộ state (admin dùng để đồng bộ) — lộ hết đơn hàng/khách hàng nên bắt buộc admin.
-  api.get('/state', requireAdmin, (req, res) => res.json(read()));
+  // toàn bộ state (admin dùng để đồng bộ) — lộ hết đơn hàng/khách hàng nên bắt
+  // buộc admin. Quyền admin vẫn KHÔNG đủ để được xem hash mật khẩu của người
+  // khác: scrubUsers() bóc chúng ra, và lib/store.js giữ lại ở chiều ghi vào.
+  api.get('/state', requireAdmin, (req, res) => {
+    const state = read();
+    res.json({ ...state, users: scrubUsers(state.users) });
+  });
   api.get('/admin/live', requireAdmin, (req, res) => {
     const state = read();
     res.json({
@@ -43,7 +52,7 @@ module.exports = function registerHealthRoutes(api, ctx) {
       carts: state.carts,
       reviews: state.reviews,
       reviewReactions: state.reviewReactions,
-      users: state.users,
+      users: scrubUsers(state.users),
       shop: state.shop,
     });
   });
@@ -111,9 +120,16 @@ module.exports = function registerHealthRoutes(api, ctx) {
     res.end(bytes);
   });
 
-  // Danh mục/banner/voucher/thẻ bài là dữ liệu công khai của shop — ai xem cũng được.
-  const publicCollections = ['categories', 'banners', 'vouchers', 'flagcards'];
+  // Danh mục/banner/thẻ bài là dữ liệu công khai của shop — ai xem cũng được.
+  const publicCollections = ['categories', 'banners', 'flagcards'];
   publicCollections.forEach((c) => api.get('/' + c, (req, res) => res.json(read()[c] || [])));
+  // Voucher thì không: ngoài mã khuyến mãi chung còn có voucher CÁ NHÂN (thưởng
+  // quỹ mục tiêu, thưởng đóng góp địa điểm, đền bù, đủ bộ thẻ địa danh). Chỉ trả
+  // mã chung cho mọi người, mã cá nhân chỉ trả cho đúng chủ sở hữu.
+  api.get('/vouchers', optionalAuth, (req, res) => {
+    const all = read().vouchers || [];
+    res.json(all.filter((voucher) => !voucher.ownerUserId || (req.user?.id && String(voucher.ownerUserId) === String(req.user.id))));
+  });
   // Đơn hàng/giao dịch/khách hàng chứa dữ liệu cá nhân — chỉ admin trở lên xem toàn bộ.
   const adminOnlyCollections = ['payments', 'returnRequests', 'users'];
   adminOnlyCollections.forEach((c) => api.get('/' + c, requireAdmin, (req, res) => res.json(read()[c] || [])));

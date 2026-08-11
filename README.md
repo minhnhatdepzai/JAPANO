@@ -9,7 +9,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)
 
 > [!IMPORTANT]
-Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính mặc định nằm trong file JSON cục bộ.
+> JAPANO hiện là **full-stack demo/research prototype**, chưa phải hệ thống production. Backend và Admin chưa có xác thực/RBAC phía server; Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính mặc định nằm trong file JSON cục bộ.
 
 ## Mục lục
 
@@ -44,7 +44,7 @@ Backend phục vụ đồng thời API và Web Admin:
 - Health: <http://localhost:4100/api/health>
 - AI health: <http://localhost:4100/api/ai/health>
 
-Lần chạy đầu, backend tự tạo catalog và dữ liệu demo nếu chưa có `backend/data/db.json`.
+Khi có `MONGODB_URI`, MongoDB là nguồn dữ liệu chính; lần chạy đầu backend dùng `backend/data/db.json` làm seed rồi tạo `app_state` và các collection theo thực thể trong MongoDB. Cloudinary chỉ giữ media, MongoDB chỉ lưu URL media.
 
 ## Điểm nổi bật
 
@@ -57,6 +57,7 @@ Lần chạy đầu, backend tự tạo catalog và dữ liệu demo nếu chưa
 - Loyalty riêng của JAPANO: VIP theo doanh số tháng và bộ sưu tập 7 Flagcard địa danh Nhật Bản.
 - Review verified-purchase, moderation chống lách từ nhạy cảm, reaction hữu ích/không hữu ích và media tùy chọn.
 - Dữ liệu hành chính Việt Nam gồm 34 tỉnh/thành và 3.321 phường/xã.
+- Core backend, Admin, recommendation và bot fallback chạy được không cần GPU.
 
 ## Kiến trúc hệ thống
 
@@ -65,11 +66,11 @@ flowchart LR
     Mobile["Expo / React Native"] --> API["Express API"]
     Admin["Web Admin"] --> API
 
-    API --> Store["JSON state<br/>db.json"]
+    API --> Store["MongoDB<br/>app_state + collections"]
     API --> Reco["Recommendation + Analytics<br/>Node.js / CPU"]
     API --> Payment["Stripe Test / VNPay Sandbox"]
 
-    Store -. optional sync .-> Cloud["MongoDB + Cloudinary"]
+    API --> Media["Cloudinary<br/>media files"]
     API -. optional .-> Ollama["Ollama<br/>Qwen2.5 / Qwen3-VL"]
     API -. optional .-> TryOn["FASHN + FLUX.2 + YOLO"]
     API -. optional .-> Motion["One-to-All / Wan2.1"]
@@ -126,8 +127,8 @@ view · search · wishlist · cart · try-on · chat · purchase
 ### Backend
 
 - REST API chia theo domain trong [`backend/routes`](backend/routes).
-- JSON store có ghi file nguyên tử và tự migration schema.
-- MongoDB và Cloudinary là tích hợp tùy chọn, không phải dependency bắt buộc.
+- MongoDB là nguồn dữ liệu chính khi có `MONGODB_URI`; `app_state` phục vụ runtime và các collection theo thực thể phục vụ Compass/reporting.
+- Cloudinary giữ file media; MongoDB chỉ lưu URL và metadata media.
 - Giá, voucher, payment promotion và VIP discount được tính lại phía server.
 - Log hành vi nuôi recommendation gồm view, search, wishlist, cart, try-on, chat, goal và purchase.
 - Cache recommendation tách theo state, TTL 60 giây và invalidation khi dữ liệu thay đổi.
@@ -294,6 +295,17 @@ Sau khi chạy:
 - API: <http://localhost:4100/api>
 - API health: <http://localhost:4100/api/health>
 
+Lần đầu backend tự seed dữ liệu demo. Có thể chạy backend riêng bằng:
+
+```bash
+./start-backend.sh
+```
+
+Trên Windows:
+
+```bat
+start-backend.bat
+```
 
 ### 4. Chạy Android
 
@@ -381,7 +393,7 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 | Biến | Mặc định | Mục đích |
 |---|---|---|
 | `PORT` | `4100` | Cổng Backend/Admin |
-| `JAPANO_DATA_FILE` | `backend/data/db.json` | Đổi file JSON source of truth |
+| `JAPANO_DATA_FILE` | `backend/data/db.json` | File seed/fallback khi chưa cấu hình MongoDB |
 | `EXPO_PUBLIC_API_URL` | Tự dò | Base URL của mobile |
 | `EXPO_PUBLIC_API_PORT` | `4100` | Cổng fallback mobile |
 | `JAPANO_API_URL` | `http://127.0.0.1:4100` | Base URL cho smoke test |
@@ -390,8 +402,8 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 
 | Biến | Mục đích |
 |---|---|
-| `MONGODB_URI`, `MONGODB_DB` |
-| `CLOUDINARY_URL` | Upload logo và media review |
+| `MONGODB_URI`, `MONGODB_DB` | Nguồn dữ liệu chính và các collection để xem bằng Compass |
+| `CLOUDINARY_URL` | Lưu media; MongoDB chỉ lưu URL/media metadata |
 
 ### Payment
 
@@ -441,6 +453,12 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 JAPANO_API_URL=http://127.0.0.1:4200 npm run verify
 ```
 
+Seed khi DB kiểm thử đang trống:
+
+```bash
+npm run verify -- --seed
+```
+
 ## API chính
 
 | Method | Endpoint | Chức năng |
@@ -480,7 +498,7 @@ japano/
 │   ├── routes/                 # REST routes theo domain
 │   ├── lib/                    # Commerce, AI, analytics, recommendation
 │   ├── test/                   # node:test suites
-│   ├── data/db.json            
+│   ├── data/db.json            # Seed/fallback khi không cấu hình MongoDB
 │   ├── fashn_service.py        # FASHN + FLUX.2 service
 │   ├── motion_service.py       # One-to-All service
 │   └── catvton_service.py      # Optional CatVTON service
@@ -524,5 +542,33 @@ Kiểm tra cả AI stack:
 npm run verify:ai
 ```
 
-Test suite hiện bao phủ recommendation provenance, cache isolation, next-item transition, causal ranker diagnostics, feedback, bot model trace, analytics, payment/VIP, Flagcard, moderation và dữ liệu hành chính.
+Test suite hiện bao phủ recommendation provenance, cache isolation, next-item transition, causal ranker diagnostics, feedback âm, bot model trace, analytics, payment/VIP, Flagcard, moderation và dữ liệu hành chính.
 
+## Giới hạn hiện tại
+
+- Admin chưa có màn login; các mutation endpoint chưa có server-side authentication/authorization.
+- Mobile login/register hiện lưu local bằng AsyncStorage, chưa có JWT/session/password verification.
+- Một số wrapper mobile cho camera, try-on, goals, Japan community và return vẫn fallback về demo user; cần chuẩn hóa identity trước production.
+- Cập nhật state hiện giữ API đồng bộ để tương thích route hiện có; nếu cần nhiều backend ghi đồng thời, bước tiếp theo là chuyển các mutation sang transaction MongoDB theo từng collection.
+- Stripe chỉ nhận test keys và VNPay dùng sandbox/demo configuration.
+- Notification hiện là record trong shared state, chưa tích hợp FCM/APNs push.
+- AI checkpoints và Python environments không nằm trong repo và không được cài bởi npm.
+- Recommendation SSM/GNN/mLSTM là lightweight inspired implementations; chưa có offline NDCG/Recall benchmark.
+- Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
+- Trước production cần thêm auth/RBAC, rate limiting, request validation, secret management, migrations, audit log, observability và CI/CD.
+
+## Trước khi push lên GitHub
+
+```bash
+npm run check
+git status
+git check-ignore .env.server
+```
+
+Đảm bảo:
+
+- `.env.server`, API keys, model weights, runtime output và customer data không được stage.
+- Chỉ `.env.example` được commit làm mẫu cấu hình.
+- `backend/data/db.json` không chứa dữ liệu người dùng thật.
+- Không commit virtual environments, `node_modules`, APK/build output hoặc video/ảnh runtime.
+- Kiểm tra lại staged files bằng `git diff --cached`.

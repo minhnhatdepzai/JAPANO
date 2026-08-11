@@ -8,7 +8,7 @@ const { findPayment, findReturnRequest, checkoutItemsKey, reusableStripeOrder } 
 const { makeCreateOrderInState, requestedVipProductId } = require('./orders');
 
 function makeStripeHelpers(ctx) {
-  const { read, update, httpError, stripe, stripeEnabled, reconcileFlagRewards, flagcardCollectionView } = ctx;
+  const { read, update, httpError, stripe, stripeEnabled, reconcileFlagRewards, flagcardCollectionView, reconcileGoalRewards, pushNotification, sendPaymentReceipt } = ctx;
   const createOrderInState = makeCreateOrderInState(ctx);
 
   function applyStripeRefundToState(refund) {
@@ -136,6 +136,10 @@ function makeStripeHelpers(ctx) {
       if (!payment || !order) return next;
       const now = Date.now();
       const card = charge?.payment_method_details?.card;
+      // Webhook Stripe, lượt reconcile và lượt xác nhận từ app có thể cùng chạy
+      // qua đây cho MỘT giao dịch — nhớ trạng thái trước khi ghi đè để chỉ gửi
+      // biên nhận đúng một lần.
+      const wasPaid = payment.status === 'paid';
       payment.status = 'paid';
       payment.paymentIntentId = intentId;
       payment.transactionCode = intentId;
@@ -168,10 +172,14 @@ function makeStripeHelpers(ctx) {
         order.history.push({ s: 'paid', at: now, txn: intentId });
       }
       reconcileFlagRewards(next);
-      result = { order, payment };
+      if (reconcileGoalRewards) reconcileGoalRewards(next, now, pushNotification);
+      result = { order, payment, alreadyPaid: wasPaid };
       return next;
     });
     if (!result) throw httpError(404, 'Không tìm thấy đơn hàng gắn với Stripe Checkout Session.');
+    if (!result.alreadyPaid && sendPaymentReceipt) {
+      void sendPaymentReceipt(result.order.userId, { order: result.order, payment: result.payment });
+    }
     return { ...result, collection: flagcardCollectionView(state, result.order.userId) };
   }
 
@@ -207,6 +215,7 @@ function makeStripeHelpers(ctx) {
       const now = Date.now();
       const card = charge?.payment_method_details?.card;
       const billing = charge?.billing_details;
+      const wasPaid = payment.status === 'paid'; // chống gửi biên nhận trùng, xem finalizeStripeCheckout
       payment.status = 'paid';
       payment.intentStatus = String(intent.status);
       payment.paymentIntentId = intent.id;
@@ -238,10 +247,14 @@ function makeStripeHelpers(ctx) {
         order.history.push({ s: 'paid', at: now, txn: intent.id });
       }
       reconcileFlagRewards(next);
-      result = { order, payment };
+      if (reconcileGoalRewards) reconcileGoalRewards(next, now, pushNotification);
+      result = { order, payment, alreadyPaid: wasPaid };
       return next;
     });
     if (!result) throw httpError(404, 'Không tìm thấy giao dịch PaymentIntent để cập nhật.');
+    if (!result.alreadyPaid && sendPaymentReceipt) {
+      void sendPaymentReceipt(result.order.userId, { order: result.order, payment: result.payment });
+    }
     return { ...result, collection: flagcardCollectionView(state, result.order.userId) };
   }
 

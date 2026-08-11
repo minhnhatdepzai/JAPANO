@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn, money } from '../components/ui';
-import { PRODUCTS } from '../lib/catalog';
+import { PRODUCTS, variantPrice } from '../lib/catalog';
 import { useStore } from '../lib/store';
 import { voucherDiscountFor } from '../lib/api';
 import { VoucherField } from '../components/VoucherPicker';
@@ -61,7 +61,7 @@ export default function Cart() {
                 <Text style={{ fontFamily:F.body, fontSize:11.5, color:C.muted, marginTop:2 }}>{it.color} · {it.size}</Text>
                 {stock!==null && <Text style={{ fontFamily:F.bodyM, fontSize:10.5, marginTop:1, marginBottom:6, color:stock<=5?C.danger:C.ok }}>{stock===0?'Hết hàng':`Còn ${stock} sản phẩm`}</Text>}
                 <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginTop:stock!==null?0:6 }}>
-                  <Text style={{ fontFamily:F.bodyX, fontSize:14, color:C.shu }}>{money(p.price*it.qty)}</Text>
+                  <Text style={{ fontFamily:F.bodyX, fontSize:14, color:C.shu }}>{money(variantPrice(p, it.color, it.size)*it.qty)}</Text>
                   <View style={st.qty}>
                     <Pressable onPress={()=>decQty(i)} hitSlop={6}><Ionicons name="remove" size={16} color={C.ink} /></Pressable>
                     <Text style={{ fontFamily:F.bodyB, marginHorizontal:12 }}>{it.qty}</Text>

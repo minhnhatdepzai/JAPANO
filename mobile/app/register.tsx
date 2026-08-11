@@ -26,15 +26,15 @@ export default function Register() {
   const submit=async()=>{
     if(submitting)return;
     if(!name.trim()||!email.trim()||!phone.trim()||!password){
-      showToast('Vui lòng điền đủ thông tin');
+      showToast('Vui lòng điền đủ thông tin','error');
       return;
     }
     if(password.length<8){
-      showToast('Mật khẩu cần ít nhất 8 ký tự');
+      showToast('Mật khẩu cần ít nhất 8 ký tự','error');
       return;
     }
     if(strength==='weak'){
-      showToast('Mật khẩu quá yếu — hãy kết hợp chữ hoa, chữ thường, số hoặc ký tự đặc biệt.');
+      showToast('Mật khẩu quá yếu — hãy kết hợp chữ hoa, chữ thường, số hoặc ký tự đặc biệt.','error');
       return;
     }
     setSubmitting(true);
@@ -42,7 +42,7 @@ export default function Register() {
       const target=await register({name:name.trim(),email:email.trim(),password});
       router.replace(target||'/daily');
     }catch(error:any){
-      showToast(error?.message||'Không đăng ký được, vui lòng thử lại.');
+      showToast(error?.message||'Không đăng ký được, vui lòng thử lại.','error');
     }finally{
       setSubmitting(false);
     }

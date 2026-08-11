@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Switch, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header } from '../components/ui';
 import { C, F } from '../theme/tokens';
 import { useBotChat } from '../lib/botchat';
+import { useToast } from '../lib/toast';
+import { syncPushToken } from '../lib/push';
+import { sendTestNotification } from '../lib/localNotify';
 
 const Row = ({ icon, label, description, right }:{icon:string;label:string;description?:string;right:React.ReactNode}) => (
   <View style={st.row}>
@@ -18,9 +21,38 @@ const Row = ({ icon, label, description, right }:{icon:string;label:string;descr
 const Arrow = ({ t }:{t?:string}) => (<Text style={{ fontFamily:F.body, fontSize:12, color:C.muted }}>{t? t+' ›':'›'}</Text>);
 export default function Settings() {
   const bot = useBotChat();
+  const { toast } = useToast();
   const [dark, setDark] = useState(false);
   const [ai, setAi] = useState(true);
   const [noti, setNoti] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [notiHint, setNotiHint] = useState('Đang kiểm tra trạng thái…');
+
+  // Nói thật trạng thái thay vì để công tắc trang trí: nếu push từ xa chưa bật
+  // được (thiếu EAS projectId) thì app vẫn hiện thông báo qua đường cục bộ, và
+  // người dùng cần biết điều đó thay vì tưởng là hỏng.
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const status = await syncPushToken();
+      if (!live) return;
+      if (status.state === 'ok') setNotiHint('Đã bật đầy đủ — nhận được cả thông báo khi không mở ứng dụng.');
+      else if (status.state === 'denied') setNotiHint('Bạn chưa cho phép JAPANO gửi thông báo — hãy bật trong Cài đặt của điện thoại.');
+      else setNotiHint('Thông báo hoạt động khi ứng dụng đang mở. Để nhận cả lúc đã đóng ứng dụng, cần bật push từ xa.');
+    })();
+    return () => { live = false; };
+  }, []);
+
+  const onTest = async () => {
+    setTesting(true);
+    const ok = await sendTestNotification();
+    setTesting(false);
+    toast({
+      message: ok ? 'Đã gửi — kiểm tra khay thông báo của bạn ✓' : 'Chưa gửi được: hãy cho phép JAPANO gửi thông báo.',
+      kind: ok ? 'success' : 'error',
+    });
+  };
+
   return (
     <Screen>
       <Header title="Cài đặt hệ thống" />
@@ -37,7 +69,21 @@ export default function Settings() {
           description={bot.enabled ? 'Hiện nút tròn có thể kéo trên màn hình' : 'Đang ẩn — bật lại tại đây'}
           right={<Switch value={bot.enabled} onValueChange={bot.setEnabled} trackColor={{ false:C.hair, true:C.shu }} />}
         />
-        <Row icon="notifications-outline" label="Thông báo đẩy" right={<Switch value={noti} onValueChange={setNoti} trackColor={{ true:C.shu }} />} />
+        <Text style={st.grp}>THÔNG BÁO</Text>
+        <Row
+          icon="notifications-outline"
+          label="Thông báo trên điện thoại"
+          description={notiHint}
+          right={<Switch value={noti} onValueChange={setNoti} trackColor={{ false:C.hair, true:C.shu }} />}
+        />
+        <Pressable style={st.row} onPress={onTest} disabled={testing}>
+          <View style={st.ic}><Ionicons name="send-outline" size={17} color={C.shu} /></View>
+          <View style={{ flex:1 }}>
+            <Text style={st.lbl}>Gửi thông báo thử</Text>
+            <Text style={st.description}>Kiểm tra thông báo có hiện ở khay thông báo máy bạn không</Text>
+          </View>
+          <Text style={{ fontFamily:F.bodyB, fontSize:12, color:C.shu }}>{testing ? 'Đang gửi…' : 'Gửi thử'}</Text>
+        </Pressable>
         <Row icon="trash-outline" label="Xoá dữ liệu đã xem" right={<Arrow />} />
         <Text style={st.grp}>KHÁC</Text>
         <Row icon="information-circle-outline" label="Về JAPANO" right={<Arrow />} />

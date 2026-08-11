@@ -1,10 +1,22 @@
 /* ================= ACTION NAMESPACE ================= */
 window.A={
   go, toggleApi(){toast('Đang kết nối lại backend…','info');bootstrap();},
+  /* chuông sự kiện trực tiếp */
+  openFeedItem(route,refId){
+    if(!route)return;
+    go(route);
+    // Chờ view render xong rồi mới mở đúng bản ghi được nhắc tới.
+    setTimeout(()=>{
+      if(route==='orders')A.openOrder(refId);
+      else if(route==='returns')A.openReturn(refId);
+      else if(route==='payments')A.openPayment(refId);
+    },420);
+  },
+  clearFeed(){ADMIN_FEED=[];ADMIN_UNREAD=0;saveAdminFeed();refreshChrome();toast('Đã xoá danh sách hoạt động','info');},
   openSettings(){go('settings');},
   async seed(){try{const r=await fetch(API+'/seed',{method:'POST'});if(!r.ok)throw 0;DB=await r.json();NET_OK=true;}catch(e){seedDemo();NET_OK=false;}refreshChrome();renderView();toast('Đã nạp dữ liệu demo ✓');},
   rev(s){state.revSpan=s;const c=$('#revChart'),sum=$('#revSummary');if(c)c.innerHTML=bars(revBy(s),s);if(sum)sum.innerHTML=revenueSummaryHTML(s);document.querySelectorAll('#revSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));},
-  async dataScope(scope){state.dataScope=scope==='all'?'all':'live';ANALYTICS_STATUS='idle';renderView();await refreshAnalytics(true);},
+  async dataScope(scope){state.dataScope=scope==='all'?'all':'live';ANALYTICS_STATUS='idle';renderView();await refreshAnalytics(true);toast(state.dataScope==='all'?'Đang xem cả dữ liệu mẫu':'Chỉ xem dữ liệu phát sinh thật','info');},
   revPoint(span,index){const row=revBy(span)[index]||{},detail=revenuePeriodOrders(span,index),orders=detail.orders,total=orders.reduce((sum,o)=>sum+orderAmount(o),0);openModal(`<div class="mh"><div><h3>Chi tiết doanh thu · ${esc(row.label||'Kỳ đã chọn')}</h3><div class="faint" style="font-size:11px">${detail.start.toLocaleDateString('vi-VN')} – ${new Date(+detail.end-1).toLocaleDateString('vi-VN')} · ${state.dataScope==='live'?'dữ liệu thực':'gồm dữ liệu mẫu'}</div></div><div class="x" onclick="closeModal()">✕</div></div><div class="mb"><div class="metriccards"><div class="metriccard"><div class="ml">Doanh thu</div><div class="mv">${money(total)}</div></div><div class="metriccard"><div class="ml">Số đơn</div><div class="mv">${orders.length}</div></div><div class="metriccard"><div class="ml">Trung bình/đơn</div><div class="mv">${money(orders.length?total/orders.length:0)}</div></div></div><div class="tablewrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Thời gian</th><th class="right">Số tiền</th></tr></thead><tbody>${orders.length?orders.sort((a,b)=>orderTime(b)-orderTime(a)).map(o=>`<tr onclick="closeModal();A.openOrder('${o.id}')" style="cursor:pointer"><td class="bold">#${esc(o.code)}</td><td>${esc(o.customer?.name||o.userId||'Khách')}</td><td>${fmtDate(orderTime(o))}</td><td class="right bold">${money(orderAmount(o))}</td></tr>`).join(''):emptyTR(4,'Kỳ này chưa có đơn tạo doanh thu.')}</tbody></table></div></div>`,`lg`);},
   revenueSummary(){const windowData=revenueWindow(state.revSpan),orders=windowData.orders,total=orders.reduce((sum,o)=>sum+orderAmount(o),0),spanName={day:'7 ngày',week:'8 tuần',month:'12 tháng',year:'5 năm'}[state.revSpan]||'khoảng đang xem';openModal(`<div class="mh"><h3>Tổng hợp doanh thu · ${spanName}</h3><div class="x" onclick="closeModal()">✕</div></div><div class="mb"><div class="metriccards"><div class="metriccard"><div class="ml">Tổng doanh thu</div><div class="mv">${money(total)}</div></div><div class="metriccard"><div class="ml">Đơn có doanh thu</div><div class="mv">${orders.length}</div></div><div class="metriccard"><div class="ml">Giá trị trung bình</div><div class="mv">${money(orders.length?total/orders.length:0)}</div></div></div><p class="faint" style="margin-top:14px;font-size:11.5px">Khoảng biểu đồ: ${windowData.start.toLocaleDateString('vi-VN')} – ${new Date(+windowData.end-1).toLocaleDateString('vi-VN')}. Chỉ tính đơn đã thanh toán hoặc hoàn tất; loại đơn huỷ, trả hàng, thất bại và hoàn tiền. Phạm vi: ${state.dataScope==='live'?'dữ liệu phát sinh thực':'toàn bộ, gồm dữ liệu mẫu'}.</p><div class="tablewrap" style="margin-top:14px"><table class="tbl"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Thời gian</th><th class="right">Số tiền</th></tr></thead><tbody>${orders.length?[...orders].sort((a,b)=>orderTime(b)-orderTime(a)).map(o=>`<tr onclick="closeModal();A.openOrder('${o.id}')" style="cursor:pointer"><td class="bold">#${esc(o.code)}</td><td>${esc(o.customer?.name||o.userId||'Khách')}</td><td>${fmtDate(orderTime(o))}</td><td class="right bold">${money(orderAmount(o))}</td></tr>`).join(''):emptyTR(4,'Khoảng này chưa có đơn tạo doanh thu.')}</tbody></table></div></div>`,`lg`);},
   orderDrill(status){let orders=dashboardOrders();if(status==='paid')orders=orders.filter(revenueOrder);else if(status==='shipping')orders=orders.filter(o=>['shipping','confirmed'].includes(o.status));else if(status!=='all')orders=orders.filter(o=>o.status===status);openModal(`<div class="mh"><div><h3>Danh sách đơn · ${status==='all'?'Tất cả':status==='paid'?'Có doanh thu':ORD[status]?.t||status}</h3><div class="faint" style="font-size:11px">${orders.length} đơn · nhấn một dòng để mở chi tiết</div></div><div class="x" onclick="closeModal()">✕</div></div><div class="tablewrap"><table class="tbl"><thead><tr><th>Mã</th><th>Khách</th><th>Ngày</th><th>Trạng thái</th><th class="right">Tổng</th></tr></thead><tbody>${orders.length?orders.sort((a,b)=>orderTime(b)-orderTime(a)).map(o=>`<tr onclick="closeModal();A.openOrder('${o.id}')" style="cursor:pointer"><td class="bold">#${esc(o.code)}</td><td>${esc(o.customer?.name||'Khách')}</td><td>${fmtDate(orderTime(o))}</td><td>${badge(ORD,o.status)}</td><td class="right bold">${money(orderAmount(o))}</td></tr>`).join(''):emptyTR(5,'Không có đơn phù hợp.')}</tbody></table></div>`,`lg`);},
@@ -59,8 +71,8 @@ window.A={
   async toggleHide(id){const p=DB.products.find(x=>x.id===id);if(!p)return;p.status=p.status==='hidden'?'published':'hidden';try{const result=await requestJSON('/products/'+encodeURIComponent(id),30000,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});Object.assign(p,result.product);localStorage.setItem(LS,JSON.stringify(DB));renderView();toast(p.status==='hidden'?'Đã ẩn sản phẩm':'Đã hiển thị sản phẩm ✓');}catch(e){toast('Không cập nhật được sản phẩm','err');}},
   addVar(){readEditorForm();editing.variants.push({colorName:'Màu mới',colorHex:'#A33A2F',size:'M',sku:'',stock:0});openEditor();},
   rmVar(i){readEditorForm();editing.variants.splice(i,1);if(!editing.variants.length)editing.variants.push({colorName:'Sumi',colorHex:'#1A1410',size:'M',sku:'',stock:0});openEditor();},
-  addImg(){readEditorForm();const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=e=>{const fs=[...e.target.files];let left=fs.length;if(!left)return;fs.forEach(f=>{const r=new FileReader();r.onload=()=>{editing.images.push(r.result);if(--left===0)openEditor();};r.readAsDataURL(f);});};inp.click();},
-  addVideo(){readEditorForm();const inp=document.createElement('input');inp.type='file';inp.accept='video/mp4,video/webm,video/quicktime';inp.multiple=true;inp.onchange=e=>{const files=[...e.target.files];if(!files.length)return;const tooLarge=files.find(f=>f.size>25*1024*1024);if(tooLarge){toast('Đoạn phim '+tooLarge.name+' vượt quá 25 MB','err');return;}let left=files.length;files.forEach(file=>{const reader=new FileReader();reader.onload=()=>{editing.videos||=[];editing.videos.push({url:reader.result,name:file.name,type:file.type||'video/mp4'});if(--left===0)openEditor();};reader.readAsDataURL(file);});};inp.click();},
+  addImg(){readEditorForm();const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=e=>{const fs=[...e.target.files];let left=fs.length;if(!left)return;const total=left;fs.forEach(f=>{const r=new FileReader();r.onload=()=>{editing.images.push(r.result);if(--left===0){openEditor();toast('Đã thêm '+total+' ảnh · nhớ bấm Lưu để đồng bộ sang ứng dụng','info');}};r.readAsDataURL(f);});};inp.click();},
+  addVideo(){readEditorForm();const inp=document.createElement('input');inp.type='file';inp.accept='video/mp4,video/webm,video/quicktime';inp.multiple=true;inp.onchange=e=>{const files=[...e.target.files];if(!files.length)return;const tooLarge=files.find(f=>f.size>25*1024*1024);if(tooLarge){toast('Đoạn phim '+tooLarge.name+' vượt quá 25 MB','err');return;}let left=files.length;const totalVideos=left;files.forEach(file=>{const reader=new FileReader();reader.onload=()=>{editing.videos||=[];editing.videos.push({url:reader.result,name:file.name,type:file.type||'video/mp4'});if(--left===0){openEditor();toast('Đã thêm '+totalVideos+' đoạn phim · nhớ bấm Lưu','info');}};reader.readAsDataURL(file);});};inp.click();},
   sampleImg(){readEditorForm();editing.images.push(sampleImgURL(editing.variants[0]?.colorHex||'#8A2F26',catKanji(editing.cat)));openEditor();},
   rmImg(i){readEditorForm();editing.images.splice(i,1);openEditor();},
   rmVideo(i){readEditorForm();editing.videos.splice(i,1);openEditor();},
@@ -96,6 +108,54 @@ window.A={
   /* Khám phá Nhật Bản */
   delJapanReview(id){confirmModal('Xoá đánh giá địa điểm?','Đánh giá này sẽ bị gỡ khỏi mục Khám phá Nhật Bản trong app.',async()=>{try{const r=await fetch(API+'/japan-spots/reviews/'+encodeURIComponent(id),{method:'DELETE'});if(!r.ok)throw 0;await loadJapan();toast('Đã xoá đánh giá ✓');}catch(e){toast('Không xoá được','err');}},true);},
   delJapanSuggestion(id){confirmModal('Xoá gợi ý?','Gợi ý địa điểm này sẽ bị gỡ khỏi hệ thống.',async()=>{try{const r=await fetch(API+'/japan-spots/suggestions/'+encodeURIComponent(id),{method:'DELETE'});if(!r.ok)throw 0;await loadJapan();toast('Đã xoá gợi ý ✓');}catch(e){toast('Không xoá được','err');}},true);},
+  // Duyệt đóng góp địa điểm = trả thưởng thật cho khách, nên mở form cho phép
+  // sửa mức thưởng trước khi phát (mặc định lấy cấu hình từ máy chủ).
+  approveSpot(id){
+    const cfg=spotRewardConfig();
+    openModal(`<div class="mh"><h3>Duyệt đóng góp &amp; trả thưởng</h3><div class="x" onclick="closeModal()">✕</div></div>
+    <div class="mb">
+      <div class="banner warn" style="margin-bottom:12px"><div class="bi">🎁</div><div>Khách sẽ nhận voucher cá nhân ngay lập tức kèm thông báo trong ứng dụng. Một gợi ý chỉ được thưởng một lần.</div></div>
+      <div class="row2">
+        <div class="field"><label>Mức giảm (₫)</label><input id="sp-amount" class="inp mono" type="number" min="1000" value="${cfg.amount}"></div>
+        <div class="field"><label>Đơn tối thiểu (₫)</label><input id="sp-min" class="inp mono" type="number" min="0" value="${cfg.minOrder}"></div>
+      </div>
+      <div class="field"><label>Hạn dùng (ngày)</label><input id="sp-days" class="inp mono" type="number" min="1" value="${cfg.validityDays}"></div>
+      <div class="field"><label>Ghi chú nội bộ (không bắt buộc)</label><input id="sp-note" class="inp" placeholder="VD: đã kiểm chứng trên bản đồ"></div>
+    </div>
+    <div class="mf"><button class="btn" onclick="closeModal()">Huỷ</button><button class="btn p" onclick="A.confirmApproveSpot('${esc(id)}')">Duyệt &amp; gửi thưởng</button></div>`);
+  },
+  async confirmApproveSpot(id){
+    const amount=Math.max(1000,+($('#sp-amount')?.value||0));
+    const minOrder=Math.max(0,+($('#sp-min')?.value||0));
+    const validDays=Math.max(1,+($('#sp-days')?.value||60));
+    const note=($('#sp-note')?.value||'').trim();
+    try{
+      toast('Đang duyệt và tạo voucher…','info');
+      const resp=await fetch(API+'/japan-spots/suggestions/'+encodeURIComponent(id)+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,minOrder,validDays,note})});
+      const data=await resp.json();
+      if(!resp.ok)throw new Error(data.message||'Không duyệt được gợi ý');
+      closeModal();
+      await loadJapan();
+      try{DB=await requestJSON('/state',8000);refreshChrome();}catch(_){}
+      toast('Đã duyệt · gửi khách mã '+data.voucher.code+' giảm '+money(data.voucher.value)+' ✓');
+    }catch(e){toast(e.message||'Không duyệt được gợi ý','err');}
+  },
+  rejectSpot(id){
+    openModal(`<div class="mh"><h3>Từ chối đóng góp?</h3><div class="x" onclick="closeModal()">✕</div></div>
+    <div class="mb"><p class="muted" style="font-size:13px">Khách sẽ nhận thông báo kèm lý do bên dưới để biết cần bổ sung gì. Không có voucher nào được phát.</p>
+      <div class="field" style="margin-top:12px"><label>Lý do gửi cho khách</label><input id="sp-reject-note" class="inp" placeholder="VD: chưa rõ địa điểm nằm ở đâu, bạn bổ sung giúp nhé"></div></div>
+    <div class="mf"><button class="btn" onclick="closeModal()">Huỷ</button><button class="btn d" onclick="A.confirmRejectSpot('${esc(id)}')">Từ chối</button></div>`);
+  },
+  async confirmRejectSpot(id){
+    const note=($('#sp-reject-note')?.value||'').trim();
+    try{
+      const resp=await fetch(API+'/japan-spots/suggestions/'+encodeURIComponent(id)+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note})});
+      const data=await resp.json();
+      if(!resp.ok)throw new Error(data.message||'Không cập nhật được');
+      closeModal();await loadJapan();
+      toast('Đã từ chối và báo lại cho khách','info');
+    }catch(e){toast(e.message||'Không cập nhật được','err');}
+  },
   /* Kiểm duyệt AI */
   async testMod(){const t=(document.getElementById('mod-test')||{}).value||'';const box=document.getElementById('mod-result');if(!t.trim()){box.innerHTML='<div class="faint" style="font-size:12px">Nhập nội dung để kiểm tra.</div>';return;}box.innerHTML='<div class="faint" style="font-size:12px">Đang kiểm tra…</div>';try{const d=await requestJSON('/moderation/test',12000,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});const tone=d.decision==='rejected'?'b-red':d.decision==='pending'?'b-amber':'b-green';const label=d.decision==='rejected'?'❌ BỊ CHẶN':d.decision==='pending'?'⏳ CHỜ DUYỆT':'✅ HỢP LỆ';box.innerHTML=`<div class="banner ${d.decision==='rejected'?'err':d.decision==='approved'?'ok':'warn'}"><div class="bi">${d.decision==='rejected'?'🛑':d.decision==='approved'?'✅':'⏳'}</div><div><b>${label}</b> · điểm ${Math.round((d.score||0)*100)}% · engine: ${esc(d.engine||'')}<div style="font-size:11.5px;margin-top:4px">${esc(d.reason||'')}</div>${(d.categories||[]).length?`<div style="margin-top:6px">${d.categories.map(c=>`<span class="bdg ${tone}" style="margin:0 4px 4px 0;display:inline-block">${esc(c)}</span>`).join('')}</div>`:''}${d.normalized?`<div class="faint" style="font-size:10.5px;margin-top:4px">Chuẩn hoá: <code>${esc(d.normalized)}</code></div>`:''}</div></div>`;}catch(e){box.innerHTML='<div class="faint" style="font-size:12px;color:var(--red,#c00)">Không kiểm tra được (backend/model chưa sẵn sàng).</div>';}},
   async modSet(id,status){try{const r=await fetch(API+'/reviews/'+encodeURIComponent(id)+'/moderation',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});if(!r.ok)throw 0;await loadModeration();try{DB=await requestJSON('/state',6000);}catch(_){}refreshChrome();toast(status==='approved'?'Đã duyệt bình luận ✓':'Đã chặn bình luận ✓');}catch(e){toast('Không cập nhật được','err');}},
@@ -126,7 +186,7 @@ window.A={
     <div class="row2"><div class="field"><label>Hạn dùng</label><input id="v-exp" class="inp" type="date"></div><div class="field"><label>Giới hạn lượt</label><input id="v-lim" class="inp mono" type="number" placeholder="500"></div></div>
     </div><div class="mf"><button class="btn" onclick="closeModal()">Huỷ</button><button class="btn p" onclick="A.saveVoucher()">Tạo</button></div>`);},
   saveVoucher(){const code=$('#v-code').value.trim().toUpperCase();if(!code){toast('Nhập mã voucher','err');return;}DB.vouchers.push({code,type:$('#v-type').value,value:+$('#v-val').value||0,min:+$('#v-min').value||0,expiry:$('#v-exp').value||'—',limit:+$('#v-lim').value||100,used:0,active:true});save();closeModal();renderView();toast('Đã tạo voucher '+code+' ✓');},
-  toggleVoucher(code){const v=DB.vouchers.find(x=>x.code===code);v.active=!v.active;save();renderView();},
+  toggleVoucher(code){const v=DB.vouchers.find(x=>x.code===code);if(!v)return;v.active=!v.active;save();renderView();toast(v.active?'Đã bật lại voucher '+code+' ✓':'Đã tạm khoá voucher '+code,'info');},
   delVoucher(code){confirmModal('Xoá voucher?','Mã '+code+' sẽ bị xoá.',()=>{DB.vouchers=DB.vouchers.filter(x=>x.code!==code);save();renderView();toast('Đã xoá voucher','info');},true);},
   /* flagcards */
   toggleFlagcardProgram(){DB.flagcardConfig.active=!DB.flagcardConfig.active;save();renderView();toast(DB.flagcardConfig.active?'Đã bật chương trình thẻ địa danh ✓':'Đã tạm dừng chương trình thẻ địa danh','info');},
@@ -155,12 +215,12 @@ window.A={
   /* banners */
   addBanner(){openModal(`<div class="mh"><h3>Thêm ảnh quảng bá</h3><div class="x" onclick="closeModal()">✕</div></div><div class="mb"><div class="field"><label>Tiêu đề</label><input id="bn-title" class="inp" placeholder="Bộ sưu tập mới"></div><div class="field"><label>Liên kết</label><input id="bn-link" class="inp mono" placeholder="/category/haori"></div><div class="field"><label>Màu nền</label><div class="chips">${['#8A2F26','#243244','#6B7255','#B08D3C','#6D28D9'].map(c=>`<div class="sw" onclick="A._bnc='${c}';document.querySelectorAll('#bnc .sw').forEach(x=>x.style.outline='');this.style.outline='2px solid #A33A2F'" style="width:30px;height:30px;border-radius:6px;background:${c};cursor:pointer"></div>`).join('')}</div><div id="bnc"></div></div></div><div class="mf"><button class="btn" onclick="closeModal()">Huỷ</button><button class="btn p" onclick="A.saveBanner()">Thêm</button></div>`);A._bnc='#8A2F26';},
   saveBanner(){const t=$('#bn-title').value.trim();if(!t){toast('Nhập tiêu đề','err');return;}DB.banners.push({id:'b'+Date.now(),title:t,img:A._bnc||'#8A2F26',link:$('#bn-link').value||'/',active:true,order:DB.banners.length+1});save();closeModal();renderView();toast('Đã thêm ảnh quảng bá ✓');},
-  toggleBanner(id){const b=DB.banners.find(x=>x.id===id);b.active=!b.active;save();renderView();},
+  toggleBanner(id){const b=DB.banners.find(x=>x.id===id);if(!b)return;b.active=!b.active;save();renderView();toast(b.active?'Đã hiển thị ảnh quảng bá trên ứng dụng ✓':'Đã tắt ảnh quảng bá','info');},
   delBanner(id){DB.banners=DB.banners.filter(x=>x.id!==id);save();renderView();toast('Đã xoá ảnh quảng bá','info');},
   /* settings */
   async saveShop(){const patch={name:$('#set-name').value,hotline:$('#set-hotline').value,email:$('#set-email').value,address:$('#set-addr').value};try{await persistShop(patch);toast('Đã lưu thông tin cửa hàng ✓');}catch(e){toast('Không lưu được thông tin cửa hàng','err');}},
   async setShip(v){try{await persistShop({shipFee:+v||0});toast('Đã cập nhật phí vận chuyển');}catch(e){toast('Không cập nhật được phí vận chuyển','err');}},
-  async toggleShop(k){const value=!DB.shop[k];try{await persistShop({[k]:value});renderView();}catch(e){toast('Không cập nhật được cấu hình','err');}},
+  async toggleShop(k){const value=!DB.shop[k];const label={cod:'Thanh toán khi nhận hàng (COD)',stripe:'Thanh toán Stripe',vnpay:'Thanh toán VNPay'}[k]||k;try{await persistShop({[k]:value});renderView();toast(value?'Đã bật '+label+' ✓':'Đã tắt '+label,'info');}catch(e){toast('Không cập nhật được cấu hình','err');}},
   uploadLogo(){const inp=document.createElement('input');inp.type='file';inp.accept='image/png,image/jpeg,image/webp,image/svg+xml';inp.onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>3*1024*1024){toast('Logo vượt quá 3 MB','err');return;}const reader=new FileReader();reader.onload=async()=>{try{await persistShop({logo:String(reader.result)});renderView();toast('Đã đổi logo · ứng dụng sẽ tự cập nhật ✓');}catch(err){toast('Không tải được logo','err');}};reader.readAsDataURL(file);};inp.click();},
   async removeLogo(){try{await persistShop({logo:null});renderView();toast('Đã gỡ logo');}catch(e){toast('Không gỡ được logo','err');}},
   async testInt(k){const started=performance.now();await refreshHealth(false);const statuses={database:HEALTH.database,cloud:HEALTH.cloudinary,ai:anyStatus(HEALTH.gateway,HEALTH.catvton),ollama:HEALTH.ollama,pillow:HEALTH.pillow,stripe:HEALTH.stripe,vnpay:HEALTH.vnpay};const ok=statuses[k]===true;if(state.route==='settings')renderView();toast(ok?`Kết nối ${k.toUpperCase()} OK · ${Math.max(1,Math.round(performance.now()-started))}ms ✓`:`${k.toUpperCase()} chưa sẵn sàng` ,ok?'info':'err');},

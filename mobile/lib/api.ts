@@ -70,6 +70,28 @@ export type ProductAiDescription = {
   engine: string;
 };
 
+// Quỹ tích luỹ của một mục tiêu mua sắm. Đây là SỔ THEO DÕI: JAPANO không giữ
+// tiền của khách, mỗi khoản chỉ là một dòng ghi nhận tiến độ tiết kiệm.
+export type GoalDeposit = { id:string; amount:number; note?:string; at:number };
+export type GoalFund = {
+  target:number; saved:number; remaining:number; percent:number;
+  deposits:GoalDeposit[];
+  status:'saving'|'completed'|'achieved';
+  rewardPercent:number;
+  completedAt:number|null;
+  rewardVoucherCode:string|null;
+  achievedOrderId:string|null;
+  achievedOrderCode:string|null;
+  achievedAt:number|null;
+};
+export type GoalFundConfig = { rewardPercent:number; rewardValidityDays:number; maxDepositPerEntry:number; isLedgerOnly:boolean };
+export type ApiGoal = {
+  id:string; userId:string; productId:string;
+  product:{ slug:string; name:string; price:number; image?:string };
+  input:Record<string,number|undefined>;
+  plan:GoalPlan; fund:GoalFund|null; createdAt:number; updatedAt:number;
+};
+
 export type GoalPlan = {
   saving: {
     productId: string; productName: string; targetPrice: number; currentSavings: number;
@@ -150,20 +172,14 @@ function expoDevHost() {
   return /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host === 'localhost' ? host : '';
 }
 
-function webHost() {
-  const location = (globalThis as any)?.location;
-  return Platform.OS === 'web' && location?.hostname ? String(location.hostname) : '';
-}
-
 export function apiBaseCandidates() {
   const env = trim(process.env.EXPO_PUBLIC_API_URL);
   const port = trim(process.env.EXPO_PUBLIC_API_PORT) || '4100';
   const dev = expoDevHost();
-  const browser = webHost();
   const list = [
     env,
     dev && `http://${dev}:${port}`,
-    browser && `http://${browser}:${port}`,
+    // Máy ảo Android ánh xạ máy chủ qua 10.0.2.2; máy thật dùng IP LAN ở `dev`.
     Platform.OS === 'android' ? `http://10.0.2.2:${port}` : `http://localhost:${port}`,
     `http://127.0.0.1:${port}`,
   ].filter(Boolean) as string[];
@@ -243,8 +259,17 @@ export function apiLogin(input: { email: string; password: string }) {
 export function apiMe() {
   return requestJson<{ ok: boolean; user: ApiAuthUser }>('/api/auth/me', { timeoutMs: 10000 });
 }
+// Ứng dụng chỉ chuyển tiếp token của Google; backend mới là nơi kiểm chữ ký,
+// audience và email_verified (xem backend/lib/googleAuth.js).
+export function apiGoogleLogin(tokens: { idToken?: string; accessToken?: string }) {
+  return jsonPost<ApiAuthResponse & { isNew?: boolean }>('/api/auth/google', tokens, 15000);
+}
+// Hỏi máy chủ có bật đăng nhập Google chưa, để không hiện nút dẫn tới ngõ cụt.
+export function apiAuthProviders() {
+  return requestJson<{ ok: boolean; password: boolean; google: boolean }>('/api/auth/providers', { timeoutMs: 8000 });
+}
 export function apiForgotPassword(email: string) {
-  return jsonPost<{ ok: boolean; message: string; sandboxPreviewUrl?: string }>('/api/auth/forgot-password', { email }, 15000);
+  return jsonPost<{ ok: boolean; message: string; sandboxPreviewUrl?: string; expiresInSeconds?: number; resendAfterSeconds?: number }>('/api/auth/forgot-password', { email }, 15000);
 }
 export function apiResetPassword(input: { email: string; code: string; newPassword: string }) {
   return jsonPost<{ ok: boolean; message: string }>('/api/auth/reset-password', input, 15000);
@@ -423,12 +448,21 @@ export async function getProductAiDescription(slug:string):Promise<ProductAiDesc
   return requestJson(`/api/products/${encodeURIComponent(slug)}/ai-description`,{timeoutMs:135000});
 }
 
-export async function createGoalPlan(payload:Record<string,unknown>):Promise<{ok:boolean;goal:{id:string;productId:string;plan:GoalPlan}}>{
-  return jsonPost('/api/goals/plan',{userId:USER_ID,...payload},110000);
+// userId lấy từ phiên đăng nhập ở backend, không tin tham số client gửi lên.
+export async function createGoalPlan(payload:Record<string,unknown>):Promise<{ok:boolean;goal:ApiGoal;fundConfig:GoalFundConfig}>{
+  return jsonPost('/api/goals/plan',payload,110000);
 }
 
-export async function getGoals(userId=USER_ID){
+export async function getGoals(userId:string):Promise<{ok:boolean;goals:ApiGoal[];fundConfig:GoalFundConfig}>{
   return requestJson(`/api/goals/${encodeURIComponent(userId)}`,{timeoutMs:8000});
+}
+
+export function depositToGoal(goalId:string,payload:{amount:number;note?:string}):Promise<{ok:boolean;goal:ApiGoal;justCompleted:boolean;rewardVoucher:ApiVoucher|null}>{
+  return jsonPost(`/api/goals/${encodeURIComponent(goalId)}/deposits`,payload,12000);
+}
+
+export function removeGoalDeposit(goalId:string,depositId:string):Promise<{ok:boolean;goal:ApiGoal}>{
+  return requestJson(`/api/goals/${encodeURIComponent(goalId)}/deposits/${encodeURIComponent(depositId)}`,{method:'DELETE',timeoutMs:12000});
 }
 
 export type ReviewMedia = { url:string; kind:'video'|'audio'; publicId?:string } | null;
@@ -441,13 +475,17 @@ export async function postJapanSpotReview(payload:{place:string;prefecture:strin
   const data:any=await jsonPost('/api/japan-spots/reviews',{userId:USER_ID,...payload},90000);
   return data.review;
 }
-export type JapanSpotSuggestion = { id:string; prefecture:string; userName:string; suggestion:string; createdAt:number };
-export async function getJapanSpotSuggestions(prefecture:string):Promise<JapanSpotSuggestion[]>{
-  const data:any=await requestJson(`/api/japan-spots/suggestions?prefecture=${encodeURIComponent(prefecture)}`,{timeoutMs:8000});
-  return data?.suggestions||[];
+// Đóng góp địa điểm chụp ảnh mới: được quản trị viên duyệt thì nhận voucher
+// giảm tiền — mức thưởng lấy từ backend để app không hiển thị con số tự chế.
+export type SpotRewardConfig = { amount:number; minOrder:number; validityDays:number; label:string };
+export type SpotSuggestionReward = { status:'pending'|'approved'|'rejected'; voucherCode?:string; amount?:number; minOrder?:number; expiry?:string; note?:string };
+export type JapanSpotSuggestion = { id:string; prefecture:string; userName:string; suggestion:string; createdAt:number; mine?:boolean; reward?:SpotSuggestionReward|null };
+export async function getJapanSpotSuggestions(prefecture:string,userId=''):Promise<{suggestions:JapanSpotSuggestion[];rewardConfig:SpotRewardConfig|null}>{
+  const data:any=await requestJson(`/api/japan-spots/suggestions?prefecture=${encodeURIComponent(prefecture)}&userId=${encodeURIComponent(userId)}`,{timeoutMs:8000});
+  return { suggestions:data?.suggestions||[], rewardConfig:data?.rewardConfig||null };
 }
-export async function postJapanSpotSuggestion(payload:{prefecture:string;suggestion:string;userName?:string}):Promise<JapanSpotSuggestion>{
-  const data:any=await jsonPost('/api/japan-spots/suggestions',{userId:USER_ID,...payload},8000);
+export async function postJapanSpotSuggestion(payload:{prefecture:string;suggestion:string;place?:string;userName?:string;userId:string}):Promise<JapanSpotSuggestion>{
+  const data:any=await jsonPost('/api/japan-spots/suggestions',payload,8000);
   return data.suggestion;
 }
 
@@ -558,12 +596,50 @@ export function confirmVnpayReturn(params:Record<string,string>):Promise<{ok:boo
   return jsonPost('/api/vnpay/return',params,20000);
 }
 
+export type ReturnItem = { productId:string; slug:string; name:string; size:string; colorName:string; qty:number; price:number };
 export type ReturnRequest = {
   id:string; kind:'cancel'|'return'; code:string; orderId:string; orderCode:string; userId:string; paymentId:string; paymentCode:string;
-  status:'requested'|'approved'|'received'|'refund_pending'|'refunded'|'refund_failed'|'rejected'|'cancelled';
+  status:'requested'|'approved'|'shipped_back'|'received'|'refund_pending'|'refunded'|'refund_failed'|'rejected'|'cancelled';
   reason:string; note?:string; adminNote?:string; photos?:string[]; codManualRefund?:boolean; amount:number; currency:string; refundId?:string; refundStatus?:string;
+  items?:ReturnItem[]; coversWholeOrder?:boolean; shipBackDeadline?:number|null;
+  shipBack?:{carrier:string;trackingCode:string;note?:string;at:number}|null;
+  refundBreakdown?:{itemsValue:number;discountAllocated:number;vipDiscountAllocated:number;shipRefunded:number;orderSubtotal:number};
   createdAt:number; updatedAt:number; timeline:Array<{s:string;at:number;refundId?:string;note?:string}>;
 };
+
+// Một sản phẩm trong đơn kèm số lượng còn có thể yêu cầu trả.
+export type ReturnableItem = ApiOrder['items'][number] & { returnedQty:number; remainingQty:number };
+export type ReturnWindow = { days:number; startedAt:number; deadline:number; expired:boolean };
+export function getReturnableItems(orderId:string):Promise<{ok:boolean;items:ReturnableItem[];window:ReturnWindow;eligible:boolean}>{
+  return requestJson(`/api/orders/${encodeURIComponent(orderId)}/returnable`,{timeoutMs:10000});
+}
+
+// Chính khách xác nhận đã nhận đúng hàng sau khi bên vận chuyển báo đã giao.
+export function confirmOrderReceived(orderId:string):Promise<{ok:boolean;order:ApiOrder}>{
+  return jsonPost(`/api/orders/${encodeURIComponent(orderId)}/confirm-received`,{},12000);
+}
+export function shipBackReturn(returnId:string,payload:{carrier:string;trackingCode:string;note?:string}):Promise<{ok:boolean;returnRequest:ReturnRequest;order:ApiOrder}>{
+  return jsonPost(`/api/returns/${encodeURIComponent(returnId)}/ship-back`,payload,12000);
+}
+export function withdrawReturnRequest(returnId:string):Promise<{ok:boolean;returnRequest:ReturnRequest;order:ApiOrder}>{
+  return jsonPost(`/api/returns/${encodeURIComponent(returnId)}/withdraw`,{},12000);
+}
+
+// Quy trình mua → giao → nhận → đổi/trả lấy từ backend (lib/fulfillmentPolicy.js)
+// để app, trang quản trị và tài liệu luôn mô tả đúng một quy trình.
+export type PolicyStage = { status:string; label:string; actor:string; description:string; optional?:boolean; customerCan?:string[]; timerDays?:number };
+export type FulfillmentPolicy = {
+  version:string;
+  actors:Record<string,string>;
+  timers:{autoConfirmDays:number;returnWindowDays:number;shipBackDays:number;inspectionDays:number;refundSettlementDays:number};
+  order:{stages:PolicyStage[];terminal:PolicyStage[]};
+  return:{stages:PolicyStage[];terminal:PolicyStage[];conditions:string[]};
+  cancel:{allowedStatuses:string[];description:string};
+};
+export async function getFulfillmentPolicy():Promise<FulfillmentPolicy>{
+  const data:any=await requestJson('/api/policies/fulfillment',{timeoutMs:8000});
+  return data.policy;
+}
 
 export type ProductReview={id:string;productId:string;userName:string;rating:number;comment:string;media?:ReviewMedia;verifiedPurchase:boolean;createdAt:number;updatedAt:number;helpful:number;notHelpful:number;myReaction:'helpful'|'not_helpful'|null};
 export type ProductReviews={ok:boolean;productId:string;summary:{average:number;count:number;distribution:Array<{rating:number;count:number}>};eligibility:{canReview:boolean;purchased:boolean;alreadyReviewed:boolean;orderIds:string[]};reviews:ProductReview[]};
@@ -577,11 +653,13 @@ export function reactToReview(reviewId:string,userId:string,value:'helpful'|'not
   return jsonPost(`/api/reviews/${encodeURIComponent(reviewId)}/reaction`,{userId,value},10000);
 }
 
-export function getOrderDetail(id:string):Promise<{ok:boolean;order:ApiOrder;payment:StripePaymentRecord|null;returnRequest:ReturnRequest|null}>{
+export function getOrderDetail(id:string):Promise<{ok:boolean;order:ApiOrder;payment:StripePaymentRecord|null;returnRequest:ReturnRequest|null;returnRequests?:ReturnRequest[]}>{
   return requestJson(`/api/orders/${encodeURIComponent(id)}`,{timeoutMs:10000});
 }
 
-export function createReturnRequest(orderId:string,payload:{reason:string;note?:string;photos:string[]}):Promise<{ok:boolean;order:ApiOrder;payment:StripePaymentRecord;returnRequest:ReturnRequest}>{
+// items rỗng = trả toàn bộ phần chưa yêu cầu; có items = chỉ trả đúng những
+// sản phẩm đó trong đơn nhiều món.
+export function createReturnRequest(orderId:string,payload:{reason:string;note?:string;photos:string[];items?:Array<{slug:string;colorName:string;size:string;qty:number}>}):Promise<{ok:boolean;order:ApiOrder;payment:StripePaymentRecord;returnRequest:ReturnRequest}>{
   return jsonPost(`/api/orders/${encodeURIComponent(orderId)}/returns`,payload,30000);
 }
 

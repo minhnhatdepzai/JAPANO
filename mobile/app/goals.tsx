@@ -5,13 +5,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn, money } from '../components/ui';
 import { SmartImage } from '../components/SmartImage';
 import { useCatalog } from '../lib/data';
-import { createGoalPlan, getGoals, GoalPlan } from '../lib/api';
+import { ApiGoal, createGoalPlan, depositToGoal, getGoals, GoalPlan, removeGoalDeposit } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { useToast } from '../lib/toast';
 import { regionsList, prefecturesInRegion, spotsInPrefecture, JapanSpot } from '../lib/japanSpots';
 import { C, F } from '../theme/tokens';
 
 const one = (value:string|string[]|undefined)=>Array.isArray(value)?value[0]:value;
 const onlyNumber = (value:string)=>value.replace(/[^0-9.]/g,'');
 type Tab='shopping'|'health'|'japan';
+const QUICK_DEPOSITS=[50000,100000,200000,500000];
+const dateOf=(at:number)=>new Date(at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
 
 function Field({label,value,onChange,suffix,placeholder}:{label:string;value:string;onChange:(value:string)=>void;suffix?:string;placeholder?:string}){
   return (
@@ -49,10 +53,16 @@ export default function Goals(){
   const params=useLocalSearchParams<{productId?:string}>();
   const router=useRouter();
   const {products}=useCatalog();
+  const {user}=useAuth();
+  const {toast}=useToast();
   const initial=one(params.productId)||products[0]?.slug||'kimono-hong';
   const [tab,setTab]=useState<Tab>('shopping');
   const [productId,setProductId]=useState(initial);
   const product=useMemo(()=>products.find(item=>item.slug===productId)||products[0],[productId,products]);
+  // Mọi mục tiêu của tài khoản, để đổi sản phẩm là thấy ngay quỹ tương ứng.
+  const [goals,setGoals]=useState<ApiGoal[]>([]);
+  const goal=useMemo(()=>goals.find(item=>item.productId===productId)||null,[goals,productId]);
+  const upsertGoal=(next:ApiGoal)=>setGoals(current=>[next,...current.filter(item=>item.id!==next.id)]);
   const [age,setAge]=useState('25');
   const [height,setHeight]=useState('165');
   const [currentWeight,setCurrentWeight]=useState('65');
@@ -67,24 +77,34 @@ export default function Goals(){
   const scroll=useRef<ScrollView>(null);
 
   useEffect(()=>{
-    if(one(params.productId))return;
+    if(!user?.id)return;
     let live=true;
-    void getGoals().then((data:any)=>{
-      const latest=data?.goals?.[0];
-      if(!live||!latest)return;
-      setProductId(String(latest.productId||initial));
-      setPlan(latest.plan||null);
-      const input=latest.input||{};
+    void getGoals(user.id).then(data=>{
+      if(!live)return;
+      const list=data?.goals||[];
+      setGoals(list);
+      const latest=list[0];
+      if(!latest)return;
+      if(!one(params.productId)){
+        setProductId(String(latest.productId||initial));
+        setPlan(latest.plan||null);
+      }
+      const input:any=latest.input||{};
       if(input.age)setAge(String(input.age));if(input.heightCm)setHeight(String(input.heightCm));
       if(input.currentWeightKg)setCurrentWeight(String(input.currentWeightKg));if(input.targetWeightKg)setTargetWeight(String(input.targetWeightKg));
       if(input.monthlyIncome)setIncome(String(input.monthlyIncome));if(input.fixedExpenses)setExpenses(String(input.fixedExpenses));
       if(input.currentSavings!=null)setSaved(String(input.currentSavings));if(input.targetMonths)setMonths(String(input.targetMonths));
     }).catch(()=>undefined);
     return()=>{live=false;};
-  },[]);
+  },[user?.id]);
+
+  // Đổi sản phẩm mục tiêu thì hiện lại đúng lộ trình đã lưu của sản phẩm đó
+  // (nếu có) thay vì để trống bắt khách tạo lại từ đầu.
+  useEffect(()=>{ if(goal?.plan)setPlan(goal.plan); },[goal?.id]);
 
   const create=async()=>{
     if(!product||loading)return;
+    if(!user?.id){ toast({message:'Bạn cần đăng nhập để lưu mục tiêu và nhận thưởng.',kind:'error'}); router.push('/login'); return; }
     setLoading(true);setError('');
     try{
       const response=await createGoalPlan({
@@ -92,8 +112,14 @@ export default function Goals(){
         monthlyIncome:income,fixedExpenses:expenses,currentSavings:saved,targetMonths:months,
       });
       setPlan(response.goal.plan);
+      upsertGoal(response.goal);
+      toast('Đã lưu lộ trình mục tiêu của bạn ✓');
       setTimeout(()=>scroll.current?.scrollToEnd({animated:true}),180);
-    }catch(e:any){setError(e?.message||'Chưa tạo được lộ trình. Hãy kiểm tra kết nối máy chủ và thử lại.');}
+    }catch(e:any){
+      const message=e?.message||'Chưa tạo được lộ trình. Hãy kiểm tra kết nối máy chủ và thử lại.';
+      setError(message);
+      toast({message,kind:'error'});
+    }
     finally{setLoading(false);}
   };
 
@@ -163,12 +189,13 @@ export default function Goals(){
         {tab==='shopping' && plan && (
           <View style={{gap:14,marginTop:18}}>
             <View style={st.resultCard}>
-              <Text style={st.resultKicker}>QUỸ MUA SẮM</Text><Text style={st.resultBig}>{Math.round(plan.saving.progressPercent)}%</Text>
+              <Text style={st.resultKicker}>KẾ HOẠCH TIẾT KIỆM</Text><Text style={st.resultBig}>{Math.round(plan.saving.progressPercent)}%</Text>
               <View style={st.progress}><View style={[st.progressOn,{width:`${Math.max(2,plan.saving.progressPercent)}%` as any}]} /></View>
               <Text style={st.resultText}>Còn <Text style={st.strong}>{money(plan.saving.gap)}</Text> · nên dành <Text style={st.strong}>{money(plan.saving.monthlySaving)}/tháng</Text></Text>
               <Text style={st.resultText}>{plan.saving.estimatedMonths==null?'Chưa có thu nhập khả dụng để ước tính.':`Khoảng ${plan.saving.estimatedMonths} tháng · ${money(plan.saving.weeklySaving)}/tuần`}</Text>
               {plan.saving.actions.map((item,index)=><Text key={index} style={st.item}>✓ {item}</Text>)}
             </View>
+            {!!goal && <FundCard goal={goal} onChange={upsertGoal} />}
             <CoachCard plan={plan} />
           </View>
         )}
@@ -192,6 +219,122 @@ export default function Goals(){
         {tab==='japan' && <JapanGoalTab />}
       </ScrollView>
     </Screen>
+  );
+}
+
+// Quỹ tích luỹ: khách tự ghi nhận từng khoản đã để dành cho món hàng mục tiêu.
+// Đây là SỔ THEO DÕI, không phải ví — nói rõ trong UI để không ai hiểu nhầm là
+// đã chuyển tiền thật cho JAPANO.
+function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
+  const {toast}=useToast();
+  const router=useRouter();
+  const [amount,setAmount]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [showLedger,setShowLedger]=useState(false);
+  const fund=goal.fund;
+  if(!fund)return null;
+  const done=fund.status!=='saving';
+
+  const deposit=async(value:number)=>{
+    if(busy)return;
+    if(!(value>0)){toast({message:'Nhập số tiền bạn vừa để dành được.',kind:'error'});return;}
+    setBusy(true);
+    try{
+      const result=await depositToGoal(goal.id,{amount:value});
+      onChange(result.goal);
+      setAmount('');
+      if(result.justCompleted&&result.rewardVoucher){
+        toast({
+          message:`🎉 Đủ quỹ rồi! Bạn nhận mã ${result.rewardVoucher.code} giảm ${result.rewardVoucher.value}% cho món này.`,
+          kind:'success',
+          durationMs:6000,
+          action:{label:'Mua ngay',onPress:()=>router.push(`/product/${goal.productId}` as any)},
+        });
+      }else{
+        const remaining=Math.max(0,result.goal.fund?.remaining??0);
+        toast(`Đã ghi nhận ${money(value)} vào quỹ · còn ${money(remaining)}`);
+      }
+    }catch(e:any){toast({message:e?.message||'Không ghi nhận được khoản tích luỹ.',kind:'error'});}
+    finally{setBusy(false);}
+  };
+
+  const undo=async(depositId:string)=>{
+    if(busy)return;
+    setBusy(true);
+    try{
+      const result=await removeGoalDeposit(goal.id,depositId);
+      onChange(result.goal);
+      toast({message:'Đã gỡ khoản ghi nhầm khỏi quỹ.',kind:'info'});
+    }catch(e:any){toast({message:e?.message||'Không gỡ được khoản này.',kind:'error'});}
+    finally{setBusy(false);}
+  };
+
+  return (
+    <View style={[st.resultCard,done&&{borderColor:C.matcha,borderWidth:2}]}>
+      <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+        <Ionicons name={done?'trophy':'wallet'} size={17} color={done?C.matcha:C.shu} />
+        <Text style={[st.resultKicker,done&&{color:C.matcha}]}>QUỸ TÍCH LUỸ CỦA BẠN</Text>
+      </View>
+      <Text style={st.fundBig}>{money(fund.saved)} <Text style={st.fundTarget}>/ {money(fund.target)}</Text></Text>
+      <View style={st.progress}><View style={[st.progressOn,{width:`${Math.max(2,fund.percent)}%` as any},done&&{backgroundColor:C.matcha}]} /></View>
+      <Text style={st.resultText}>
+        {done
+          ? `Bạn đã tích đủ ${money(fund.target)} — mục tiêu hoàn thành ${fund.completedAt?`ngày ${dateOf(fund.completedAt)}`:''}.`
+          : <>Còn <Text style={st.strong}>{money(fund.remaining)}</Text> nữa là đủ mua {goal.product?.name}.</>}
+      </Text>
+
+      {done ? (
+        <View style={st.rewardBox}>
+          <Text style={st.rewardTitle}>🎁 Phần thưởng hoàn thành mục tiêu</Text>
+          {fund.rewardVoucherCode
+            ? <Text selectable style={st.rewardCode}>{fund.rewardVoucherCode}</Text>
+            : <Text style={st.rewardBody}>Mã giảm giá đang được tạo, hãy tải lại sau ít phút.</Text>}
+          <Text style={st.rewardBody}>Giảm {fund.rewardPercent}% — nhập mã ở bước thanh toán. Mã dùng được 1 lần và chỉ thuộc về tài khoản của bạn.</Text>
+          {fund.status==='achieved'
+            ? <View style={st.achieved}><Ionicons name="checkmark-circle" size={15} color={C.matcha} /><Text style={st.achievedT}>Đã mua thành công trong đơn #{fund.achievedOrderCode}. Chúc mừng bạn!</Text></View>
+            : <Btn label="Dùng mã và mua ngay" icon="bag-handle-outline" onPress={()=>router.push(`/product/${goal.productId}` as any)} style={{marginTop:10}} />}
+        </View>
+      ) : (
+        <>
+          <Text style={st.fundHint}>Mỗi lần để dành được bao nhiêu, ghi vào đây bấy nhiêu. Đủ giá món hàng là bạn nhận ngay voucher giảm {fund.rewardPercent}%.</Text>
+          <View style={st.quickRow}>
+            {QUICK_DEPOSITS.map(value=>(
+              <Pressable key={value} disabled={busy} style={st.quick} onPress={()=>void deposit(value)}>
+                <Text style={st.quickT}>+{value>=1000000?`${value/1000000}tr`:`${value/1000}k`}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={st.depositRow}>
+            <View style={[st.field,{flex:1}]}>
+              <TextInput value={amount} onChangeText={text=>setAmount(onlyNumber(text))} keyboardType="numeric" placeholder="Số tiền khác" placeholderTextColor={C.muted} style={st.input} />
+              <Text style={st.suffix}>₫</Text>
+            </View>
+            <Pressable disabled={busy} style={[st.depositBtn,busy&&{opacity:.5}]} onPress={()=>void deposit(Number(amount)||0)}>
+              {busy?<ActivityIndicator color="#fff" size="small"/>:<Text style={st.depositBtnT}>Nạp vào quỹ</Text>}
+            </Pressable>
+          </View>
+          <Text style={st.ledgerNote}>JAPANO không giữ tiền của bạn — đây là sổ theo dõi tiến độ tiết kiệm, tiền vẫn nằm trong tài khoản của bạn.</Text>
+        </>
+      )}
+
+      {!!fund.deposits.length && (
+        <>
+          <Pressable style={st.ledgerToggle} onPress={()=>setShowLedger(value=>!value)}>
+            <Text style={st.ledgerToggleT}>Lịch sử tích luỹ ({fund.deposits.length})</Text>
+            <Ionicons name={showLedger?'chevron-up':'chevron-down'} size={15} color={C.shu} />
+          </Pressable>
+          {showLedger&&[...fund.deposits].reverse().map(item=>(
+            <View key={item.id} style={st.ledgerRow}>
+              <View style={{flex:1}}>
+                <Text style={st.ledgerAmount}>+{money(item.amount)}</Text>
+                <Text style={st.ledgerMeta}>{dateOf(item.at)}{item.note?` · ${item.note}`:''}</Text>
+              </View>
+              <Pressable hitSlop={8} disabled={busy} onPress={()=>void undo(item.id)}><Ionicons name="trash-outline" size={16} color={C.muted} /></Pressable>
+            </View>
+          ))}
+        </>
+      )}
+    </View>
   );
 }
 
@@ -303,4 +446,23 @@ const st=StyleSheet.create({
   spotPick:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:11,paddingHorizontal:13,backgroundColor:'#fff',marginBottom:8},
   spotPickOn:{backgroundColor:C.shu,borderColor:C.shu},spotPickT:{fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
   exploreLink:{flexDirection:'row',alignItems:'center',gap:7,marginTop:2,marginBottom:6},exploreLinkT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  fundBig:{fontFamily:F.displayX,fontSize:24,color:C.sumi,marginTop:7},fundTarget:{fontFamily:F.body,fontSize:13,color:C.muted},
+  fundHint:{fontFamily:F.body,fontSize:11,lineHeight:17,color:C.muted,marginTop:9},
+  quickRow:{flexDirection:'row',gap:7,marginTop:10},
+  quick:{flex:1,alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:10,paddingVertical:9,backgroundColor:C.washi2},
+  quickT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  depositRow:{flexDirection:'row',gap:8,marginTop:9,alignItems:'center'},
+  depositBtn:{backgroundColor:C.shu,borderRadius:12,height:46,paddingHorizontal:15,alignItems:'center',justifyContent:'center'},
+  depositBtnT:{fontFamily:F.bodyB,fontSize:12.5,color:'#fff'},
+  ledgerNote:{fontFamily:F.body,fontSize:10,lineHeight:15,color:C.muted,marginTop:8,fontStyle:'italic'},
+  ledgerToggle:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderTopWidth:1,borderTopColor:C.hair,marginTop:12,paddingTop:10},
+  ledgerToggleT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  ledgerRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.hair},
+  ledgerAmount:{fontFamily:F.bodyX,fontSize:12.5,color:C.ink},ledgerMeta:{fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2},
+  rewardBox:{backgroundColor:'#F0F7F0',borderWidth:1,borderColor:'#CBE3CC',borderRadius:13,padding:12,marginTop:11},
+  rewardTitle:{fontFamily:F.bodyB,fontSize:12.5,color:'#25603A'},
+  rewardCode:{fontFamily:F.displayX,fontSize:19,letterSpacing:1,color:'#1F6B44',marginTop:6},
+  rewardBody:{fontFamily:F.body,fontSize:11,lineHeight:17,color:'#3C6A4C',marginTop:5},
+  achieved:{flexDirection:'row',alignItems:'center',gap:6,marginTop:9},
+  achievedT:{flex:1,fontFamily:F.bodyB,fontSize:11,lineHeight:16,color:'#1F6B44'},
 });

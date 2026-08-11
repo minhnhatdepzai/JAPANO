@@ -6,6 +6,7 @@ import { Screen, Header, Btn } from '../components/ui';
 import { getProvinces, getWards, VietnamLocation } from '../lib/api';
 import { deleteAddress, listAddresses, SavedAddress, setDefaultAddress, upsertAddress } from '../lib/addresses';
 import { useAuth } from '../lib/auth';
+import { useToast } from '../lib/toast';
 import { C, F } from '../theme/tokens';
 
 const emptyDraft = (name = '') => ({
@@ -16,6 +17,7 @@ const emptyDraft = (name = '') => ({
 
 export default function Addresses() {
   const { user, requireAuth } = useAuth();
+  const { toast } = useToast();
   const [items, setItems] = useState<SavedAddress[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<string | 'new' | null>(null);
@@ -75,15 +77,16 @@ export default function Addresses() {
       }, user?.id);
       refresh();
       setEditing(null);
+      toast(editing === 'new' ? 'Đã thêm địa chỉ nhận hàng ✓' : 'Đã cập nhật địa chỉ ✓');
     } catch (error: any) {
-      Alert.alert('Không lưu được địa chỉ', error?.message || 'Vui lòng thử lại.');
+      toast({ message: error?.message || 'Không lưu được địa chỉ, vui lòng thử lại.', kind: 'error' });
     } finally { setSaving(false); }
   };
 
   const remove = (item: SavedAddress) => {
     Alert.alert('Xoá địa chỉ?', `Xoá "${item.title}" khỏi danh sách địa chỉ nhận hàng.`, [
       { text: 'Huỷ', style: 'cancel' },
-      { text: 'Xoá', style: 'destructive', onPress: () => void deleteAddress(item.id,user?.id).then(setItems) },
+      { text: 'Xoá', style: 'destructive', onPress: () => void deleteAddress(item.id,user?.id).then(next => { setItems(next); toast({ message: `Đã xoá "${item.title}"`, kind: 'info' }); }) },
     ]);
   };
 

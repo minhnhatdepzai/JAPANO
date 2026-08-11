@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { BUNDLED, setCatalog, Product } from './catalog';
 import { getProducts, resolveApiMediaUrl } from './api';
 
@@ -73,5 +73,6 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { void load(); }, [load]);
 
-  return <Ctx.Provider value={{ products, online, loading, refresh: load }}>{children}</Ctx.Provider>;
+  const value = useMemo(() => ({ products, online, loading, refresh: load }), [products, online, loading, load]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

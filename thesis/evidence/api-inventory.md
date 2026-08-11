@@ -2,6 +2,8 @@
 
 Status: verified by direct reading of `backend/server.js` (full, 326 lines), all 17 files under `backend/routes/`, and cross-checked against a live `GET /api/health` call earlier in this project's development. Every endpoint below is a literal `api.get/post/put/patch/delete(...)` call found in source — none are inferred from naming. **Total: 109 distinct HTTP endpoints** (108 under the `/api` router + 1 Stripe webhook mounted directly on the Express app). This directly refutes the prior fabricated draft's claims of a single-file backend on port 4000 with a small, different endpoint set.
 
+> **SUPERSEDED NUMBERS — recount 2026-08.** This file is a point-in-time snapshot. The real count is now **111 endpoints**, not 109: `POST /api/gpu/focus` (`routes/stylist.js:27`) and `GET /api/gpu/focus` (`routes/stylist.js:36`) were added after this inventory was written, as part of the GPU-priority arbitration feature. Line numbers for `stylist.js` and `tryon.js` have also shifted. Likewise, `backend/lib/` now holds **36 files**, not 34 (`gpuArbiter.js`, `gpuJobQueue.js` added). The thesis uses the corrected figures — see `thesis/appendices/phu-luc-a-api-endpoints.md` for the full re-verified endpoint table with current line numbers, and `phu-luc-b-backend-lib.md` for the lib inventory. Everything else in this file remains accurate.
+
 ## Entry point and request pipeline (`backend/server.js`)
 
 - Default port: `const PORT = Number(process.env.PORT || 4100);` — `server.js:48`.

@@ -385,6 +385,15 @@ if [[ -z "${EXPO_PUBLIC_API_URL:-}" ]]; then
   fi
 fi
 export EXPO_PUBLIC_API_PORT="$PORT"
+
+# Google Client ID phải tới app qua biến EXPO_PUBLIC_* chứ không qua app.json:
+# dev client đọc app config từ bản nướng sẵn trong APK lúc build, nên sửa
+# app.json xong app vẫn không thấy cho tới khi build lại. Metro thì nhúng
+# EXPO_PUBLIC_* vào bundle mỗi lần đóng gói, nên chỉ cần khởi động lại là xong.
+# Giá trị lấy từ .env.server (đã source ở đầu file) — một nguồn duy nhất.
+export EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID="${GOOGLE_CLIENT_ID_ANDROID:-}"
+export EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS="${GOOGLE_CLIENT_ID_IOS:-}"
+export EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB="${GOOGLE_CLIENT_ID_WEB:-}"
 # SDK 51 cần lấy workspace root làm Metro server root; nếu không URL entry bị
 # chuẩn hoá từ ../node_modules thành mobile/node_modules và Expo Go báo đỏ.
 export EXPO_USE_METRO_WORKSPACE_ROOT=1

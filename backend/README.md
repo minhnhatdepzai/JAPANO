@@ -1,6 +1,6 @@
 # JAPANO Backend
 
-Node.js + Express. Dữ liệu dùng chung với Admin và mobile được lưu tại `data/db.json`; lần chạy đầu backend tự tạo catalog mẫu nếu file chưa tồn tại. Trang Admin được phục vụ tại `/`.
+Node.js + Express. Khi cấu hình `MONGODB_URI`, MongoDB là nơi lưu dữ liệu chính cho Admin và mobile; `data/db.json` chỉ được dùng để seed/migration khi chưa cấu hình MongoDB. Media chỉ lưu URL Cloudinary trong MongoDB. Trang Admin được phục vụ tại `/`.
 
 Từ thư mục gốc, chạy backend riêng bằng:
 

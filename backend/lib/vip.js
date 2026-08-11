@@ -9,6 +9,18 @@ const DAY_MS = 86_400_000;
 
 const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
+function vipRule(state) {
+  const rule = (state?.discountRules || []).find((item) => item?.active !== false && String(item.scope || '').toLowerCase() === 'vip');
+  return {
+    id: String(rule?.id || 'discount-vip-10'),
+    code: String(rule?.code || 'JAPANO-VIP10'),
+    monthlySpendThreshold: finite(rule?.qualificationValue, VIP_CONFIG.monthlySpendThreshold),
+    validityDays: finite(rule?.validityDays, VIP_CONFIG.validityDays),
+    discountPercent: finite(rule?.value, VIP_CONFIG.discountPercent),
+    discountedUnitsPerOrder: finite(rule?.maxUnitsPerOrder, VIP_CONFIG.discountedUnitsPerOrder),
+  };
+}
+
 function orderUserId(order) {
   return String(order?.userId || order?.customer?.id || '').trim();
 }
@@ -60,6 +72,7 @@ function canReceiveVip(state, userId) {
 }
 
 function deriveVipMemberships(state, now = Date.now()) {
+  const config = vipRule(state);
   const grouped = new Map();
   for (const order of state?.orders || []) {
     const userId = orderUserId(order);
@@ -79,20 +92,21 @@ function deriveVipMemberships(state, now = Date.now()) {
     let crossing = null;
     for (const entry of group.orders) {
       cumulative += entry.spend;
-      if (!crossing && cumulative >= VIP_CONFIG.monthlySpendThreshold) crossing = { ...entry, cumulative };
+      if (!crossing && cumulative >= config.monthlySpendThreshold) crossing = { ...entry, cumulative };
     }
     if (!crossing) continue;
     const startedAt = crossing.at;
-    const expiresAt = startedAt + VIP_CONFIG.validityDays * DAY_MS;
+    const expiresAt = startedAt + config.validityDays * DAY_MS;
     memberships.push({
       id: `vip-${encodeURIComponent(group.userId)}-${group.period.key}`,
       userId: group.userId,
+      discountRuleId: config.id,
       qualifyingPeriod: group.period.key,
       qualifyingOrderIds: group.orders.filter((entry) => entry.at <= crossing.at).map((entry) => String(entry.order.id)),
       qualifiedSpend: crossing.cumulative,
-      threshold: VIP_CONFIG.monthlySpendThreshold,
-      discountPercent: VIP_CONFIG.discountPercent,
-      discountedUnitsPerOrder: VIP_CONFIG.discountedUnitsPerOrder,
+      threshold: config.monthlySpendThreshold,
+      discountPercent: config.discountPercent,
+      discountedUnitsPerOrder: config.discountedUnitsPerOrder,
       startedAt,
       expiresAt,
       status: now < expiresAt ? 'active' : 'expired',
@@ -104,6 +118,7 @@ function deriveVipMemberships(state, now = Date.now()) {
 }
 
 function vipStatus(state, userId, now = Date.now()) {
+  const config = vipRule(state);
   const normalizedUserId = String(userId || '').trim();
   const memberships = deriveVipMemberships(state, now).filter((item) => item.userId === normalizedUserId);
   const activeMembership = memberships
@@ -115,7 +130,7 @@ function vipStatus(state, userId, now = Date.now()) {
     return orderUserId(order) === normalizedUserId && at >= period.start && at < period.end;
   });
   const monthlySpend = monthlyOrders.reduce((sum, order) => sum + vipQualifyingSpend(order), 0);
-  const threshold = VIP_CONFIG.monthlySpendThreshold;
+  const threshold = config.monthlySpendThreshold;
   return {
     userId: normalizedUserId,
     isVip: Boolean(activeMembership),
@@ -135,19 +150,21 @@ function vipStatus(state, userId, now = Date.now()) {
     },
     benefit: {
       available: Boolean(activeMembership),
-      discountPercent: VIP_CONFIG.discountPercent,
-      discountedUnitsPerOrder: VIP_CONFIG.discountedUnitsPerOrder,
-      description: 'Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng.',
+      discountRuleId: config.id,
+      discountPercent: config.discountPercent,
+      discountedUnitsPerOrder: config.discountedUnitsPerOrder,
+      description: `Giảm ${config.discountPercent}% cho ${config.discountedUnitsPerOrder} đơn vị sản phẩm tự chọn trong mỗi đơn hàng.`,
     },
   };
 }
 
 function vipDiscountForSelection(state, { userId, items, productId, selection, now = Date.now() } = {}) {
+  const config = vipRule(state);
   const selectedId = String(productId || selection?.productId || selection?.slug || '').trim();
   if (!selectedId) return { discount: 0, promotion: null, status: vipStatus(state, userId, now) };
   const status = vipStatus(state, userId, now);
   if (!status.isVip) {
-    const error = new Error('Quyền lợi VIP đã hết hạn hoặc tài khoản chưa đạt 5.000.000₫ trong tháng.');
+    const error = new Error(`Quyền lợi VIP đã hết hạn hoặc tài khoản chưa đạt ${config.monthlySpendThreshold.toLocaleString('vi-VN')}₫ trong tháng.`);
     error.status = 400;
     throw error;
   }
@@ -162,20 +179,21 @@ function vipDiscountForSelection(state, { userId, items, productId, selection, n
     error.status = 400;
     throw error;
   }
-  const discount = Math.max(0, Math.round(finite(selected.price) * VIP_CONFIG.discountPercent / 100));
+  const discount = Math.max(0, Math.round(finite(selected.price) * config.discountPercent / 100));
   return {
     discount,
     status,
     promotion: {
       membershipId: status.membership.id,
-      code: 'JAPANO-VIP10',
-      label: `VIP giảm ${VIP_CONFIG.discountPercent}% cho 1 sản phẩm`,
-      percent: VIP_CONFIG.discountPercent,
+      discountRuleId: config.id,
+      code: config.code,
+      label: `VIP giảm ${config.discountPercent}% cho ${config.discountedUnitsPerOrder} sản phẩm`,
+      percent: config.discountPercent,
       productId: String(selected.slug || selected.productId),
       productName: String(selected.name || 'Sản phẩm'),
       colorName: String(selected.colorName || ''),
       size: String(selected.size || ''),
-      discountedUnits: VIP_CONFIG.discountedUnitsPerOrder,
+      discountedUnits: config.discountedUnitsPerOrder,
       originalUnitPrice: finite(selected.price),
       discount,
     },
@@ -221,6 +239,7 @@ function reconcileVipState(state, now = Date.now()) {
 
 module.exports = {
   VIP_CONFIG,
+  vipRule,
   monthBounds,
   isVipQualifyingOrder,
   vipQualifyingSpend,

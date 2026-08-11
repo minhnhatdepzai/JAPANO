@@ -370,7 +370,7 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
   const wishProduct = useCallback((product: Product) => {
     if (!isWished(product.slug)) {
       toggleWish(product.slug);
-      showToast('Đã thêm vào yêu thích ♥');
+      showToast('Đã thêm vào yêu thích ♥','success');
       addMessage({ id: messageId(), role: 'ai', text: `${product.name} đã được lưu vào yêu thích của bạn.` });
     } else {
       showToast('Sản phẩm đã có trong yêu thích');

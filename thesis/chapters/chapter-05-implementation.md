@@ -15,7 +15,7 @@ japano/
 ├── backend/
 │   ├── server.js                # Điểm khởi động Express, chuỗi middleware, DI ctx
 │   ├── routes/                  # 17 tệp route theo domain nghiệp vụ
-│   ├── lib/                     # 34 tệp — thương mại, xác thực, AI, phân tích, thanh toán
+│   ├── lib/                     # 36 tệp — thương mại, xác thực, AI, phân tích, thanh toán
 │   ├── test/                    # 5 tệp kiểm thử tự động (node:test)
 │   ├── data/db.json             # Nguồn dữ liệu chính (JSON)
 │   ├── fashn_service.py         # Dịch vụ thử đồ AI (FASHN + FLUX.2)
@@ -103,7 +103,9 @@ Trang quản trị (`admin/`) là một ứng dụng JavaScript thuần không q
 
 ## 5.4. API và xử lý dữ liệu
 
-Hệ thống backend cung cấp **109 endpoint HTTP** phân bố trên 17 tệp route, được thống kê đầy đủ tại `thesis/evidence/api-inventory.md`. Bảng 5.3 trình bày một số endpoint tiêu biểu theo nhóm nghiệp vụ — danh sách đầy đủ nên đặt ở phần phụ lục của bản in cuối cùng để không làm loãng nội dung chính của chương.
+Hệ thống backend cung cấp **111 endpoint HTTP** phân bố trên 17 tệp route, được thống kê đầy đủ tại Phụ lục A. Bảng 5.3 trình bày một số endpoint tiêu biểu theo nhóm nghiệp vụ — danh sách đầy đủ đặt ở phụ lục để không làm loãng nội dung chính của chương.
+
+Con số 111 gồm 103 endpoint khai báo trực tiếp trong `backend/routes/`, 7 endpoint sinh qua hai vòng lặp `forEach` trong `routes/health.js`, và 1 webhook Stripe gắn trực tiếp trên đối tượng `app` (`backend/server.js:216`) — webhook phải nằm ngoài router chính để giữ được raw body phục vụ xác thực chữ ký.
 
 **Bảng 5.3: Một số API tiêu biểu theo nhóm nghiệp vụ**
 
@@ -116,7 +118,9 @@ Hệ thống backend cung cấp **109 endpoint HTTP** phân bố trên 17 tệp 
 | AI | `POST /api/stylist/chat`, `POST /api/tryon`, `POST /api/stylist/size` | Có phương án dự phòng khi dịch vụ AI ngoại vi không khả dụng |
 | Quản trị | `GET /api/admin/live`, `POST /api/returns/:id/action`, `PATCH /api/admin/users/:id` | Phân theo ba mức middleware: `requireStaff`/`requireAdmin`/`requireSuperAdmin` |
 
-*Nguồn: `thesis/evidence/api-inventory.md` (toàn bộ, bảng đầy đủ 109 endpoint).*
+*Nguồn: Phụ lục A (bảng đầy đủ 111 endpoint, kèm middleware bảo vệ và số dòng mã nguồn).*
+
+Cần ghi nhận trung thực một điểm yếu ở đây: trong 111 endpoint có **45 endpoint chưa gắn middleware xác thực**, phần lớn thuộc nhóm AI (`stylist.js`, `tryon.js`) và dữ liệu hành vi người dùng (`customerData.js`). Trường hợp nghiêm trọng nhất là `POST /api/flagcards/admin/grant` (`backend/routes/loyalty.js:26`) — đường dẫn có chữ "admin" nhưng không hề kiểm tra quyền. Danh sách đầy đủ và phân loại mức nghiêm trọng ở Phụ lục A mục A.5; lộ trình khắc phục ở Chương 8 mục 8.3.1.
 
 Về mặt xử lý dữ liệu, điểm thiết kế xuyên suốt là **tái sử dụng logic tạo đơn hàng cho cả ba phương thức thanh toán**: `backend/routes/paymentsStripe.js` và `backend/routes/paymentsVnpay.js` đều gọi lại hàm `makeCreateOrderInState` được định nghĩa trong `backend/routes/orders.js`, thay vì mỗi phương thức thanh toán tự cài đặt lại logic tính giá/giảm giá/VIP. Nhờ đó, một thay đổi trong quy tắc tính giá chỉ cần sửa ở một nơi duy nhất, giảm rủi ro ba luồng thanh toán tính tiền không nhất quán với nhau.
 

@@ -1,7 +1,7 @@
 // Hành vi mua sắm của khách: log tương tác (nuôi engine gợi ý), giỏ hàng, và
 // danh sách yêu thích (wishlist là thực thể riêng — ERD v2, không suy từ log).
 module.exports = function registerCustomerDataRoutes(api, ctx) {
-  const { read, update, httpError, pushNotification, sendPushToUser } = ctx;
+  const { read, update, httpError, pushNotification, sendPushToUser, requireSelfOrStaff } = ctx;
 
   // thu thập dữ liệu hành vi người dùng (xem, thích, giỏ hàng, thử đồ...) để nuôi engine gợi ý
   api.post('/interactions', (req, res) => {
@@ -96,9 +96,8 @@ module.exports = function registerCustomerDataRoutes(api, ctx) {
   // WISHLIST (ERD v2: bảng wishlists) — thực thể riêng, không suy ra từ log
   // interactions nữa. Mỗi (user, product) là 1 dòng UNIQUE.
   // ---------------------------------------------------------------------------
-  api.get('/wishlist', (req, res) => {
+  api.get('/wishlist', requireSelfOrStaff((req) => req.query.userId), (req, res) => {
     const userId = String(req.query.userId || '');
-    if (!userId) return res.status(400).json({ ok: false, message: 'Thiếu userId.' });
     const slugs = (read().wishlists || []).filter((w) => w.userId === userId)
       .sort((l, r) => Number(r.createdAt || 0) - Number(l.createdAt || 0))
       .map((w) => w.productSlug);

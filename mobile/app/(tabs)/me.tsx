@@ -95,6 +95,7 @@ export default function Me() {
         <Text style={st.grp}>KHÁC</Text>
         <Row icon="compass-outline" label="Khám phá Nhật Bản" to="/explore-japan" />
         <Row icon="sparkles-outline" label="Văn hoá Nhật Bản" to="/culture" />
+        <Row icon="shield-checkmark-outline" label="Chính sách giao – nhận – đổi/trả" to="/policy" />
         <Row icon="settings-outline" label="Cài đặt hệ thống" to="/settings" />
         <Pressable style={st.row} onPress={()=>void signOut().then(()=>router.replace('/login'))}>
           <View style={[st.ic,{ backgroundColor:'#F6E3E3' }]}><Ionicons name="power-outline" size={17} color={C.danger} /></View>

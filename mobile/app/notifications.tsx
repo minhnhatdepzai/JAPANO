@@ -16,7 +16,15 @@ const ICON: Record<string, { ic: string; bg: string }> = {
   'Hệ thống': { ic: '✦', bg: C.aiSoft },
   'Đơn hàng': { ic: '📦', bg: C.aiSoft },
 };
-const ROUTE: Record<string,string> = { 'flagcard-intro': '/flagcard-intro' };
+// Thông báo có action thì chạm vào phải mở đúng màn hình liên quan — thưởng
+// mục tiêu mở màn Mục tiêu, thưởng đóng góp địa điểm mở Khám phá Nhật Bản...
+const ROUTE: Record<string,string> = {
+  'flagcard-intro': '/flagcard-intro',
+  'goals': '/goals',
+  'explore-japan': '/explore-japan',
+  'vouchers': '/(tabs)/me',
+  'policy': '/policy',
+};
 const timeAgo = (at: number) => {
   const mins = Math.max(1, Math.round((Date.now() - at) / 60000));
   if (mins < 60) return `${mins} phút`;

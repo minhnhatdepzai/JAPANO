@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, useWindowDimensions } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, FlatList, TextInput, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F } from '../../theme/tokens';
@@ -76,6 +76,10 @@ export default function Products() {
   const sortLabel = SORTS.find(s=>s.key===sort)?.label || 'M\u1edbi nh\u1ea5t';
   const cardGap = 12;
   const cardWidth = Math.floor((screenWidth - 36 - cardGap) / 2);
+  const keyExtractor = useCallback((p:Product)=>p.slug,[]);
+  const renderItem = useCallback(({ item }:{ item:Product })=>(
+    <ProductCard p={item} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />
+  ),[cardWidth]);
   useEffect(()=>{
     const query=q.trim();
     if(query.length<2)return;
@@ -126,18 +130,30 @@ export default function Products() {
           </View>
         )}
       </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24 }} keyboardShouldPersistTaps="handled">
-        {list.length===0 ? (
+      {/* FlatList thay cho ScrollView+map: chỉ dựng những thẻ đang lọt khung
+          nhìn. Danh mục còn nhỏ thì khác biệt chưa rõ, nhưng khi kho hàng lớn
+          dần thì cách cũ mount toàn bộ ảnh cùng lúc — vừa giật khi mở tab vừa
+          ngốn bộ nhớ ảnh. */}
+      <FlatList
+        data={list}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        numColumns={2}
+        columnWrapperStyle={{ gap:cardGap, justifyContent:'center' }}
+        contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24, gap:cardGap }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={7}
+        removeClippedSubviews
+        ListEmptyComponent={
           <View style={{ alignItems:'center', paddingVertical:50 }}>
             <Ionicons name="search-outline" size={44} color={C.hair} />
             <Text style={{ fontFamily:F.bodyM, fontSize:14, color:C.muted, marginTop:10 }}>Không tìm thấy "{q}"</Text>
           </View>
-        ) : (
-          <View style={st.grid}>
-            {list.map(p=><ProductCard key={p.slug} p={p} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />)}
-          </View>
-        )}
-      </ScrollView>
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -145,7 +161,6 @@ const st = StyleSheet.create({
   search:{ flexDirection:'row', alignItems:'center', gap:8, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, marginBottom:12 },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
   chipOn:{ backgroundColor:C.shu, borderColor:C.shu },
-  grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'center', columnGap:12, rowGap:12, width:'100%', alignSelf:'center' },
   sortMenu:{ borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', marginBottom:10, overflow:'hidden' },
   sortOpt:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:11, paddingHorizontal:14, borderTopWidth:1, borderTopColor:C.hair },
 });

@@ -12,7 +12,7 @@ import { saveMediaToLibrary, shareMedia } from '../lib/media';
 import { useStore } from '../lib/store';
 import { C, F } from '../theme/tokens';
 import { SmartImage } from '../components/SmartImage';
-import { useGpuFocus } from '../lib/useGpuFocus';
+import { beginGpuJob, endGpuJob, useGpuFocus } from '../lib/useGpuFocus';
 
 type PickedImage={uri:string;base64:string};
 const DEFAULT_MOTIONS:MotionPreset[]=[
@@ -123,6 +123,9 @@ export default function TryOn() {
     const pickedNames=accessories.filter(item=>selectedAccessories.includes(item.slug)).map(item=>item.name);
     setLoading(true);setError('');setWarning('');setMessage(`Hệ thống đang nhận diện nhân vật chính và ghép trang phục${pickedNames.length?`, sau đó hòa ${pickedNames.join(', ')} vào tóc, tay, ánh sáng và dáng người`:''}. Tư thế chỉ được chỉnh khi thật sự cần; hệ thống sẽ tự kiểm tra chất lượng và thử lại…`);
     await reportGpuFocus('tryon');
+    // Đánh dấu "đang chạy" để tín hiệu focus nền không huỷ mất tác vụ này khi
+    // màn hình tự tắt hoặc người dùng kéo thanh thông báo (xem lib/useGpuFocus).
+    beginGpuJob();
     try{
       const saved=await saveStyleProfile(profile);
       const output=await generateTryOn({
@@ -143,6 +146,7 @@ export default function TryOn() {
       );
     }catch(e:any){setResult('');setResultEngine('');setSizeFit(null);setError(e?.message||'Không tạo được ảnh thử đồ.');setMessage('');}
     finally{
+      endGpuJob();
       setLoading(false);
       if(gpuScreenActive.current)void reportGpuFocus('browse');
     }
@@ -152,12 +156,14 @@ export default function TryOn() {
     if(!result||motionLoading||!motionReady)return;
     setMotionLoading(true);setMotionError('');setMotionVideo('');
     await reportGpuFocus('motion');
+    beginGpuJob();
     try{
       const output=await generateTryOnMotion(result,selectedMotion);
       if(!output.videoUrl)throw new Error('Backend chưa trả video chuyển động.');
       setMotionVideo(output.videoUrl);
     }catch(e:any){setMotionError(e?.message||'Không tạo được video chuyển động AI.');}
     finally{
+      endGpuJob();
       setMotionLoading(false);
       if(gpuScreenActive.current)void reportGpuFocus('browse');
     }
@@ -166,7 +172,7 @@ export default function TryOn() {
   const savePhoto=async()=>{
     if(!result||savingPhoto)return;
     setSavingPhoto(true);
-    try{await saveMediaToLibrary(result,'photo');showToast('Đã lưu ảnh vào thư viện ✓');}
+    try{await saveMediaToLibrary(result,'photo');showToast('Đã lưu ảnh vào thư viện ✓','success');}
     catch(e:any){Alert.alert('Không lưu được ảnh',e?.message||'Vui lòng thử lại.');}
     finally{setSavingPhoto(false);}
   };
@@ -180,7 +186,7 @@ export default function TryOn() {
   const saveVideo=async()=>{
     if(!motionVideo||savingVideo)return;
     setSavingVideo(true);
-    try{await saveMediaToLibrary(motionVideo,'video');showToast('Đã lưu video vào thư viện ✓');}
+    try{await saveMediaToLibrary(motionVideo,'video');showToast('Đã lưu video vào thư viện ✓','success');}
     catch(e:any){Alert.alert('Không lưu được video',e?.message||'Vui lòng thử lại.');}
     finally{setSavingVideo(false);}
   };

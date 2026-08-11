@@ -16,7 +16,7 @@ Dự án JAPANO Store đã xây dựng được một hệ thống thương mạ
 | Trang quản trị phân quyền nhiều cấp | Đạt | Bốn cấp vai trò (`customer/staff/admin/super_admin`), phân quyền theo cả route lẫn phạm vi dữ liệu |
 | Xác thực và phân quyền thật phía máy chủ | Đạt | bcrypt + JWT, middleware phân tầng, kiểm tra quyền sở hữu dữ liệu ở tầng handler |
 
-Về mặt kỹ thuật, hệ thống có tổng cộng **109 endpoint API** phân bố trên 17 module route theo domain nghiệp vụ, **46 trường hợp kiểm thử tự động đều đạt**, và một kiến trúc tiêm phụ thuộc nhất quán giúp tách biệt logic nghiệp vụ khỏi chi tiết hạ tầng (cơ sở dữ liệu, thanh toán, lưu trữ media).
+Về mặt kỹ thuật, hệ thống có tổng cộng **111 endpoint API** phân bố trên 17 module route theo domain nghiệp vụ, **50 trường hợp kiểm thử tự động đều đạt**, và một kiến trúc tiêm phụ thuộc nhất quán giúp tách biệt logic nghiệp vụ khỏi chi tiết hạ tầng (cơ sở dữ liệu, thanh toán, lưu trữ media).
 
 Thông qua dự án, nhóm đã vận dụng và thực hành được một dải kiến thức tương đối rộng: phát triển ứng dụng di động đa nền tảng, thiết kế và triển khai REST API, xác thực/phân quyền, tích hợp cổng thanh toán có xác minh chữ ký, thiết kế cơ sở dữ liệu (cả mô hình tài liệu đang vận hành lẫn thiết kế quan hệ chuẩn hoá), kiểm thử tự động, và điều phối các dịch vụ AI cục bộ chạy trên GPU.
 
@@ -33,7 +33,7 @@ Mục này trình bày song song các điểm mạnh và điểm yếu đã đư
 | Xác thực có chiều sâu: bcrypt, JWT, chặn khởi động ở production nếu thiếu `JWT_SECRET`, mặc định từ chối vai trò không xác định | CORS mở hoàn toàn, chưa giới hạn theo danh sách domain |
 | Xác minh chữ ký thanh toán đúng chuẩn: webhook Stripe kiểm tra chữ ký, VNPay dùng HMAC-SHA512 với so sánh an toàn theo thời gian | Kiểm tra tệp tải lên chỉ dựa trên tiền tố MIME do client khai báo, chưa xác thực nội dung thật của tệp |
 | Khoá cứng chế độ thử nghiệm: Stripe chỉ hoạt động với khoá `sk_test_`/`pk_test_` | Tồn tại giá trị bí mật dự phòng ghi cứng trong mã nguồn (merchant sandbox VNPay) |
-| 46/46 kiểm thử tự động đạt, chạy nhanh nhờ tách hàm thuần khỏi tầng HTTP | Chưa có kiểm thử tự động cho xác thực, luồng trả hàng và hai cổng thanh toán; chưa có CI/CD; chưa có kiểm thử giao diện tự động |
+| 50/50 kiểm thử tự động đạt, chạy nhanh nhờ tách hàm thuần khỏi tầng HTTP | Chưa có kiểm thử tự động cho xác thực, luồng trả hàng và hai cổng thanh toán; chưa có CI/CD; chưa có kiểm thử giao diện tự động |
 | Nguyên tắc không trả kết quả AI giả: khi mô hình thất bại, hệ thống báo lỗi rõ ràng thay vì ghép ảnh dự phòng | Một số màn hình chưa hoàn thiện: biểu mẫu hồ sơ cá nhân chưa lưu được, phần lớn công tắc cài đặt chưa đồng bộ máy chủ, nút đăng nhập Google/Apple mới là giao diện |
 | Toàn bộ khối AI đều có phương án dự phòng, luồng thương mại lõi không phụ thuộc GPU | Tồn kho bị trừ ngay khi tạo đơn nhưng chưa tự hoàn lại khi đơn thanh toán trực tuyến thất bại |
 | Cơ sở dữ liệu JSON ghi nguyên tử, có cơ chế bảo vệ chống ghi đè dữ liệu mới bằng dữ liệu cũ từ trang quản trị | JSON chưa hỗ trợ giao dịch (transaction) và mở rộng theo chiều ngang |

@@ -1,6 +1,6 @@
 {
   "seeded": true,
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "shop": {
     "name": "JAPANO Store",
     "hotline": "1900 6868",
@@ -8117,19 +8117,20 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
-          "spend": 1940000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
           "threshold": 5000000,
-          "remaining": 3060000,
-          "progressPercent": 39
+          "remaining": 5000000,
+          "progressPercent": 0
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8154,19 +8155,20 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
-          "spend": 1440000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
           "threshold": 5000000,
-          "remaining": 3560000,
-          "progressPercent": 29
+          "remaining": 5000000,
+          "progressPercent": 0
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8191,9 +8193,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8201,9 +8203,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8228,9 +8231,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8238,9 +8241,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8265,9 +8269,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8275,9 +8279,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8302,9 +8307,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8312,9 +8317,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8339,9 +8345,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8349,9 +8355,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8376,9 +8383,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8386,9 +8393,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8413,9 +8421,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8423,9 +8431,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8450,9 +8459,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8460,9 +8469,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8485,6 +8495,7 @@
         "membership": {
           "id": "vip-demo-minh-2026-07",
           "userId": "demo-minh",
+          "discountRuleId": "discount-vip-10",
           "qualifyingPeriod": "2026-07",
           "qualifyingOrderIds": [
             "o1784206566598"
@@ -8497,25 +8508,26 @@
           "expiresAt": 1786798908261,
           "status": "active",
           "createdAt": 1784206908261,
-          "updatedAt": 1785327528660
+          "updatedAt": 1786081029291
         },
         "startedAt": 1784206908261,
         "expiresAt": 1786798908261,
-        "daysRemaining": 18,
+        "daysRemaining": 9,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
-          "spend": 11805000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
           "threshold": 5000000,
-          "remaining": 0,
-          "progressPercent": 100
+          "remaining": 5000000,
+          "progressPercent": 0
         },
         "benefit": {
           "available": true,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8540,19 +8552,20 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
-          "spend": 1290000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
           "threshold": 5000000,
-          "remaining": 3710000,
-          "progressPercent": 26
+          "remaining": 5000000,
+          "progressPercent": 0
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "stripeCustomerId": "cus_UxCr4ABzaY5DdI"
@@ -8578,19 +8591,20 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
-          "spend": 931000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
           "threshold": 5000000,
-          "remaining": 4069000,
-          "progressPercent": 19
+          "remaining": 5000000,
+          "progressPercent": 0
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       }
     },
@@ -8614,9 +8628,9 @@
         "expiresAt": null,
         "daysRemaining": 0,
         "currentMonth": {
-          "key": "2026-07",
-          "startsAt": 1782838800000,
-          "endsAt": 1785517200000,
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
           "spend": 0,
           "threshold": 5000000,
           "remaining": 5000000,
@@ -8624,9 +8638,10 @@
         },
         "benefit": {
           "available": false,
+          "discountRuleId": "discount-vip-10",
           "discountPercent": 10,
           "discountedUnitsPerOrder": 1,
-          "description": "Giảm 10% cho một đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
         }
       },
       "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
@@ -8724,6 +8739,12 @@
       "userId": "u-1784882707878-lypbq5",
       "productSlug": "yukata-xanh",
       "createdAt": 1784882748893
+    },
+    {
+      "id": "wish-1785640249329-hkhf",
+      "userId": "admin-1784883154949",
+      "productSlug": "kimono-hong",
+      "createdAt": 1785640249329
     }
   ],
   "notifications": [
@@ -8929,6 +8950,40 @@
       "action": "product:haori-dang-dai",
       "reach": 1,
       "at": 1785327528605
+    },
+    {
+      "id": "notif-1785640248417-y5ct6o",
+      "userId": "admin-1784883154949",
+      "title": "Đã thêm vào yêu thích",
+      "body": "Kimono truyền thống Hồng đang chờ bạn trong danh sách yêu thích.",
+      "type": "Yêu thích",
+      "action": "product:kimono-hong",
+      "reach": 1,
+      "at": 1785640248417
+    },
+    {
+      "id": "notif-1785896243218-glu31c",
+      "userId": null,
+      "title": "8/5",
+      "body": "hôm nay báo cáo",
+      "type": "Hệ thống",
+      "reach": 14,
+      "at": 1785896243218
+    }
+  ],
+  "discountRules": [
+    {
+      "id": "discount-vip-10",
+      "code": "JAPANO-VIP10",
+      "name": "Thành viên VIP giảm 10%",
+      "scope": "vip",
+      "type": "percent",
+      "value": 10,
+      "maxUnitsPerOrder": 1,
+      "qualificationType": "monthly_spend",
+      "qualificationValue": 5000000,
+      "validityDays": 30,
+      "active": true
     }
   ],
   "vouchers": [
@@ -9350,6 +9405,7 @@
     {
       "id": "vip-demo-minh-2026-07",
       "userId": "demo-minh",
+      "discountRuleId": "discount-vip-10",
       "qualifyingPeriod": "2026-07",
       "qualifyingOrderIds": [
         "o1784206566598"
@@ -9362,7 +9418,7 @@
       "expiresAt": 1786798908261,
       "status": "active",
       "createdAt": 1784206908261,
-      "updatedAt": 1785327528660
+      "updatedAt": 1786081029291
     }
   ],
   "flagcardConfig": {
@@ -13304,6 +13360,313 @@
         "intent": "lookup",
         "generatedByBot": true
       }
+    },
+    {
+      "id": "i17855962817627rohm",
+      "userId": "admin-1784883154949",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785596281762,
+      "source": "mobile"
+    },
+    {
+      "id": "i17855963209905zv1o",
+      "userId": "admin-1784883154949",
+      "productId": "cardigan-dai",
+      "type": "cart",
+      "value": 1,
+      "metadata": {
+        "color": "Sumi",
+        "size": "S"
+      },
+      "createdAt": 1785596320990,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785597105607kfjol",
+      "userId": "admin-1784883154949",
+      "productId": "cardigan-dai",
+      "type": "cart",
+      "value": 0,
+      "metadata": {
+        "color": "Sumi",
+        "size": "S"
+      },
+      "createdAt": 1785597105607,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785597115638vjtqn",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785597115638,
+      "source": "mobile"
+    },
+    {
+      "id": "i178559838905721k60",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598389057,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598399253rkipu",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598399253,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598410515nwuaz",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598410515,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598444621krtp4",
+      "userId": "admin-1784883154949",
+      "productId": "blazer-kaki",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598444621,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598468795lhzrw",
+      "userId": "admin-1784883154949",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598468795,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598648538yfrpl",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598648538,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598660512p454l",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598660512,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785598672441boat6",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785598672441,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785638099321iwd20",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785638099321,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785638830344",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785638830344,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785639029923",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785639029923,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785639169742nw59m",
+      "userId": "admin-1784883154949",
+      "productId": "dong-phuc-thuy-thu",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785639169742,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785639215200",
+      "userId": "demo-minh",
+      "productId": "dong-phuc-thuy-thu",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785639215200,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785639325018",
+      "userId": "demo-minh",
+      "productId": "dong-phuc-thuy-thu",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785639325018,
+      "source": "mobile"
+    },
+    {
+      "id": "i17856402437214oy8d",
+      "userId": "admin-1784883154949",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785640243721,
+      "source": "mobile"
+    },
+    {
+      "id": "i17856402444250bec6",
+      "userId": "admin-1784883154949",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785640244425,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785640248417ed5x5",
+      "userId": "admin-1784883154949",
+      "productId": "kimono-hong",
+      "type": "wishlist",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785640248417,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785849549937kxj58",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785849549937,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785849608536",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785849608536,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785849623783nh2gg",
+      "userId": "admin-1784883154949",
+      "productId": "cardigan-dai",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785849623783,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785849669669",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785849669669,
+      "source": "mobile"
+    },
+    {
+      "id": "i1785895568186l7yhm",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1785895568186,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1785895618614",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1785895618614,
+      "source": "mobile"
+    },
+    {
+      "id": "i17860618128997qzq2",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1786061812899,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1786061877676",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1786061877676,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1786062057500",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1786062057500,
+      "source": "mobile"
+    },
+    {
+      "id": "i17860622734811ekn7",
+      "userId": "admin-1784883154949",
+      "productId": "yukata-xanh",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1786062273481,
+      "source": "mobile"
     }
   ],
   "searchLogs": [],
@@ -13405,7 +13768,7 @@
         "lễ hội"
       ],
       "heightCm": 165,
-      "updatedAt": 1784887344698,
+      "updatedAt": 1786061807442,
       "weightKg": 40
     },
     {
@@ -14332,6 +14695,78 @@
       "accessoryIds": [],
       "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
       "createdAt": 1785314068628
+    },
+    {
+      "id": "tryon-1785638830344",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+      "createdAt": 1785638830344
+    },
+    {
+      "id": "tryon-1785639029923",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785639029923
+    },
+    {
+      "id": "tryon-1785639215200",
+      "userId": "demo-minh",
+      "productId": "dong-phuc-thuy-thu",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785639215200
+    },
+    {
+      "id": "tryon-1785639325018",
+      "userId": "demo-minh",
+      "productId": "dong-phuc-thuy-thu",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785639325018
+    },
+    {
+      "id": "tryon-1785849608536",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785849608536
+    },
+    {
+      "id": "tryon-1785849669669",
+      "userId": "demo-minh",
+      "productId": "cardigan-dai",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785849669669
+    },
+    {
+      "id": "tryon-1785895618614",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1785895618614
+    },
+    {
+      "id": "tryon-1786061877676",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1786061877676
+    },
+    {
+      "id": "tryon-1786062057500",
+      "userId": "demo-minh",
+      "productId": "yukata-xanh",
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1786062057500
     }
   ],
   "goals": [
@@ -14714,7 +15149,7 @@
     },
     {
       "productId": "cardigan-dai",
-      "generatedAt": 1784950930293,
+      "generatedAt": 1785596354938,
       "description": {
         "headline": "Áo len khoác dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ",
         "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",

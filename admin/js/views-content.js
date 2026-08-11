@@ -79,6 +79,34 @@ function userDrawer(u){
   <div class="mf"><button class="btn ${u.status==='locked'?'p':'d'}" onclick="A.toggleLock('${u.id}',1)">${u.status==='locked'?'Mở khoá tài khoản':'Khoá tài khoản'}</button></div>`;}
 
 /* ================= KHÁM PHÁ NHẬT BẢN (đóng góp cộng đồng) ================= */
+// Mức thưởng lấy từ máy chủ (backend/lib/communityRewards.js); nếu chưa tải kịp
+// thì dùng tạm mặc định để giao diện không vỡ.
+function spotRewardConfig(){return SPOT_REWARD||{amount:50000,minOrder:300000,validityDays:60};}
+function suggestionCard(s){
+  const reward=s.reward||{status:'pending'};
+  const cls=reward.status==='approved'?'sugcard done':reward.status==='rejected'?'sugcard no':'sugcard';
+  const badgeHtml=reward.status==='approved'
+    ? `<span class="bdg b-green"><span class="d"></span>Đã thưởng ${money(reward.amount||0)}</span>`
+    : reward.status==='rejected'
+    ? '<span class="bdg b-red"><span class="d"></span>Không duyệt</span>'
+    : '<span class="bdg b-amber"><span class="d"></span>Chờ duyệt</span>';
+  const acts=reward.status==='pending'
+    ? `<button class="btn p sm" onclick="A.approveSpot('${esc(s.id)}')">✅ Duyệt &amp; trả thưởng</button><button class="btn d sm" onclick="A.rejectSpot('${esc(s.id)}')">Từ chối</button><button class="btn sm" onclick="A.delJapanSuggestion('${esc(s.id)}')">🗑️ Xoá</button>`
+    : `<button class="btn sm" onclick="A.delJapanSuggestion('${esc(s.id)}')">🗑️ Xoá</button>`;
+  return `<div class="${cls}">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        ${s.place?`<div class="bold" style="font-size:12.5px">📍 ${esc(s.place)}</div>`:''}
+        <div class="sugtext">${esc(s.suggestion)}</div>
+        <div class="faint" style="font-size:10.5px;margin-top:3px">${esc(s.userName||'Khách')} · <span class="mono">${esc(s.userId||'')}</span> · ${fmtDate(s.createdAt)}</div>
+        ${reward.voucherCode?`<div class="faint" style="font-size:10.5px;margin-top:3px">Mã đã gửi khách: <span class="mono bold">${esc(reward.voucherCode)}</span> · hạn ${esc(reward.expiry||'')}</div>`:''}
+        ${reward.status==='rejected'&&reward.note?`<div class="faint" style="font-size:10.5px;margin-top:3px">Lý do: ${esc(reward.note)}</div>`:''}
+      </div>
+      <div>${badgeHtml}</div>
+    </div>
+    <div class="sugacts">${acts}</div>
+  </div>`;
+}
 function viewJapan(){
   if(JAPAN_STATUS==='loading'||JAPAN_STATUS==='idle')return `<div class="panel"><div class="pb">${skRows(4)}</div></div>`;
   if(JAPAN_STATUS==='error')return errState();
@@ -86,6 +114,9 @@ function viewJapan(){
   const byPref={};sugs.forEach(s=>{(byPref[s.prefecture]=byPref[s.prefecture]||[]).push(s);});
   const stars=n=>'★'.repeat(Math.max(0,Math.min(5,n||0)))+'☆'.repeat(5-Math.max(0,Math.min(5,n||0)));
   const flag=st=>st==='pending'?'<span class="bdg b-amber" style="margin-left:6px"><span class="d"></span>Chờ kiểm duyệt</span>':'';
+  const rewardCfg=spotRewardConfig();
+  const pendingSugs=sugs.filter(s=>(s.reward?.status||'pending')==='pending').length;
+  const rewarded=sugs.filter(s=>s.reward?.status==='approved').length;
   return `<div class="grid" style="grid-template-columns:3fr 2fr;align-items:start;gap:14px">
     <div class="panel"><div class="ph"><h3>Đánh giá địa điểm</h3><span class="sub">${revs.length} đánh giá của khách</span></div>
       <div class="tablewrap"><table class="tbl"><thead><tr><th>Địa điểm</th><th>Khách</th><th class="center">Sao</th><th>Bình luận</th><th></th></tr></thead>
@@ -95,8 +126,11 @@ function viewJapan(){
         <td class="center" style="color:var(--kin,#C99A2E);white-space:nowrap">${stars(r.rating)}</td>
         <td style="max-width:260px"><div style="font-size:12px">${esc(r.comment||'')}</div>${r.media?`<div class="faint" style="font-size:10px">📎 ${esc(r.media.kind||'media')}</div>`:''}</td>
         <td class="right"><button class="btn d sm" onclick="A.delJapanReview('${esc(r.id)}')">Xoá</button></td></tr>`).join(''):emptyTR(5,'Chưa có đánh giá địa điểm nào.')}</tbody></table></div></div>
-    <div class="panel"><div class="ph"><h3>Gợi ý địa điểm mới cho hệ thống</h3><span class="sub">${sugs.length} gợi ý · nhóm theo tỉnh</span></div>
-      <div class="pb">${sugs.length?Object.keys(byPref).map(pref=>`<div style="margin-bottom:14px"><div class="bold" style="font-size:12.5px;margin-bottom:6px">🗾 ${esc(pref)} <span class="faint">(${byPref[pref].length})</span></div>${byPref[pref].map(s=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:9px 11px;border:1px solid var(--line2,#eee);border-radius:10px;margin-bottom:6px"><div><div style="font-size:12.5px">${esc(s.suggestion)}${flag(s.status)}</div><div class="faint" style="font-size:10.5px;margin-top:2px">${esc(s.userName||'Khách')} · ${fmtDate(s.createdAt)}</div></div><button class="btn d sm" onclick="A.delJapanSuggestion('${esc(s.id)}')">Xoá</button></div>`).join('')}</div>`).join(''):'<div class="faint" style="font-size:12px;padding:8px">Chưa có gợi ý nào từ khách.</div>'}</div></div>
+    <div class="panel"><div class="ph"><h3>Đóng góp địa điểm chụp ảnh mới</h3><span class="sub">${sugs.length} gợi ý · ${pendingSugs} chờ duyệt · đã thưởng ${rewarded}</span></div>
+      <div class="pb">
+        <div class="banner warn" style="margin-bottom:12px"><div class="bi">🎁</div><div><b>Duyệt là khách nhận thưởng ngay.</b> Mỗi gợi ý được duyệt sẽ tự phát một voucher giảm ${money(rewardCfg.amount)} cho đơn từ ${money(rewardCfg.minOrder)}, hạn ${rewardCfg.validityDays} ngày, chỉ khách đó dùng được và chỉ thưởng một lần cho mỗi gợi ý. Chỉ duyệt khi địa điểm có thật và mô tả đủ dùng.</div></div>
+        ${sugs.length?Object.keys(byPref).map(pref=>`<div style="margin-bottom:14px"><div class="bold" style="font-size:12.5px;margin-bottom:6px">🗾 ${esc(pref)} <span class="faint">(${byPref[pref].length})</span></div>${byPref[pref].map(suggestionCard).join('')}</div>`).join(''):'<div class="faint" style="font-size:12px;padding:8px">Chưa có gợi ý nào từ khách.</div>'}
+      </div></div>
   </div>
   <div class="banner ok" style="margin-top:12px"><div class="bi">🛡️</div><div>Mọi đánh giá &amp; gợi ý đều đã qua <b>bộ lọc kiểm duyệt AI</b> (chống lách từ nhạy cảm) trước khi vào đây. Nội dung vi phạm bị chặn ngay từ app.</div></div>`;
 }

@@ -1,7 +1,7 @@
 # ĐỀ CƯƠNG CHI TIẾT BÁO CÁO TỐT NGHIỆP
 ## Đề tài: Phát triển ứng dụng thương mại điện tử thời trang JAPANO Store
 
-**Căn cứ xây dựng đề cương:** cấu trúc chương/mục theo đúng khung của báo cáo mẫu (`baocao (2).docx`, Trường Cao đẳng FPT Polytechnic) — front-matter, số chương, tiêu đề chương và quy ước đánh số Bảng/Hình được giữ nguyên vì đây là yêu cầu định dạng của trường. **Toàn bộ nội dung kỹ thuật của đề cương này được xây dựng lại từ 10 tệp bằng chứng trong `thesis/evidence/`, không kế thừa nội dung kỹ thuật của báo cáo mẫu** vì báo cáo mẫu chứa nhiều chi tiết sai lệch so với mã nguồn thật (xem `thesis/evidence/missing-information.md`, mục 1). Một số mục con được thêm mới hoặc đổi tên so với báo cáo mẫu để phản ánh đúng bằng chứng thật đang có (ví dụ: bổ sung hẳn một mục "Kiểm thử tự động" ở Chương 6 vì hệ thống có 46 test case tự động thật; đổi "Tài khoản admin mặc định" ở mục 5.5 vì báo cáo mẫu ghi tài khoản/mật khẩu không có thật trong mã nguồn).
+**Căn cứ xây dựng đề cương:** cấu trúc chương/mục theo đúng khung của báo cáo mẫu (`baocao (2).docx`, Trường Cao đẳng FPT Polytechnic) — front-matter, số chương, tiêu đề chương và quy ước đánh số Bảng/Hình được giữ nguyên vì đây là yêu cầu định dạng của trường. **Toàn bộ nội dung kỹ thuật của đề cương này được xây dựng lại từ 10 tệp bằng chứng trong `thesis/evidence/`, không kế thừa nội dung kỹ thuật của báo cáo mẫu** vì báo cáo mẫu chứa nhiều chi tiết sai lệch so với mã nguồn thật (xem `thesis/evidence/missing-information.md`, mục 1). Một số mục con được thêm mới hoặc đổi tên so với báo cáo mẫu để phản ánh đúng bằng chứng thật đang có (ví dụ: bổ sung hẳn một mục "Kiểm thử tự động" ở Chương 6 vì hệ thống có 50 test case tự động thật; đổi "Tài khoản admin mặc định" ở mục 5.5 vì báo cáo mẫu ghi tài khoản/mật khẩu không có thật trong mã nguồn).
 
 **Quy ước sử dụng đề cương này:** mỗi mục có 7 trường — Mục đích, Luận điểm chính, Bằng chứng cần dùng (trỏ đến tệp:mục trong `thesis/evidence/`), Hình/sơ đồ cần có, Bảng cần có, Số trang ước tính, Thông tin còn thiếu. Số trang ước tính dựa trên mật độ nội dung thật đang có trong evidence pack, không phải số trang mong muốn — nơi nào bằng chứng mỏng thì số trang ước tính cũng thấp, thay vì độn chữ cho đủ dài.
 
@@ -172,7 +172,7 @@
 - **Luận điểm chính:** trình bày cây thư mục thật (`admin/`, `backend/{routes,lib,data}`, `mobile/{app,lib,components}`) — **không dùng** các đường dẫn sai của báo cáo mẫu (`app/_layout.tsx` không có tiền tố `mobile/`, `context/AppContext.tsx`, `server/index.mjs`, `data/catalog.ts`).
 - **Bằng chứng cần dùng:** `architecture.md`; `api-inventory.md`; `feature-inventory.md` (cột "Mobile entry point").
 - **Hình/sơ đồ:** 1 cây thư mục (text tree, có thể lấy gần nguyên bản từ `README.md`'s "Cấu trúc thư mục", đã kiểm chứng khớp thật).
-- **Bảng:** 1 bảng "Thư mục/Tệp chính – Chức năng" (chọn ra khoảng 15–20 file/thư mục quan trọng nhất từ 17 route file + 34 lib file + các thư mục mobile, không cần liệt kê hết 51 file backend).
+- **Bảng:** 1 bảng "Thư mục/Tệp chính – Chức năng" (chọn ra khoảng 15–20 file/thư mục quan trọng nhất từ 17 route file + 36 lib file + các thư mục mobile, không cần liệt kê hết 53 file backend).
 - **Số trang ước tính:** 2–3 trang.
 - **Thông tin còn thiếu:** không.
 
@@ -196,10 +196,10 @@
 
 ### 5.4. API và xử lý dữ liệu
 - **Mục đích:** trình bày danh sách API như bằng chứng kỹ thuật cốt lõi của chương Thực hiện.
-- **Luận điểm chính:** hệ thống có 109 endpoint thật trên 17 route file — không liệt kê hết 109 endpoint trong thân bài (đưa bảng đầy đủ vào phụ lục nếu cần), thân bài chỉ trình bày theo nhóm nghiệp vụ (Auth, Catalog, Cart/Wishlist/Orders, Checkout/Stripe/VNPay, AI, Admin) kèm 1–2 endpoint tiêu biểu mỗi nhóm và giải thích cơ chế dùng chung logic (ví dụ: COD/Stripe/VNPay đều gọi chung `makeCreateOrderInState`).
+- **Luận điểm chính:** hệ thống có 111 endpoint thật trên 17 route file — không liệt kê hết 111 endpoint trong thân bài (bảng đầy đủ đã đưa vào Phụ lục A), thân bài chỉ trình bày theo nhóm nghiệp vụ (Auth, Catalog, Cart/Wishlist/Orders, Checkout/Stripe/VNPay, AI, Admin) kèm 1–2 endpoint tiêu biểu mỗi nhóm và giải thích cơ chế dùng chung logic (ví dụ: COD/Stripe/VNPay đều gọi chung `makeCreateOrderInState`). Thân bài cũng phải nêu trung thực rằng 45/111 endpoint chưa gắn middleware xác thực.
 - **Bằng chứng cần dùng:** `api-inventory.md` (toàn bộ — đây là bằng chứng nguồn chính của mục này).
 - **Hình/sơ đồ:** 1 sơ đồ minh hoạ pattern dependency-injection `ctx` (route → ctx → store/Cloudinary/Stripe/VNPay).
-- **Bảng:** bảng rút gọn theo nhóm API (giống bảng 5.3 trong báo cáo mẫu về hình thức, nhưng nội dung/endpoint lấy đúng từ `api-inventory.md`); bảng đầy đủ 109 endpoint đưa vào phụ lục.
+- **Bảng:** bảng rút gọn theo nhóm API (giống bảng 5.3 trong báo cáo mẫu về hình thức, nhưng nội dung/endpoint lấy đúng từ mã nguồn thật); bảng đầy đủ 111 endpoint đã đưa vào Phụ lục A.
 - **Số trang ước tính:** 5–6 trang (thân bài) + phụ lục riêng cho bảng đầy đủ.
 - **Thông tin còn thiếu:** không.
 
@@ -218,10 +218,10 @@
 
 ### 6.1. Kiểm thử tự động (đề xuất bổ sung mới so với báo cáo mẫu)
 - **Mục đích:** trình bày bằng chứng kiểm thử **mạnh nhất và đáng tin cậy nhất** của toàn bộ dự án — nên đặt lên đầu chương thay vì chỉ có test case thủ công như báo cáo mẫu.
-- **Luận điểm chính:** hệ thống có 46 test case tự động thật, chạy bằng `node --test` (không cần Jest/Mocha), **46/46 pass**, bao phủ: VIP/loyalty (7 case), embeddings (4), tạo đơn hàng/tồn kho/chống trùng đơn (7), try-on pure-function (8), recommendation/analytics/moderation/goals (20). Nêu rõ cách chạy (`npm --workspace backend test` / `npm run check`) để người chấm có thể tự kiểm chứng lại.
+- **Luận điểm chính:** hệ thống có 50 test case tự động thật, chạy bằng `node --test` (không cần Jest/Mocha), **50/50 pass**, bao phủ: VIP/loyalty (7 case), embeddings (4), tạo đơn hàng/tồn kho/chống trùng đơn (7), try-on pure-function (8), hàng đợi/ưu tiên GPU (3), recommendation/analytics/moderation/goals/Flagcard (21). Nêu rõ cách chạy (`npm --workspace backend test` / `npm run check`) để người chấm có thể tự kiểm chứng lại.
 - **Bằng chứng cần dùng:** `testing-evidence.md` (toàn bộ, đặc biệt mục 1 và 3 — số liệu thật copy từ kết quả chạy lệnh, không phải số ước tính).
-- **Hình/sơ đồ:** 1 ảnh chụp màn hình terminal kết quả chạy `npm --workspace backend test` thật (khuyến khích chụp mới để có bằng chứng trực quan, số liệu `46 pass / 0 fail` đã có sẵn trong evidence pack nếu không kịp chụp lại).
-- **Bảng:** 1 bảng liệt kê 5 tệp test (Tệp | Module kiểm thử | Số test case).
+- **Hình/sơ đồ:** 1 ảnh chụp màn hình terminal kết quả chạy `npm --workspace backend test` thật (khuyến khích chụp mới để có bằng chứng trực quan, số liệu `50 pass / 0 fail` đã được xác minh lại nếu không kịp chụp).
+- **Bảng:** 1 bảng liệt kê 6 tệp test (Tệp | Module kiểm thử | Số test case).
 - **Số trang ước tính:** 3–4 trang.
 - **Thông tin còn thiếu:** không — đây là mục có bằng chứng đầy đủ nhất trong toàn báo cáo.
 
@@ -307,7 +307,7 @@
 
 ### 8.2. Đánh giá ưu điểm và hạn chế (đề xuất bổ sung mới)
 - **Mục đích:** một mục đánh giá trung thực, tách bạch khỏi phần "Kết luận" mang tính tổng kết — đây là mục có giá trị học thuật cao vì thể hiện khả năng tự đánh giá của nhóm, phù hợp tinh thần "không được thổi phồng" của toàn bộ yêu cầu ban đầu.
-- **Luận điểm chính:** liệt kê song song 2 cột — Ưu điểm thật (ví dụ: kiến trúc dependency-injection nhất quán, xác thực JWT/RBAC thật, kiểm thử tự động 46/46, thanh toán có xác thực chữ ký/webhook thật, AI có cơ chế fallback không bịa kết quả) và Hạn chế thật (phân quyền chưa nhất quán ở 5 route, CSP tắt, CORS mở, chưa có CI/CD, form hồ sơ cá nhân chưa lưu được, chưa phục hồi tồn kho khi đơn online thất bại).
+- **Luận điểm chính:** liệt kê song song 2 cột — Ưu điểm thật (ví dụ: kiến trúc dependency-injection nhất quán, xác thực JWT/RBAC thật, kiểm thử tự động 50/50, thanh toán có xác thực chữ ký/webhook thật, AI có cơ chế fallback không bịa kết quả) và Hạn chế thật (45/111 endpoint chưa gắn middleware xác thực, CSP tắt, CORS mở, chưa có CI/CD, form hồ sơ cá nhân chưa lưu được, chưa phục hồi tồn kho khi đơn online thất bại).
 - **Bằng chứng cần dùng:** `missing-information.md` mục 4 (danh sách hạn chế đã tổng hợp sẵn); `security-analysis.md` mục "Summary".
 - **Hình/sơ đồ:** không bắt buộc.
 - **Bảng:** 1 bảng 2 cột "Ưu điểm – Hạn chế", mỗi dòng kèm trích dẫn vị trí mã nguồn.
@@ -325,13 +325,27 @@
 
 ---
 
-## PHỤ LỤC (đề xuất, không bắt buộc theo khung 8 chương)
+## PHỤ LỤC (đã viết — xem `thesis/appendices/`)
 
-| Phụ lục | Nội dung | Nguồn |
+| Phụ lục | Nội dung | Tệp |
 |---|---|---|
-| A | Bảng đầy đủ 109 endpoint API | `api-inventory.md` |
-| B | Bảng đầy đủ 34 file `backend/lib/` | `api-inventory.md` (báo cáo agent gốc) |
-| C | Toàn văn `missing-information.md` (rút gọn) | trình bày như "Ghi chú về phạm vi và độ tin cậy của báo cáo" — nên đưa gần đầu báo cáo hoặc phụ lục đầu tiên để người chấm hiểu ngay phương pháp luận trước khi đọc nội dung kỹ thuật |
+| A | Bảng đầy đủ 111 endpoint API, kèm middleware bảo vệ, số dòng mã nguồn và cảnh báo phân quyền | `appendices/phu-luc-a-api-endpoints.md` |
+| B | Bảng đầy đủ 36 file `backend/lib/`, kèm vai trò và quan hệ phụ thuộc | `appendices/phu-luc-b-backend-lib.md` |
+| C | "Ghi chú về phạm vi và độ tin cậy của báo cáo" — phương pháp luận, các điểm báo cáo mẫu sai đã sửa, thông tin còn thiếu, hạn chế đã biết. **Nên đưa lên trước Chương 1** để người chấm hiểu ngay phương pháp luận trước khi đọc nội dung kỹ thuật | `appendices/phu-luc-c-ghi-chu-pham-vi.md` |
+
+---
+
+## FRONT-MATTER (đã viết — xem `thesis/front-matter/`)
+
+| Tệp | Nội dung | Cần nhóm điền |
+|---|---|---|
+| `00-trang-bia.md` | Trang bìa | Toàn bộ thông tin hành chính |
+| `01-loi-cam-on.md` | Lời cảm ơn | Tên GVHD, ngày tháng, địa điểm |
+| `02-loi-mo-dau.md` | Lời mở đầu | Không |
+| `03-muc-luc.md` | Mục lục đầy đủ tới cấp mục con | Số trang (tự sinh khi xuất Word) |
+| `04-danh-muc-hinh.md` | Danh mục hình — hiện chỉ 3 hình có đánh số | Bổ sung hình còn thiếu rồi cập nhật danh mục |
+| `05-danh-muc-bang.md` | Danh mục 23 bảng | Số trang |
+| `06-danh-muc-tu-viet-tat.md` | Danh mục từ viết tắt, chia 2 phần: thuật ngữ đã dùng trong thân bài và thuật ngữ chỉ có trong mã nguồn | Quyết định giữ hay bỏ phần B |
 
 ---
 

@@ -93,11 +93,22 @@ def target_transform(crop, x, y):
 def fallback_pose():
     return {
         'box': [150, 50, 620, 1000],
-    'keypoints': {},
-        'confidence': 0,S
+        'keypoints': {},
+        'confidence': 0,
+        'fallback': True,
+        'otherBoxes': [],
+        'otherConfidences': [],
+        'personCount': 0,
+        'inferredKeypoints': [],
+        'garmentRegion': {
             'ok': False,
             'reason': 'no_person',
             'message': 'Chưa nhận rõ người chính trong ảnh. Hãy dùng ảnh sáng hơn và để người chiếm phần lớn khung hình.',
+        },
+        'poseSuitability': {
+            'requiresRepose': True,
+            'score': 0,
+            'reasons': ['no_person'],
         },
     }
 

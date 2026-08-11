@@ -12,7 +12,7 @@ Two Word documents exist at the repo root: `baocao (2).docx` and `baocao (2).bac
 
 | Claim in the draft | Verified reality |
 |---|---|
-| Backend is one file, `server/index.mjs` | Real backend is `backend/server.js` (326 lines) + 17 files under `backend/routes/` + 34 files under `backend/lib/` (`api-inventory.md`) |
+| Backend is one file, `server/index.mjs` | Real backend is `backend/server.js` (326 lines) + 17 files under `backend/routes/` + 36 files under `backend/lib/` (`api-inventory.md`; recount 2026-08 — was 34 before `gpuArbiter.js` and `gpuJobQueue.js` were added) |
 | MongoDB + Mongoose is the database, with normalized collections (Users, Products, ProductVariants, Cart, Orders, OrderItems, Payments, etc.) | Primary store is a JSON file, `backend/data/db.json`; MongoDB, if configured, mirrors the *entire* state as one document; zero `mongoose` usage anywhere in the repo (`database-analysis.md`) |
 | Default port 4000 | Default port is 4100 (`backend/server.js:48`) |
 | Mobile paths `app/_layout.tsx`, `context/AppContext.tsx`, `data/catalog.ts` (implying a different, un-prefixed structure) | Real paths are `mobile/app/_layout.tsx`, and there is no `AppContext.tsx` — state is split across `mobile/lib/auth.tsx`, `store.tsx`, `data.tsx`, `shop.tsx`, `botchat.tsx`; catalog data is `mobile/lib/catalog.ts` |

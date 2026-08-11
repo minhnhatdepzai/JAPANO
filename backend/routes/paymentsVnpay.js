@@ -11,7 +11,7 @@ const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { makeCreateOrderInState } = require('./orders');
 
 function makeVnpayHelpers(ctx) {
-  const { read, update, httpError, reconcileFlagRewards } = ctx;
+  const { read, update, httpError, reconcileFlagRewards, reconcileGoalRewards, pushNotification, sendPaymentReceipt } = ctx;
 
   // Đối soát dùng chung cho cả app tự bắt returnUrl trong WebView lẫn IPN thật.
   // Trả {code} thay vì ném lỗi để mỗi endpoint tự dịch sang định dạng riêng.
@@ -57,6 +57,7 @@ function makeVnpayHelpers(ctx) {
           order.history.push({ s: 'paid', at: now, txn: txnRef });
         }
         reconcileFlagRewards(state);
+        if (reconcileGoalRewards) reconcileGoalRewards(state, now, pushNotification);
         outcome = { code: 'success', order, payment };
       } else {
         payment.status = responseCode === '24' ? 'cancelled' : 'failed';
@@ -69,6 +70,11 @@ function makeVnpayHelpers(ctx) {
       }
       return state;
     });
+    // Biên nhận chỉ gửi ở nhánh 'success'; nhánh 'already_done' ở trên đã chặn
+    // lượt gọi lặp (VNPay gọi cả return URL lẫn IPN cho cùng một giao dịch).
+    if (outcome.code === 'success' && sendPaymentReceipt) {
+      void sendPaymentReceipt(outcome.order.userId, { order: outcome.order, payment: outcome.payment });
+    }
     return outcome;
   }
 

@@ -8,7 +8,7 @@ import { Product } from '../lib/catalog';
 import { useStore } from '../lib/store';
 import { SmartImage } from './SmartImage';
 
-export const Heart = ({ slug }:{ slug:string }) => {
+export const Heart = React.memo(({ slug }:{ slug:string }) => {
   const { isWished, toggleWish } = useStore();
   const on = isWished(slug);
   return (
@@ -16,9 +16,13 @@ export const Heart = ({ slug }:{ slug:string }) => {
       <Ionicons name={on?'heart':'heart-outline'} size={16} color={C.shu} />
     </Pressable>
   );
-};
+});
+Heart.displayName = 'Heart';
 
-export const ProductCard = ({ p, width=150, reason, imgH=180 }:
+// memo hoá: lưới sản phẩm dựng lại toàn bộ thẻ mỗi lần màn hình cha vẽ lại —
+// rõ nhất là khi gõ ô tìm kiếm (mỗi ký tự là một lần setState của cha). Props
+// đều là giá trị nguyên thuỷ hoặc object sản phẩm ổn định nên so sánh nông đủ.
+export const ProductCard = React.memo(({ p, width=150, reason, imgH=180 }:
   { p:Product; width?:number; reason?:string; imgH?:number }) => {
   const router = useRouter();
   return (
@@ -32,7 +36,8 @@ export const ProductCard = ({ p, width=150, reason, imgH=180 }:
       {!!reason && <Text style={st.reason}>{reason}</Text>}
     </Pressable>
   );
-};
+});
+ProductCard.displayName = 'ProductCard';
 
 const st = StyleSheet.create({
   tile:{ borderRadius:14, overflow:'hidden', backgroundColor:C.washi2, position:'relative', borderWidth:1.5, borderColor:C.blue },

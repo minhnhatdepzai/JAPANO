@@ -4,6 +4,10 @@
 const { fetchWithTimeout, serviceHealth } = require('../lib/httpFetch');
 const { CATVTON_URL, FASHN_URL, MOTION_URL, AI_GATEWAY_URL, OLLAMA_URL, EMBEDDING_URL } = require('../lib/serviceUrls');
 const { setFocus, getFocus } = require('../lib/gpuArbiter');
+const { pushNotification } = require('../lib/notify');
+const {
+  GOAL_FUND_CONFIG, ensureGoalFund, fundView, addDeposit, removeDeposit, ensureGoalRewardVoucher,
+} = require('../lib/goalFund');
 
 // map 4 lựa chọn phong cách của app sang đúng từ vựng tag đang có trong catalog (backend/seed.js) để content-based match được
 const STYLE_LABELS = {
@@ -16,7 +20,7 @@ const styleTags = (style) => STYLE_LABELS[style] || [style];
 
 module.exports = function registerStylistRoutes(api, ctx) {
   const {
-    read, update, tryonGpuBusy,
+    read, update, tryonGpuBusy, httpError, requireAuth, requireSelfOrStaff, roleAtLeast, sendPushToUser,
     getHomeRecommendations, getRecommendationDiagnostics, runPillow, analyzePortrait, buildGoalPlan, enhanceCoaching,
     composeOutfit, todaysOutfit, adviseSize, styleRecommendation, chatbot,
   } = ctx;
@@ -145,31 +149,52 @@ module.exports = function registerStylistRoutes(api, ctx) {
     ctx.write(s);
     return merged;
   }
-  api.post('/stylist/profile', (req, res) => {
+  // Hồ sơ phong cách chứa chiều cao/cân nặng/size — dữ liệu cá nhân, nên phải
+  // là chính chủ (hoặc nhân viên hỗ trợ) mới đọc/ghi được.
+  api.post('/stylist/profile', requireSelfOrStaff((req) => req.body?.userId), (req, res) => {
     const b = req.body || {};
-    if (!b.userId) return res.status(400).json({ error: 'thiếu userId' });
     res.json({ ok: true, profile: saveStylistProfile(b.userId, b.profile || {}) });
   });
   // alias dạng /stylist/profile/:userId với body là hồ sơ trực tiếp (không bọc trong {profile})
-  api.post('/stylist/profile/:userId', (req, res) => {
+  api.post('/stylist/profile/:userId', requireSelfOrStaff((req) => req.params.userId), (req, res) => {
     res.json({ ok: true, profile: saveStylistProfile(req.params.userId, req.body || {}) });
   });
-  api.get('/stylist/profile/:userId', (req, res) => {
+  api.get('/stylist/profile/:userId', requireSelfOrStaff((req) => req.params.userId), (req, res) => {
     const profile = read().profiles.find((row) => row.userId === String(req.params.userId));
     res.json({ ok: true, profile: profile || null });
   });
 
   // Mục tiêu mua sắm + sức khoẻ: thuật toán tài chính quyết định con số,
-  // LLM chỉ diễn đạt coach hành vi trong hàng rào an toàn.
-  api.get('/goals/:userId', (req, res) => {
+  // LLM chỉ diễn đạt coach hành vi trong hàng rào an toàn. Mỗi mục tiêu mua sắm
+  // còn có một QUỸ TÍCH LUỸ (lib/goalFund.js) để khách nạp dần cho tới khi đủ
+  // tiền — đủ quỹ thì được thưởng voucher giảm giá cá nhân.
+  const goalWithFund = (goal) => ({ ...goal, fund: goal.fund ? fundView(goal) : null });
+
+  function findOwnGoal(state, goalId, user) {
+    const goal = (state.goals || []).find((item) => String(item.id) === String(goalId));
+    if (!goal) throw httpError(404, 'Không tìm thấy mục tiêu.');
+    if (String(goal.userId) !== String(user.id) && !roleAtLeast(user.role, 'admin')) {
+      throw httpError(403, 'Bạn không có quyền thao tác với mục tiêu này.');
+    }
+    return goal;
+  }
+
+  // Mục tiêu chứa thu nhập/chi tiêu cá nhân nên chỉ chính chủ (hoặc admin) xem được.
+  api.get('/goals/:userId', requireAuth, (req, res) => {
+    const target = String(req.params.userId);
+    if (target !== String(req.user.id) && !roleAtLeast(req.user.role, 'admin')) {
+      return res.status(403).json({ ok: false, message: 'Bạn chỉ xem được mục tiêu của chính mình.' });
+    }
     const goals = (read().goals || [])
-      .filter((goal) => goal.userId === String(req.params.userId))
+      .filter((goal) => goal.userId === target)
       .sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
-    res.json({ ok: true, goals });
+    res.json({ ok: true, fundConfig: GOAL_FUND_CONFIG, goals: goals.map(goalWithFund) });
   });
-  api.post('/goals/plan', async (req, res) => {
+  api.post('/goals/plan', requireAuth, async (req, res) => {
     const input = req.body || {};
-    const userId = String(input.userId || 'guest');
+    // userId luôn lấy từ phiên đăng nhập: quỹ tích luỹ và voucher thưởng gắn với
+    // đúng một tài khoản, không thể tạo mục tiêu "giả danh" người khác.
+    const userId = String(req.user.id);
     const state = read();
     const requestedId = String(input.productId || '');
     const product = state.products.find((item) => item.slug === requestedId || item.id === requestedId);
@@ -207,12 +232,80 @@ module.exports = function registerStylistRoutes(api, ctx) {
     };
     update((next) => {
       const index = next.goals.findIndex((item) => item.id === goal.id);
-      if (index >= 0) goal.createdAt = next.goals[index].createdAt || now;
-      if (index >= 0) next.goals[index] = goal; else next.goals.push(goal);
+      if (index >= 0) {
+        goal.createdAt = next.goals[index].createdAt || now;
+        // Lập lại kế hoạch KHÔNG được xoá quỹ đã tích: tiền khách đã bỏ vào và
+        // voucher đã thưởng phải đi theo mục tiêu suốt vòng đời của nó.
+        goal.fund = next.goals[index].fund || null;
+        next.goals[index] = goal;
+      } else {
+        next.goals.push(goal);
+      }
+      ensureGoalFund(goal, product.price, now);
+      // Số "đã tiết kiệm" khách khai lúc lập kế hoạch được ghi thành khoản đầu
+      // tiên của quỹ, để tiến độ trên màn hình và sổ tích luỹ luôn là một.
+      const openingBalance = Math.max(0, Number(input.currentSavings) || 0);
+      if (index < 0 && openingBalance > 0) {
+        goal.fund.deposits.push({ id: `dep-${now}-open`, amount: openingBalance, note: 'Số dư bạn đã tiết kiệm trước đó', at: now });
+        ensureGoalFund(goal, product.price, now);
+        if (goal.fund.status !== 'saving') ensureGoalRewardVoucher(next, goal, now);
+      }
       next.interactions.push({ id: `goal-i-${now}`, userId, productId: product.slug, type: 'goal', value: 1, createdAt: now, source: 'mobile' });
       return next;
     });
-    res.json({ ok: true, goal });
+    res.json({ ok: true, goal: goalWithFund(goal), fundConfig: GOAL_FUND_CONFIG });
+  });
+
+  // ---- Quỹ tích luỹ: nạp / gỡ khoản ghi nhầm -------------------------------
+  // Đây là SỔ THEO DÕI, không phải ví: JAPANO không giữ tiền của khách. Mỗi
+  // khoản chỉ là một dòng ghi nhận để biết khi nào đã đủ tiền mua món đã chọn.
+  api.post('/goals/:id/deposits', requireAuth, (req, res) => {
+    try {
+      let payload = null;
+      update((state) => {
+        const goal = findOwnGoal(state, req.params.id, req.user);
+        const now = Date.now();
+        const result = addDeposit(state, goal, { amount: req.body?.amount, note: req.body?.note }, now);
+        goal.updatedAt = now;
+        if (result.justCompleted && result.voucher) {
+          pushNotification(state, {
+            userId: goal.userId,
+            title: '🎉 Bạn đã tích đủ quỹ mục tiêu!',
+            body: `Quỹ cho "${goal.product?.name || goal.productId}" đã đủ ${Number(goal.fund.target).toLocaleString('vi-VN')}₫. Nhận ngay mã ${result.voucher.code} giảm ${result.voucher.value}% khi mua món này.`,
+            type: 'Khuyến mãi',
+            action: 'goals',
+          });
+        }
+        payload = { goal: goalWithFund(goal), justCompleted: result.justCompleted, rewardVoucher: result.voucher || null };
+        return state;
+      });
+      res.json({ ok: true, ...payload });
+      if (payload.justCompleted && payload.rewardVoucher) {
+        void sendPushToUser(payload.goal.userId, {
+          title: 'Đã tích đủ quỹ mục tiêu 🎉',
+          body: `Nhận mã ${payload.rewardVoucher.code} giảm ${payload.rewardVoucher.value}%.`,
+          data: { type: 'goal-reward' },
+        });
+      }
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không ghi nhận được khoản tích luỹ.' });
+    }
+  });
+
+  api.delete('/goals/:id/deposits/:depositId', requireAuth, (req, res) => {
+    try {
+      let payload = null;
+      update((state) => {
+        const goal = findOwnGoal(state, req.params.id, req.user);
+        removeDeposit(state, goal, req.params.depositId);
+        goal.updatedAt = Date.now();
+        payload = { goal: goalWithFund(goal) };
+        return state;
+      });
+      res.json({ ok: true, ...payload });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không gỡ được khoản tích luỹ.' });
+    }
   });
 
   // ghép đồ AI: set hôm nay (đổi mỗi ngày) và set phối quanh 1 sản phẩm cụ thể

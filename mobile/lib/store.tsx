@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PRODUCTS, getVariantStock, isOutOfStock } from './catalog';
+import { PRODUCTS, getVariantStock, isOutOfStock, variantPrice } from './catalog';
 import { trackInteraction, syncCart, getWishlist, syncWishlist, AppliedVoucher } from './api';
 import { emitBotEvent } from './botEvents';
 import { useAuth } from './auth';
+import { ToastKind, useToast } from './toast';
 
 export type CartItem = { slug:string; color:string; size:string; qty:number };
 
@@ -20,7 +20,7 @@ type Store = {
   decQty: (i:number)=>void;
   removeCart: (i:number)=>void;
   clearCart: ()=>void;
-  showToast: (msg:string)=>void;
+  showToast: (msg:string, kind?:ToastKind)=>void;
   voucher: AppliedVoucher|null;
   setVoucher: (v:AppliedVoucher|null)=>void;
   clearVoucher: ()=>void;
@@ -35,7 +35,13 @@ export const useStore = () => {
   return v;
 };
 
-const priceOf = (slug:string)=> PRODUCTS.find(p=>p.slug===slug)?.price || 0;
+// Giá của một DÒNG giỏ hàng phải theo đúng màu+size đã chọn, không phải giá
+// chung của sản phẩm — nếu không, khách thấy tổng tiền một đằng còn máy chủ
+// tính một nẻo lúc đặt hàng (routes/orders.js tự tính lại theo biến thể).
+const lineUnitPrice = (item:CartItem)=>{
+  const product = PRODUCTS.find(p=>p.slug===item.slug);
+  return product ? variantPrice(product, item.color, item.size) : 0;
+};
 const fireInteraction = (userId:string, type:'wishlist'|'cart', item:CartItem | { slug:string; qty:number }, metadata:Record<string, unknown> = {}) => {
   void trackInteraction({ userId, type, productId:item.slug, value:item.qty, metadata }).catch(()=>undefined);
 };
@@ -48,9 +54,9 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
   const clearVoucher = useCallback(()=>setVoucher(null),[]);
   const clearCart = useCallback(()=>{setCart([]);setVoucher(null);},[]);
   const [hydrated, setHydrated] = useState(false);
-  const [toast, setToast] = useState<string|null>(null);
-  const fade = useRef(new Animated.Value(0)).current;
-  const timer = useRef<ReturnType<typeof setTimeout>|null>(null);
+  // Một hệ thống thanh thông báo duy nhất cho toàn app (lib/toast.tsx) — trước
+  // đây giỏ hàng tự vẽ toast riêng nên các màn hình khác không dùng lại được.
+  const { toast } = useToast();
 
   useEffect(()=>{
     let live=true;
@@ -88,16 +94,11 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     return()=>clearTimeout(timer);
   },[wish,cart,hydrated,user]);
 
-  const showToast = useCallback((msg:string)=>{
-    setToast(msg);
-    Animated.timing(fade,{ toValue:1, duration:180, useNativeDriver:true }).start();
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(()=>{
-      Animated.timing(fade,{ toValue:0, duration:220, useNativeDriver:true }).start(()=>setToast(null));
-    }, 1600);
-  },[fade]);
-
-  useEffect(()=>()=>{ if (timer.current) clearTimeout(timer.current); },[]);
+  // Loại thông báo do NƠI GỌI quyết định, không đoán theo nội dung: đoán chữ
+  // từng làm lời cảnh báo "mật khẩu quá yếu" hiện ra màu xanh như báo thành công.
+  const showToast = useCallback((msg:string, kind:ToastKind='info')=>{
+    toast({ message: msg, kind });
+  },[toast]);
 
   const isWished = useCallback((slug:string)=> wish.includes(slug),[wish]);
   const toggleWish = useCallback((slug:string)=>{
@@ -105,13 +106,15 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     const nextOn = !wish.includes(slug);
     setWish(w => nextOn ? [...w, slug] : w.filter(s=>s!==slug));
     fireInteraction(user!.id,'wishlist',{ slug, qty:nextOn?1:0 });
-  },[requireAuth,user,wish]);
+    const name = PRODUCTS.find(p=>p.slug===slug)?.name || 'Sản phẩm';
+    toast(nextOn ? `Đã lưu "${name}" vào yêu thích ✓` : `Đã bỏ "${name}" khỏi yêu thích`, nextOn?'success':'info');
+  },[requireAuth,toast,user,wish]);
 
   const addToCart = useCallback((slug:string, color='Sumi', size='M')=>{
     if(!requireAuth())return;
     const product = PRODUCTS.find(p=>p.slug===slug);
     if (product && isOutOfStock(product, color, size)) {
-      showToast('Sản phẩm đã hết hàng');
+      showToast('Sản phẩm đã hết hàng','error');
       return;
     }
     const existing = cart.find(x=>x.slug===slug && x.color===color && x.size===size);
@@ -119,7 +122,7 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     if (product) {
       const stock = getVariantStock(product, color, size);
       if (stock !== null && nextQty > stock) {
-        showToast('Sản phẩm đã hết hàng');
+        showToast('Sản phẩm đã hết hàng','error');
         return;
       }
     }
@@ -129,7 +132,7 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
       return [...c, { slug, color, size, qty:1 }];
     });
     fireInteraction(user!.id,'cart',{ slug, qty:nextQty },{ color,size });
-    showToast('Đã thêm vào giỏ ✓');
+    showToast('Đã thêm vào giỏ ✓','success');
   },[cart,requireAuth,showToast,user]);
 
   const incQty = useCallback((i:number)=>{
@@ -140,7 +143,7 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     if (product) {
       const stock = getVariantStock(product, item.color, item.size);
       if (stock !== null && qty > stock) {
-        showToast('Sản phẩm đã hết hàng');
+        showToast('Sản phẩm đã hết hàng','error');
         return;
       }
     }
@@ -153,7 +156,8 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     setCart(c=>c.filter((_,idx)=>idx!==i));
     fireInteraction(user!.id,'cart',{...item,qty:0},{color:item.color,size:item.size});
     emitBotEvent({ type:'cart_removed', item });
-  },[cart,requireAuth,user]);
+    toast({ message:`Đã xoá "${PRODUCTS.find(p=>p.slug===item.slug)?.name || 'sản phẩm'}" khỏi giỏ`, kind:'info' });
+  },[cart,requireAuth,toast,user]);
   const decQty = useCallback((i:number)=>{
     if(!requireAuth())return;
     const item=cart[i]; if(!item)return;
@@ -168,30 +172,20 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
   },[cart,clearVoucher,requireAuth,removeCart,user]);
 
   const cartCount = useMemo(()=> cart.reduce((s,x)=>s+x.qty,0),[cart]);
-  const cartSubtotal = useMemo(()=> cart.reduce((s,x)=>s+priceOf(x.slug)*x.qty,0),[cart]);
+  const cartSubtotal = useMemo(()=> cart.reduce((s,x)=>s+lineUnitPrice(x)*x.qty,0),[cart]);
 
   const removeCartAndMaybeClearVoucher = useCallback((i:number)=>{
     removeCart(i);
     if (cart.length<=1) clearVoucher();
   },[removeCart,cart.length,clearVoucher]);
 
-  const value:Store = { wish, isWished, toggleWish, cart, cartCount, cartSubtotal, addToCart, incQty, decQty, removeCart:removeCartAndMaybeClearVoucher, clearCart, showToast, voucher, setVoucher, clearVoucher };
+  // Không memo hoá thì mỗi lần StoreProvider vẽ lại (kể cả do provider cha đổi)
+  // là object context mới → mọi màn hình dùng useStore() re-render theo.
+  const value:Store = useMemo(()=>({
+    wish, isWished, toggleWish, cart, cartCount, cartSubtotal, addToCart, incQty, decQty,
+    removeCart:removeCartAndMaybeClearVoucher, clearCart, showToast, voucher, setVoucher, clearVoucher,
+  }),[wish,isWished,toggleWish,cart,cartCount,cartSubtotal,addToCart,incQty,decQty,
+     removeCartAndMaybeClearVoucher,clearCart,showToast,voucher,clearVoucher]);
 
-  return (
-    <Ctx.Provider value={value}>
-      <View style={{ flex:1 }}>
-        {children}
-        {toast!==null && (
-          <Animated.View pointerEvents="none" style={[st.toast,{ opacity:fade, transform:[{ translateY: fade.interpolate({ inputRange:[0,1], outputRange:[-8,0] }) }] }]}>
-            <Text style={st.toastT}>{toast}</Text>
-          </Animated.View>
-        )}
-      </View>
-    </Ctx.Provider>
-  );
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
-const st = StyleSheet.create({
-  toast:{ position:'absolute', top:56, alignSelf:'center', backgroundColor:'#1A1410', paddingVertical:10, paddingHorizontal:18, borderRadius:999, zIndex:999, elevation:12,
-    shadowColor:'#000', shadowOpacity:0.25, shadowRadius:10, shadowOffset:{ width:0, height:6 } },
-  toastT:{ color:'#fff', fontFamily:'Arimo_700Bold', fontSize:13 },
-});

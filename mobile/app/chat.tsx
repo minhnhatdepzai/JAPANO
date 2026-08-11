@@ -59,7 +59,7 @@ export default function Chat() {
   const addFavorite = (product: Product) => {
     if (!isWished(product.slug)) {
       toggleWish(product.slug);
-      showToast('Đã thêm vào yêu thích ♥');
+      showToast('Đã thêm vào yêu thích ♥','success');
     } else {
       showToast('Sản phẩm đã có trong yêu thích');
     }

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView, WebViewNavigation } from 'react-native-webview';
 import { CardForm, CardFormView, ConfirmPaymentResult, PaymentIntent, StripeProvider, useStripe } from '@stripe/stripe-react-native';
 import { Screen, Header, Btn, money } from '../components/ui';
-import { PRODUCTS } from '../lib/catalog';
+import { PRODUCTS, variantPrice } from '../lib/catalog';
 import { useStore } from '../lib/store';
 import { confirmStripePaymentIntent, confirmVnpayReturn, createOrder, createStripePaymentIntent, createVnpayPaymentUrl, deleteSavedCard, getProvinces, getSavedCards, getStripeConfig, getVipStatus, getVnpayConfig, getWards, SavedCard, StripeConfig, VietnamLocation, VipStatus, VnpayConfig, voucherDiscountFor } from '../lib/api';
 import { getDefaultAddress } from '../lib/addresses';
@@ -106,7 +106,11 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
   const voucherDisc = voucher ? voucherDiscountFor(cartSubtotal, voucher) : 0;
   const stripeDisc = pay === 'card' ? Math.round(cartSubtotal * 0.1) : 0;
   const vnpayDisc = pay === 'vnpay' ? Math.round(cartSubtotal * 0.05) : 0;
-  const vipDisc = vip?.isVip&&vipProduct ? Math.round(vipProduct.price * 0.1) : 0;
+  // Máy chủ tính ưu đãi VIP trên đơn giá của DÒNG giỏ hàng (lib/vip.js dùng
+  // selected.price, vốn đã là giá biến thể) — bản xem trước ở đây phải cùng cơ
+  // sở, nếu không khách thấy một con số rồi bị trừ một con số khác.
+  const vipUnitPrice = vipProduct&&vipCartItem ? variantPrice(vipProduct, vipCartItem.color, vipCartItem.size) : 0;
+  const vipDisc = vip?.isVip&&vipProduct ? Math.round(vipUnitPrice * 0.1) : 0;
   const disc = Math.min(cartSubtotal, voucherDisc + stripeDisc + vnpayDisc + vipDisc);
   const grand = cartSubtotal - disc + SHIP;
 
@@ -398,7 +402,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
                 <Pressable key={key} style={[st.vipChoice,on&&st.vipChoiceOn]} onPress={()=>setSelectedVipLine(on?'':key)}>
                   <View style={[st.radio,on&&st.radioOn]}/>
                   <View style={{flex:1}}><Text style={st.vipProductName}>{p?.name||item.slug}</Text><Text style={st.vipHint}>{item.color} · {item.size} · x{item.qty}{item.qty>1?' · giảm 1 món':''}</Text></View>
-                  <Text style={st.vipSaving}>{p?`-${money(Math.round(p.price*.1))}`:''}</Text>
+                  <Text style={st.vipSaving}>{p?`-${money(Math.round(variantPrice(p,item.color,item.size)*.1))}`:''}</Text>
                 </Pressable>
               );})}
               {!selectedVipLine&&<Text style={st.vipSkip}>Chưa chọn — bạn vẫn có thể đặt hàng mà không dùng ưu đãi VIP.</Text>}

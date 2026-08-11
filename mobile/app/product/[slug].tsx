@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F, money } from '../../theme/tokens';
 import { Btn, SectionHeader, Price, TagK } from '../../components/ui';
-import { PRODUCTS, Product, storyFor } from '../../lib/catalog';
+import { PRODUCTS, Product, storyFor, variantPrice, variantOldPrice, priceRange } from '../../lib/catalog';
 import { useStore } from '../../lib/store';
 import { getOutfitFor, getProductAiDescription, getProductReviews, getRelatedProducts, OutfitSet, ProductAiDescription, ProductReviews, reactToReview, trackInteraction } from '../../lib/api';
 import { SmartImage } from '../../components/SmartImage';
@@ -162,6 +162,10 @@ export default function Detail() {
   const currentStock = hasVariants ? (currentSizes.find(s=>s.size===size)?.stock ?? 0) : null;
   const outOfStock = hasVariants && currentStock === 0;
   const chosenSize = size;
+  // Giá bám theo lựa chọn hiện tại; đổi màu hoặc kích cỡ là số tiền đổi theo.
+  const shownPrice = useMemo(()=>variantPrice(p, colorName, size), [p, colorName, size]);
+  const shownOld = useMemo(()=>variantOldPrice(p, colorName, size), [p, colorName, size]);
+  const variesByVariant = useMemo(()=>priceRange(p).varies, [p]);
   const [page, setPage] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const related = PRODUCTS.filter(x=>x.cat===p.cat && x.slug!==p.slug).slice(0,4);
@@ -230,7 +234,16 @@ export default function Detail() {
               <Text style={{ fontFamily:F.displaySb, color:C.kin, letterSpacing:2, fontSize:10 }}>TRANG PHỤC NHẬT · JAPANO</Text>
               <Text style={{ fontFamily:F.display, fontSize:22, color:C.sumi, marginTop:3 }}>{p.name}</Text>
             </View>
-            <Price value={p.price} old={p.old} size={19} />
+            {/* Giá đi theo đúng màu + kích cỡ khách đang chọn — biến thể có
+                giá riêng thì hiện giá riêng (xem lib/catalog.ts::variantPrice). */}
+            <View style={{ alignItems:'flex-end' }}>
+              <Price value={shownPrice} old={shownOld} size={19} />
+              {variesByVariant && (
+                <Text style={{ fontFamily:F.body, fontSize:10.5, color:C.muted, marginTop:2 }}>
+                  giá thay đổi theo màu/kích cỡ
+                </Text>
+              )}
+            </View>
           </View>
           <Text style={{ fontFamily:F.body, fontSize:12.5, color:C.muted, marginTop:8 }}>{reviewData?.summary.count?<><Text style={{color:C.kin}}>★</Text> <Text style={{color:C.ink,fontFamily:F.bodyB}}>{reviewData.summary.average}</Text> · {reviewData.summary.count} đánh giá đã xác minh</>:<>Chưa có đánh giá</>} · {p.sold||0} đã bán</Text>
 

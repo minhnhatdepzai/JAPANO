@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Href, usePathname, useRouter } from 'expo-router';
-import { apiLogin, apiRegister, apiMe, setAuthToken, ApiAuthUser } from './api';
+import { apiLogin, apiRegister, apiMe, apiGoogleLogin, setAuthToken, ApiAuthUser } from './api';
 import { syncPushToken } from './push';
 
 export type AuthUser = {
@@ -18,6 +18,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   signIn: (input: { email: string; password: string }) => Promise<Href | null>;
   register: (input: { name: string; email: string; password: string }) => Promise<Href | null>;
+  signInWithGoogle: (tokens: { idToken?: string; accessToken?: string }) => Promise<Href | null>;
   signOut: () => Promise<void>;
   requireAuth: (target?: Href, replace?: boolean) => boolean;
   continueAsGuest: () => void;
@@ -92,6 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return applySession(token, apiUser);
   }, [applySession]);
 
+  // Đăng nhập Google dùng lại đúng applySession như mật khẩu — phía sau vẫn là
+  // một JWT do JAPANO ký, nên mọi màn hình khác không cần biết khách đã đăng
+  // nhập bằng cách nào.
+  const signInWithGoogle = useCallback(async (tokens: { idToken?: string; accessToken?: string }) => {
+    const { token, user: apiUser } = await apiGoogleLogin(tokens);
+    return applySession(token, apiUser);
+  }, [applySession]);
+
   const signOut = useCallback(async () => {
     pendingTarget.current = null;
     redirecting.current = false;
@@ -124,20 +133,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace('/(tabs)/products');
   }, [router]);
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      hydrated,
-      isAuthenticated: Boolean(user),
-      signIn,
-      register,
-      signOut,
-      requireAuth,
-      continueAsGuest,
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo(() => ({
+    user,
+    hydrated,
+    isAuthenticated: Boolean(user),
+    signIn,
+    register,
+    signInWithGoogle,
+    signOut,
+    requireAuth,
+    continueAsGuest,
+  }), [user, hydrated, signIn, register, signInWithGoogle, signOut, requireAuth, continueAsGuest]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

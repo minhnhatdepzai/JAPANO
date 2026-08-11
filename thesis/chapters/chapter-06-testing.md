@@ -6,38 +6,41 @@
 
 Hệ thống sử dụng **trình chạy kiểm thử tích hợp sẵn của Node.js** (`node:test`), khai báo trong `backend/package.json` bằng script `"test": "node --test"`. Đây là lựa chọn có chủ đích: dự án không cài đặt bất kỳ framework kiểm thử bên thứ ba nào (Jest, Mocha, Vitest đều không có trong danh sách phụ thuộc), giúp giảm số lượng phụ thuộc phải quản lý cho một dự án ở quy mô tốt nghiệp.
 
-Toàn bộ tệp kiểm thử nằm trong `backend/test/`, gồm 5 tệp với tổng cộng **46 trường hợp kiểm thử**. Bảng 6.1 trình bày phân bố các trường hợp kiểm thử theo module được kiểm tra.
+Toàn bộ tệp kiểm thử nằm trong `backend/test/`, gồm 6 tệp với tổng cộng **50 trường hợp kiểm thử**. Bảng 6.1 trình bày phân bố các trường hợp kiểm thử theo module được kiểm tra.
 
 **Bảng 6.1: Phân bố kiểm thử tự động theo module**
 
 | Tệp kiểm thử | Module được kiểm thử | Số trường hợp |
 |---|---|---|
-| `backend/test/analytics-recommend.test.js` | Phân tích dữ liệu, hệ gợi ý, kiểm duyệt nội dung, mục tiêu mua sắm, Flagcard, dữ liệu hành chính | 20 |
-| `backend/test/tryon.test.js` | Các hàm thuần của luồng thử đồ AI (`stripDataUri`, `normalizeImageResult`, `clothTypeFor`, `computeSizeFit`) | 8 |
+| `backend/test/analytics-recommend.test.js` | Phân tích dữ liệu, hệ gợi ý, kiểm duyệt nội dung, mục tiêu mua sắm, Flagcard, mô tả sản phẩm bằng AI, dữ liệu hành chính | 21 |
+| `backend/test/tryon.test.js` | Các hàm thuần của luồng thử đồ AI (`stripDataUri`, `normalizeImageResult`, `clothTypeFor`, `fashnCategoryFor`, `computeSizeFit`) | 8 |
 | `backend/test/orders.test.js` | Tạo đơn hàng, trừ tồn kho, chống trùng đơn, chuẩn hoá sản phẩm trong đơn | 7 |
 | `backend/test/vip.test.js` | Logic khách hàng VIP: tích luỹ chi tiêu, hiệu lực 30 ngày, ưu đãi 10% | 7 |
 | `backend/test/embeddings.test.js` | Toán học vector embedding (`cosineSimilarity`, `productText`) | 4 |
-| **Tổng cộng** | | **46** |
+| `backend/test/gpu-queue.test.js` | Hàng đợi và ưu tiên tác vụ GPU, huỷ tác vụ khi đổi tính năng đang mở | 3 |
+| **Tổng cộng** | | **50** |
 
-*Nguồn: `thesis/evidence/testing-evidence.md` mục 1.*
+*Nguồn: đếm trực tiếp bằng `node --test` trên từng tệp kiểm thử.*
+
+> **Ghi chú về số liệu:** bộ bằng chứng lập trước đó (`thesis/evidence/testing-evidence.md`) ghi 46 trường hợp trên 5 tệp. Con số đúng hiện tại là **50 trường hợp trên 6 tệp** — chênh lệch do bổ sung `test/gpu-queue.test.js` (3 trường hợp) và thêm 1 trường hợp trong `analytics-recommend.test.js` sau khi bộ bằng chứng được lập. Chi tiết ở Phụ lục C mục C.1.
 
 ### 6.1.2. Kết quả chạy thực tế
 
 Kết quả dưới đây được sao chép nguyên văn từ đầu ra thật của lệnh `npm --workspace backend test` chạy tại thư mục gốc dự án, không phải số liệu ước lượng:
 
 ```text
-1..46
-# tests 46
+1..50
+# tests 50
 # suites 0
-# pass 46
+# pass 50
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 131.197996
+# duration_ms 156.224943
 ```
 
-**Toàn bộ 46/46 trường hợp kiểm thử đều đạt, không có trường hợp nào thất bại hay bị bỏ qua.** Lệnh được chạy lặp lại hai lần để xác nhận tính ổn định, cho kết quả pass/fail giống hệt nhau (thời gian thực thi chênh lệch nhẹ, khoảng 125–131 ms, là dao động bình thường giữa các lần chạy).
+**Toàn bộ 50/50 trường hợp kiểm thử đều đạt, không có trường hợp nào thất bại hay bị bỏ qua.** Lệnh được chạy lặp lại hai lần để xác nhận tính ổn định, cho kết quả pass/fail giống hệt nhau (thời gian thực thi 156,2 ms và 152,5 ms — dao động bình thường giữa các lần chạy).
 
 Trong quá trình chạy có xuất hiện một cảnh báo (không phải lỗi) khi hệ thống không kết nối được dịch vụ embedding cục bộ tại cổng 7865:
 
@@ -46,11 +49,11 @@ WARN: Không gọi được embedding service — bỏ qua semantic matching,
       các tín hiệu khác vẫn hoạt động bình thường.
 ```
 
-Cảnh báo này thực chất là một bằng chứng tích cực cho thiết kế: bộ kiểm thử vẫn chạy đúng và đạt đủ 46/46 ngay cả khi dịch vụ AI ngoại vi không khả dụng, xác nhận cơ chế suy giảm mượt (graceful degradation) đã mô tả ở các chương trước hoạt động đúng như thiết kế.
+Cảnh báo này thực chất là một bằng chứng tích cực cho thiết kế: bộ kiểm thử vẫn chạy đúng và đạt đủ 50/50 ngay cả khi dịch vụ AI ngoại vi không khả dụng, xác nhận cơ chế suy giảm mượt (graceful degradation) đã mô tả ở các chương trước hoạt động đúng như thiết kế.
 
 ### 6.1.3. Nhận xét về cách tổ chức mã nguồn phục vụ kiểm thử
 
-Một đặc điểm thiết kế đáng chú ý: nhiều tệp route xuất khẩu (export) các hàm thuần nội bộ ra ngoài chỉ nhằm mục đích cho phép kiểm thử đơn vị mà không cần khởi động máy chủ HTTP. Ví dụ, `backend/routes/orders.js` xuất khẩu `makeCreateOrderInState`, `normalizedOrderItems`, `findVariant` ở cuối tệp; `backend/routes/tryon.js` xuất khẩu 5 hàm thuần tương tự. Nhờ đó, các trường hợp kiểm thử về tồn kho, chống trùng đơn hay phân loại loại trang phục có thể chạy trực tiếp trên logic nghiệp vụ, tốc độ cao (toàn bộ 46 trường hợp hoàn tất trong khoảng 130 ms) và không phụ thuộc trạng thái mạng.
+Một đặc điểm thiết kế đáng chú ý: nhiều tệp route xuất khẩu (export) các hàm thuần nội bộ ra ngoài chỉ nhằm mục đích cho phép kiểm thử đơn vị mà không cần khởi động máy chủ HTTP. Ví dụ, `backend/routes/orders.js` xuất khẩu `makeCreateOrderInState`, `normalizedOrderItems`, `findVariant` ở cuối tệp; `backend/routes/tryon.js` xuất khẩu 5 hàm thuần tương tự. Nhờ đó, các trường hợp kiểm thử về tồn kho, chống trùng đơn hay phân loại loại trang phục có thể chạy trực tiếp trên logic nghiệp vụ, tốc độ cao (toàn bộ 50 trường hợp hoàn tất trong khoảng 150 ms) và không phụ thuộc trạng thái mạng.
 
 Tuy nhiên cũng cần ghi nhận trung thực: mẫu thiết kế này được áp dụng rộng hơn phạm vi kiểm thử hiện có. Cụ thể, `backend/routes/paymentsStripe.js` và `backend/routes/paymentsVnpay.js` cũng xuất khẩu hàm theo đúng mẫu này (`makeStripeHelpers`, `makeVnpayHelpers`) nhưng **chưa có tệp kiểm thử nào sử dụng chúng** — tức hạ tầng để kiểm thử thanh toán đã sẵn sàng nhưng chưa được khai thác.
 
