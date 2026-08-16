@@ -5,6 +5,7 @@
 // — nên được export qua makeStripeHelpers(ctx) để tạo lại với cùng ctx dùng chung.
 const { stripeAmount, localStripeAmount, STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { findPayment, findReturnRequest, checkoutItemsKey, reusableStripeOrder } = require('../lib/paymentLookup');
+const { restockCancelledOrder, restockRemainingOrderUnits } = require('../lib/inventory');
 const { makeCreateOrderInState, requestedVipProductId } = require('./orders');
 
 function makeStripeHelpers(ctx) {
@@ -82,7 +83,11 @@ function makeStripeHelpers(ctx) {
           if (returnRequest.status === 'refunded' && fullyRefunded) order.status = 'returned';
         }
       } else if (order && fullyRefunded) {
+        // Hoàn tiền thẳng từ trang quản trị, không đi qua yêu cầu đổi/trả — vẫn
+        // phải hoàn kho, nếu không mỗi lần hoàn tiền lại làm bốc hơi tồn kho.
         order.status = order.status === 'completed' ? 'returned' : 'cancelled';
+        if (order.status === 'returned') restockRemainingOrderUnits(state, order, 'gateway-full-refund');
+        else restockCancelledOrder(state, order, 'gateway-full-refund');
       }
       if (order) {
         order.history ||= [];
@@ -110,6 +115,9 @@ function makeStripeHelpers(ctx) {
         order.payment.status = 'failed';
         order.history ||= [];
         order.history.push({ s: 'payment_failed', at: Date.now() });
+        // Kho đã bị giữ chỗ lúc tạo đơn; thanh toán hỏng thì hàng chưa bao giờ
+        // rời cửa hàng nên phải nhả lại để khách khác mua được.
+        restockCancelledOrder(state, order, 'stripe-checkout-failed');
       }
       result = { payment, order };
       return state;
@@ -271,6 +279,7 @@ function makeStripeHelpers(ctx) {
       order.payment.status = 'failed';
       order.history ||= [];
       order.history.push({ s: 'payment_failed', at: Date.now(), reason: payment.failureReason });
+      restockCancelledOrder(state, order, 'stripe-intent-failed');
       result = { payment, order };
       return state;
     });
@@ -480,13 +489,21 @@ module.exports = function registerStripeRoutes(api, ctx) {
       };
       const nativeAttempt = Number(payment.nativeAttempt || 0) + 1;
       const customerEmail = String(req.body?.customer?.email || '').trim();
+      // Lưu thẻ cho lần sau phải do khách ĐỒNG Ý, không mặc định.
+      //
+      // Trước đây `setup_future_usage: 'off_session'` được gắn cho mọi giao dịch
+      // có Stripe Customer, nên thẻ của khách bị lưu lại mà không ai hỏi và
+      // không có gì báo — lần sau mở app đã thấy thẻ nằm sẵn đó. Đây là thông
+      // tin thanh toán, phải hỏi trước. Thẻ đã lưu sẵn (savedPaymentMethodId)
+      // thì đương nhiên giữ nguyên, vì khách đã đồng ý ở lần trước rồi.
+      const saveCard = req.body?.saveCard === true || Boolean(savedPaymentMethodId);
       const intent = await stripe.paymentIntents.create({
         amount: stripeAmount(order.total),
         currency: STRIPE_CURRENCY,
         payment_method_types: ['card'],
         description: `Thanh toán trong ứng dụng JAPANO #${order.code}`,
         ...(customerEmail ? { receipt_email: customerEmail } : {}),
-        ...(stripeCustomerId ? { customer: stripeCustomerId, setup_future_usage: 'off_session' } : {}),
+        ...(stripeCustomerId ? { customer: stripeCustomerId, ...(saveCard ? { setup_future_usage: 'off_session' } : {}) } : {}),
         ...(savedPaymentMethodId ? { payment_method: savedPaymentMethodId } : {}),
         metadata: {
           orderId: order.id, orderCode: order.code, userId: order.userId, paymentId: payment.id,
@@ -684,6 +701,7 @@ module.exports = function registerStripeRoutes(api, ctx) {
         order.status = 'cancelled';
         order.history ||= [];
         order.history.push({ s: 'cancelled', at: Date.now() });
+        restockCancelledOrder(state, order, 'stripe-checkout-cancelled');
       }
       result = { order, payment };
       return state;

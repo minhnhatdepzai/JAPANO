@@ -1,0 +1,292 @@
+{
+  "note": "Ảnh sản phẩm lấy từ Wikimedia Commons, đã soi thủ công từng ảnh để loại ảnh phong cảnh/tranh vẽ/ảnh tư liệu. Giữ nguyên tên tác giả và giấy phép khi dùng lại hoặc phát hành.",
+  "generatedAt": "2026-08-13T15:01:07.872Z",
+  "products": {
+    "hakama-nu": [
+      {
+        "file": "hakama-nu_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Pliage_2.jpg",
+        "title": "File:Pliage 2.jpg",
+        "author": "Bokken",
+        "license": "CC BY 2.0",
+        "bytes": 34240
+      },
+      {
+        "file": "hakama-nu_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Pliage_3.jpg",
+        "title": "File:Pliage 3.jpg",
+        "author": "Bokken",
+        "license": "CC BY 2.0",
+        "bytes": 33620
+      },
+      {
+        "file": "hakama-nu_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Pliage_5.jpg",
+        "title": "File:Pliage 5.jpg",
+        "author": "Bokken",
+        "license": "CC BY 2.0",
+        "bytes": 58581
+      },
+      {
+        "file": "hakama-nu_4.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Hakama,_folded.jpeg",
+        "title": "File:Hakama, folded.jpeg",
+        "author": "No machine-readable author provided. Tobias Wolter assumed (based on copyright claims).",
+        "license": "CC BY-SA 3.0",
+        "bytes": 462269
+      }
+    ],
+    "happi-le-hoi": [
+      {
+        "file": "happi-le-hoi_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Festival4.jpg",
+        "title": "File:Festival4.jpg",
+        "author": "Không rõ",
+        "license": "Public domain",
+        "bytes": 556081
+      },
+      {
+        "file": "happi-le-hoi_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:PIC_0094crop.jpg",
+        "title": "File:PIC 0094crop.jpg",
+        "author": "Rhtakeuchi",
+        "license": "CC BY-SA 4.0",
+        "bytes": 349243
+      },
+      {
+        "file": "happi-le-hoi_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Jidai_Matsuri_2009_068.jpg",
+        "title": "File:Jidai Matsuri 2009 068.jpg",
+        "author": "Corpse Reviver",
+        "license": "CC BY-SA 3.0",
+        "bytes": 361943
+      }
+    ],
+    "samue-thien": [
+      {
+        "file": "samue-thien_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Samue_001.jpg",
+        "title": "File:Samue 001.jpg",
+        "author": "Ocdp",
+        "license": "CC0",
+        "bytes": 509081
+      },
+      {
+        "file": "samue-thien_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Samue-worn-2006.jpg",
+        "title": "File:Samue-worn-2006.jpg",
+        "author": "Michael Cornelius from Lincoln, Nebraska, USA",
+        "license": "CC BY-SA 2.0",
+        "bytes": 470362
+      },
+      {
+        "file": "samue-thien_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Asakusa_%E6%B5%85%E8%8D%89_(50289223736).jpg",
+        "title": "File:Asakusa 浅草 (50289223736).jpg",
+        "author": "nakashi from Chofu, Tokyo, JAPAN",
+        "license": "CC BY-SA 2.0",
+        "bytes": 217811
+      }
+    ],
+    "obi-lua": [
+      {
+        "file": "obi-lua_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Kimono_backshot_by_sth.jpg",
+        "title": "File:Kimono backshot by sth.jpg",
+        "author": "sth",
+        "license": "CC BY 2.0",
+        "bytes": 615250
+      },
+      {
+        "file": "obi-lua_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Stiff_obi,Kaku-obi,Katori-city,Japan.jpg",
+        "title": "File:Stiff obi,Kaku-obi,Katori-city,Japan.jpg",
+        "author": "katorisi",
+        "license": "CC BY-SA 3.0",
+        "bytes": 729155
+      },
+      {
+        "file": "obi-lua_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Museum_obi_display.jpg",
+        "title": "File:Museum obi display.jpg",
+        "author": "Bruno Cordioli from Milano, Italy",
+        "license": "CC BY 2.0",
+        "bytes": 528283
+      }
+    ],
+    "tabi-chia-ngon": [
+      {
+        "file": "tabi-chia-ngon_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Japanese_tabi_socks,_black.jpeg",
+        "title": "File:Japanese tabi socks, black.jpeg",
+        "author": "No machine-readable author provided. Tobias Wolter assumed (based on copyright claims).",
+        "license": "CC BY-SA 3.0",
+        "bytes": 233523
+      },
+      {
+        "file": "tabi-chia-ngon_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Tabi_et_z%C3%B4ri_de_femme.JPG",
+        "title": "File:Tabi et zôri de femme.JPG",
+        "author": "Clément Bucco-Lechat",
+        "license": "CC BY-SA 3.0",
+        "bytes": 231846
+      },
+      {
+        "file": "tabi-chia-ngon_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:TABi_SOCK_2016_(26482782281).jpg",
+        "title": "File:TABi SOCK 2016 (26482782281).jpg",
+        "author": "Alexis Lewis",
+        "license": "CC BY 2.0",
+        "bytes": 733141
+      }
+    ],
+    "furoshiki-vai": [
+      {
+        "file": "furoshiki-vai_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Home_made_Bento.jpg",
+        "title": "File:Home made Bento.jpg",
+        "author": "The original uploader was Kunchan at English Wikipedia.",
+        "license": "CC BY-SA 3.0",
+        "bytes": 619152
+      },
+      {
+        "file": "furoshiki-vai_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Furoshiki_designed_by_Friedensreich_Hundertwasser_for_%27Fernw%C3%A4rme_Wien%27_AG.jpg",
+        "title": "File:Furoshiki designed by Friedensreich Hundertwasser for 'Fernwärme Wien' AG.jpg",
+        "author": "Friedensreich Hundertwasser (design), uploader (photograph).",
+        "license": "CC BY-SA 3.0",
+        "bytes": 296103
+      },
+      {
+        "file": "furoshiki-vai_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Furoshiki-wrapped_Christmas_gift.jpg",
+        "title": "File:Furoshiki-wrapped Christmas gift.jpg",
+        "author": "me!",
+        "license": "CC BY-SA 3.0",
+        "bytes": 307047
+      }
+    ],
+    "sensu-quat-gap": [
+      {
+        "file": "sensu-quat-gap_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Uchiwa.jpg",
+        "title": "File:Uchiwa.jpg",
+        "author": "Haragayato",
+        "license": "CC BY-SA 3.0",
+        "bytes": 119341
+      },
+      {
+        "file": "sensu-quat-gap_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Boushuu_uchiwa.jpg",
+        "title": "File:Boushuu uchiwa.jpg",
+        "author": "\"zenkota (talk)\"",
+        "license": "CC BY-SA 3.0",
+        "bytes": 159567
+      },
+      {
+        "file": "sensu-quat-gap_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Nasubi-Uchiwa.JPG",
+        "title": "File:Nasubi-Uchiwa.JPG",
+        "author": "antique1967",
+        "license": "Public domain",
+        "bytes": 57883
+      }
+    ],
+    "kanzashi-trau-cai": [
+      {
+        "file": "kanzashi-trau-cai_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Jidai_Matsuri_2009_495.jpg",
+        "title": "File:Jidai Matsuri 2009 495.jpg",
+        "author": "Corpse Reviver",
+        "license": "CC BY-SA 3.0",
+        "bytes": 253066
+      },
+      {
+        "file": "kanzashi-trau-cai_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Miehina_inaho.jpg",
+        "title": "File:Miehina inaho.jpg",
+        "author": "Fergus Randall https://www.flickr.com/people/36053119@N02/",
+        "license": "CC BY 2.0",
+        "bytes": 198220
+      },
+      {
+        "file": "kanzashi-trau-cai_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Fukuyu_with_willow_kanzashi.jpg",
+        "title": "File:Fukuyu with willow kanzashi.jpg",
+        "author": "Chris Gladis",
+        "license": "CC BY 2.0",
+        "bytes": 628759
+      },
+      {
+        "file": "kanzashi-trau-cai_4.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Shochikubai_kanzashi.jpg",
+        "title": "File:Shochikubai kanzashi.jpg",
+        "author": "Kanawa Kuniko 金輪久仁子",
+        "license": "CC BY-SA 3.0",
+        "bytes": 957291
+      }
+    ],
+    "hakama-do": [
+      {
+        "file": "hakama-do_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Mikohakamaback.JPG",
+        "title": "File:Mikohakamaback.JPG",
+        "author": "carpkazu",
+        "license": "CC BY-SA 3.0",
+        "bytes": 300568
+      },
+      {
+        "file": "hakama-do_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:A_Japanese_lady_wearing_a_Hakama_at_the_Tsurugaoka_Hachimangu.jpg",
+        "title": "File:A Japanese lady wearing a Hakama at the Tsurugaoka Hachimangu.jpg",
+        "author": "H.Hmoderato",
+        "license": "CC BY-SA 4.0",
+        "bytes": 719882
+      }
+    ],
+    "chan-vay-xep-ly": [
+      {
+        "file": "chan-vay-xep-ly_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Culotte_skirt.jpg",
+        "title": "File:Culotte skirt.jpg",
+        "author": "Lumi iori",
+        "license": "CC BY-SA 4.0",
+        "bytes": 259463
+      },
+      {
+        "file": "chan-vay-xep-ly_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Pleatedskirt.jpg",
+        "title": "File:Pleatedskirt.jpg",
+        "author": "Andrea Cornell",
+        "license": "CC BY-SA 2.0",
+        "bytes": 73427
+      }
+    ],
+    "haori-dang-dai": [
+      {
+        "file": "haori-dang-dai_1.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Haori_(1).jpg",
+        "title": "File:Haori (1).jpg",
+        "author": "Angélica Beghini",
+        "license": "CC BY-SA 4.0",
+        "bytes": 178614
+      },
+      {
+        "file": "haori-dang-dai_2.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Mannen_haori_met_de_geboorte_van_Akihito,_AK-RAK-2009-3-62.jpg",
+        "title": "File:Mannen haori met de geboorte van Akihito, AK-RAK-2009-3-62.jpg",
+        "author": "Rijksmuseum",
+        "license": "CC0",
+        "bytes": 153366
+      },
+      {
+        "file": "haori-dang-dai_3.jpg",
+        "sourcePage": "https://commons.wikimedia.org/wiki/File:Mannen_haori_met_oogstscene_bij_de_berg_Fuji,_AK-RAK-2009-3-64.jpg",
+        "title": "File:Mannen haori met oogstscene bij de berg Fuji, AK-RAK-2009-3-64.jpg",
+        "author": "Rijksmuseum",
+        "license": "CC0",
+        "bytes": 137171
+      }
+    ]
+  }
+}

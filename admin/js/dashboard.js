@@ -93,7 +93,7 @@ function revenueWindow(span){
 function revenueSummaryHTML(span){
   const data=revBy(span),windowData=revenueWindow(span),paid=windowData.orders,total=paid.reduce((sum,o)=>sum+orderAmount(o),0),average=paid.length?Math.round(total/paid.length):0;
   const best=data.reduce((winner,row)=>Number(row.value||0)>Number(winner?.value||0)?row:winner,null);
-  return `<div class="chartsummary"><div class="cell" onclick="A.revenueSummary()"><span>Tổng theo biểu đồ</span><b>${money(total)}</b></div><div class="cell" onclick="A.revenueSummary()"><span>Đơn có doanh thu</span><b>${paid.length}</b></div><div class="cell" onclick="A.revenueSummary()"><span>Giá trị đơn trung bình</span><b>${money(average)}</b></div><div class="cell" onclick="A.revPoint('${span}',${Math.max(0,data.indexOf(best))})"><span>Kỳ cao nhất · ${esc(best?.label||'—')}</span><b>${money(Number(best?.value||0))}</b></div></div>`;
+  return `<div class="chartsummary"><div class="cell" onclick="A.revenueSummary()"><span>Tổng theo biểu đồ</span><b>${money(total)}</b></div><div class="cell" onclick="A.revenueSummary()"><span>Đơn có doanh thu</span><b>${paid.length}</b></div><div class="cell" onclick="A.revenueSummary()"><span>Giá trị đơn trung bình</span><b>${money(average)}</b></div><div class="cell" onclick="A.revPoint('${escJs(span)}',${Math.max(0,data.indexOf(best))})"><span>Kỳ cao nhất · ${esc(best?.label||'—')}</span><b>${money(Number(best?.value||0))}</b></div></div>`;
 }
 function localRevenueBy(span){
   const now=new Date();
@@ -342,7 +342,7 @@ function viewDashboard(){
         <td class="bold">${money(o.total)}</td>
         <td>${o.payment.method} ${badge(PAY,o.payment.status)}</td>
         <td>${badge(ORD,o.status)}</td>
-        <td class="right"><button class="btn sm" onclick="A.openOrder('${o.id}')">Xem</button></td>
+        <td class="right"><button class="btn sm" onclick="A.openOrder('${escJs(o.id)}')">Xem</button></td>
       </tr>`).join('')}
       </tbody></table></div>
     </div>

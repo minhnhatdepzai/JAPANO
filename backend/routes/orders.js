@@ -47,6 +47,21 @@ function assertStockAvailable(state, items, httpError) {
     const product = state.products.find((p) => p.slug === item.slug || p.id === item.slug);
     const variants = Array.isArray(product?.variants) ? product.variants : [];
     if (!variants.length) continue;
+    // findVariant() cố ý dễ dãi: khớp không được cả màu lẫn size thì lùi về chỉ
+    // khớp size, để sản phẩm một màu không bị chặn oan. Với TỒN KHO thì sự dễ
+    // dãi đó là một lỗ hổng: đặt một màu không hề tồn tại vẫn được nhận đơn, và
+    // số lượng bị trừ vào biến thể của MỘT MÀU KHÁC. Ở đây bắt buộc màu phải là
+    // màu thật của sản phẩm trước khi cho đi tiếp.
+    const colors = new Set(variants.map((variant) => String(variant.colorName || 'Mặc định')));
+    const requestedColor = String(item.colorName || 'Mặc định');
+    if (colors.size > 1 && !colors.has(requestedColor)) {
+      throw httpError(400, `"${item.name}" không có màu "${requestedColor}". Vui lòng chọn lại màu.`);
+    }
+    const sizes = new Set(variants.map((variant) => String(variant.size || 'M')));
+    const requestedSize = String(item.size || 'M');
+    if (!sizes.has(requestedSize)) {
+      throw httpError(400, `"${item.name}" không có kích cỡ "${requestedSize}". Vui lòng chọn lại kích cỡ.`);
+    }
     const variant = findVariant(product, item.colorName, item.size);
     const stock = variant ? Math.max(0, Number(variant.stock) || 0) : 0;
     if (!variant || stock < item.qty) {
@@ -64,6 +79,23 @@ function decrementStock(state, items) {
     const variant = product && findVariant(product, item.colorName, item.size);
     if (variant) variant.stock = Math.max(0, Number(variant.stock || 0) - item.qty);
   });
+}
+
+// Mã đơn cũ tính bằng `'JP' + (240700 + s.orders.length)`, tức là suy ra từ SỐ
+// LƯỢNG đơn đang có. Xoá một đơn cũ là đơn kế tiếp nhận lại đúng mã của một đơn
+// đã tồn tại — hai đơn khác nhau cùng mã, mà tra cứu đơn lại cho phép tìm theo
+// `code`, nên khách có thể mở nhầm đơn của người khác. Ở đây lấy mốc cao nhất
+// từng dùng rồi tăng tiếp, và dò tới khi chắc chắn chưa ai giữ mã đó.
+function nextOrderCode(state) {
+  const used = new Set((state.orders || []).map((order) => String(order.code || '')));
+  let highest = 240700 + (state.orders || []).length;
+  for (const code of used) {
+    const match = /^JP(\d+)$/.exec(code);
+    if (match) highest = Math.max(highest, Number(match[1]));
+  }
+  let candidate = highest + 1;
+  while (used.has(`JP${candidate}`)) candidate += 1;
+  return `JP${candidate}`;
 }
 
 function upsertOrderCustomer(state, body, userId, now) {
@@ -144,7 +176,7 @@ function makeCreateOrderInState({ httpError, validateVoucher, vipDiscountForSele
     const ship = Number(s.shop.shipFee) || 0;
     const order = {
       id: 'o' + now,
-      code: 'JP' + (240700 + s.orders.length),
+      code: nextOrderCode(s),
       userId,
       clientRequestId: clientRequestId || null,
       customer: { ...(b.customer || { name: 'Khách lẻ', phone: '' }), id: userId },
@@ -241,10 +273,20 @@ module.exports = function registerOrdersRoutes(api, ctx) {
   // Một đơn nhiều món có thể có NHIỀU yêu cầu trả hàng (mỗi lần trả một vài
   // món khác nhau), nên trả về cả danh sách. `returnRequest` là yêu cầu mới
   // nhất, giữ lại cho các màn hình cũ chỉ đọc một yêu cầu.
-  api.get('/orders/:id', (req, res) => {
+  // Yêu cầu đăng nhập VÀ đúng chủ đơn. Trước đây route này hoàn toàn công khai:
+  // mã đơn được sinh tuần tự (JP240700, JP240701, ...) nên chỉ cần đếm lên là
+  // đọc được họ tên, số điện thoại, địa chỉ nhận và toàn bộ giá trị đơn của mọi
+  // khách hàng — không cần token, không để lại dấu vết gì.
+  api.get('/orders/:id', requireAuth, (req, res) => {
     const state = read();
     const order = state.orders.find((item) => item.id === req.params.id || item.code === req.params.id);
     if (!order) return res.status(404).json({ ok: false, message: 'Không tìm thấy đơn hàng.' });
+    const ownerId = String(order.userId || order.customer?.id || '');
+    if (ownerId !== String(req.user.id) && !ctx.roleAtLeast(req.user.role, 'staff')) {
+      // 404 chứ không 403: trả 403 là xác nhận "mã đơn này có thật", đủ để dò
+      // ra dải mã đang dùng dù không đọc được nội dung.
+      return res.status(404).json({ ok: false, message: 'Không tìm thấy đơn hàng.' });
+    }
     const returnRequests = (state.returnRequests || [])
       .filter((item) => String(item.orderId) === String(order.id))
       .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));

@@ -12,7 +12,7 @@ function orderRow(o){
     <td>${o.payment.method}<div style="margin-top:3px">${badge(PAY,o.payment.status)}</div></td>
     <td>${badge(ORD,o.status)}</td>
     <td class="faint" style="font-size:11px">${fmtDate(o.createdAt)}</td>
-    <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">${next?`<button class="btn p sm" onclick="A.setOrder('${o.id}','${next.a}')">${next.t}</button>`:''}<button class="btn sm" onclick="A.openOrder('${o.id}')">Xem</button></div></td>
+    <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">${next?`<button class="btn p sm" onclick="A.setOrder('${escJs(o.id)}','${escJs(next.a)}')">${next.t}</button>`:''}<button class="btn sm" onclick="A.openOrder('${escJs(o.id)}')">Xem</button></div></td>
   </tr>`;
 }
 function viewOrders(){
@@ -24,7 +24,7 @@ function viewOrders(){
   list=[...list].sort((a,b)=>b.createdAt-a.createdAt);
   return `
   <div class="filters">
-    <div class="tabs">${tabs.map(t=>`<button class="${state.oStatus===t[0]?'on':''}" onclick="A.oTab('${t[0]}')">${t[1]}<span class="c">${t[0]==='all'?DB.orders.length:countStatus(t[0])}</span></button>`).join('')}</div>
+    <div class="tabs">${tabs.map(t=>`<button class="${state.oStatus===t[0]?'on':''}" onclick="A.oTab('${escJs(t[0])}')">${t[1]}<span class="c">${t[0]==='all'?DB.orders.length:countStatus(t[0])}</span></button>`).join('')}</div>
     <div class="search" style="max-width:260px"><span>🔍</span><input placeholder="Mã đơn / tên / SĐT" value="${esc(state.oQuery||'')}" oninput="A.oSearch(this.value)"></div>
     <div class="hspace"></div>
     <button class="btn" onclick="A.exportOrders()"><span class="ic">⇩</span>Xuất dữ liệu</button>
@@ -56,15 +56,15 @@ function paymentRow(p){
   const waitingLabel=isVnpay?'Đang chờ VNPay':'Đang chờ Stripe';
   return `<tr>
     <td><div class="bold mono">${esc(p.code||p.id)}</div><div class="faint" style="font-size:10.5px">${esc(p.provider||'stripe')}</div></td>
-    <td><button class="link" onclick="A.openOrder('${esc(o?.id||p.orderId)}')">#${esc(p.orderCode||o?.code||'—')}</button></td>
+    <td><button class="link" onclick="A.openOrder('${escJs(o?.id||p.orderId)}')">#${esc(p.orderCode||o?.code||'—')}</button></td>
     <td>${badge(PAY,p.status)}${p.refundedAmount?`<div class="faint" style="font-size:10.5px;margin-top:3px">Đã hoàn ${money(p.refundedAmount)}</div>`:''}</td>
     <td class="bold">${money(p.amount||0)}<div class="faint" style="font-size:10px;text-transform:uppercase">${esc(p.currency||'vnd')}</div></td>
     <td><div class="mono" style="font-size:10.5px;max-width:210px;overflow:hidden;text-overflow:ellipsis" title="${esc(intent)}">${esc(intent||waitingLabel)}</div><div class="faint" style="font-size:10.5px;margin-top:3px">${esc(card)}</div></td>
     <td class="faint" style="font-size:11px">${fmtDate(p.paidAt||p.createdAt)}</td>
     <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">
-      <button class="btn sm" onclick="A.openPayment('${p.id}')">Chi tiết</button>
-      ${realStripe?`<button class="btn sm" onclick="A.openStripePayment('${p.id}')">Stripe ↗</button>`:''}
-      ${canRefund?`<button class="btn d sm" onclick="A.refundPayment('${p.id}')">Hoàn tiền</button>`:''}
+      <button class="btn sm" onclick="A.openPayment('${escJs(p.id)}')">Chi tiết</button>
+      ${realStripe?`<button class="btn sm" onclick="A.openStripePayment('${escJs(p.id)}')">Stripe ↗</button>`:''}
+      ${canRefund?`<button class="btn d sm" onclick="A.refundPayment('${escJs(p.id)}')">Hoàn tiền</button>`:''}
     </div></td>
   </tr>`;
 }
@@ -84,7 +84,7 @@ function viewPayments(){
   </div>
   <div class="banner warn" style="margin-bottom:14px"><div class="bi">💳</div><div><b>Stripe &amp; VNPay ở chế độ thử nghiệm.</b> Giao dịch và hoàn tiền trên trang này không thu hoặc trả tiền thật. Mã giao dịch và mã hoàn tiền được lưu vào cơ sở dữ liệu JAPANO.</div><div class="acts"><button class="btn sm" onclick="window.open('https://dashboard.stripe.com/test/payments','_blank')">Mở trang Stripe ↗</button><button class="btn sm" onclick="A.refreshPayments()">↻ Đối soát VNPay</button></div></div>
   <div class="filters">
-    <div class="tabs">${tabs.map(t=>`<button class="${state.payStatus===t[0]?'on':''}" onclick="A.payTab('${t[0]}')">${t[1]}<span class="c">${t[0]==='all'?all.length:all.filter(p=>p.status===t[0]).length}</span></button>`).join('')}</div>
+    <div class="tabs">${tabs.map(t=>`<button class="${state.payStatus===t[0]?'on':''}" onclick="A.payTab('${escJs(t[0])}')">${t[1]}<span class="c">${t[0]==='all'?all.length:all.filter(p=>p.status===t[0]).length}</span></button>`).join('')}</div>
     <div class="search" style="max-width:290px"><span>🔍</span><input placeholder="Mã thanh toán / PI / đơn" value="${esc(state.payQuery||'')}" oninput="A.paySearch(this.value)"></div>
     <button class="btn" onclick="A.refreshPayments()">↻ Làm mới</button>
   </div>
@@ -123,7 +123,7 @@ function paymentDrawer(p){
     </div></div></div>
     <div class="section-title" style="margin:16px 0 10px"><h2 style="font-size:13px">Lịch sử hoàn tiền</h2></div>
     <div class="panel" style="box-shadow:none"><table class="tbl"><thead><tr><th>Mã hoàn tiền</th><th>Trạng thái</th><th class="right">Số tiền</th><th>Thời gian</th></tr></thead><tbody>${rows}</tbody></table></div>
-  </div><div class="mf"><button class="btn" onclick="closeModal()">Đóng</button>${real?`<button class="btn" onclick="A.openStripePayment('${p.id}')">Mở Stripe ↗</button>`:''}${canRefund?`<button class="btn d" onclick="closeModal();A.refundPayment('${p.id}')">Hoàn tiền thử nghiệm</button>`:''}</div>`;
+  </div><div class="mf"><button class="btn" onclick="closeModal()">Đóng</button>${real?`<button class="btn" onclick="A.openStripePayment('${escJs(p.id)}')">Mở Stripe ↗</button>`:''}${canRefund?`<button class="btn d" onclick="closeModal();A.refundPayment('${escJs(p.id)}')">Hoàn tiền thử nghiệm</button>`:''}</div>`;
 }
 
 /* ================= RETURNS & REFUNDS ================= */
@@ -138,11 +138,11 @@ function returnList(){
 }
 function returnActions(r,small=true){
   const cls=small?' sm':'';
-  if(r.status==='requested')return `<button class="btn p${cls}" onclick="A.returnAction('${r.id}','approve')">Duyệt</button><button class="btn d${cls}" onclick="A.returnAction('${r.id}','reject')">Từ chối</button>`;
+  if(r.status==='requested')return `<button class="btn p${cls}" onclick="A.returnAction('${escJs(r.id)}','approve')">Duyệt</button><button class="btn d${cls}" onclick="A.returnAction('${escJs(r.id)}','reject')">Từ chối</button>`;
   // approved: chờ khách gửi hàng về. Khách mang trực tiếp tới cửa hàng thì vẫn
   // bấm "Đã nhận & kiểm hàng" được ngay, không cần bước vận đơn.
-  if(r.status==='approved'||r.status==='shipped_back')return `<button class="btn g${cls}" onclick="A.returnAction('${r.id}','receive')">Đã nhận & kiểm hàng</button><button class="btn d${cls}" onclick="A.returnAction('${r.id}','reject')">Từ chối</button>`;
-  if(r.status==='received'||r.status==='refund_failed'){const p=returnPayment(r);const providerLabel=r.codManualRefund?'thủ công (COD)':p?.provider==='vnpay'?'VNPay':'Stripe';return `<button class="btn d${cls}" onclick="A.returnAction('${r.id}','refund')">Hoàn ${providerLabel}</button>`;}
+  if(r.status==='approved'||r.status==='shipped_back')return `<button class="btn g${cls}" onclick="A.returnAction('${escJs(r.id)}','receive')">Đã nhận & kiểm hàng</button><button class="btn d${cls}" onclick="A.returnAction('${escJs(r.id)}','reject')">Từ chối</button>`;
+  if(r.status==='received'||r.status==='refund_failed'){const p=returnPayment(r);const providerLabel=r.codManualRefund?'thủ công (COD)':p?.provider==='vnpay'?'VNPay':'Stripe';return `<button class="btn d${cls}" onclick="A.returnAction('${escJs(r.id)}','refund')">Hoàn ${providerLabel}</button>`;}
   return '';
 }
 // Yêu cầu trả từng món trong đơn nhiều sản phẩm: hiện rõ trả món nào, mấy cái.
@@ -185,17 +185,17 @@ function returnPolicyPanel(){
 function returnKindBadge(r){return r.kind==='cancel'?'<span class="bdg b-gray" style="margin-left:6px"><span class="d"></span>Huỷ đơn</span>':'<span class="bdg b-violet" style="margin-left:6px"><span class="d"></span>Trả hàng</span>';}
 function returnRow(r){const o=returnOrder(r);const p=returnPayment(r);const isVnpay=p?.provider==='vnpay';const method=isVnpay?`${p?.vnpBankCode||'VNPAY'}${p?.vnpCardType?' · '+p.vnpCardType:''}`:`${p?.card?.brand||'CARD'} •••• ${p?.card?.last4||'—'}`;return `<tr>
   <td><div class="bold mono">${esc(r.code)}${returnKindBadge(r)}${returnScopeBadge(r)}</div><div class="faint" style="font-size:10.5px">${fmtDate(r.createdAt)}</div></td>
-  <td><button class="link" onclick="A.openOrder('${esc(o?.id||r.orderId)}')">#${esc(r.orderCode||o?.code||'—')}</button><div class="faint" style="font-size:10.5px">${esc(o?.customer?.name||r.userId||'')}</div></td>
+  <td><button class="link" onclick="A.openOrder('${escJs(o?.id||r.orderId)}')">#${esc(r.orderCode||o?.code||'—')}</button><div class="faint" style="font-size:10.5px">${esc(o?.customer?.name||r.userId||'')}</div></td>
   <td>${badge(RET,r.status)}</td><td style="max-width:240px"><div class="bold" style="font-size:11.5px">${esc(r.reason)}</div><div class="faint" style="font-size:10.5px;white-space:normal;line-height:1.45">${esc((r.items||[]).map(item=>`${item.name} ×${item.qty}`).join(', ')||r.note||'Không có ghi chú')}</div></td>
   <td class="bold">${money(r.amount||0)}<div class="faint" style="font-size:10px">${esc(method)}</div></td>
   <td><div class="mono" style="font-size:10.5px">${esc(r.refundId||'Chưa tạo Refund')}</div></td>
-  <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">${returnActions(r)}<button class="btn sm" onclick="A.openReturn('${r.id}')">Chi tiết</button></div></td></tr>`;}
+  <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">${returnActions(r)}<button class="btn sm" onclick="A.openReturn('${escJs(r.id)}')">Chi tiết</button></div></td></tr>`;}
 function viewReturns(){
   const all=DB.returnRequests||[];const waiting=all.filter(r=>['requested','approved','received'].includes(r.status)).length;const refunded=all.filter(r=>r.status==='refunded').reduce((s,r)=>s+Number(r.amount||0),0);const list=returnList();
   const tabs=[['all','Tất cả'],['requested','Chờ duyệt'],['approved','Chờ khách gửi'],['shipped_back','Khách đã gửi về'],['received','Đã nhận hàng'],['refund_pending','Đang hoàn'],['refunded','Đã hoàn'],['rejected','Từ chối']];
   return `<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px"><div class="kpi"><div class="lb">Tổng yêu cầu</div><div class="v">${all.length}</div><div class="dl">Mã RMA/RTN riêng</div></div><div class="kpi"><div class="lb">Cần xử lý</div><div class="v">${waiting}</div><div class="dl" style="color:var(--amber)">Duyệt · nhận hàng · hoàn tiền</div></div><div class="kpi"><div class="lb">Đã hoàn tiền</div><div class="v">${money(refunded)}</div><div class="dl">Qua Stripe &amp; VNPay</div></div></div>
   ${returnPolicyPanel()}
-  <div class="filters"><div class="tabs">${tabs.map(t=>`<button class="${state.returnStatus===t[0]?'on':''}" onclick="A.returnTab('${t[0]}')">${t[1]}<span class="c">${t[0]==='all'?all.length:all.filter(r=>r.status===t[0]).length}</span></button>`).join('')}</div><div class="search" style="max-width:280px"><span>🔍</span><input placeholder="Mã trả hàng / đơn / refund" value="${esc(state.returnQuery||'')}" oninput="A.returnSearch(this.value)"></div><button class="btn" onclick="A.refreshReturns()">↻ Làm mới</button></div>
+  <div class="filters"><div class="tabs">${tabs.map(t=>`<button class="${state.returnStatus===t[0]?'on':''}" onclick="A.returnTab('${escJs(t[0])}')">${t[1]}<span class="c">${t[0]==='all'?all.length:all.filter(r=>r.status===t[0]).length}</span></button>`).join('')}</div><div class="search" style="max-width:280px"><span>🔍</span><input placeholder="Mã trả hàng / đơn / refund" value="${esc(state.returnQuery||'')}" oninput="A.returnSearch(this.value)"></div><button class="btn" onclick="A.refreshReturns()">↻ Làm mới</button></div>
   <div class="panel"><div class="tablewrap"><table class="tbl"><thead><tr><th>Mã trả hàng</th><th>Đơn hàng</th><th>Trạng thái</th><th>Lý do</th><th>Tiền hoàn</th><th>Mã hoàn tiền</th><th></th></tr></thead><tbody id="returnBody">${list.length?list.map(returnRow).join(''):`<tr><td colspan="7"><div style="text-align:center;color:var(--faint);padding:30px">Chưa có yêu cầu trả hàng phù hợp.</div></td></tr>`}</tbody></table></div></div>`;
 }
 function returnDrawer(r){const o=returnOrder(r),p=returnPayment(r);const timeline=(r.timeline||[]).map(item=>`<div class="n done"><div class="dotn"></div><div><div class="tl-b">${esc(RET[item.s]?.t||item.s)}</div><div class="tl-t">${fmtDate(item.at)}${item.note?` · ${esc(item.note)}`:''}${item.refundId?` · <span class="mono">${esc(item.refundId)}</span>`:''}</div></div></div>`).join('');
@@ -221,7 +221,7 @@ function returnDrawer(r){const o=returnOrder(r),p=returnPayment(r);const timelin
   ${shipBack}
   ${photos}
   <div class="section-title" style="margin:16px 0 10px"><h2 style="font-size:13px">Lịch sử xử lý</h2></div><div class="timeline">${timeline}</div></div>
-  <div class="mf"><button class="btn" onclick="closeModal()">Đóng</button>${p?`<button class="btn" onclick="A.openPayment('${p.id}')">Xem thanh toán</button>`:''}<button class="btn" onclick="A.promptVoucher('${r.userId}','${esc(r.orderCode)}')">🎁 Gửi voucher đền bù</button>${returnActions(r,false)}</div>`;}
+  <div class="mf"><button class="btn" onclick="closeModal()">Đóng</button>${p?`<button class="btn" onclick="A.openPayment('${escJs(p.id)}')">Xem thanh toán</button>`:''}<button class="btn" onclick="A.promptVoucher('${escJs(r.userId)}','${escJs(r.orderCode)}')">🎁 Gửi voucher đền bù</button>${returnActions(r,false)}</div>`;}
 function orderDrawer(o){
   const chain=['pending','confirmed','shipping','completed'];
   const pay=orderPayment(o);
@@ -232,11 +232,11 @@ function orderDrawer(o){
   const cancellable=['pending','pending_payment','confirmed'].includes(o.status);
   const actions = ['cancelled','completed','returned'].includes(o.status)
      ? `<span class="muted" style="font-size:12px;align-self:center">Đơn đã ${o.status==='completed'?'được khách xác nhận nhận hàng':o.status==='returned'?'trả hàng và hoàn tiền':'huỷ'} — không thể thay đổi trạng thái.</span>`
-     : `${o.status==='pending'||o.status==='pending_payment'?`<button class="btn p" onclick="A.setOrder('${o.id}','${o.status==='pending_payment'?'pending':'confirmed'}',1)">${o.status==='pending_payment'?'Ghi nhận đã thanh toán':'Xác nhận đơn'}</button>`:''}
-        ${o.status==='confirmed'?`<button class="btn p" onclick="A.setOrder('${o.id}','shipping',1)">Bàn giao đơn vị vận chuyển</button>`:''}
-        ${o.status==='shipping'?`<button class="btn p" onclick="A.setOrder('${o.id}','delivered',1)">Đơn vị vận chuyển đã giao</button>`:''}
-        ${o.status==='delivered'?`<button class="btn g" onclick="A.setOrder('${o.id}','completed',1)">Xác nhận thay khách (hỗ trợ)</button>`:''}
-        ${cancellable?`<button class="btn d" onclick="A.cancelOrder('${o.id}')">Huỷ đơn</button>`:''}`;
+     : `${o.status==='pending'||o.status==='pending_payment'?`<button class="btn p" onclick="A.setOrder('${escJs(o.id)}','${escJs(o.status==='pending_payment'?'pending':'confirmed')}',1)">${o.status==='pending_payment'?'Ghi nhận đã thanh toán':'Xác nhận đơn'}</button>`:''}
+        ${o.status==='confirmed'?`<button class="btn p" onclick="A.setOrder('${escJs(o.id)}','shipping',1)">Bàn giao đơn vị vận chuyển</button>`:''}
+        ${o.status==='shipping'?`<button class="btn p" onclick="A.setOrder('${escJs(o.id)}','delivered',1)">Đơn vị vận chuyển đã giao</button>`:''}
+        ${o.status==='delivered'?`<button class="btn g" onclick="A.setOrder('${escJs(o.id)}','completed',1)">Xác nhận thay khách (hỗ trợ)</button>`:''}
+        ${cancellable?`<button class="btn d" onclick="A.cancelOrder('${escJs(o.id)}')">Huỷ đơn</button>`:''}`;
   const stageHint = o.status==='shipping'
      ? 'Hàng đang ở đơn vị vận chuyển. Khi bên vận chuyển báo đã giao, bấm "Đơn vị vận chuyển đã giao" — khách sẽ nhận thông báo để kiểm hàng và tự xác nhận.'
      : o.status==='delivered'
@@ -255,9 +255,9 @@ function orderDrawer(o){
         <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:4px"><span class="muted">Ngân hàng</span><b>${pay.vnpBankCode?`${esc(pay.vnpBankCode)}${pay.vnpCardType?' · '+esc(pay.vnpCardType):''}`:'—'}</b></div>
         <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:4px"><span class="muted">Mã GD ngân hàng</span><span class="mono faint">${esc(pay.vnpTransactionNo||'—')}</span></div>
         `:''}
-        ${o.returnRequest?`<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:4px"><span class="muted">Trả hàng</span><button class="link" onclick="A.openReturn('${o.returnRequest.id}')">${esc(o.returnRequest.code)} · ${esc(RET[o.returnRequest.status]?.t||o.returnRequest.status)}</button></div>`:''}
-        ${pay?`<button class="btn sm" style="margin-top:8px;width:100%" onclick="A.openPayment('${pay.id}')">Xem chi tiết giao dịch</button>`:''}
-        ${o.payment.method==='COD'&&o.payment.status!=='paid'&&o.status!=='cancelled'?`<button class="btn sm" style="margin-top:8px;width:100%" onclick="A.markPaid('${o.id}')">Đánh dấu đã thanh toán COD</button>`:''}
+        ${o.returnRequest?`<div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:4px"><span class="muted">Trả hàng</span><button class="link" onclick="A.openReturn('${escJs(o.returnRequest.id)}')">${esc(o.returnRequest.code)} · ${esc(RET[o.returnRequest.status]?.t||o.returnRequest.status)}</button></div>`:''}
+        ${pay?`<button class="btn sm" style="margin-top:8px;width:100%" onclick="A.openPayment('${escJs(pay.id)}')">Xem chi tiết giao dịch</button>`:''}
+        ${o.payment.method==='COD'&&o.payment.status!=='paid'&&o.status!=='cancelled'?`<button class="btn sm" style="margin-top:8px;width:100%" onclick="A.markPaid('${escJs(o.id)}')">Đánh dấu đã thanh toán COD</button>`:''}
       </div></div>
     </div>
     <div class="section-title" style="margin:16px 0 10px"><h2 style="font-size:13px">Sản phẩm đã mua</h2></div>
@@ -285,9 +285,9 @@ function prodRow(p){
     <td class="center">${p.variants.length}</td>
     <td>${badge(PST,effStatus(p))}</td>
     <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end">
-      <button class="iconbtn" title="Sửa" onclick="A.editProduct('${p.id}')">✎</button>
-      <button class="iconbtn" title="${p.status==='hidden'?'Hiện':'Ẩn'}" onclick="A.toggleHide('${p.id}')">${p.status==='hidden'?'👁️':'🚫'}</button>
-      ${STAFF_ONLY?'':`<button class="iconbtn d" title="Xoá" onclick="A.delProduct('${p.id}')">🗑️</button>`}
+      <button class="iconbtn" title="Sửa" onclick="A.editProduct('${escJs(p.id)}')">✎</button>
+      <button class="iconbtn" title="${p.status==='hidden'?'Hiện':'Ẩn'}" onclick="A.toggleHide('${escJs(p.id)}')">${p.status==='hidden'?'👁️':'🚫'}</button>
+      ${STAFF_ONLY?'':`<button class="iconbtn d" title="Xoá" onclick="A.delProduct('${escJs(p.id)}')">🗑️</button>`}
     </div></td>
   </tr>`;
 }
@@ -300,7 +300,7 @@ function viewProducts(){
   const cnt=s=>s==='all'?DB.products.length:DB.products.filter(p=>effStatus(p)===s).length;
   return `
   <div class="filters">
-    <div class="tabs">${tabs.map(t=>`<button class="${state.pStatus===t[0]?'on':''}" onclick="A.pTab('${t[0]}')">${t[1]}<span class="c">${cnt(t[0])}</span></button>`).join('')}</div>
+    <div class="tabs">${tabs.map(t=>`<button class="${state.pStatus===t[0]?'on':''}" onclick="A.pTab('${escJs(t[0])}')">${t[1]}<span class="c">${cnt(t[0])}</span></button>`).join('')}</div>
     <div class="search" style="max-width:240px"><span>🔍</span><input placeholder="Tên, mã hàng, danh mục" value="${esc(state.pQuery||'')}" oninput="A.pSearch(this.value)"></div>
     <div class="hspace"></div>
     ${STAFF_ONLY?'':'<button class="btn" onclick="A.importCSV()"><span class="ic">⇪</span>Nhập dữ liệu</button><button class="btn" onclick="A.exportCSV()"><span class="ic">⇩</span>Xuất dữ liệu</button>'}
@@ -397,7 +397,7 @@ function openPicker(idx){readEditorForm();cpk.idx=idx;const cur=editing.variants
   <div class="mb"><div class="cp">
     <div class="sv" id="sv"><div class="svh" id="svh"></div></div>
     <div class="hue" id="hue"><div class="hh" id="hh"></div></div>
-    <div class="presets" id="presets">${PALETTE.map(c=>`<div class="sw" style="background:${c}" onclick="A.pickPreset('${c}')"></div>`).join('')}</div>
+    <div class="presets" id="presets">${PALETTE.map(c=>`<div class="sw" style="background:${c}" onclick="A.pickPreset('${escJs(c)}')"></div>`).join('')}</div>
     <div class="out"><div class="prev" id="cpPrev"></div><input class="inp mono" id="cpHex" style="width:120px" value="${cur}" oninput="A.pickHex(this.value)"><span class="faint" style="font-size:11px">Kéo trên bảng để chọn màu</span></div>
   </div></div>
   <div class="mf"><button class="btn" onclick="A.pickCancel()">Huỷ</button><button class="btn p" onclick="A.pickApply()">Áp dụng màu</button></div>`);

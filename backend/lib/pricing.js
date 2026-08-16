@@ -11,6 +11,9 @@
 
 const DEFAULT_COLOR = 'Mặc định';
 const DEFAULT_SIZE = 'M';
+// Phụ thu nhẹ theo lượng vải. S là giá niêm yết; mỗi bậc lớn hơn tăng 10.000đ.
+// Size lạ/size phụ kiện không nằm trong bảng thì không tự cộng.
+const SIZE_SURCHARGE = Object.freeze({ S: 0, M: 10_000, L: 20_000, XL: 30_000, XXL: 40_000, XXXL: 50_000, '4XL': 60_000, '5XL': 70_000 });
 
 const sameColor = (variant, colorName) =>
   String(variant.colorName || DEFAULT_COLOR) === String(colorName || DEFAULT_COLOR);
@@ -36,10 +39,14 @@ function variantOwnPrice(variant) {
   return Number.isFinite(price) && price > 0 ? price : null;
 }
 
+function sizeSurcharge(size) {
+  return SIZE_SURCHARGE[String(size || DEFAULT_SIZE).trim().toUpperCase()] ?? 0;
+}
+
 /** Đơn giá thực tế khách phải trả cho một lựa chọn màu+size. */
 function unitPrice(product, colorName, size) {
   const variant = findVariant(product, colorName, size);
-  return variantOwnPrice(variant) ?? Math.max(0, Number(product?.price) || 0);
+  return variantOwnPrice(variant) ?? Math.max(0, Number(product?.price) || 0) + sizeSurcharge(size);
 }
 
 /**
@@ -50,10 +57,10 @@ function priceRange(product) {
   const base = Math.max(0, Number(product?.price) || 0);
   const variants = Array.isArray(product?.variants) ? product.variants : [];
   if (!variants.length) return { min: base, max: base, varies: false };
-  const prices = variants.map((variant) => variantOwnPrice(variant) ?? base);
+  const prices = variants.map((variant) => variantOwnPrice(variant) ?? base + sizeSurcharge(variant.size));
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   return { min, max, varies: min !== max };
 }
 
-module.exports = { findVariant, variantOwnPrice, unitPrice, priceRange, DEFAULT_COLOR, DEFAULT_SIZE };
+module.exports = { findVariant, variantOwnPrice, sizeSurcharge, unitPrice, priceRange, SIZE_SURCHARGE, DEFAULT_COLOR, DEFAULT_SIZE };

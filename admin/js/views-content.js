@@ -23,9 +23,9 @@ function viewReviews(){
   const rows=list.length?list.map(review=>{
     const reactions=(DB.reviewReactions||[]).filter(item=>item.reviewId===review.id),helpful=reactions.filter(item=>item.value==='helpful').length,notHelpful=reactions.filter(item=>item.value==='not_helpful').length;
     const engine=review.moderation?.engine||'Bộ lọc quy tắc',reason=review.moderation?.reason||'Chưa có kết luận';
-    return `<tr><td><div class="bold">${esc(review.userName||review.userId)}</div><div class="faint mono" style="font-size:10px">${esc(review.userId)} · #${esc(review.orderCode||review.orderId)}</div></td><td><div class="bold">${esc(productLabel(review.productId))}</div><div style="color:var(--amber)">${'★'.repeat(Number(review.rating||0))}${'☆'.repeat(Math.max(0,5-Number(review.rating||0)))}</div></td><td style="max-width:350px"><div style="white-space:normal;line-height:1.5">${esc(review.comment)}</div><div class="faint" style="font-size:10.5px;margin-top:5px">👍 ${helpful} · 👎 ${notHelpful} · ${fmtDate(review.createdAt)}</div></td><td><div class="bold" style="font-size:11px">${esc(engine)}</div><div class="faint" style="font-size:10.5px;max-width:240px;white-space:normal">${esc(reason)}</div></td><td>${badge(REVIEW_STATUS,review.status)}</td><td class="right"><div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sm" onclick="A.moderateReview('${review.id}','approved')">Duyệt</button><button class="btn d sm" onclick="A.moderateReview('${review.id}','rejected')">Chặn & học</button></div></td></tr>`;
+    return `<tr><td><div class="bold">${esc(review.userName||review.userId)}</div><div class="faint mono" style="font-size:10px">${esc(review.userId)} · #${esc(review.orderCode||review.orderId)}</div></td><td><div class="bold">${esc(productLabel(review.productId))}</div><div style="color:var(--amber)">${'★'.repeat(Number(review.rating||0))}${'☆'.repeat(Math.max(0,5-Number(review.rating||0)))}</div></td><td style="max-width:350px"><div style="white-space:normal;line-height:1.5">${esc(review.comment)}</div><div class="faint" style="font-size:10.5px;margin-top:5px">👍 ${helpful} · 👎 ${notHelpful} · ${fmtDate(review.createdAt)}</div></td><td><div class="bold" style="font-size:11px">${esc(engine)}</div><div class="faint" style="font-size:10.5px;max-width:240px;white-space:normal">${esc(reason)}</div></td><td>${badge(REVIEW_STATUS,review.status)}</td><td class="right"><div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sm" onclick="A.moderateReview('${escJs(review.id)}','approved')">Duyệt</button><button class="btn d sm" onclick="A.moderateReview('${escJs(review.id)}','rejected')">Chặn & học</button></div></td></tr>`;
   }).join(''):emptyTR(6,'Không có đánh giá phù hợp.');
-  return `<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px"><div class="kpi"><div class="lb">Tổng đánh giá xác minh</div><div class="v">${all.length}</div><div class="dl">chỉ từ đơn đã mua</div></div><div class="kpi"><div class="lb">Chờ kiểm tra</div><div class="v">${count('pending')}</div><div class="dl">ưu tiên xử lý</div></div><div class="kpi"><div class="lb">Đã chặn</div><div class="v">${count('rejected')}</div><div class="dl">mẫu chặn được học lại</div></div><div class="kpi"><div class="lb">Mô hình kiểm duyệt</div><div class="v" style="font-size:17px">Qwen 2.5 7B</div><div class="dl" style="color:var(--green)">đang hoạt động · chống lách luật</div></div></div><div class="filters"><div class="tabs">${[['all','Tất cả'],['pending','Chờ kiểm tra'],['approved','Đã duyệt'],['rejected','Đã chặn']].map(([key,label])=>`<button class="${state.reviewStatus===key?'on':''}" onclick="A.reviewTab('${key}')">${label}<span class="c">${count(key)}</span></button>`).join('')}</div><span class="faint" style="font-size:11px">Mô hình phân tích ngữ nghĩa, viết tắt, chen ký tự, bỏ dấu, đảo cụm từ và công kích ám chỉ.</span></div><div class="panel"><div class="tablewrap"><table class="tbl"><thead><tr><th>Khách/đơn</th><th>Sản phẩm</th><th>Đánh giá</th><th>Kết luận AI</th><th>Trạng thái</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  return `<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px"><div class="kpi"><div class="lb">Tổng đánh giá xác minh</div><div class="v">${all.length}</div><div class="dl">chỉ từ đơn đã mua</div></div><div class="kpi"><div class="lb">Chờ kiểm tra</div><div class="v">${count('pending')}</div><div class="dl">ưu tiên xử lý</div></div><div class="kpi"><div class="lb">Đã chặn</div><div class="v">${count('rejected')}</div><div class="dl">mẫu chặn được học lại</div></div><div class="kpi"><div class="lb">Mô hình kiểm duyệt</div><div class="v" style="font-size:17px">Qwen 2.5 7B</div><div class="dl" style="color:var(--green)">đang hoạt động · chống lách luật</div></div></div><div class="filters"><div class="tabs">${[['all','Tất cả'],['pending','Chờ kiểm tra'],['approved','Đã duyệt'],['rejected','Đã chặn']].map(([key,label])=>`<button class="${state.reviewStatus===key?'on':''}" onclick="A.reviewTab('${escJs(key)}')">${label}<span class="c">${count(key)}</span></button>`).join('')}</div><span class="faint" style="font-size:11px">Mô hình phân tích ngữ nghĩa, viết tắt, chen ký tự, bỏ dấu, đảo cụm từ và công kích ám chỉ.</span></div><div class="panel"><div class="tablewrap"><table class="tbl"><thead><tr><th>Khách/đơn</th><th>Sản phẩm</th><th>Đánh giá</th><th>Kết luận AI</th><th>Trạng thái</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 /* ================= USERS ================= */
@@ -38,13 +38,13 @@ function userRow(u){return `<tr>
   <td class="bold">${money(u.spent)}<div class="faint" style="font-size:10.5px">Tháng này ${money(userVip(u).currentMonth?.spend||0)} / ${money(userVip(u).currentMonth?.threshold||5000000)}</div></td>
   <td class="center">${u.tryons}</td>
   <td>${userVip(u).isVip?`<span class="bdg b-violet"><span class="d"></span>VIP · còn ${userVip(u).daysRemaining} ngày</span><div class="faint" style="font-size:10px;margin-top:3px">đến ${new Date(userVip(u).expiresAt).toLocaleDateString('vi-VN')}</div>`:'<span class="bdg b-blue"><span class="d"></span>Thành viên</span>'}</td>
-  <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" onclick="A.openUser('${u.id}')">Xem</button><button class="iconbtn ${u.status==='locked'?'':'d'}" title="${u.status==='locked'?'Mở khoá':'Khoá'}" onclick="A.toggleLock('${u.id}')">${u.status==='locked'?'🔓':'🔒'}</button></div></td></tr>`;}
+  <td class="right"><div style="display:flex;gap:6px;justify-content:flex-end"><button class="btn sm" onclick="A.openUser('${escJs(u.id)}')">Xem</button><button class="iconbtn ${u.status==='locked'?'':'d'}" title="${u.status==='locked'?'Mở khoá':'Khoá'}" onclick="A.toggleLock('${escJs(u.id)}')">${u.status==='locked'?'🔓':'🔒'}</button></div></td></tr>`;}
 function viewUsers(){
   if(!DB.seeded||DB.users.length===0)return emptyPanel('👥','Chưa có người dùng','Người dùng đăng ký app sẽ hiển thị tại đây kèm lịch sử mua, chi tiêu và số lần thử đồ AI.',[['','A.seed()','✦ Nạp dữ liệu demo']]);
   const tabs=[['all','Tất cả'],['customer','Khách'],['staff','Nhân viên'],['admin','Admin'],['super_admin','Super Admin']];
   const cnt=r=>r==='all'?DB.users.length:DB.users.filter(u=>u.role===r).length;
   return `<div class="filters">
-    <div class="tabs">${tabs.map(t=>`<button class="${state.uRole===t[0]?'on':''}" onclick="A.uTab('${t[0]}')">${t[1]}<span class="c">${cnt(t[0])}</span></button>`).join('')}</div>
+    <div class="tabs">${tabs.map(t=>`<button class="${state.uRole===t[0]?'on':''}" onclick="A.uTab('${escJs(t[0])}')">${t[1]}<span class="c">${cnt(t[0])}</span></button>`).join('')}</div>
     <div class="search" style="max-width:240px"><span>🔍</span><input placeholder="Tên hoặc email" value="${esc(state.uQuery||'')}" oninput="A.uSearch(this.value)"></div></div>
   <div class="panel"><div class="tablewrap"><table class="tbl">
     <thead><tr><th>Người dùng</th><th>Vai trò</th><th>Trạng thái</th><th class="center">Đơn</th><th>Tổng chi</th><th class="center">Thử đồ AI</th><th>Hạng</th><th></th></tr></thead>
@@ -73,10 +73,10 @@ function userDrawer(u){
         <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
         <option value="super_admin" ${u.role==='super_admin'?'selected':''}>Super Admin</option>
       </select></div>
-      <button class="btn p" style="width:100%" onclick="A.saveUserAdmin('${u.id}')">Lưu thay đổi quyền & thông tin</button>
+      <button class="btn p" style="width:100%" onclick="A.saveUserAdmin('${escJs(u.id)}')">Lưu thay đổi quyền & thông tin</button>
     </div>`:''}
   </div>
-  <div class="mf"><button class="btn ${u.status==='locked'?'p':'d'}" onclick="A.toggleLock('${u.id}',1)">${u.status==='locked'?'Mở khoá tài khoản':'Khoá tài khoản'}</button></div>`;}
+  <div class="mf"><button class="btn ${u.status==='locked'?'p':'d'}" onclick="A.toggleLock('${escJs(u.id)}',1)">${u.status==='locked'?'Mở khoá tài khoản':'Khoá tài khoản'}</button></div>`;}
 
 /* ================= KHÁM PHÁ NHẬT BẢN (đóng góp cộng đồng) ================= */
 // Mức thưởng lấy từ máy chủ (backend/lib/communityRewards.js); nếu chưa tải kịp
@@ -91,8 +91,8 @@ function suggestionCard(s){
     ? '<span class="bdg b-red"><span class="d"></span>Không duyệt</span>'
     : '<span class="bdg b-amber"><span class="d"></span>Chờ duyệt</span>';
   const acts=reward.status==='pending'
-    ? `<button class="btn p sm" onclick="A.approveSpot('${esc(s.id)}')">✅ Duyệt &amp; trả thưởng</button><button class="btn d sm" onclick="A.rejectSpot('${esc(s.id)}')">Từ chối</button><button class="btn sm" onclick="A.delJapanSuggestion('${esc(s.id)}')">🗑️ Xoá</button>`
-    : `<button class="btn sm" onclick="A.delJapanSuggestion('${esc(s.id)}')">🗑️ Xoá</button>`;
+    ? `<button class="btn p sm" onclick="A.approveSpot('${escJs(s.id)}')">✅ Duyệt &amp; trả thưởng</button><button class="btn d sm" onclick="A.rejectSpot('${escJs(s.id)}')">Từ chối</button><button class="btn sm" onclick="A.delJapanSuggestion('${escJs(s.id)}')">🗑️ Xoá</button>`
+    : `<button class="btn sm" onclick="A.delJapanSuggestion('${escJs(s.id)}')">🗑️ Xoá</button>`;
   return `<div class="${cls}">
     <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
       <div style="flex:1;min-width:0">
@@ -125,7 +125,7 @@ function viewJapan(){
         <td class="faint" style="font-size:11.5px">${esc(r.userName||'Khách')}<div class="faint" style="font-size:10px">${fmtDate(r.createdAt)}</div></td>
         <td class="center" style="color:var(--kin,#C99A2E);white-space:nowrap">${stars(r.rating)}</td>
         <td style="max-width:260px"><div style="font-size:12px">${esc(r.comment||'')}</div>${r.media?`<div class="faint" style="font-size:10px">📎 ${esc(r.media.kind||'media')}</div>`:''}</td>
-        <td class="right"><button class="btn d sm" onclick="A.delJapanReview('${esc(r.id)}')">Xoá</button></td></tr>`).join(''):emptyTR(5,'Chưa có đánh giá địa điểm nào.')}</tbody></table></div></div>
+        <td class="right"><button class="btn d sm" onclick="A.delJapanReview('${escJs(r.id)}')">Xoá</button></td></tr>`).join(''):emptyTR(5,'Chưa có đánh giá địa điểm nào.')}</tbody></table></div></div>
     <div class="panel"><div class="ph"><h3>Đóng góp địa điểm chụp ảnh mới</h3><span class="sub">${sugs.length} gợi ý · ${pendingSugs} chờ duyệt · đã thưởng ${rewarded}</span></div>
       <div class="pb">
         <div class="banner warn" style="margin-bottom:12px"><div class="bi">🎁</div><div><b>Duyệt là khách nhận thưởng ngay.</b> Mỗi gợi ý được duyệt sẽ tự phát một voucher giảm ${money(rewardCfg.amount)} cho đơn từ ${money(rewardCfg.minOrder)}, hạn ${rewardCfg.validityDays} ngày, chỉ khách đó dùng được và chỉ thưởng một lần cho mỗi gợi ý. Chỉ duyệt khi địa điểm có thật và mô tả đủ dùng.</div></div>
@@ -146,7 +146,7 @@ function viewModeration(){
   const modRow=r=>`<tr><td><div class="bold">${esc(r.userName||'Khách')}</div><div class="faint" style="font-size:10px">${fmtDate(r.createdAt)} · ${esc(r.productId||'')}</div></td>
     <td style="max-width:280px"><div style="font-size:12px">${esc(r.comment||'')}</div><div class="faint" style="font-size:10.5px;margin-top:3px">${esc((r.moderation&&r.moderation.reason)||'')}</div></td>
     <td>${badge2(r.status)}</td>
-    <td class="right" style="white-space:nowrap"><button class="btn p sm" onclick="A.modSet('${esc(r.id)}','approved')">Duyệt</button> <button class="btn d sm" onclick="A.modSet('${esc(r.id)}','rejected')">Chặn</button></td></tr>`;
+    <td class="right" style="white-space:nowrap"><button class="btn p sm" onclick="A.modSet('${escJs(r.id)}','approved')">Duyệt</button> <button class="btn d sm" onclick="A.modSet('${escJs(r.id)}','rejected')">Chặn</button></td></tr>`;
   return `<div class="grid" style="grid-template-columns:2fr 1fr;align-items:start;gap:14px">
     <div>
       <div class="panel"><div class="ph"><h3>Thử bộ lọc trực tiếp</h3><span class="sub">Kiểm tra một câu xem AI có chặn không (kể cả viết tắt/lách)</span></div>
@@ -200,15 +200,15 @@ function viewCategories(){
   return `<div class="filters"><div class="hspace"></div><button class="btn p" onclick="A.addCategory()"><span class="ic">＋</span>Thêm danh mục</button></div>
   <div class="panel"><table class="tbl"><thead><tr><th>Danh mục</th><th>Kanji</th><th>Slug</th><th class="center">Sản phẩm</th><th></th></tr></thead>
   <tbody>${DB.categories.map(c=>`<tr><td class="bold">${esc(c.name)}</td><td style="font-size:16px">${c.kanji||'—'}</td><td class="mono faint">${c.id}</td><td class="center">${DB.products.filter(p=>p.cat===c.id).length}</td>
-  <td class="right"><button class="iconbtn d" onclick="A.delCategory('${c.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`;}
+  <td class="right"><button class="iconbtn d" onclick="A.delCategory('${escJs(c.id)}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`;}
 function voucherRow(v){
   const isFlag=v.source==='flagcard-collection';
   return `<tr><td class="bold mono">${v.code}</td><td class="bold">${v.type==='percent'?v.value+'%':money(v.value)}</td><td>${v.min?money(v.min):'—'}</td>
   <td>${isFlag?'<span class="bdg b-violet"><span class="d"></span>🚩 Thẻ địa danh</span>':'<span class="bdg b-blue"><span class="d"></span>Khuyến mãi</span>'}</td>
   <td>${v.ownerUserId?`<span class="mono faint">${esc(v.ownerUserId)}</span>`:'<span class="faint">Công khai</span>'}</td>
   <td class="faint">${v.expiry}</td><td>${v.used}/${v.limit}</td>
-  <td><div class="switch ${v.active?'on':''}" onclick="A.toggleVoucher('${v.code}')"><i></i></div></td>
-  <td class="right">${isFlag?'':`<button class="iconbtn d" onclick="A.delVoucher('${v.code}')">🗑️</button>`}</td></tr>`;
+  <td><div class="switch ${v.active?'on':''}" onclick="A.toggleVoucher('${escJs(v.code)}')"><i></i></div></td>
+  <td class="right">${isFlag?'':`<button class="iconbtn d" onclick="A.delVoucher('${escJs(v.code)}')">🗑️</button>`}</td></tr>`;
 }
 function viewVouchers(){
   const flagV=DB.vouchers.filter(v=>v.source==='flagcard-collection');
@@ -234,7 +234,7 @@ function flagcardMini(c){
     <div class="muted" style="font-size:11px;margin-top:8px;line-height:1.5;max-height:48px;overflow:hidden">${esc(c.summary||'')}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
       ${c.active!==false?'<span class="bdg b-green"><span class="d"></span>Đang phát</span>':'<span class="bdg b-gray"><span class="d"></span>Tạm ẩn</span>'}
-      <div class="switch ${c.active!==false?'on':''}" onclick="A.toggleFlagcardActive('${c.id}')"><i></i></div>
+      <div class="switch ${c.active!==false?'on':''}" onclick="A.toggleFlagcardActive('${escJs(c.id)}')"><i></i></div>
     </div>
   </div></div>`;
 }
@@ -302,12 +302,12 @@ function viewBanners(){
   return `<div class="filters"><div class="hspace"></div><button class="btn p" onclick="A.addBanner()"><span class="ic">＋</span>Thêm ảnh quảng bá</button></div>
   <div class="grid" style="grid-template-columns:repeat(3,1fr)">${DB.banners.map(b=>`<div class="panel"><div style="height:110px;background:${b.img};border-radius:8px 8px 0 0;display:flex;align-items:flex-end;padding:12px"><div style="color:#fff"><div style="font-size:10px;letter-spacing:2px;opacity:.85">JAPANO</div><div style="font-weight:800;font-size:16px">${esc(b.title)}</div></div></div>
   <div class="pb" style="display:flex;align-items:center;justify-content:space-between"><div><div class="faint mono" style="font-size:11px">${esc(b.link)}</div><div style="margin-top:4px">${b.active?'<span class="bdg b-green"><span class="d"></span>Đang hiển thị</span>':'<span class="bdg b-gray"><span class="d"></span>Đã tắt</span>'}</div></div>
-  <div style="display:flex;gap:8px;align-items:center"><div class="switch ${b.active?'on':''}" onclick="A.toggleBanner('${b.id}')"><i></i></div><button class="iconbtn d" onclick="A.delBanner('${b.id}')">🗑️</button></div></div></div>`).join('')||emptyPanel('🖼️','Chưa có ảnh quảng bá','Thêm ảnh quảng bá để làm nổi bật khuyến mãi trên trang chủ ứng dụng.',[['p','A.addBanner()','＋ Thêm ảnh quảng bá']])}</div>`;}
+  <div style="display:flex;gap:8px;align-items:center"><div class="switch ${b.active?'on':''}" onclick="A.toggleBanner('${escJs(b.id)}')"><i></i></div><button class="iconbtn d" onclick="A.delBanner('${escJs(b.id)}')">🗑️</button></div></div></div>`).join('')||emptyPanel('🖼️','Chưa có ảnh quảng bá','Thêm ảnh quảng bá để làm nổi bật khuyến mãi trên trang chủ ứng dụng.',[['p','A.addBanner()','＋ Thêm ảnh quảng bá']])}</div>`;}
 
 /* ================= SETTINGS ================= */
 function intRow(label,ok,key){return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)">
   <span class="dot ${ok?'g':'r'}"></span><div style="flex:1"><div class="bold" style="font-size:12.5px">${label}</div><div class="faint" style="font-size:11px">${ok?'Đã kết nối · hoạt động bình thường':'Chưa cấu hình / mất kết nối'}</div></div>
-  <button class="btn sm" onclick="A.testInt('${key}')">Kiểm tra</button></div>`;}
+  <button class="btn sm" onclick="A.testInt('${escJs(key)}')">Kiểm tra</button></div>`;}
 function healthOr(value,fallback){return HEALTH.checked&&value!==null?value===true:Boolean(fallback);}
 async function persistShop(patch){
   const result=await requestJSON('/shop',20000,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(patch)});

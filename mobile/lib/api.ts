@@ -37,6 +37,8 @@ export type StylistRecommendation = {
   tags: string[];
   products: ApiProductRef[];
   accessories: ApiProductRef[];
+  /** Lý do gợi ý từng món, khoá theo slug — dùng cho cả trang phục lẫn phụ kiện. */
+  reasons: Record<string,string>;
   mood: string|null;
   moodLabel: string|null;
   ageRange: string|null;
@@ -50,6 +52,7 @@ export type SizeFit = {
   verdict: 'good'|'tight'|'loose'|'unknown';
   message: string;
 };
+export type TryOnGarment = { slug:string; name:string; zone:'upper'|'lower'|'overall' };
 export type TryOnResult = {
   imageUrl: string;
   message: string;
@@ -57,6 +60,12 @@ export type TryOnResult = {
   engine?: string;
   sizeFit?: SizeFit;
   warning?: string;
+  /** Những món THỰC SỰ lên được ảnh — có thể ít hơn số món đã chọn. */
+  garments: TryOnGarment[];
+  /** Món đã chọn nhưng AI không ghép được, để nói thật với người dùng. */
+  skippedGarments: string[];
+  appliedAccessories: string[];
+  skippedAccessories: string[];
 };
 export type MotionPreset = { id:string; label:string; icon:string };
 
@@ -391,6 +400,7 @@ export async function recommendStyle(payload: {
     tags: (result?.tags || result?.styleTags || result?.analysis?.styleTags || []).map(String),
     products: result?.products || result?.recommendations || result?.productIds || [],
     accessories: result?.accessories || result?.accessoryProducts || result?.accessoryIds || [],
+    reasons: (result?.reasons && typeof result.reasons === 'object') ? result.reasons as Record<string,string> : {},
     mood: data?.mood || null,
     moodLabel: data?.moodLabel || null,
     ageRange: data?.ageRange || null,
@@ -431,6 +441,10 @@ export async function generateTryOn(payload: Record<string, unknown>): Promise<T
     engine: String(data?.engine || ''),
     sizeFit: data?.sizeFit,
     warning: String(data?.accessoryWarning || (data?.qualityWarning ? data?.message : '') || ''),
+    garments: Array.isArray(data?.garments) ? data.garments as TryOnGarment[] : [],
+    skippedGarments: Array.isArray(data?.skippedGarments) ? data.skippedGarments.map(String) : [],
+    appliedAccessories: Array.isArray(data?.appliedAccessories) ? data.appliedAccessories.map((item:any)=>String(item?.name||item?.id||'')).filter(Boolean) : [],
+    skippedAccessories: Array.isArray(data?.skippedAccessories) ? data.skippedAccessories.map(String) : [],
   };
 }
 

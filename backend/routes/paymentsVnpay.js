@@ -7,6 +7,7 @@ const {
   VNPAY_TMN_CODE, VNPAY_API_URL, VNPAY_RETURN_URL, VNPAY_VERSION,
 } = require('../lib/vnpaySign');
 const { findPayment, findReturnRequest, reusableProviderOrder } = require('../lib/paymentLookup');
+const { restockCancelledOrder, restockRemainingOrderUnits } = require('../lib/inventory');
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { makeCreateOrderInState } = require('./orders');
 
@@ -66,6 +67,8 @@ function makeVnpayHelpers(ctx) {
         order.payment.status = payment.status;
         order.history ||= [];
         order.history.push({ s: payment.status, at: now, reason: responseCode });
+        // Huỷ/thất bại ở cổng VNPay: hàng chưa rời cửa hàng, nhả kho lại ngay.
+        restockCancelledOrder(state, order, `vnpay-${payment.status}`);
         outcome = { code: payment.status, order, payment };
       }
       return state;
@@ -185,7 +188,11 @@ function makeVnpayHelpers(ctx) {
           if (fullyRefunded) order.status = 'returned';
         }
       } else if (order && fullyRefunded) {
+        // Hoàn tiền thẳng từ trang quản trị, không đi qua yêu cầu đổi/trả — vẫn
+        // phải hoàn kho, nếu không mỗi lần hoàn tiền lại làm bốc hơi tồn kho.
         order.status = order.status === 'completed' ? 'returned' : 'cancelled';
+        if (order.status === 'returned') restockRemainingOrderUnits(state, order, 'gateway-full-refund');
+        else restockCancelledOrder(state, order, 'gateway-full-refund');
       }
       if (order) {
         order.history ||= [];

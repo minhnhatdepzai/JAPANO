@@ -10,15 +10,23 @@ export const useCatalog = () => useContext(Ctx);
 
 function normalizedRemote(remote:any[]):Product[]{
   const remoteBySlug = new Map(remote.filter(p=>p?.slug).map(p=>[String(p.slug),p]));
+  // Máy chủ là nguồn sự thật. Danh mục ghi cứng chỉ còn hai việc: giữ ảnh đóng
+  // gói để app dùng khi mất mạng, và làm bản dự phòng khi API không trả lời.
+  //
+  // Trước đây khối này lấy `name` từ bản ghi cứng và GIỮ LẠI sản phẩm mà API
+  // không trả về. Hệ quả: đổi tên sản phẩm trong trang quản trị thì app vẫn
+  // hiện tên cũ, và ẩn một sản phẩm đi thì nó vẫn nằm trong app — cả hai đều
+  // trái với việc "app hiển thị đúng những gì có trong cơ sở dữ liệu".
   const bundled = BUNDLED.map(base=>{
     const r:any=remoteBySlug.get(base.slug);
-    if(!r)return base;
+    // API đã trả lời nhưng không có sản phẩm này ⇒ nó đã bị ẩn/nháp/xoá.
+    if(!r)return null;
     remoteBySlug.delete(base.slug);
     return {
       ...base,
       ...r,
       slug:base.slug,
-      name:base.name,
+      name:String(r.name||r.productName||base.name),
       cat:r.cat||r.category||base.cat,
       kanji:r.kanji||base.kanji,
       rating:Number(r.rating??r.avgRating??0),
@@ -52,7 +60,7 @@ function normalizedRemote(remote:any[]):Product[]{
       colors:(p.variants||[]).map((variant:any)=>({name:String(variant.colorName||'Mặc định'),hex:String(variant.colorHex||p.colorHex||'#1A1410')})),
       variants:Array.isArray(p.variants)?p.variants:[],
     } as Product));
-  return [...bundled,...remoteOnly];
+  return [...bundled.filter(Boolean) as Product[],...remoteOnly];
 }
 
 export function CatalogProvider({ children }: { children: React.ReactNode }) {

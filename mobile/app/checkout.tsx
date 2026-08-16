@@ -7,7 +7,7 @@ import { CardForm, CardFormView, ConfirmPaymentResult, PaymentIntent, StripeProv
 import { Screen, Header, Btn, money } from '../components/ui';
 import { PRODUCTS, variantPrice } from '../lib/catalog';
 import { useStore } from '../lib/store';
-import { confirmStripePaymentIntent, confirmVnpayReturn, createOrder, createStripePaymentIntent, createVnpayPaymentUrl, deleteSavedCard, getProvinces, getSavedCards, getStripeConfig, getVipStatus, getVnpayConfig, getWards, SavedCard, StripeConfig, VietnamLocation, VipStatus, VnpayConfig, voucherDiscountFor } from '../lib/api';
+import { apiCreateAddress, apiListAddresses, confirmStripePaymentIntent, confirmVnpayReturn, createOrder, createStripePaymentIntent, createVnpayPaymentUrl, deleteSavedCard, getProvinces, getSavedCards, getStripeConfig, getVipStatus, getVnpayConfig, getWards, SavedCard, StripeConfig, VietnamLocation, VipStatus, VnpayConfig, voucherDiscountFor } from '../lib/api';
 import { getDefaultAddress } from '../lib/addresses';
 import { VoucherField } from '../components/VoucherPicker';
 import { C, F } from '../theme/tokens';
@@ -15,6 +15,27 @@ import { emitBotEvent } from '../lib/botEvents';
 import { useAuth } from '../lib/auth';
 
 const SHIP = 30000;
+
+// Ô tích dùng cho các lựa chọn "lưu lại cho lần sau". Cả hàng đều bấm được, kèm
+// một dòng phụ nói rõ hệ quả — người dùng nên biết chính xác cái gì được lưu ở
+// đâu trước khi đồng ý, nhất là với thông tin thanh toán.
+const SaveOption = ({ checked, onToggle, title, note }:{checked:boolean;onToggle:()=>void;title:string;note:string}) => (
+  <Pressable
+    onPress={onToggle}
+    accessibilityRole="checkbox"
+    accessibilityState={{ checked }}
+    accessibilityLabel={title}
+    style={st.saveRow}
+  >
+    <View style={[st.saveBox, checked&&st.saveBoxOn]}>
+      {checked&&<Ionicons name="checkmark" size={13} color="#fff" />}
+    </View>
+    <View style={{ flex:1 }}>
+      <Text style={st.saveTitle}>{title}</Text>
+      <Text style={st.saveNote}>{note}</Text>
+    </View>
+  </Pressable>
+);
 const cartLineKey = (item:{slug:string;color:string;size:string}) => `${item.slug}::${item.color}::${item.size}`;
 const Step = ({ n, label, on }:{n:number;label:string;on?:boolean}) => (
   <View style={{ alignItems:'center', flex:1 }}>
@@ -94,6 +115,14 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
   const [savedCards,setSavedCards]=useState<SavedCard[]>([]);
   const [selectedCardId,setSelectedCardId]=useState('');
   const [savedCardsLoaded,setSavedCardsLoaded]=useState(false);
+  // Hỏi trước khi lưu, không lưu ngầm.
+  // · Địa chỉ: mặc định BẬT — đây là địa chỉ của chính khách, lưu vào sổ địa chỉ
+  //   là điều họ mong đợi, và trước đây gõ xong cả địa chỉ thì lần sau vẫn phải
+  //   gõ lại từ đầu vì màn này chưa bao giờ lưu địa chỉ mới nhập.
+  // · Thẻ: mặc định TẮT — thông tin thanh toán chỉ được lưu khi khách chủ động
+  //   đồng ý. Backend cũng chỉ gắn setup_future_usage khi cờ này bật.
+  const [saveAddress,setSaveAddress]=useState(true);
+  const [saveCard,setSaveCard]=useState(false);
   const usingSavedCard = pay==='card' && !!selectedCardId;
   const [sending, setSending] = useState(false);
   const [orderError, setOrderError] = useState('');
@@ -174,8 +203,30 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
     // Chống tạo trùng đơn nếu requestJson thử lại (đổi base URL) hoặc mạng chập
     // chờn khiến app không nhận được phản hồi dù server đã tạo đơn thành công.
     const clientRequestId = `checkout-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    // Chỉ lưu SAU KHI đơn được chấp nhận, và không bao giờ để lỗi lưu địa chỉ
+    // làm hỏng một giao dịch đã thành công — nuốt lỗi có chủ đích.
+    const persistAddressIfWanted = async () => {
+      if (!saveAddress || addressLocked || !user) return;
+      try {
+        const existing = await apiListAddresses(user.id);
+        const duplicate = existing.some(item =>
+          item.street.trim().toLowerCase() === street.trim().toLowerCase()
+          && item.wardCode === ward.code && item.provinceCode === province.code);
+        if (duplicate) return;
+        await apiCreateAddress({
+          title: existing.length ? 'Địa chỉ khác' : 'Địa chỉ mặc định',
+          name: name.trim(), phone: phone.trim(),
+          street: street.trim(),
+          wardCode: ward.code, ward: ward.name,
+          provinceCode: province.code, province: province.name,
+          isDefault: existing.length === 0,
+        }, user.id);
+      } catch { /* sổ địa chỉ chỉ là tiện ích, không phải điều kiện để đặt hàng */ }
+    };
+
     const payload = {
       userId:user.id,
+      saveCard: pay==='card' && !usingSavedCard ? saveCard : undefined,
       clientRequestId,
       customer: { id:user.id, name: name.trim(), email: user.email || '', phone: phone.trim() },
       address: fullAddress,
@@ -191,12 +242,14 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
     try {
       if (pay === 'vnpay') {
         const vnpay = await createVnpayPaymentUrl(payload);
+        void persistAddressIfWanted();
         setSending(false);
         setVnpaySession({ paymentUrl: vnpay.paymentUrl, returnUrlMarker: vnpay.returnUrlMarker, orderId: vnpay.order.id });
         return;
       }
       if (pay === 'card') {
         const stripe = await createStripePaymentIntent(payload);
+        void persistAddressIfWanted();
         order = stripe.order;
         eligibility = stripe.flagcardEligibility;
         if(stripe.payment.status==='paid'){
@@ -237,6 +290,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
         return;
       }
       const res:any = await createOrder(payload);
+      void persistAddressIfWanted();
       order = res?.order;
       eligibility = res?.flagcardEligibility;
       award = res?.award;
@@ -303,6 +357,12 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
             {wardOpen&&province&&<ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>{locationLoading?<Text style={st.loadingText}>Đang gợi ý…</Text>:wards.map(item=><Pressable key={item.code} style={[st.opt,item.code===ward?.code&&{backgroundColor:C.shuSoft}]} onPress={()=>{setWard(item);setWardQuery(item.name);setWardOpen(false);}}><Ionicons name="navigate" size={14} color={C.shu}/><Text style={{fontFamily:item.code===ward?.code?F.bodyB:F.body,fontSize:13,color:C.ink}}>{item.name}</Text></Pressable>)}</ScrollView>}
             <View style={{height:12}}/><Field label="Số nhà / Tên đường" value={street} onChangeText={setStreet} placeholder="Ví dụ: 123 Lê Lợi" />
             <View style={st.preview}><Text style={{ fontFamily:F.body, fontSize:12, color:C.ai }}><Text style={{ fontFamily:F.bodyB }}>Giao tới: </Text>{fullAddress||'Chưa đủ thông tin địa chỉ'}</Text></View>
+            <SaveOption
+              checked={saveAddress}
+              onToggle={()=>setSaveAddress(value=>!value)}
+              title="Lưu địa chỉ này cho lần sau"
+              note="Lần đặt hàng sau sẽ tự điền sẵn, bạn không phải gõ lại. Sửa hoặc xoá bất cứ lúc nào trong mục Sổ địa chỉ."
+            />
           </>
         )}
         <Text style={st.grp}>PHƯƠNG THỨC THANH TOÁN</Text>
@@ -384,6 +444,14 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
               />
             </View>
             </>}
+            {!usingSavedCard&&(
+              <SaveOption
+                checked={saveCard}
+                onToggle={()=>setSaveCard(value=>!value)}
+                title="Lưu thẻ này để thanh toán nhanh lần sau"
+                note="Thẻ do Stripe lưu và mã hoá; JAPANO chỉ giữ 4 số cuối để bạn nhận ra thẻ. Không tích thì thẻ chỉ dùng cho đúng lần thanh toán này."
+              />
+            )}
             <View style={st.secureHint}><Ionicons name="shield-checkmark" size={14} color="#15803D"/><Text style={st.secureHintText}>{usingSavedCard?'Thẻ đã lưu được Stripe mã hoá — JAPANO chỉ giữ 4 số cuối để bạn nhận diện.':'Số thẻ và CVC được mã hóa bởi Stripe. JAPANO không lưu thông tin thẻ trên hệ thống, chỉ Stripe lưu (nếu bạn dùng lại thẻ này lần sau).'}</Text></View>
             {stripeMode==='test' && <View style={st.secureHint}><Ionicons name="flask-outline" size={14} color="#B45309"/><Text style={[st.secureHintText,{color:'#B45309'}]}>Cổng thẻ đang chạy ở chế độ Stripe Test — dùng số thẻ thử nghiệm của Stripe, tiền không được trừ thật.</Text></View>}
           </View>
@@ -563,6 +631,11 @@ const st = StyleSheet.create({
   offerBox:{ flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginBottom:1 },
   offerText:{ flex:1,fontFamily:F.bodyB,fontSize:11.5,color:'#166534' },
   cardFieldLabel:{fontFamily:F.bodyX,fontSize:9,color:C.muted,letterSpacing:.9,marginTop:13,marginBottom:6},
+  saveRow:{flexDirection:'row',alignItems:'flex-start',gap:10,backgroundColor:C.aiSoft,borderRadius:11,padding:12,marginTop:10},
+  saveBox:{width:20,height:20,borderRadius:5,borderWidth:1.5,borderColor:C.muted,alignItems:'center',justifyContent:'center',marginTop:1,backgroundColor:'#fff'},
+  saveBoxOn:{backgroundColor:C.shu,borderColor:C.shu},
+  saveTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},
+  saveNote:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:3},
   savedCard:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:11,marginBottom:8,backgroundColor:'#fff'},
   savedCardOn:{borderColor:C.shu,backgroundColor:C.shuSoft},
   savedCardT:{flex:1,fontFamily:F.bodyM,fontSize:12.5,color:C.ink},

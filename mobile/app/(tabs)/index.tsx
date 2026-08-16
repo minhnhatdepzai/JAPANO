@@ -146,7 +146,7 @@ export default function Home() {
                     <Shimmer style={{ height:12, borderRadius:6, marginTop:6, width:'50%' }} />
                   </View>
                 ))
-              : recs.map((p,i)=><ProductCard key={p.slug} p={p} reason={reasons[p.slug]||['phong cách Nhật cổ','vì bạn thích sự tối giản','hợp gu của bạn'][i]} />)}
+              : recs.map((p,i)=><ProductCard key={p.slug} p={p} index={i} reason={reasons[p.slug]||['phong cách Nhật cổ','vì bạn thích sự tối giản','hợp gu của bạn'][i]} />)}
           </ScrollView>
 
           {/* culture strip */}
@@ -183,7 +183,7 @@ export default function Home() {
           {/* featured grid */}
           <SectionHeader kanji="選" label="Sản phẩm nổi bật" action="Tất cả" onAction={()=>router.push('/(tabs)/products')} />
           <View style={st.grid}>
-            {featured.map(p=><ProductCard key={p.slug} p={p} width={featuredCardWidth} imgH={Math.round(featuredCardWidth*1.2)} />)}
+            {featured.map((p,i)=><ProductCard key={p.slug} p={p} index={i} width={featuredCardWidth} imgH={Math.round(featuredCardWidth*1.2)} />)}
           </View>
 
           {/* quick actions */}

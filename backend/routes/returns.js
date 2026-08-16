@@ -13,6 +13,7 @@ const { findPayment, findReturnRequest } = require('../lib/paymentLookup');
 const { makeStripeHelpers } = require('./paymentsStripe');
 const { makeVnpayHelpers } = require('./paymentsVnpay');
 const { pushNotification } = require('../lib/notify');
+const { restockCancelledOrder, restockReceivedReturn, restockRemainingOrderUnits } = require('../lib/inventory');
 const { resolveSelection, computeRefund, returnableItems, allItemsRefunded } = require('../lib/refundMath');
 const {
   FULFILLMENT_POLICY, ORDER_STATUS_FLOW, PRE_SHIP_STATUSES, RETURNABLE_ORDER_STATUSES,
@@ -440,6 +441,8 @@ module.exports = function registerReturnsRoutes(api, ctx) {
                 order.history.push({ s: 'cancelled', at: now, returnRequestId: rr.id });
                 order.returnStatus = 'approved';
                 order.returnRequest = { id: rr.id, code: rr.code, status: 'approved', kind: 'cancel' };
+                // Hàng chưa từng rời cửa hàng — trả lại kho ngay khi huỷ được duyệt.
+                restockCancelledOrder(next, order, 'cancel-approved');
               }
               pushNotification(next, { userId: rr.userId, title: `Đơn #${rr.orderCode} đã được huỷ`, body: 'Yêu cầu huỷ đơn của bạn đã được chấp nhận, đang hoàn tiền qua cổng thanh toán.', type: 'Đơn hàng', action: `order:${rr.orderId}` });
               cancelled = { returnRequest: rr, order };
@@ -486,7 +489,11 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         if (action === 'approve' && returnRequest.kind === 'cancel') {
           returnRequest.status = 'approved';
           returnRequest.timeline.push({ s: 'approved', at: now, note: adminNote });
-          if (order) { order.status = 'cancelled'; order.history.push({ s: 'cancelled', at: now, returnRequestId: returnRequest.id }); }
+          if (order) {
+            order.status = 'cancelled';
+            order.history.push({ s: 'cancelled', at: now, returnRequestId: returnRequest.id });
+            restockCancelledOrder(next, order, 'cancel-approved');
+          }
           pushNotification(next, { userId: returnRequest.userId, title: `Đơn #${returnRequest.orderCode} đã được huỷ`, body: 'Yêu cầu huỷ đơn của bạn đã được chấp nhận.', type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
           pendingPush = { title: `Đơn #${returnRequest.orderCode} đã được huỷ`, body: 'Yêu cầu huỷ đơn của bạn đã được chấp nhận.' };
         } else if (action === 'reject') {
@@ -508,6 +515,10 @@ module.exports = function registerReturnsRoutes(api, ctx) {
             pendingPush = { title: `Yêu cầu trả hàng #${returnRequest.orderCode} đã được duyệt`, body };
           }
           if (action === 'receive') {
+            // Kiểm hàng đạt = hàng đã nằm trong kho và bán lại được. Đây là mốc
+            // đúng để cộng kho, không phải lúc hoàn tiền: tiền và hàng là hai
+            // dòng riêng, hoàn tiền có thể lỗi nhưng hàng thì đã về rồi.
+            restockReceivedReturn(next, returnRequest, 'return-received');
             const body = 'Cửa hàng đã nhận và kiểm hàng trả về. Khoản hoàn tiền sẽ được xử lý ngay.';
             pushNotification(next, { userId: returnRequest.userId, title: `Đã nhận hàng trả về #${returnRequest.orderCode}`, body, type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
             pendingPush = { title: `Đã nhận hàng trả về #${returnRequest.orderCode}`, body };
@@ -556,6 +567,10 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         statusChanged = true;
         if (order.status === 'delivered') order.deliveredAt ||= now;
         if (order.status === 'completed') order.completedAt ||= now;
+        // Đơn kết thúc mà hàng không đi tới khách (huỷ) hoặc quay về kho (trả)
+        // thì tồn kho phải được hoàn — xem lib/inventory.js.
+        if (order.status === 'cancelled') restockCancelledOrder(next, order, 'admin-cancelled-order');
+        if (order.status === 'returned') restockRemainingOrderUnits(next, order, 'admin-marked-returned');
         order.history ||= [];
         order.history.push({ s: order.status, at: now });
       }

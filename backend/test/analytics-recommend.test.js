@@ -290,9 +290,12 @@ test('mục tiêu kết hợp quỹ mua sắm và lộ trình giảm cân có gi
   assert.equal(minor.wellness.weeklyRateKg, null);
 });
 
-test('phụ kiện nón và ô được định tuyến tới đúng điểm neo pose', () => {
+test('phụ kiện được định tuyến tới đúng điểm neo pose', () => {
   assert.equal(accessoryKind({ name: 'Mũ bo Nhật', slug: 'mu-nhat', tags: ['mũ'] }), 'hat');
   assert.equal(accessoryKind({ name: 'Dù Nhật bản', slug: 'du-nhat', tags: ['dù'] }), 'umbrella');
+  assert.equal(accessoryKind({ name: 'Kẹp nơ tóc', slug: 'kep-no', tags: ['kẹp tóc'] }), 'hair_clip');
+  assert.equal(accessoryKind({ name: 'Chụp tai nữ', slug: 'chup-tai', tags: ['mùa đông'] }), 'earmuffs');
+  assert.equal(accessoryKind({ name: 'Dép quai Nhật', slug: 'giay-dep', tags: ['dép'] }), 'shoe');
 });
 
 test('Flagcard chỉ cấp một lần cho đơn thành công từ 5 triệu', () => {

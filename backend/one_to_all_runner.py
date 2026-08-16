@@ -26,8 +26,15 @@ from safetensors.torch import load_file as safe_load, save_file as safe_save
 
 
 MOTIONS = {
-    "runway_walk": "The same full-body fashion model walks forward on a runway with clear alternating steps and natural arm movement, then returns to the starting mark. Keep the exact face and clothing.",
-    "spin": "The same full-body fashion model completes one clear 360 degree turn in place: front, left profile, back, right profile, then front again. Keep the exact face and clothing.",
+    # Bước đi BÌNH THƯỜNG, không phải sải bước catwalk. Prompt cũ ghi "on a
+    # runway" nên model hay dựng dáng đi sàn diễn: bước chéo chân, hông lắc
+    # mạnh, tay vung điệu — đúng thứ khách phàn nàn là nhìn kỳ. Ở đây tả đúng
+    # một người đi bộ thong thả để khách thấy bộ đồ rủ thế nào khi mặc thật.
+    "walk_natural": "The same full-body person walks forward at a relaxed, even everyday pace with natural alternating steps and arms swinging gently at their sides. Ordinary walking, not a catwalk or runway strut: feet stay under the hips, shoulders level, posture upright and calm. Keep the exact face and clothing.",
+    "turn_show": "The same full-body person completes one calm 360 degree turn in place: front, left profile, back, right profile, then front again, so the outfit can be seen from every side. Keep the exact face and clothing.",
+    # Giữ tên cũ để bản ghi/log cũ và mọi lời gọi trực tiếp không gãy.
+    "runway_walk": "The same full-body person walks forward at a relaxed, even everyday pace with natural alternating steps and arms swinging gently at their sides. Ordinary walking, not a catwalk or runway strut: feet stay under the hips, shoulders level, posture upright and calm. Keep the exact face and clothing.",
+    "spin": "The same full-body person completes one calm 360 degree turn in place: front, left profile, back, right profile, then front again, so the outfit can be seen from every side. Keep the exact face and clothing.",
     "jump": "The same full-body fashion model bends the knees, jumps once with both feet visibly airborne, lands, and stands straight. Keep the exact face and clothing.",
     "pose_sway": "The same full-body fashion model performs a tasteful fashion pose sequence, shifting weight left and right with natural hip, shoulder and arm movement. Keep the exact face and clothing.",
     "sit_stand": "The same full-body fashion model sits naturally onto a chair and then stands fully upright again. Keep the exact face and clothing.",
@@ -76,7 +83,7 @@ def body_motion(base: np.ndarray, motion: str, t: float) -> np.ndarray:
     hips = (base[8] + base[11]) / 2.0
     center = (neck + hips) / 2.0
 
-    if motion == "spin":
+    if motion in ("turn_show", "spin"):
         angle = 2.0 * math.pi * t
         yaw = math.cos(angle)
         pose = transform_points(pose, center, max(0.12, abs(yaw)), 1.0, 0.015 * math.sin(angle), 0.0)
@@ -118,16 +125,21 @@ def body_motion(base: np.ndarray, motion: str, t: float) -> np.ndarray:
         pose[[4, 7], 1] += 0.07 * seated
         return np.clip(pose, 0.01, 0.99)
 
-    # runway_walk
+    # walk_natural (và tên cũ runway_walk)
+    #
+    # Nhịp 6π ≈ 3 chu kỳ trong clip 4 giây, tức khoảng 1,5 bước/giây — đúng nhịp
+    # đi thong thả của người bình thường (dáng catwalk nhanh và dài sải hơn).
+    # Biên độ tay hạ từ 0.07 xuống 0.05 và chân từ 0.08 xuống 0.065: sải rộng
+    # khiến nhân vật trông như đang sải bước trình diễn thay vì đi lại bình thường.
     stride = math.sin(6.0 * math.pi * t)
     bob = abs(stride)
-    pose[:, 1] -= 0.012 * bob
-    pose[10, 0] += 0.08 * stride
-    pose[13, 0] -= 0.08 * stride
-    pose[9, 1] -= 0.035 * max(0.0, -stride)
-    pose[12, 1] -= 0.035 * max(0.0, stride)
-    pose[4, 0] -= 0.07 * stride
-    pose[7, 0] += 0.07 * stride
+    pose[:, 1] -= 0.010 * bob
+    pose[10, 0] += 0.065 * stride
+    pose[13, 0] -= 0.065 * stride
+    pose[9, 1] -= 0.028 * max(0.0, -stride)
+    pose[12, 1] -= 0.028 * max(0.0, stride)
+    pose[4, 0] -= 0.05 * stride
+    pose[7, 0] += 0.05 * stride
     approach = math.sin(math.pi * t)
     pose = transform_points(pose, center, 1.0 + 0.06 * approach, 1.0 + 0.06 * approach, 0.0, 0.0)
     return np.clip(pose, 0.01, 0.99)

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 ROOT = Path(__file__).resolve().parent.parent
 POSE_MODEL = ROOT / 'backend/models/yolov8n-pose.pt'
@@ -242,7 +242,7 @@ def pose_suitability(pose):
     }
 
 
-def analyze(image, include_normalized=False):
+def analyze(image, include_normalized=False, source_coordinates=False):
     from ultralytics import YOLO
 
     rgb = image.convert('RGB')
@@ -255,6 +255,9 @@ def analyze(image, include_normalized=False):
         result = model.predict(np.asarray(rgb), imgsz=960, conf=0.07, verbose=False, device='cpu')[0]
     if result.boxes is None or len(result.boxes) == 0:
         pose = fallback_pose()
+        if source_coordinates:
+            pose['box'] = [round(width * .195, 2), round(height * .049, 2),
+                           round(width * .807, 2), round(height * .977, 2)]
         return (pose, None) if include_normalized else pose
 
     boxes = result.boxes.xyxy.cpu().numpy()
@@ -277,8 +280,19 @@ def analyze(image, include_normalized=False):
     names = ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder',
              'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist',
              'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle']
-    crop = subject_crop(width, height, boxes[selected], points[selected], point_conf[selected])
-    normalized = crop_and_pad(rgb, crop)
+    if source_coordinates:
+        # Các bước ghép/kiểm tra thao tác trực tiếp trên ảnh hiện tại. Đặc biệt
+        # chế độ GPU ít bộ nhớ trả 576x768, không được dùng nhầm tọa độ chuẩn
+        # 768x1024 rồi dán phụ kiện lệch sang phải và xuống dưới.
+        crop = (0.0, 0.0, float(width), float(height))
+        normalized = rgb
+        transform = lambda x, y: (float(x), float(y))
+        target_width, target_height = width, height
+    else:
+        crop = subject_crop(width, height, boxes[selected], points[selected], point_conf[selected])
+        normalized = crop_and_pad(rgb, crop)
+        transform = lambda x, y: target_transform(crop, x, y)
+        target_width, target_height = TARGET_SIZE
     transformed = {}
     raw_kp = {}
     for index, name in enumerate(names):
@@ -288,13 +302,14 @@ def analyze(image, include_normalized=False):
         # tay che ngực để bắt được cả tư thế tay khó (chắp tay, ôm đồ trước ngực).
         if conf < 0.06:
             continue
-        tx, ty = target_transform(crop, float(x), float(y))
+        tx, ty = transform(float(x), float(y))
         raw_kp[name] = [round(tx, 2), round(ty, 2), round(conf, 3)]
         if conf >= 0.18:
             transformed[name] = [round(tx, 2), round(ty, 2), round(conf, 3)]
-    x1, y1 = target_transform(crop, boxes[selected][0], boxes[selected][1])
-    x2, y2 = target_transform(crop, boxes[selected][2], boxes[selected][3])
-    box = [max(0, round(x1, 2)), max(0, round(y1, 2)), min(768, round(x2, 2)), min(1024, round(y2, 2))]
+    x1, y1 = transform(boxes[selected][0], boxes[selected][1])
+    x2, y2 = transform(boxes[selected][2], boxes[selected][3])
+    box = [max(0, round(x1, 2)), max(0, round(y1, 2)),
+           min(target_width, round(x2, 2)), min(target_height, round(y2, 2))]
     other_boxes = []
     other_confidences = []
     selected_box = boxes[selected]
@@ -314,9 +329,10 @@ def analyze(image, include_normalized=False):
             continue
         if overlap / max(1.0, other_area) > .62 or overlap / selected_area > .62:
             continue
-        ox1, oy1 = target_transform(crop, other[0], other[1])
-        ox2, oy2 = target_transform(crop, other[2], other[3])
-        transformed_other = [max(0, round(ox1, 2)), max(0, round(oy1, 2)), min(768, round(ox2, 2)), min(1024, round(oy2, 2))]
+        ox1, oy1 = transform(other[0], other[1])
+        ox2, oy2 = transform(other[2], other[3])
+        transformed_other = [max(0, round(ox1, 2)), max(0, round(oy1, 2)),
+                             min(target_width, round(ox2, 2)), min(target_height, round(oy2, 2))]
         if transformed_other[2] - transformed_other[0] < 36 or transformed_other[3] - transformed_other[1] < 72:
             continue
         other_boxes.append(transformed_other)
@@ -334,7 +350,7 @@ def analyze(image, include_normalized=False):
         'normalization': {
             'sourceSize': [width, height],
             'crop': [round(value, 2) for value in crop],
-            'targetSize': list(TARGET_SIZE),
+            'targetSize': [target_width, target_height],
         },
     }
     # Dùng keypoint ngưỡng thấp (raw_kp) để đánh giá tay che ngực nhạy hơn.
@@ -407,6 +423,57 @@ def add_hat(canvas, item, pose):
     return 'đội nón đúng vị trí đầu'
 
 
+def add_hair_clip(canvas, item, pose):
+    x1, y1, x2, y2 = pose['box']
+    box_w = x2 - x1
+    left_eye = keypoint(pose, 'left_eye', (x1 + box_w * .43, y1 + (y2 - y1) * .12))
+    right_eye = keypoint(pose, 'right_eye', (x1 + box_w * .57, y1 + (y2 - y1) * .12))
+    left_ear = keypoint(pose, 'left_ear', (left_eye[0] - box_w * .09, left_eye[1]))
+    right_ear = keypoint(pose, 'right_ear', (right_eye[0] + box_w * .09, right_eye[1]))
+    face_width = max(abs(right_ear[0] - left_ear[0]), box_w * .2)
+    clip = resize_alpha(item, min(box_w * .23, face_width * .72))
+    # Dùng phía có nhiều khoảng trống hơn, ghim vào tóc ngang thái dương. Neo
+    # theo tâm thay vì đáy ảnh để phần tua của trâm rủ xuống tự nhiên.
+    # Tọa độ left/right của COCO là theo cơ thể người (nên có thể đảo với bên
+    # trái/phải màn hình). Chọn trực tiếp tai gần mép ảnh hơn và đẩy phụ kiện
+    # ra phía ngoài khuôn mặt.
+    ear = min((left_ear, right_ear), key=lambda point: min(point[0], canvas.width - point[0]))
+    side = -1 if ear[0] < (left_eye[0] + right_eye[0]) / 2 else 1
+    center_x = ear[0] + side * face_width * .08
+    center_y = ear[1] - face_width * .20
+    paste_with_shadow(canvas, clip, (center_x - clip.width / 2, center_y - clip.height * .30), blur=3, opacity=45)
+    return 'kẹp vào tóc cạnh thái dương'
+
+
+def add_earmuffs(canvas, item, pose):
+    x1, y1, x2, y2 = pose['box']
+    box_w = x2 - x1
+    left_eye = keypoint(pose, 'left_eye', (x1 + box_w * .43, y1 + (y2 - y1) * .12))
+    right_eye = keypoint(pose, 'right_eye', (x1 + box_w * .57, y1 + (y2 - y1) * .12))
+    left_ear = keypoint(pose, 'left_ear', (left_eye[0] - box_w * .09, left_eye[1]))
+    right_ear = keypoint(pose, 'right_ear', (right_eye[0] + box_w * .09, right_eye[1]))
+    face_width = max(abs(right_ear[0] - left_ear[0]), box_w * .2)
+    earmuffs = resize_alpha(item, min(box_w * .40, face_width * 1.18))
+    center_x = (left_ear[0] + right_ear[0]) / 2
+    ear_y = (left_ear[1] + right_ear[1]) / 2
+    # Lưu mặt trước khi đặt chụp tai; sau đó dán lại bằng mask mềm để bản ghép
+    # thô đã thể hiện đúng quan hệ che khuất: vòng/đệm nằm sau tóc và hai bên
+    # tai, tuyệt đối không nằm đè như sticker lên mắt mũi.
+    fx1 = max(0, int(center_x - face_width * .43))
+    fy1 = max(0, int(min(left_eye[1], right_eye[1]) - face_width * .30))
+    fx2 = min(canvas.width, int(center_x + face_width * .43))
+    fy2 = min(canvas.height, int(ear_y + face_width * .82))
+    face_patch = canvas.crop((fx1, fy1, fx2, fy2))
+    # Ảnh reference đứng riêng có vòng chụp ở nửa trên và hai đệm tai ở đáy.
+    paste_with_shadow(canvas, earmuffs, (center_x - earmuffs.width / 2, ear_y - earmuffs.height * .57), blur=4, opacity=55)
+    if face_patch.width and face_patch.height:
+        mask = Image.new('L', face_patch.size, 0)
+        ImageDraw.Draw(mask).ellipse((2, 1, face_patch.width - 2, face_patch.height - 1), fill=255)
+        mask = mask.filter(ImageFilter.GaussianBlur(max(2, int(face_width * .025))))
+        canvas.paste(face_patch, (fx1, fy1), mask)
+    return 'đeo hai bên tai và vòng qua đỉnh đầu'
+
+
 def add_umbrella(canvas, item, pose):
     x1, y1, x2, y2 = pose['box']
     box_w, box_h = x2 - x1, y2 - y1
@@ -467,12 +534,127 @@ def add_shoe(canvas, item, pose):
     box_w, box_h = x2 - x1, y2 - y1
     left_ankle = keypoint(pose, 'left_ankle', (x1 + box_w * .38, y2 - box_h * .04))
     right_ankle = keypoint(pose, 'right_ankle', (x1 + box_w * .62, y2 - box_h * .04))
-    # Chọn chân ở dưới thấp hơn trong khung hình (gần ống kính hơn / trụ chính)
-    # để đặt giày/dép/vớ đúng vào bàn chân thay vì gắn nhầm lên tay.
-    ankle = left_ankle if left_ankle[1] >= right_ankle[1] else right_ankle
-    shoe = resize_alpha(item, max(70, min(260, box_w * .32)))
-    paste_with_shadow(canvas, shoe, (ankle[0] - shoe.width * .5, ankle[1] - shoe.height * .32), blur=6, opacity=70)
-    return 'đặt đúng vị trí bàn chân'
+    # Reference hiện có là cả đôi, nên đặt giữa hai cổ chân và neo ĐÁY vào mặt
+    # đất. Bản cũ neo một đôi vào một chân và thường đẩy nó ra ngoài mép ảnh.
+    shoe = resize_alpha(item, max(90, min(330, box_w * .58)))
+    center_x = (left_ankle[0] + right_ankle[0]) / 2
+    # YOLO trả cổ chân, trong khi bàn chân kéo dài xuống thêm khoảng 7–10% thân.
+    ground_y = min(canvas.height - 2, max(left_ankle[1], right_ankle[1]) + box_h * .10)
+    paste_with_shadow(canvas, shoe, (center_x - shoe.width * .5, ground_y - shoe.height), blur=5, opacity=55)
+    return 'mang đôi dép/giày vào hai bàn chân'
+
+
+def body_mask(pose, size, grow=1.0):
+    """Mặt nạ thô của thân + đầu, dựng từ khớp xương.
+
+    Pipeline này chỉ có PIL và numpy, không có model tách người, nên không thể
+    cắt chính xác viền cơ thể. Nhưng một đa giác vai–hông cộng một hình bầu dục
+    đầu là đủ để biết chỗ nào LÀ người: dùng nó đục bớt phần ba lô chồng lên
+    thân, phần còn lại lộ ra hai bên đúng như nhìn một người đeo ba lô từ phía
+    trước. Không có bước này thì ba lô nằm đè lên ngực như dán decal.
+    """
+    x1, y1, x2, y2 = pose['box']
+    box_w, box_h = x2 - x1, y2 - y1
+    left_shoulder = keypoint(pose, 'left_shoulder', (x1 + box_w * .32, y1 + box_h * .22))
+    right_shoulder = keypoint(pose, 'right_shoulder', (x1 + box_w * .68, y1 + box_h * .22))
+    left_hip = keypoint(pose, 'left_hip', (x1 + box_w * .38, y1 + box_h * .56))
+    right_hip = keypoint(pose, 'right_hip', (x1 + box_w * .62, y1 + box_h * .56))
+
+    mask = Image.new('L', size, 0)
+    draw = ImageDraw.Draw(mask)
+    pad = max(6.0, abs(right_shoulder[0] - left_shoulder[0]) * .12 * grow)
+    draw.polygon([
+        (left_shoulder[0] - pad, left_shoulder[1] - pad),
+        (right_shoulder[0] + pad, right_shoulder[1] - pad),
+        (right_hip[0] + pad, right_hip[1] + pad),
+        (left_hip[0] - pad, left_hip[1] + pad),
+    ], fill=255)
+
+    shoulder_mid_y = (left_shoulder[1] + right_shoulder[1]) / 2
+    head_r = max(10.0, abs(right_shoulder[0] - left_shoulder[0]) * .42)
+    head_cx = (left_shoulder[0] + right_shoulder[0]) / 2
+    head_cy = shoulder_mid_y - head_r * .75
+    draw.ellipse([head_cx - head_r, head_cy - head_r * 1.25,
+                  head_cx + head_r, head_cy + head_r * 1.25], fill=255)
+    # Làm mềm mép để chỗ giao giữa ba lô và thân không thành đường cắt gắt.
+    return mask.filter(ImageFilter.GaussianBlur(max(2, int(pad * .5))))
+
+
+def dominant_color(item):
+    """Màu đại diện của phụ kiện, lấy từ các điểm ảnh không trong suốt."""
+    small = item.resize((32, 32), Image.Resampling.LANCZOS)
+    pixels = np.asarray(small.convert('RGBA'), dtype=np.float32)
+    alpha = pixels[:, :, 3]
+    solid = alpha > 40
+    if not solid.any():
+        return (60, 60, 66)
+    rgb = pixels[:, :, :3][solid]
+    return tuple(int(value) for value in rgb.mean(axis=0))
+
+
+def add_backpack(canvas, item, pose):
+    """Đeo ba lô SAU LƯNG, quai vắt qua hai vai — không phải cầm trên tay."""
+    x1, y1, x2, y2 = pose['box']
+    box_w, box_h = x2 - x1, y2 - y1
+    left_shoulder = keypoint(pose, 'left_shoulder', (x1 + box_w * .32, y1 + box_h * .22))
+    right_shoulder = keypoint(pose, 'right_shoulder', (x1 + box_w * .68, y1 + box_h * .22))
+    left_hip = keypoint(pose, 'left_hip', (x1 + box_w * .38, y1 + box_h * .56))
+    right_hip = keypoint(pose, 'right_hip', (x1 + box_w * .62, y1 + box_h * .56))
+
+    shoulder_w = max(40.0, abs(right_shoulder[0] - left_shoulder[0]))
+    # Ba lô rộng hơn vai một chút thì mới ló ra hai bên sau khi bị thân che.
+    pack = resize_alpha(item, min(box_w * .78, shoulder_w * 1.28))
+    center_x = (left_shoulder[0] + right_shoulder[0]) / 2
+    torso_h = max(1.0, ((left_hip[1] + right_hip[1]) / 2) - ((left_shoulder[1] + right_shoulder[1]) / 2))
+    top = min(left_shoulder[1], right_shoulder[1]) + torso_h * .06
+
+    layer = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    layer.alpha_composite(pack, (int(center_x - pack.width / 2), int(top)))
+    # Đục phần chồng lên thân/đầu: giữ lại hai mép ba lô nhìn thấy được.
+    torso = body_mask(pose, canvas.size, grow=1.0)
+    layer.putalpha(ImageChops.subtract(layer.getchannel('A'), torso))
+    canvas.alpha_composite(layer)
+
+    # Hai quai vắt qua vai, tô bằng chính tông màu của ba lô — đây là chi tiết
+    # nói cho người xem biết món đồ đang được ĐEO chứ không phải dán phía sau.
+    strap_color = dominant_color(pack)
+    strap_rgb = tuple(max(0, int(channel * .78)) for channel in strap_color)
+    straps = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    strap_draw = ImageDraw.Draw(straps)
+    strap_w = max(4, int(shoulder_w * .11))
+    for shoulder, hip in ((left_shoulder, left_hip), (right_shoulder, right_hip)):
+        inner_x = shoulder[0] + (center_x - shoulder[0]) * .38
+        strap_draw.line(
+            [(shoulder[0], shoulder[1] - strap_w * .3), (inner_x, hip[1] - (hip[1] - shoulder[1]) * .28)],
+            fill=strap_rgb + (235,), width=strap_w, joint='curve',
+        )
+    straps = straps.filter(ImageFilter.GaussianBlur(1))
+    canvas.alpha_composite(straps)
+    return 'đeo ba lô sau lưng, quai vắt qua hai vai'
+
+
+def add_waist_sash(canvas, item, pose):
+    """Thắt đai/obi ngang eo, bản ngang theo chiều rộng hông."""
+    x1, y1, x2, y2 = pose['box']
+    box_w, box_h = x2 - x1, y2 - y1
+    left_hip = keypoint(pose, 'left_hip', (x1 + box_w * .38, y1 + box_h * .56))
+    right_hip = keypoint(pose, 'right_hip', (x1 + box_w * .62, y1 + box_h * .56))
+    left_shoulder = keypoint(pose, 'left_shoulder', (x1 + box_w * .32, y1 + box_h * .22))
+    right_shoulder = keypoint(pose, 'right_shoulder', (x1 + box_w * .68, y1 + box_h * .22))
+
+    hip_w = max(40.0, abs(right_hip[0] - left_hip[0]))
+    sash = resize_alpha(item, hip_w * 1.32)
+    # Obi thắt trên rốn, khoảng giữa vai và hông chứ không nằm đúng ở hông.
+    shoulder_y = (left_shoulder[1] + right_shoulder[1]) / 2
+    hip_y = (left_hip[1] + right_hip[1]) / 2
+    waist_y = hip_y - (hip_y - shoulder_y) * .30
+    center_x = (left_hip[0] + right_hip[0]) / 2
+    paste_with_shadow(
+        canvas, sash,
+        (center_x - sash.width * .5, waist_y - sash.height * .5),
+        blur=5, opacity=60,
+    )
+    return 'thắt đai ngang eo nhân vật chính'
 
 
 def add_hand_prop(canvas, item, pose, kind):
@@ -480,7 +662,7 @@ def add_hand_prop(canvas, item, pose, kind):
     wrist = keypoint(pose, 'right_wrist', (x2 - (x2 - x1) * .2, y1 + (y2 - y1) * .5))
     width = (x2 - x1) * (.45 if kind in {'bag', 'sword'} else .25)
     prop = resize_alpha(item, width)
-    paste_with_shadow(canvas, prop, (wrist[0] - prop.width * .18, wrist[1] - prop.height * .18))
+    paste_with_shadow(canvas, prop, (wrist[0] - prop.width * .5, wrist[1] - prop.height * .22))
     return 'gắn phụ kiện vào tay nhân vật chính'
 
 
@@ -521,7 +703,7 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
     if result.size != source.size:
         result = result.resize(source.size, Image.Resampling.LANCZOS)
 
-    result_pose = analyze(result)
+    result_pose = analyze(result, source_coordinates=True)
     reasons = []
     if result_pose.get('fallback') or float(result_pose.get('confidence') or 0) < .25:
         reasons.append('main_subject_lost')
@@ -597,8 +779,8 @@ def accessory_quality(clean_image, result_image, kinds):
     """
     clean = clean_image.convert('RGB')
     result = result_image.convert('RGB').resize(clean.size, Image.Resampling.LANCZOS)
-    clean_pose = analyze(clean)
-    result_pose = analyze(result)
+    clean_pose = analyze(clean, source_coordinates=True)
+    result_pose = analyze(result, source_coordinates=True)
     kinds = {str(value) for value in (kinds or [])}
     reasons = []
     width, height = clean.size
@@ -646,17 +828,38 @@ def accessory_quality(clean_image, result_image, kinds):
     garment_region = (x1 + box_w * .30, y1 + box_h * .20,
                       x2 - box_w * .30, y1 + box_h * .68)
     garment_diff = region_diff(garment_region)
-    if garment_diff > float(52):
+    # Ba lô có quai vắt chéo qua ngực và đai obi thắt ngang eo — cả hai CỐ Ý
+    # phủ lên đúng vùng mà phép kiểm tra này đang canh. Giữ nguyên ngưỡng chung
+    # thì một chiếc ba lô đặt hoàn toàn đúng vị trí vẫn bị chấm là "lệch mẫu
+    # trang phục", và người dùng không bao giờ nhìn thấy phụ kiện: hệ thống lặng
+    # lẽ trả về ảnh quần áo sạch. Đây là cùng một loại lỗi với việc trước đây
+    # đòi tay phải nắm khi món đồ vốn đeo trên lưng.
+    garment_limit = 84.0 if kinds.intersection({'backpack', 'waist'}) else 52.0
+    if garment_diff > garment_limit:
         reasons.append('garment_fidelity_changed')
 
     inferred = set(result_pose.get('inferredKeypoints') or [])
     if 'hat' in kinds and {'left_eye', 'right_eye'}.issubset(inferred):
         reasons.append('hat_obscures_eyes')
 
-    head_region = (x1 + box_w * .18, y1 - box_h * .06, x2 - box_w * .18, y1 + box_h * .17)
+    head_region = (x1 + box_w * .12, y1 - box_h * .06, x2 - box_w * .12, y1 + box_h * .22)
     head_diff = region_diff(head_region)
     if 'hat' in kinds and head_diff < 5:
         reasons.append('hat_missing')
+    left_head_diff = region_diff((x1 + box_w * .08, y1 - box_h * .03,
+                                  x1 + box_w * .48, y1 + box_h * .25))
+    right_head_diff = region_diff((x1 + box_w * .52, y1 - box_h * .03,
+                                   x2 - box_w * .08, y1 + box_h * .25))
+    if 'hair_clip' in kinds and max(left_head_diff, right_head_diff) < 3.2:
+        reasons.append('hair_clip_missing')
+    if 'earmuffs' in kinds and min(left_head_diff, right_head_diff) < 4.2:
+        reasons.append('earmuffs_missing')
+
+    feet_region = (x1 + box_w * .12, y1 + box_h * .82,
+                   x2 - box_w * .12, min(height, y2 + box_h * .08))
+    feet_diff = region_diff(feet_region)
+    if 'shoe' in kinds and feet_diff < 5:
+        reasons.append('shoe_missing')
 
     def point(pose, name):
         value = (pose.get('keypoints') or {}).get(name)
@@ -682,6 +885,7 @@ def accessory_quality(clean_image, result_image, kinds):
         result_wrist = point(result_pose, f'{side}_wrist')
         if clean_wrist is not None and result_wrist is not None:
             wrist_travels.append(float(np.linalg.norm(result_wrist - clean_wrist)) / box_h)
+    # Ba lô đeo lưng và đai thắt eo không cần bàn tay nắm giữ.
     grip_required = bool(kinds.intersection({'umbrella', 'bag', 'sword', 'hand'}))
     best_arm_angle = min(arm_angles) if arm_angles else 180.0
     max_wrist_travel = max(wrist_travels) if wrist_travels else 0.0
@@ -698,6 +902,9 @@ def accessory_quality(clean_image, result_image, kinds):
         'garment_fidelity_changed': 90,
         'hand_pose_not_engaged': 55,
         'hat_missing': 80,
+        'hair_clip_missing': 80,
+        'earmuffs_missing': 90,
+        'shoe_missing': 100,
     }
     score = sum(weights.get(reason, 40) for reason in reasons)
     score += face_diff * 1.4 + garment_diff * .8
@@ -710,6 +917,9 @@ def accessory_quality(clean_image, result_image, kinds):
         'faceDiff': round(face_diff, 3),
         'garmentDiff': round(garment_diff, 3),
         'headDiff': round(head_diff, 3),
+        'leftHeadDiff': round(left_head_diff, 3),
+        'rightHeadDiff': round(right_head_diff, 3),
+        'feetDiff': round(feet_diff, 3),
         'bestArmAngle': round(best_arm_angle, 2),
         'maxWristTravel': round(max_wrist_travel, 4),
         'resultPose': result_pose,
@@ -786,7 +996,16 @@ def adjust_garment_fit(image, fit_delta):
 def compose(image, accessories, pose):
     canvas = image.convert('RGBA')
     applied = []
-    for accessory in accessories[:4]:
+    # Thứ tự này cũng là thứ tự lớp ảnh: chụp tai nằm sau, kẹp tóc nằm trên
+    # cùng; không phụ thuộc khách bấm chọn món nào trước.
+    # Ba lô đứng đầu vì nó ở SAU lưng: vẽ trước để mọi thứ khác nằm đè lên.
+    # Đai thắt eo nằm trên thân nhưng dưới các món cầm tay (tay che được đai).
+    layer_order = {'backpack': -1, 'waist': 0,
+                   'shoe': 1, 'bag': 1, 'sword': 1, 'hand': 1,
+                   'umbrella': 2, 'hat': 3, 'earmuffs': 3, 'hair_clip': 4}
+    selected = list(accessories[:4])
+    selected.sort(key=lambda value: layer_order.get(str(value.get('kind') or 'hand'), 0))
+    for accessory in selected:
         path = Path(accessory.get('imagePath') or '')
         if not path.exists():
             continue
@@ -794,10 +1013,18 @@ def compose(image, accessories, pose):
         kind = str(accessory.get('kind') or 'hand')
         if kind == 'hat':
             action = add_hat(canvas, item, pose)
+        elif kind == 'hair_clip':
+            action = add_hair_clip(canvas, item, pose)
+        elif kind == 'earmuffs':
+            action = add_earmuffs(canvas, item, pose)
         elif kind == 'umbrella':
             action = add_umbrella(canvas, item, pose)
         elif kind == 'shoe':
             action = add_shoe(canvas, item, pose)
+        elif kind == 'backpack':
+            action = add_backpack(canvas, item, pose)
+        elif kind == 'waist':
+            action = add_waist_sash(canvas, item, pose)
         else:
             action = add_hand_prop(canvas, item, pose, kind)
         applied.append({'id': accessory.get('id'), 'name': accessory.get('name'), 'kind': kind, 'action': action})
@@ -849,7 +1076,7 @@ def main():
             return
         # CatVTON có thể thay đổi vị trí tay nhẹ so với ảnh gốc, vì vậy luôn
         # đọc lại pose trên chính ảnh kết quả nếu backend không ép pose cũ.
-        pose = payload.get('pose') or analyze(image)
+        pose = payload.get('pose') or analyze(image, source_coordinates=True)
         result, applied = compose(image, payload.get('accessories') or [], pose)
         print(json.dumps({'ok': True, 'imageBase64': encode_png(result), 'applied': applied}, ensure_ascii=False))
     except Exception as exc:

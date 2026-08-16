@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Modal, Pressable, TextInput, RefreshControl, AppState } from 'react-native';
 import { useLocalSearchParams, useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, Header, Btn, money } from '../../components/ui';
+import { Screen, Header, Btn, money, ProgressBar, PulseDot, FadeSlideIn } from '../../components/ui';
 import { PRODUCTS } from '../../lib/catalog';
 import {
   getOrderDetail, createProductReview, createReturnRequest, createCancelRequest, getProductReviews,
@@ -246,22 +246,34 @@ export default function OrderDetail() {
             <Text style={st.policyLinkT}>Xem quy trình giao – nhận – đổi/trả</Text>
           </Pressable>
           {!cancelled&&!returned && (
-            <View style={{ flexDirection:'row', marginTop:10 }}>
-              {nodes.map((n,i)=>(
-                <View key={n} style={{ flex:1, alignItems:'center' }}>
-                  <View style={{ flexDirection:'row', alignItems:'center', width:'100%' }}>
-                    <View style={{ flex:1, height:2, backgroundColor:i===0?'transparent':'rgba(255,255,255,0.7)' }} />
-                    <View style={{ width:11, height:11, borderRadius:6, backgroundColor:i<=step?'#fff':'rgba(255,255,255,0.35)' }} />
-                    <View style={{ flex:1, height:2, backgroundColor:i===nodes.length-1?'transparent':(i<step?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.25)') }} />
+            <View style={{ marginTop:10 }}>
+              {/* Màn hình này tự làm mới mỗi 6 giây, nên đơn có thể tiến bước
+                  ngay trước mắt khách. Thanh chạy tới mốc mới thay vì nhảy cóc,
+                  và chấm của chặng ĐANG diễn ra đập nhịp — đó là cách nói "việc
+                  này chưa xong, vẫn đang chạy" mà một chấm tĩnh không nói được. */}
+              <View style={{ paddingHorizontal:'10%', marginBottom:8 }}>
+                <ProgressBar
+                  progress={nodes.length>1?Math.max(0,step)/(nodes.length-1):0}
+                  height={3}
+                  color="#fff"
+                  track="rgba(255,255,255,0.25)"
+                />
+              </View>
+              <View style={{ flexDirection:'row' }}>
+                {nodes.map((n,i)=>(
+                  <View key={n} style={{ flex:1, alignItems:'center' }}>
+                    {i===step
+                      ? <PulseDot size={11} color="#fff" />
+                      : <View style={{ width:11, height:11, borderRadius:6, backgroundColor:i<step?'#fff':'rgba(255,255,255,0.35)' }} />}
+                    <Text style={{ fontFamily:F.body, fontSize:10, color:i<=step?'#fff':'rgba(255,255,255,0.5)', marginTop:4 }}>{n}</Text>
                   </View>
-                  <Text style={{ fontFamily:F.body, fontSize:10, color:i<=step?'#fff':'rgba(255,255,255,0.5)', marginTop:4 }}>{n}</Text>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
           )}
         </View>
         <Text style={st.grp}>SẢN PHẨM</Text>
-        {order.items.map((it,i)=>{const slug=String(it.slug||it.productId),eligibility=reviewEligibility[slug],vipOn=order.vipPromotion&&slug===order.vipPromotion.productId&&(!order.vipPromotion.colorName||it.colorName===order.vipPromotion.colorName)&&(!order.vipPromotion.size||it.size===order.vipPromotion.size);return <Item key={i} it={it} vipDiscount={vipOn?order.vipDiscount:0} canReview={order.status==='completed'&&eligibility?.canReview} reviewed={eligibility?.alreadyReviewed} onReview={()=>{setReviewProduct(it);setReviewError('');setReviewMessage('');setReviewMedia(null);}}/>;})}
+        {order.items.map((it,i)=>{const slug=String(it.slug||it.productId),eligibility=reviewEligibility[slug],vipOn=order.vipPromotion&&slug===order.vipPromotion.productId&&(!order.vipPromotion.colorName||it.colorName===order.vipPromotion.colorName)&&(!order.vipPromotion.size||it.size===order.vipPromotion.size);return <FadeSlideIn key={i} delay={Math.min(i,6)*45} offset={8}><Item it={it} vipDiscount={vipOn?order.vipDiscount:0} canReview={order.status==='completed'&&eligibility?.canReview} reviewed={eligibility?.alreadyReviewed} onReview={()=>{setReviewProduct(it);setReviewError('');setReviewMessage('');setReviewMedia(null);}}/></FadeSlideIn>;})}
         {!!reviewMessage&&<View style={st.reviewNotice}><Ionicons name="checkmark-circle" size={19} color={C.ok}/><Text style={st.reviewNoticeT}>{reviewMessage}</Text></View>}
         <Text style={st.grp}>GIAO TỚI</Text>
         <View style={st.addr}>

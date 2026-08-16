@@ -53,8 +53,14 @@ CUDA_RUNTIME_OK: bool | None = None
 GIB = 1024 * 1024 * 1024
 ENGINE = "one-to-all-animation-1.3b-v1" if CHECKPOINT_NAME.endswith("_1") else "one-to-all-animation-1.3b-v2"
 
+# Đi bộ đứng đầu vì đó là chuyển động khách hỏi nhiều nhất: muốn xem bộ đồ rủ và
+# bay thế nào khi mình bước đi bình thường. Trước đây chỉ mở mỗi 'pose_sway' —
+# kiểu lắc hông tại chỗ, nhìn gượng gạo. Cả hai chuyển động mới đều đã có sẵn
+# quỹ đạo khớp trong one_to_all_runner.py, chỉ là chưa từng được mở ra.
 MOTIONS = {
-    "pose_sway": "Tạo dáng tự nhiên",
+    "walk_natural": "Đi bộ tự nhiên",
+    "turn_show": "Xoay một vòng",
+    "pose_sway": "Tạo dáng tại chỗ",
 }
 
 

@@ -91,14 +91,23 @@ export async function syncLocalNotifications(): Promise<number> {
     if (!seen) { await baseline(list); return 0; }
 
     const known = new Set(seen.ids);
-    const fresh = list
+    const pending = list
       .filter((item) => !known.has(item.id) && item.at > seen.baselineAt)
-      .sort((a, b) => a.at - b.at)
-      .slice(-MAX_PER_TICK);
+      .sort((a, b) => a.at - b.at);
+    const fresh = pending.slice(-MAX_PER_TICK);
+    const presentedIds = new Set(fresh.map((item) => item.id));
 
-    // Kể cả khi không hiện cái nào, vẫn ghi nhận toàn bộ id đã thấy để những
-    // thông báo cũ hơn mốc không bị xét lại ở nhịp sau.
-    const nextIds = [...seen.ids, ...list.map((item) => item.id).filter((id) => !known.has(id))];
+    // Chỉ đánh dấu "đã hiện" đúng những cái vừa hiện, cộng với những cái cũ hơn
+    // mốc (vốn không bao giờ được hiện).
+    //
+    // Trước đây dòng này gộp TOÀN BỘ id trong danh sách vào seen, kể cả phần bị
+    // MAX_PER_TICK cắt lại. Hệ quả: nhận 10 thông báo cùng lúc thì 3 cái hiện
+    // lên, 7 cái còn lại bị ghi là đã hiện và biến mất vĩnh viễn — đúng vào lúc
+    // dồn dập nhất (đơn đổi trạng thái liên tiếp, hoàn tiền, voucher) là lúc
+    // khách mất tin nhiều nhất. Giờ phần dư ở lại hàng đợi và hiện dần ở các
+    // nhịp sau.
+    const staleIds = list.filter((item) => item.at <= seen.baselineAt).map((item) => item.id);
+    const nextIds = [...new Set([...seen.ids, ...staleIds, ...presentedIds])];
     await saveSeen({ ids: nextIds, baselineAt: seen.baselineAt });
 
     for (const item of fresh) {

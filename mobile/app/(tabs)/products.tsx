@@ -77,8 +77,11 @@ export default function Products() {
   const cardGap = 12;
   const cardWidth = Math.floor((screenWidth - 36 - cardGap) / 2);
   const keyExtractor = useCallback((p:Product)=>p.slug,[]);
-  const renderItem = useCallback(({ item }:{ item:Product })=>(
-    <ProductCard p={item} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />
+  // FlatList tái sử dụng ô khi cuộn, nên `index` ở đây chỉ dùng để rải nhịp
+  // xuất hiện của MÀN HÌNH ĐẦU TIÊN; các hàng cuộn tới sau đều rơi vào trần
+  // 8 nhịp nên hiện gần như tức thì, đúng như mong đợi khi đang cuộn nhanh.
+  const renderItem = useCallback(({ item, index }:{ item:Product; index:number })=>(
+    <ProductCard p={item} index={index} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />
   ),[cardWidth]);
   useEffect(()=>{
     const query=q.trim();

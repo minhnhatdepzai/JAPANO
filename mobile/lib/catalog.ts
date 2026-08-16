@@ -13,7 +13,7 @@ export type Product = {
 export const BUNDLED: Product[] = [
   { slug:'kimono-hong', name:'Kimono truyền thống Hồng', kanji:'着物', cat:'ao-truyen-thong', price:1890000, old:2290000, rating:0, sold:0, images:[IMAGES['kimono-hong_1'],IMAGES['kimono-hong_2'],IMAGES['kimono-hong_3'],IMAGES['kimono-hong_4']], imageKeys:['kimono-hong_1','kimono-hong_2','kimono-hong_3','kimono-hong_4'] },
   { slug:'yukata-xanh', name:'Yukata vải bông xanh đen', kanji:'浴衣', cat:'ao-truyen-thong', price:1290000, old:1590000, rating:0, sold:0, images:[IMAGES['yukata-xanh_1'],IMAGES['yukata-xanh_2'],IMAGES['yukata-xanh_3'],IMAGES['yukata-xanh_4']], imageKeys:['yukata-xanh_1','yukata-xanh_2','yukata-xanh_3','yukata-xanh_4'] },
-  { slug:'haori-dang-dai', name:'Áo choàng Haori dáng dài', kanji:'羽織', cat:'haori', price:1350000, old:1690000, rating:0, sold:0, images:[IMAGES['haori-dang-dai_1'],IMAGES['haori-dang-dai_2'],IMAGES['haori-dang-dai_3'],IMAGES['haori-dang-dai_4']], imageKeys:['haori-dang-dai_1','haori-dang-dai_2','haori-dang-dai_3','haori-dang-dai_4'] },
+    { slug:'haori-dang-dai', name:'Áo choàng Haori dáng dài', kanji:'羽織', cat:'haori', price:1350000, old:1690000, rating:0, sold:0, images:[IMAGES['haori-dang-dai_1'],IMAGES['haori-dang-dai_2'],IMAGES['haori-dang-dai_3']], imageKeys:['haori-dang-dai_1','haori-dang-dai_2','haori-dang-dai_3'] },
   { slug:'cardigan-dai', name:'Áo len khoác dáng dài', kanji:'羽織', cat:'haori', price:890000, old:1090000, rating:0, sold:0, images:[IMAGES['cardigan-dai_1'],IMAGES['cardigan-dai_2'],IMAGES['cardigan-dai_3'],IMAGES['cardigan-dai_4']], imageKeys:['cardigan-dai_1','cardigan-dai_2','cardigan-dai_3','cardigan-dai_4'] },
   { slug:'blazer-kaki', name:'Áo khoác kaki dáng dài', kanji:'羽織', cat:'haori', price:990000, old:null, rating:0, sold:0, images:[IMAGES['blazer-kaki_1'],IMAGES['blazer-kaki_2'],IMAGES['blazer-kaki_3'],IMAGES['blazer-kaki_4']], imageKeys:['blazer-kaki_1','blazer-kaki_2','blazer-kaki_3','blazer-kaki_4'] },
   { slug:'ao-len-cardigan', name:'Áo len khoác dệt kim', kanji:'羽織', cat:'haori', price:650000, old:null, rating:0, sold:0, images:[IMAGES['ao-len-cardigan_1'],IMAGES['ao-len-cardigan_2'],IMAGES['ao-len-cardigan_3'],IMAGES['ao-len-cardigan_4']], imageKeys:['ao-len-cardigan_1','ao-len-cardigan_2','ao-len-cardigan_3','ao-len-cardigan_4'] },
@@ -35,6 +35,16 @@ export const BUNDLED: Product[] = [
   { slug:'yae-miko', name:'Trang phục hóa thân Yae Miko', kanji:'コス', cat:'cosplay', price:1050000, old:null, rating:0, sold:0, images:[IMAGES['yae-miko_1'],IMAGES['yae-miko_2'],IMAGES['yae-miko_3'],IMAGES['yae-miko_4']], imageKeys:['yae-miko_1','yae-miko_2','yae-miko_3','yae-miko_4'] },
   { slug:'yumeko', name:'Trang phục hóa thân Yumeko Jabami', kanji:'コス', cat:'cosplay', price:990000, old:null, rating:0, sold:0, images:[IMAGES['yumeko_1'],IMAGES['yumeko_2'],IMAGES['yumeko_3'],IMAGES['yumeko_4']], imageKeys:['yumeko_1','yumeko_2','yumeko_3','yumeko_4'] },
   { slug:'naruto', name:'Trang phục hóa thân Naruto', kanji:'コス', cat:'cosplay', price:850000, old:null, rating:0, sold:0, images:[IMAGES['naruto_1'],IMAGES['naruto_2'],IMAGES['naruto_3'],IMAGES['naruto_4']], imageKeys:['naruto_1','naruto_2','naruto_3','naruto_4'] },
+  { slug:'hakama-nu', name:'Hakama nữ vải dày', kanji:'袴', cat:'ao-truyen-thong', price:1450000, old:1790000, rating:0, sold:0, images:[IMAGES['hakama-nu_1'],IMAGES['hakama-nu_2'],IMAGES['hakama-nu_3'],IMAGES['hakama-nu_4']], imageKeys:['hakama-nu_1','hakama-nu_2','hakama-nu_3','hakama-nu_4'] },
+  { slug:'happi-le-hoi', name:'Áo Happi lễ hội', kanji:'法被', cat:'haori', price:690000, old:850000, rating:0, sold:0, images:[IMAGES['happi-le-hoi_1'],IMAGES['happi-le-hoi_2'],IMAGES['happi-le-hoi_3']], imageKeys:['happi-le-hoi_1','happi-le-hoi_2','happi-le-hoi_3'] },
+  { slug:'samue-thien', name:'Bộ Samue thiền', kanji:'作務衣', cat:'trang-phuc', price:980000, old:1190000, rating:0, sold:0, images:[IMAGES['samue-thien_1'],IMAGES['samue-thien_2'],IMAGES['samue-thien_3']], imageKeys:['samue-thien_1','samue-thien_2','samue-thien_3'] },
+  { slug:'obi-lua', name:'Đai Obi lụa dệt hoa', kanji:'帯', cat:'phu-kien', price:1290000, old:1590000, rating:0, sold:0, images:[IMAGES['obi-lua_1'],IMAGES['obi-lua_2'],IMAGES['obi-lua_3']], imageKeys:['obi-lua_1','obi-lua_2','obi-lua_3'] },
+  { slug:'tabi-chia-ngon', name:'Tất Tabi chia ngón', kanji:'足袋', cat:'phu-kien', price:150000, old:null, rating:0, sold:0, images:[IMAGES['tabi-chia-ngon_1'],IMAGES['tabi-chia-ngon_2'],IMAGES['tabi-chia-ngon_3']], imageKeys:['tabi-chia-ngon_1','tabi-chia-ngon_2','tabi-chia-ngon_3'] },
+  { slug:'furoshiki-vai', name:'Khăn gói Furoshiki', kanji:'風呂敷', cat:'phu-kien', price:220000, old:280000, rating:0, sold:0, images:[IMAGES['furoshiki-vai_1'],IMAGES['furoshiki-vai_2'],IMAGES['furoshiki-vai_3']], imageKeys:['furoshiki-vai_1','furoshiki-vai_2','furoshiki-vai_3'] },
+  { slug:'sensu-quat-gap', name:'Quạt giấy Nhật Bản', kanji:'扇子', cat:'phu-kien', price:190000, old:null, rating:0, sold:0, images:[IMAGES['sensu-quat-gap_1'],IMAGES['sensu-quat-gap_2'],IMAGES['sensu-quat-gap_3']], imageKeys:['sensu-quat-gap_1','sensu-quat-gap_2','sensu-quat-gap_3'] },
+  { slug:'kanzashi-trau-cai', name:'Trâm cài tóc Kanzashi', kanji:'簪', cat:'phu-kien', price:340000, old:420000, rating:0, sold:0, images:[IMAGES['kanzashi-trau-cai_1'],IMAGES['kanzashi-trau-cai_2'],IMAGES['kanzashi-trau-cai_3'],IMAGES['kanzashi-trau-cai_4']], imageKeys:['kanzashi-trau-cai_1','kanzashi-trau-cai_2','kanzashi-trau-cai_3','kanzashi-trau-cai_4'] },
+  { slug:'hakama-do', name:'Hakama đỏ lễ phục', kanji:'緋袴', cat:'ao-truyen-thong', price:1350000, old:1650000, rating:0, sold:0, images:[IMAGES['hakama-do_1'],IMAGES['hakama-do_2']], imageKeys:['hakama-do_1','hakama-do_2'] },
+  { slug:'chan-vay-xep-ly', name:'Chân váy xếp ly midi', kanji:'プリーツ', cat:'trang-phuc', price:620000, old:780000, rating:0, sold:0, images:[IMAGES['chan-vay-xep-ly_1'],IMAGES['chan-vay-xep-ly_2']], imageKeys:['chan-vay-xep-ly_1','chan-vay-xep-ly_2'] },
 ];
 
 export let PRODUCTS: Product[] = BUNDLED;
@@ -81,9 +91,15 @@ const ownPrice = (variant: any): number | null => {
   return Number.isFinite(price) && price > 0 ? price : null;
 };
 
+export const SIZE_SURCHARGE: Record<string, number> = {
+  S:0, M:10_000, L:20_000, XL:30_000, XXL:40_000, XXXL:50_000, '4XL':60_000, '5XL':70_000,
+};
+
+export const sizeSurcharge = (size?: string): number => SIZE_SURCHARGE[String(size || 'M').trim().toUpperCase()] ?? 0;
+
 /** Đơn giá thực tế cho một lựa chọn màu+size. */
 export function variantPrice(product: Product, color?: string, size?: string): number {
-  return ownPrice(matchVariant(product, color, size)) ?? Math.max(0, Number(product.price) || 0);
+  return ownPrice(matchVariant(product, color, size)) ?? Math.max(0, Number(product.price) || 0) + sizeSurcharge(size);
 }
 
 /** Giá gạch ngang tương ứng — chỉ giữ khi vẫn cao hơn giá đang bán. */
@@ -98,7 +114,7 @@ export function priceRange(product: Product): { min:number; max:number; varies:b
   const base = Math.max(0, Number(product.price) || 0);
   const variants = product.variants;
   if (!variants || !variants.length) return { min: base, max: base, varies: false };
-  const prices = variants.map(v => ownPrice(v) ?? base);
+  const prices = variants.map(v => ownPrice(v) ?? base + sizeSurcharge(v.size));
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   return { min, max, varies: min !== max };

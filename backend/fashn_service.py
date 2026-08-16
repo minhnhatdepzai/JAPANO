@@ -285,6 +285,9 @@ def refine_garment_fidelity(tryon_image: Image.Image, garment: Image.Image, low_
         "The garment's hem must reach exactly as low on the body as it does in image 2 relative to the garment's own proportions — if image 2 "
         "shows a long, ankle-length or floor-length garment, image 1's result must also reach the ankles, not become a shorter knee-length "
         "garment; do not shorten, lengthen, or otherwise change the garment's proportions compared to image 2. "
+        "If image 2 is an open-front outer jacket, coat, cardigan or Haori, keep it visibly open, preserve the existing inner shirt through the opening, "
+        "and match its full sleeve width, sleeve length and long hem. Never turn long outerwear into a short-sleeve shirt, cropped blazer, dress or closed robe. "
+        "Preserve the trousers, skirt or other lower garment already present in image 1 exactly; the outer garment may overlap it naturally but must not replace it. "
         "Do not expose the chest, do not alter skin, do not add props or people, do not change the pose. Photorealistic fabric and folds."
     )
     generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(
@@ -331,6 +334,16 @@ def refine_accessory_fit(
                 f"Place {name} from image {index} naturally on top of the main person's head. "
                 "The lowest brim must sit above the eyebrows; both eyes, nose and mouth must remain completely visible. "
                 "Hair must pass naturally behind or under the hat with realistic contact shadow."
+            )
+        elif kind == "hair_clip":
+            instructions.append(
+                f"Fasten {name} from image {index} into the hair beside one temple, above and slightly behind one ear. "
+                "Keep it compact, preserve its exact flowers, bow and dangling ornament, and never float it above the head or cover the face."
+            )
+        elif kind == "earmuffs":
+            instructions.append(
+                f"Make the main person wear {name} from image {index} correctly: one padded cup centered over each ear and the band following the crown. "
+                "Keep both eyes and the entire face visible; do not turn it into a hat, handheld toy or duplicate object."
             )
         elif kind == "umbrella":
             instructions.append(

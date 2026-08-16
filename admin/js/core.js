@@ -360,7 +360,25 @@ const rand=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[rand(0,a.length-1)];
 const catName=id=>(DB.categories.find(c=>c.id===id)||{}).name||id;
 const catKanji=id=>(CATS.find(c=>c.id===id)||{}).kanji||'';
-function esc(s){return(''+(s??'')).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* esc() phải bọc được CẢ HAI kiểu chỗ chèn đang dùng trong trang này:
+ *   1. nội dung/thuộc tính HTML   →  & < > "
+ *   2. chuỗi JavaScript nằm trong thuộc tính  onclick="A.foo('${escJs(...)}')"
+ * Bản cũ bỏ sót dấu nháy đơn và dấu gạch chéo ngược, nên một giá trị chứa ' là
+ * thoát ra được khỏi chuỗi và chạy mã tuỳ ý — mà dữ liệu chảy vào đây (tên
+ * khách, tên sản phẩm, nội dung đánh giá, lý do trả hàng) đều do người ngoài
+ * nhập. Trang quản trị lại giữ JWT trong localStorage và server đã tắt CSP, nên
+ * một lần XSS là mất luôn phiên quản trị. */
+function esc(s){return(''+(s??'')).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));}
+/* Dùng cho giá trị nằm trong CHUỖI JAVASCRIPT bên trong thuộc tính, kiểu
+ *   onclick="A.openOrder('${escJs(id)}')"
+ * Chỉ esc() là không đủ ở đây: trình duyệt giải mã &#39; ngược lại thành ' TRƯỚC
+ * khi bộ phân tích JavaScript nhìn thấy chuỗi, nên dấu nháy vẫn thoát ra được.
+ * Phải thoát theo kiểu JavaScript trước (\\ và \'), rồi mới thoát HTML — và
+ * tuyệt đối không đụng tới dấu gạch chéo ngược ở bước sau, nếu không lớp thoát
+ * đầu tiên bị phá. */
+function escJs(s){return String(s??'')
+  .replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r/g,'\\r').replace(/\n/g,'\\n')
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function stock(p){return (p.variants||[]).reduce((s,v)=>s+(+v.stock||0),0);}
 function effStatus(p){ if(p.status==='published' && stock(p)===0) return 'out'; return p.status; }
 function buyable(p){ return effStatus(p)==='published'; }
@@ -408,11 +426,11 @@ function confirmModal(title,msg,onOk,danger){
 
 /* ---------- charts ---------- */
 function bars(data,clickSpan=''){const max=Math.max(1,...data.map(d=>d.value));
-  return `<div class="bars">${data.map((d,index)=>`<div class="col ${clickSpan?'clickable':''}" ${clickSpan?`onclick="A.revPoint('${clickSpan}',${index})"`:''} title="${esc(d.label)} · ${money(d.value)}${d.forecast?' · dự báo':''}"><div class="bv">${d.value?kd(d.value):'0'}</div><div class="bar ${d.forecast?'forecast':''}" style="height:${Math.max(3,d.value/max*100)}%"></div><div class="bl">${esc(d.label)}</div></div>`).join('')}</div>`;}
+  return `<div class="bars">${data.map((d,index)=>`<div class="col ${clickSpan?'clickable':''}" ${clickSpan?`onclick="A.revPoint('${escJs(clickSpan)}',${index})"`:''} title="${esc(d.label)} · ${money(d.value)}${d.forecast?' · dự báo':''}"><div class="bv">${d.value?kd(d.value):'0'}</div><div class="bar ${d.forecast?'forecast':''}" style="height:${Math.max(3,d.value/max*100)}%"></div><div class="bl">${esc(d.label)}</div></div>`).join('')}</div>`;}
 function donut(segs,interactive=false){const tot=segs.reduce((s,x)=>s+x.value,0)||1;let a=0;const stops=segs.map(s=>{const from=a/tot*360;a+=s.value;const to=a/tot*360;return `${s.color} ${from}deg ${to}deg`;}).join(',');
   return `<div style="display:flex;gap:18px;align-items:center">
    <div class="donut" style="background:conic-gradient(${stops})"><div class="hole"><div><div style="font-size:18px;font-weight:800">${tot}</div><div class="faint" style="font-size:10px">đơn</div></div></div></div>
-   <div class="legend">${segs.map(s=>`<div class="li" ${interactive&&s.status?`onclick="A.orderDrill('${s.status}')" style="cursor:pointer;padding:5px;border-radius:6px"`:''}><span class="sw" style="background:${s.color}"></span>${esc(s.label)}<span class="val">${s.value}</span></div>`).join('')}</div></div>`;}
+   <div class="legend">${segs.map(s=>`<div class="li" ${interactive&&s.status?`onclick="A.orderDrill('${escJs(s.status)}')" style="cursor:pointer;padding:5px;border-radius:6px"`:''}><span class="sw" style="background:${s.color}"></span>${esc(s.label)}<span class="val">${s.value}</span></div>`).join('')}</div></div>`;}
 function hbars(items){const max=Math.max(1,...items.map(i=>i.value));
   return `<div class="hbar">${items.map(i=>`<div class="r"><div class="nm" title="${esc(i.name)}">${esc(i.name)}</div><div class="track"><div class="fill" style="width:${i.value/max*100}%;${i.color?'background:'+i.color:''}"></div></div><div class="v">${i.fmt||i.value}</div></div>`).join('')}</div>`;}
 function sourceFlag(demo=false,local=false){
@@ -441,6 +459,9 @@ function refreshChrome(){
   // Chuông hiện số việc mới chưa xem; 0 thì ẩn hẳn chấm đỏ.
   const bellCount=$('#bellCount');
   if(bellCount){bellCount.textContent=ADMIN_UNREAD>99?'99+':String(ADMIN_UNREAD);bellCount.style.display=ADMIN_UNREAD?'grid':'none';}
+  // Chuông rung nhẹ khi còn việc chưa xem — người trực thường nhìn vào bảng
+  // giữa màn hình, một con số lặng lẽ ở góc rất dễ trôi qua cả buổi.
+  $('#bellBtn')?.classList.toggle('has-unread',ADMIN_UNREAD>0);
   const dot=(id,on,tid,ontxt,offtxt)=>{const e=$(id);e.className='dot '+(on===true?'g':on===false?'r':'a');$(tid).textContent=on===true?ontxt:on===false?offtxt:'chưa rõ';};
   dot('#s-mongo',HEALTH.mongo,'#s-mongo-t','đã kết nối','mất kết nối');
   dot('#s-cloud',HEALTH.cloudinary,'#s-cloud-t','đã kết nối','mất kết nối');
@@ -502,7 +523,7 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
 // chờ duyệt…) thay vì nhảy sang trang soạn thông báo — người trực cần biết
 // "vừa có việc gì" trước, muốn soạn thông báo cho khách thì bấm nút bên dưới.
 function adminFeedDrawer(){
-  const rows=ADMIN_FEED.length?ADMIN_FEED.map(item=>`<div class="feedrow" onclick="closeModal();A.openFeedItem('${esc(item.route||'')}','${esc(item.refId||'')}')">
+  const rows=ADMIN_FEED.length?ADMIN_FEED.map(item=>`<div class="feedrow" onclick="closeModal();A.openFeedItem('${escJs(item.route||'')}','${escJs(item.refId||'')}')">
     <div class="feedtext">${esc(item.text)}</div><div class="faint" style="font-size:10.5px;margin-top:3px">${ago(item.at)} trước</div></div>`).join('')
     :'<div class="faint" style="font-size:12px;padding:16px">Chưa có sự kiện nào. Đơn hàng, yêu cầu trả hàng và đánh giá mới sẽ hiện tại đây ngay khi phát sinh.</div>';
   return `<div class="mh"><div><h3>Hoạt động vừa diễn ra</h3><div class="faint" style="font-size:11.5px">${ADMIN_FEED.length} sự kiện gần nhất · tự cập nhật mỗi 3 giây</div></div><div class="x" onclick="closeModal()">✕</div></div>
@@ -511,9 +532,11 @@ function adminFeedDrawer(){
 }
 $('#bellBtn').addEventListener('click',()=>{markAdminFeedRead();openDrawer(adminFeedDrawer());});
 $('#refreshBtn').addEventListener('click',()=>{
-  const btn=$('#refreshBtn');btn.style.opacity='.5';
+  // Biểu tượng quay trong lúc đang gọi API: bấm mà không có phản hồi nào thì
+  // người dùng bấm lại liên tục và mỗi lần lại nổ thêm một loạt request.
+  const btn=$('#refreshBtn');btn.classList.add('spinning');
   Promise.all([syncLiveSales(true),state.route==='dashboard'?refreshAnalytics(true):Promise.resolve()])
     .then(()=>toast('Đã làm mới dữ liệu ✓'))
     .catch(()=>toast('Không làm mới được — kiểm tra kết nối','err'))
-    .finally(()=>{btn.style.opacity='1';});
+    .finally(()=>{btn.classList.remove('spinning');});
 });

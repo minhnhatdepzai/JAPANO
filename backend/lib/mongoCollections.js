@@ -279,6 +279,15 @@ function serializeDirectRow(key, raw, index, maps, vouchersByCode) {
   if (key === 'chats' && Array.isArray(row.productIds)) {
     row.productIds = row.productIds.map((value) => canonicalProductId(value, maps));
   }
+  // tryon_history.productId đã được chuẩn hoá sang products.id ở khối trên, nhưng
+  // hai mảng bên cạnh thì chưa — nên cùng một document có productId='p7' (id) mà
+  // productIds=['cardigan-dai'] (slug). Cùng một bảng mà hai kiểu tham chiếu thì
+  // mọi phép nối bảng đều phải đoán, và ERD không vẽ đúng được.
+  if (key === 'tryonHistory') {
+    for (const field of ['productIds', 'accessoryIds']) {
+      if (Array.isArray(row[field])) row[field] = row[field].map((value) => canonicalProductId(value, maps));
+    }
+  }
   if (key === 'flagcards' && Array.isArray(row.recommendedProductIds)) {
     row.recommendedProductIds = row.recommendedProductIds.map((value) => canonicalProductId(value, maps));
   }
@@ -478,6 +487,11 @@ function hydrateDirectRow(key, raw, maps, vouchersById) {
   }
   if (key === 'chats' && Array.isArray(row.productIds)) {
     row.productIds = row.productIds.map((value) => runtimeProductSlug(value, maps));
+  }
+  if (key === 'tryonHistory') {
+    for (const field of ['productIds', 'accessoryIds']) {
+      if (Array.isArray(row[field])) row[field] = row[field].map((value) => runtimeProductSlug(value, maps));
+    }
   }
   if (key === 'flagcards' && Array.isArray(row.recommendedProductIds)) {
     row.recommendedProductIds = row.recommendedProductIds.map((value) => runtimeProductSlug(value, maps));
@@ -772,4 +786,8 @@ module.exports = {
   repairLegacyReferences,
   relationshipErrors,
   productMaps,
+  // Export để script dựng sản phẩm tự kiểm chứng được vòng serialize→hydrate
+  // trước khi ghi dữ liệu, thay vì phát hiện sai schema sau khi sản phẩm đã
+  // lên app mà không có ảnh (xem backend/scripts/buildJapanoProducts.js).
+  hydrateProducts,
 };

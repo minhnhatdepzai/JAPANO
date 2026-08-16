@@ -31,7 +31,7 @@ export default function Category() {
           <Text style={{ fontFamily:F.bodyM, fontSize:12, color:C.ink }}>Lọc ⌄</Text>
         </View>
         <View style={st.grid}>
-          {list.map(p=><ProductCard key={p.slug} p={p} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />)}
+          {list.map((p,i)=><ProductCard key={p.slug} p={p} index={i} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />)}
         </View>
       </ScrollView>
     </Screen>

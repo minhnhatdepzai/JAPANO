@@ -45,6 +45,11 @@ export PYTHON_BIN="${PYTHON_BIN:-$JAPANO_ACCESSORY_PYTHON}"
 
 export PORT="${PORT:-4100}"
 LOCAL_API_URL="http://127.0.0.1:${PORT}"
+# Marker chỉ gồm source backend, không gồm db.json đang thay đổi khi app chạy.
+# Nhờ đó một backend còn sống từ lượt chạy trước không thể bị nhận nhầm là bản
+# vừa sửa chỉ vì /api/health vẫn trả ok.
+JAPANO_SOURCE_VERSION="$(sha256sum backend/server.js backend/routes/*.js backend/lib/*.js | sha256sum | awk '{print $1}')"
+export JAPANO_SOURCE_VERSION
 BACKEND_LOG="${JAPANO_BACKEND_LOG:-/tmp/japano-backend-${PORT}.log}"
 BACKEND_PID=""
 FASHN_DIR="${JAPANO_FASHN_DIR:-$HOME/jp/ai/fashn-vton-1.5}"
@@ -77,7 +82,7 @@ EMBED_LOG="${JAPANO_EMBEDDING_LOG:-/tmp/japano-embedding-7865.log}"
 EMBED_PID=""
 export JAPANO_EMBEDDING_URL="${JAPANO_EMBEDDING_URL:-http://127.0.0.1:7865}"
 
-for required_command in node npm curl awk grep; do
+for required_command in node npm curl awk grep sha256sum lsof readlink; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
     echo "✗ Thiếu lệnh '$required_command'. Hãy cài công cụ này rồi chạy lại." >&2
     exit 1
@@ -120,7 +125,30 @@ api_is_ready() {
   local response
   response="$(curl --fail --silent --show-error --connect-timeout 2 --max-time 4 \
     "$LOCAL_API_URL/api/health" 2>/dev/null)" || return 1
-  [[ "$response" == *'"ok":true'* && "$response" == *'"features":['* ]]
+  [[ "$response" == *'"ok":true'* && "$response" == *'"features":['* \
+    && "$response" == *"\"sourceVersion\":\"$JAPANO_SOURCE_VERSION\""* ]]
+}
+
+stop_stale_backend() {
+  local stale_pid stale_cwd stale_cmd
+  stale_pid="$(lsof -nP -t -iTCP:"$PORT" -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+  [[ -n "$stale_pid" ]] || return 0
+  stale_cwd="$(readlink -f "/proc/$stale_pid/cwd" 2>/dev/null || true)"
+  stale_cmd="$(tr '\0' ' ' <"/proc/$stale_pid/cmdline" 2>/dev/null || true)"
+  if [[ "$stale_cwd" != "$ROOT_DIR" || "$stale_cmd" != *"backend/server.js"* ]]; then
+    echo "✗ Cổng $PORT đang do tiến trình khác sử dụng (PID $stale_pid). Không tự ý dừng." >&2
+    echo "  Thư mục: ${stale_cwd:-không đọc được}" >&2
+    echo "  Lệnh: ${stale_cmd:-không đọc được}" >&2
+    exit 1
+  fi
+  echo "→ Backend JAPANO cũ không khớp source hiện tại; nạp lại PID $stale_pid…"
+  kill "$stale_pid"
+  for ((attempt = 1; attempt <= 50; attempt += 1)); do
+    kill -0 "$stale_pid" 2>/dev/null || return 0
+    sleep 0.1
+  done
+  echo "✗ Backend cũ PID $stale_pid chưa dừng. Không khởi động chồng cổng." >&2
+  exit 1
 }
 
 fashn_is_ready() {
@@ -300,6 +328,7 @@ fi
 if api_is_ready; then
   echo "✓ Dùng backend JAPANO đang chạy tại $LOCAL_API_URL"
 else
+  stop_stale_backend
   echo "→ Khởi động backend + Admin ở cổng $PORT…"
   PORT="$PORT" node backend/server.js >"$BACKEND_LOG" 2>&1 &
   BACKEND_PID=$!
@@ -362,14 +391,26 @@ if ! printf '%s\n' "${ANDROID_DEVICES[@]}" | grep -Fxq -- "$ANDROID_SERIAL"; the
 fi
 export ANDROID_SERIAL
 
+# `adb reverse` trả về 0 ngay cả khi đường hầm USB không thực sự chuyển dữ liệu
+# (gặp trên máy MIUI). Lúc này app treo ở "Reloading…" vì localhost:8081 timeout,
+# nên phải thử lấy HTTP qua chính đường hầm mới tin là nó sống. Backend đã chạy ở
+# trên nên dùng luôn PORT làm điểm thử.
+reverse_tunnel_alive() {
+  "$ADB_BIN" -s "$ANDROID_SERIAL" shell \
+    "printf 'GET / HTTP/1.0\r\n\r\n' | toybox nc -w 5 127.0.0.1 ${PORT} 2>/dev/null | head -n 1" \
+    2>/dev/null | grep -q '^HTTP/'
+}
+
 API_REVERSED=0
-if "$ADB_BIN" -s "$ANDROID_SERIAL" reverse "tcp:${PORT}" "tcp:${PORT}" >/dev/null 2>&1; then
+if "$ADB_BIN" -s "$ANDROID_SERIAL" reverse "tcp:${PORT}" "tcp:${PORT}" >/dev/null 2>&1 \
+  && reverse_tunnel_alive; then
   API_REVERSED=1
 fi
 # Khi reverse được Metro, ép Expo mở localhost để tránh emulator bị kẹt ở
 # "New update available" do không truy cập được IP LAN của máy host.
 METRO_HOST="lan"
-if "$ADB_BIN" -s "$ANDROID_SERIAL" reverse tcp:8081 tcp:8081 >/dev/null 2>&1; then
+if (( API_REVERSED == 1 )) \
+  && "$ADB_BIN" -s "$ANDROID_SERIAL" reverse tcp:8081 tcp:8081 >/dev/null 2>&1; then
   METRO_HOST="localhost"
 fi
 
@@ -379,9 +420,16 @@ if [[ -z "${EXPO_PUBLIC_API_URL:-}" ]]; then
   elif [[ "$ANDROID_SERIAL" == emulator-* ]]; then
     export EXPO_PUBLIC_API_URL="http://10.0.2.2:${PORT}"
   else
-    echo "✗ adb reverse cho API thất bại trên thiết bị thật." >&2
-    echo "  Đặt EXPO_PUBLIC_API_URL=http://<IP-LAN-máy-tính>:${PORT} rồi chạy lại." >&2
-    exit 1
+    # Máy thật không có đường hầm USB thì đi đường LAN — cùng IP mà Metro dùng
+    # cho `--host lan`, nên app tải bundle và gọi API trên một địa chỉ duy nhất.
+    HOST_LAN_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") {print $(i+1); exit}}')"
+    if [[ -z "$HOST_LAN_IP" ]]; then
+      echo "✗ adb reverse cho API thất bại và không dò được IP LAN của máy." >&2
+      echo "  Đặt EXPO_PUBLIC_API_URL=http://<IP-LAN-máy-tính>:${PORT} rồi chạy lại." >&2
+      exit 1
+    fi
+    echo "→ adb reverse không chuyển dữ liệu — chuyển sang LAN $HOST_LAN_IP."
+    export EXPO_PUBLIC_API_URL="http://${HOST_LAN_IP}:${PORT}"
   fi
 fi
 export EXPO_PUBLIC_API_PORT="$PORT"
@@ -431,5 +479,30 @@ else
 fi
 if [[ "${JAPANO_EXPO_CLEAR:-0}" == "1" ]]; then
   EXPO_ARGS+=(--clear)
+fi
+
+# Expo hỏi đổi sang 8082 nếu một Metro cũ vẫn giữ 8081. Câu hỏi tương tác đó
+# khiến chạy lại script dễ mở app bằng bundle/biến môi trường cũ, hoặc chọn
+# "không" rồi cleanup dừng luôn backend vừa nạp. Chỉ dừng Metro khi xác nhận
+# nó thuộc đúng workspace JAPANO; cổng của dự án khác thì báo và giữ nguyên.
+METRO_PID="$(lsof -nP -t -iTCP:8081 -sTCP:LISTEN 2>/dev/null | head -n 1 || true)"
+if [[ -n "$METRO_PID" ]]; then
+  METRO_CWD="$(readlink -f "/proc/$METRO_PID/cwd" 2>/dev/null || true)"
+  METRO_CMD="$(tr '\0' ' ' <"/proc/$METRO_PID/cmdline" 2>/dev/null || true)"
+  if [[ "$METRO_CWD" != "$ROOT_DIR/mobile" || "$METRO_CMD" != *"expo"* ]]; then
+    echo "✗ Cổng Metro 8081 đang do tiến trình khác sử dụng (PID $METRO_PID). Không tự ý dừng." >&2
+    echo "  Thư mục: ${METRO_CWD:-không đọc được}" >&2
+    exit 1
+  fi
+  echo "→ Nạp lại Metro JAPANO ở cổng 8081 để dùng đúng source và cấu hình hiện tại…"
+  kill "$METRO_PID"
+  for ((attempt = 1; attempt <= 50; attempt += 1)); do
+    kill -0 "$METRO_PID" 2>/dev/null || break
+    sleep 0.1
+  done
+  if kill -0 "$METRO_PID" 2>/dev/null; then
+    echo "✗ Metro cũ PID $METRO_PID chưa dừng. Không mở chồng sang cổng khác." >&2
+    exit 1
+  fi
 fi
 npm --workspace mobile run start -- "${EXPO_ARGS[@]}"

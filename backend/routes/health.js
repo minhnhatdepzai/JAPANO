@@ -19,6 +19,10 @@ module.exports = function registerHealthRoutes(api, ctx) {
       seeded: state.seeded,
       time: Date.now(),
       port: PORT,
+      // start-all.sh so sánh marker này với source hiện tại. Nếu còn một
+      // backend cũ giữ cổng 4100, script sẽ thay đúng tiến trình JAPANO đó
+      // thay vì báo sẵn sàng nhầm và phục vụ code trước khi sửa.
+      sourceVersion: String(process.env.JAPANO_SOURCE_VERSION || 'unversioned'),
       database: stateStore.storage.startsWith('mongodb')
         ? { type: 'mongodb', model: 'collection-first', connected: mongoStatus.online, database: process.env.MONGODB_DB || 'japano' }
         : { type: 'json', connected: true, file: stateStore.filePath },
@@ -148,8 +152,11 @@ module.exports = function registerHealthRoutes(api, ctx) {
   });
   api.get('/shop', (req, res) => res.json(publicShop(read().shop || {})));
 
-  // phân tích doanh thu/nhu cầu/xu hướng/phân khúc khách hàng cho dashboard admin
-  api.get('/analytics', (req, res) => {
+  // phân tích doanh thu/nhu cầu/xu hướng/phân khúc khách hàng cho dashboard admin.
+  // Bắt buộc admin: payload gồm doanh thu theo kỳ, dự báo, phân khúc và danh
+  // sách khách có nguy cơ rời bỏ (kèm tên, số đơn, số tiền đã chi) — toàn bộ
+  // sổ sách kinh doanh. Trước đây route này để trống quyền nên ai gọi cũng đọc được.
+  api.get('/analytics', requireAdmin, (req, res) => {
     const state = read();
     const scope = String(req.query.scope || 'live') === 'all' ? 'all' : 'live';
     const scoped = scope === 'all' ? state : {

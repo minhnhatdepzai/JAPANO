@@ -111,6 +111,24 @@ function createStore(filePath) {
     useMongo = false;
     mongoReady = false;
     mongoState = null;
+    // Ghi đè db.json bằng state lấy từ MongoDB là thao tác PHÁ HUỶ, và nó xảy ra
+    // đúng lúc tệ nhất: khi MongoDB vừa trục trặc. Nếu dữ liệu trên MongoDB
+    // đang thiếu (migration dở dang, script ghi sai collection), bản thiếu đó
+    // đè mất bản đầy đủ dưới đĩa và không còn đường lùi.
+    //
+    // Chuyện này đã xảy ra thật: một script đẩy sản phẩm ghi sai collection
+    // khiến MongoDB có sản phẩm nhưng không có ảnh; một lần MongoDB chập là
+    // db.json bị thay bằng bản không ảnh, mất luôn mô tả và ảnh của 9 sản phẩm.
+    // Giữ lại một bản sao trước khi ghi đè để luôn còn đường khôi phục.
+    try {
+      if (fs.existsSync(resolved)) {
+        const backup = `${resolved}.pre-fallback-${new Date().toISOString().replace(/[:.]/g, '-')}`;
+        fs.copyFileSync(resolved, backup);
+        logger.warn({ backup }, 'Đã sao lưu db.json trước khi ghi đè bằng dữ liệu từ MongoDB.');
+      }
+    } catch (backupError) {
+      logger.error({ err: backupError }, 'Không sao lưu được db.json trước khi chuyển sang JSON cục bộ.');
+    }
     writeFile(fallback);
     logger.warn({ err: error }, 'MongoDB không khả dụng; chuyển sang dữ liệu JSON cục bộ.');
     return fallback;

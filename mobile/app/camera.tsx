@@ -30,6 +30,10 @@ export default function Camera() {
   const [moodLabel,setMoodLabel]=useState('');
   const [ageRange,setAgeRange]=useState('');
   const [cheerUp,setCheerUp]=useState<CheerUp|null>(null);
+  // Lý do gợi ý do máy chủ tính từ tín hiệu thật (gu đã chọn, hoà sắc với tông
+  // màu trong ảnh, vai trò trong set, hành vi). Trước đây màn này tự bịa chuỗi
+  // 'hợp phong cách của bạn' cho mọi món và phụ kiện thì không có chữ nào.
+  const [reasons,setReasons]=useState<Record<string,string>>({});
 
   const fallbackOutfits=useMemo(()=>['haori-dang-dai','cardigan-dai','so-mi-trang'].map(s=>products.find(p=>p.slug===s)).filter(Boolean) as Product[],[products]);
   const fallbackAccessories=useMemo(()=>products.filter(p=>p.cat==='phu-kien').slice(0,4),[products]);
@@ -37,6 +41,10 @@ export default function Camera() {
     const found=refs.map(ref=>{const key=refKey(ref);return products.find(p=>p.slug===key||p.id===key);}).filter(Boolean) as Product[];
     return (found.length?found:fallback).slice(0,4);
   };
+  // Lý do lấy theo slug từ máy chủ; nếu máy chủ không trả (mất mạng, đang dùng
+  // danh sách dự phòng) thì nói thẳng là gợi ý mặc định, chứ không giả vờ rằng
+  // có một lý do cá nhân hoá đằng sau.
+  const reasonFor=(p:Product,fallbackText='Gợi ý mặc định khi chưa phân tích được ảnh')=>reasons[p.slug]||reasons[p.id||'']||fallbackText;
   const outfits=resolve(outfitRefs,fallbackOutfits);
   const accessories=resolve(accessoryRefs,fallbackAccessories);
 
@@ -53,7 +61,7 @@ export default function Camera() {
     if(!asset)return;
     if(!asset.base64){setError('Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');return;}
     setPhoto({uri:asset.uri,base64:dataUri(asset)});
-    setTags([]);setOutfitRefs([]);setAccessoryRefs([]);setMoodLabel('');setAgeRange('');setCheerUp(null);
+    setTags([]);setOutfitRefs([]);setAccessoryRefs([]);setMoodLabel('');setAgeRange('');setCheerUp(null);setReasons({});
   };
 
   const analyze=async()=>{
@@ -63,11 +71,11 @@ export default function Camera() {
       const profile=await loadStyleProfile();
       const result=await recommendStyle({imageBase64:photo.base64,profile});
       setSummary(result.summary);setTags(result.tags);setOutfitRefs(result.products);setAccessoryRefs(result.accessories);
-      setMoodLabel(result.moodLabel||'');setAgeRange(result.ageRange||'');setCheerUp(result.cheerUp);
+      setMoodLabel(result.moodLabel||'');setAgeRange(result.ageRange||'');setCheerUp(result.cheerUp);setReasons(result.reasons||{});
     }catch(e:any){
       setError(e?.message||'Không phân tích được ảnh.');
       setSummary('Không kết nối được trợ lý phối đồ; bạn vẫn có thể xem gợi ý mặc định bên dưới.');
-      setMoodLabel('');setAgeRange('');setCheerUp(null);
+      setMoodLabel('');setAgeRange('');setCheerUp(null);setReasons({});
     }finally{setLoading(false);}
   };
 
@@ -117,15 +125,16 @@ export default function Camera() {
 
         <SectionHeader kanji="衣" label="Trang phục gợi ý" action="Tất cả" onAction={()=>router.push('/(tabs)/products')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap:12 }}>
-          {outfits.map((p,i)=><ProductMini key={p.slug} p={p} reason={(outfitRefs[i] as any)?.reason||'hợp phong cách của bạn'} />)}
+          {outfits.map(p=><ProductMini key={p.slug} p={p} reason={reasonFor(p)} />)}
         </ScrollView>
 
         <SectionHeader kanji="小" label="Phụ kiện đi kèm" />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap:12 }}>
           {accessories.map(a=>(
-            <Pressable key={a.slug} style={{ width:118 }} onPress={()=>router.push(`/product/${a.slug}`)}>
-              <SmartImage source={a.images[0]} style={{ width:'100%', height:118, borderRadius:12 }} recyclingKey={`${a.slug}-camera-accessory`} />
+            <Pressable key={a.slug} style={{ width:136 }} onPress={()=>router.push(`/product/${a.slug}`)}>
+              <SmartImage source={a.images[0]} style={{ width:'100%', height:136, borderRadius:12 }} recyclingKey={`${a.slug}-camera-accessory`} />
               <Text style={st.productName} numberOfLines={1}>{a.name}</Text><Price value={a.price} size={11.5} />
+              <Text style={st.reason} numberOfLines={3}>{reasonFor(a,'Phụ kiện hợp tông với set gợi ý')}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -170,5 +179,5 @@ const st=StyleSheet.create({
   cheerHint:{fontFamily:F.bodyM,fontSize:11,color:'#8A5B00',marginTop:9},
   productName:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginTop:6},
   productTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink,marginTop:7},
-  reason:{fontFamily:F.bodyB,fontSize:10,color:C.kin,marginTop:2},
+  reason:{fontFamily:F.bodyM,fontSize:10,lineHeight:14,color:C.kin,marginTop:3},
 });

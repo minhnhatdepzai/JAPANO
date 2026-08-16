@@ -190,6 +190,63 @@ function adviseSize(payload = {}) {
   return { size, advice, usedMeasurements };
 }
 
+const ROLE_WORD = {
+  base: 'món chính',
+  outer: 'lớp khoác ngoài',
+  outerwear: 'lớp khoác ngoài',
+  accessory: 'phụ kiện',
+  standalone: 'bộ nguyên set',
+};
+
+// Diễn giải điểm hoà sắc thành lời người đọc hiểu được, thay vì đưa ra một con số.
+function harmonyPhrase(score) {
+  if (score >= 0.85) return 'ăn màu với tông chủ đạo trong ảnh';
+  if (score >= 0.7) return 'tương phản có kiểm soát với tông trong ảnh';
+  if (score >= 0.5) return 'đủ nổi để tách khỏi nền ảnh';
+  return '';
+}
+
+/**
+ * Vì sao đúng món này được gợi ý — nêu bằng tín hiệu THẬT đã dùng để xếp hạng,
+ * không phải một câu chung chung.
+ *
+ * Trước đây hàm này không trả lý do nào cả: màn "Ống kính JAPANO" phải tự bịa
+ * chuỗi 'hợp phong cách của bạn' cho mọi món, còn phụ kiện thì không có lấy một
+ * chữ giải thích. Một gợi ý không nói được vì sao thì khách không có cơ sở nào
+ * để tin, và cũng không học được gì về gu của chính mình.
+ *
+ * Bốn nguồn tín hiệu, ghép theo thứ tự sức thuyết phục giảm dần:
+ *   1. tag phong cách khách đã chọn trùng với tag sản phẩm  — rõ ràng nhất
+ *   2. hoà sắc với tông màu chủ đạo trích từ chính bức ảnh   — gắn với ảnh vừa chụp
+ *   3. vai trò trong bộ đồ (món chính / khoác ngoài / phụ kiện)
+ *   4. lý do hành vi từ engine gợi ý (đã xem, đã mua cùng, đang thịnh hành)
+ */
+function reasonForProduct(product, { profile, dominantHex, behaviourReason }) {
+  const reasons = [];
+  const preferred = (profile?.preferredStyles || []).map((tag) => String(tag).toLowerCase());
+  const productTags = [...(product.tags || []), ...(product.visualTags || [])].map((tag) => String(tag).toLowerCase());
+  const matched = [...new Set(preferred.filter((tag) => productTags.includes(tag)))];
+  if (matched.length) reasons.push(`khớp gu ${matched.slice(0, 2).join(' + ')} bạn đã chọn`);
+
+  if (dominantHex && product.colorHex) {
+    const phrase = harmonyPhrase(colorHarmony(dominantHex, product.colorHex));
+    if (phrase) reasons.push(phrase);
+  }
+
+  const role = ROLE_WORD[roleOf(product)];
+  if (role && reasons.length < 2) reasons.push(`đóng vai ${role} trong set`);
+
+  // Lý do hành vi từ recommend.js đã là câu tiếng Việt hoàn chỉnh, chỉ dùng khi
+  // hai tín hiệu gắn với ảnh phía trên chưa đủ để giải thích.
+  const behaviour = String(behaviourReason || '').trim();
+  if (behaviour && reasons.length < 2) reasons.push(behaviour.toLowerCase());
+
+  if (!reasons.length) return 'hợp tổng thể bộ đồ trong ảnh';
+  // Viết hoa chữ đầu, nối tối đa 2 lý do — dài hơn là khách không đọc.
+  const text = reasons.slice(0, 2).join(', ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 // Tư vấn phong cách cho màn "Ống kính JAPANO": tái dùng engine gợi ý (recommend.js) theo hồ sơ,
 // rồi sắp lại theo tông màu chủ đạo trích từ ảnh (nếu có) — không cần model thị giác nặng.
 function styleRecommendation(state, { userId = 'guest', profile, dominantHex, limit = 8 } = {}) {
@@ -202,12 +259,24 @@ function styleRecommendation(state, { userId = 'guest', profile, dominantHex, li
   const parts = [styleWords ? `phong cách ${styleWords} bạn chọn` : 'gu và hành vi của bạn'];
   if (dominantHex) parts.push(`tông màu chủ đạo trong ảnh (${dominantHex})`);
   const summary = `Theo ${parts.join(' và ')}, Ori gợi ý những món sau:`;
+
+  const reasons = {};
+  for (const product of top) {
+    reasons[pid(product)] = reasonForProduct(product, {
+      profile,
+      dominantHex,
+      behaviourReason: base.reasons?.[pid(product)],
+    });
+  }
+
   return {
     summary,
     tags: profile?.preferredStyles || [],
     products: top.filter((p) => roleOf(p) !== 'accessory').map(pid),
     accessories: top.filter((p) => roleOf(p) === 'accessory').map(pid),
+    // Khoá theo slug để client tra cho cả trang phục lẫn phụ kiện.
+    reasons,
   };
 }
 
-module.exports = { composeOutfit, todaysOutfit, adviseSize, styleRecommendation, roleOf, colorHarmony };
+module.exports = { composeOutfit, todaysOutfit, adviseSize, styleRecommendation, roleOf, colorHarmony, reasonForProduct };

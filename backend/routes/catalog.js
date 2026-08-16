@@ -49,6 +49,10 @@ module.exports = function registerCatalogRoutes(api, ctx) {
     const cloudImages = cloudProductImages.get(String(product.id)) || cloudProductImages.get(String(product.slug));
     return {
       ...product,
+      // Không ghi đè ảnh ở tầng máy chủ. Trước đây có một bảng cứng phát ảnh
+      // riêng cho haori-dang-dai vì dữ liệu trong Mongo gắn nhầm ảnh khăn quàng
+      // — chữa như vậy khiến app không còn phản ánh cơ sở dữ liệu, và che mất
+      // lỗi thật. Ảnh đã được sửa tại nguồn (Mongo + file local) nên bỏ được.
       images: cloudImages && cloudImages.length ? cloudImages : product.images,
       rating,
       reviewCount,

@@ -5,6 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { C, F, money } from '../theme/tokens';
 import { RisingSun, Enso } from './art';
+import { PressScale } from './motion';
+
+export { FadeSlideIn, PressScale, Shimmer, ProgressBar, PulseDot, useReduceMotion } from './motion';
 
 export const Screen = ({ children, bg=C.washi, wave=true, edges=['top'] as any }:
   { children:React.ReactNode; bg?:string; wave?:boolean; edges?:any }) => (
@@ -33,17 +36,33 @@ export const Btn = ({ label, onPress, variant='primary', style, icon, disabled }
   const bg = variant==='primary'?C.shu: variant==='ink'?C.ai:'transparent';
   const fg = variant==='ghost'?C.shu:'#fff';
   return (
-    <Pressable onPress={disabled?undefined:onPress} disabled={disabled} style={[s.btn,{ backgroundColor:bg, borderWidth:1.5, borderColor:C.shuDeep }, disabled&&{ opacity:0.42 }, style]}>
+    // Nút vô hiệu hoá không được co lại khi chạm — phản hồi chạm mà không có
+    // hành động nào xảy ra sau đó là một lời hứa suông.
+    <PressScale
+      onPress={disabled?undefined:onPress}
+      disabled={disabled}
+      scaleTo={disabled?1:0.965}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled) }}
+      style={[s.btn,{ backgroundColor:bg, borderWidth:1.5, borderColor:C.shuDeep }, disabled&&{ opacity:0.42 }, style]}
+    >
       {!!icon && <Ionicons name={icon as any} size={18} color={fg} style={{ marginRight:8 }} />}
       <Text style={{ color:fg, fontFamily:F.bodyB, fontSize:15 }}>{label}</Text>
-    </Pressable>
+    </PressScale>
   );
 };
 
 export const Chip = ({ label, active, onPress, small }:{ label:string; active?:boolean; onPress?:()=>void; small?:boolean }) => (
-  <Pressable onPress={onPress} style={[s.chip, active && s.chipOn, small && { paddingVertical:6, paddingHorizontal:11 }]}>
+  <PressScale
+    onPress={onPress}
+    scaleTo={0.94}
+    accessibilityRole="button"
+    accessibilityState={{ selected: Boolean(active) }}
+    style={[s.chip, active && s.chipOn, small && { paddingVertical:6, paddingHorizontal:11 }]}
+  >
     <Text style={{ color:active?'#fff':C.ink, fontFamily:F.bodyM, fontSize:small?11:12.5 }}>{label}</Text>
-  </Pressable>
+  </PressScale>
 );
 
 export const Price = ({ value, old, size=16 }:{ value:number; old?:number|null; size?:number }) => (

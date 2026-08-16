@@ -303,3 +303,84 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .sugcard.no{border-color:#F0C9C9;background:#FDF6F6}
 .sugtext{font-size:12.5px;line-height:1.55}
 .sugacts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+
+/* ===========================================================================
+   LỚP CHUYỂN ĐỘNG — thêm 2026-08-13
+   ---------------------------------------------------------------------------
+   Trang quản trị tự làm mới mỗi 3 giây và dựng lại toàn bộ DOM của khung nhìn
+   khi dữ liệu đổi. Trước đây mọi thứ chỉ "nhấp" một cái rồi thay nội dung, nên
+   người trực không nhận ra vừa có gì thay đổi giữa một bảng dài. Chuyển động ở
+   đây có đúng một nhiệm vụ: chỉ cho mắt biết CHỖ NÀO vừa đổi và trạng thái nào
+   đang chạy — không trang trí.
+
+   Toàn bộ chỉ dùng transform và opacity (không đụng layout) nên trình duyệt xử
+   lý trên GPU, không gây reflow ở nhịp 3 giây.
+   =========================================================================== */
+
+/* Người dùng bật "giảm chuyển động" trong hệ điều hành thường vì chuyển động
+   gây chóng mặt. Tắt sạch, giữ nguyên chức năng. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+}
+
+/* --- xuất hiện: bảng và hàng dữ liệu ------------------------------------- */
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.panel{animation:riseIn .26s cubic-bezier(.22,.61,.36,1) both}
+.kpi{animation:riseIn .3s cubic-bezier(.22,.61,.36,1) both}
+/* Rải nhịp cho hàng KPI: mắt đọc theo thứ tự trái→phải thay vì nhận cả 4 cùng lúc. */
+.kpis .kpi:nth-child(1){animation-delay:0ms}
+.kpis .kpi:nth-child(2){animation-delay:45ms}
+.kpis .kpi:nth-child(3){animation-delay:90ms}
+.kpis .kpi:nth-child(4){animation-delay:135ms}
+
+/* --- phản hồi chạm ------------------------------------------------------- */
+.btn{transition:transform .12s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:var(--sh)}
+.btn:active:not(:disabled){transform:translateY(0) scale(.975);box-shadow:none}
+.btn:disabled{cursor:not-allowed}
+.nav a{transition:background-color .15s ease,color .15s ease,padding-left .15s ease}
+.nav a:hover{padding-left:14px}
+.x{transition:background-color .14s ease,transform .14s ease}
+.x:hover{transform:rotate(90deg)}
+
+/* --- hàng bảng: nêu rõ hàng đang trỏ tới --------------------------------- */
+.row,.trow,tbody tr{transition:background-color .14s ease}
+.thumb{transition:transform .22s cubic-bezier(.22,.61,.36,1)}
+.row:hover .thumb,tbody tr:hover .thumb{transform:scale(1.06)}
+
+/* --- huy hiệu trạng thái: chấm của việc ĐANG chạy thì đập nhịp ------------
+   Chờ duyệt / đang giao / đang hoàn tiền là việc chưa xong và cần người xử lý.
+   Nhịp đập phân biệt chúng với các trạng thái đã chốt (xanh, tím, xám). */
+@keyframes badgePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+.bdg.b-amber .d{animation:badgePulse 1.8s ease-in-out infinite}
+
+/* --- chuông thông báo: rung khi có việc mới ------------------------------- */
+@keyframes bellRing{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(11deg)}80%{transform:rotate(-9deg)}90%{transform:rotate(5deg)}}
+#bellBtn:has(#bellCount:not([style*="display: none"])) .ic,
+#bellBtn.has-unread{animation:bellRing 2.6s ease-in-out infinite}
+#bellCount{animation:popIn .22s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes popIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+
+/* --- hộp thoại: bung ra từ tâm thay vì hiện đột ngột ---------------------- */
+.overlay.show .modal{animation:modalIn .2s cubic-bezier(.22,.61,.36,1) both}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+
+/* --- dòng sự kiện trực tiếp ---------------------------------------------- */
+.feedrow{transition:background-color .14s ease,border-left-color .18s ease;border-left:3px solid transparent;cursor:pointer}
+.feedrow:hover{background:var(--panel2);border-left-color:var(--brand)}
+.feedrow:first-child{animation:riseIn .3s cubic-bezier(.22,.61,.36,1) both}
+
+/* --- biểu đồ: cột mọc lên khi vẽ lại ------------------------------------- */
+@keyframes barGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.bars .bar{transform-origin:bottom;animation:barGrow .42s cubic-bezier(.22,.61,.36,1) both}
+.bars .col:hover .bar{filter:brightness(1.1);box-shadow:0 0 0 2px var(--brand-weak)}
+.hbar .fill{transition:width .5s cubic-bezier(.22,.61,.36,1)}
+
+/* --- đèn trạng thái kết nối ---------------------------------------------- */
+.dot{transition:background-color .25s ease,box-shadow .25s ease}
+.dot.a{animation:badgePulse 1.6s ease-in-out infinite}
+
+/* --- nút làm mới: quay trong lúc đang đồng bộ ---------------------------- */
+@keyframes spin{to{transform:rotate(360deg)}}
+#refreshBtn.spinning .ic,#refreshBtn.spinning{animation:spin .7s linear infinite}

@@ -6,7 +6,7 @@ import { C, F, money } from '../../theme/tokens';
 import { Btn, SectionHeader, Price, TagK } from '../../components/ui';
 import { PRODUCTS, Product, storyFor, variantPrice, variantOldPrice, priceRange } from '../../lib/catalog';
 import { useStore } from '../../lib/store';
-import { getOutfitFor, getProductAiDescription, getProductReviews, getRelatedProducts, OutfitSet, ProductAiDescription, ProductReviews, reactToReview, trackInteraction } from '../../lib/api';
+import { getFulfillmentPolicy, getOutfitFor, getProductAiDescription, getProductReviews, getRelatedProducts, getShop, OutfitSet, ProductAiDescription, ProductReviews, reactToReview, trackInteraction } from '../../lib/api';
 import { SmartImage } from '../../components/SmartImage';
 import { useAuth } from '../../lib/auth';
 import { ResizeMode, Video } from 'expo-av';
@@ -176,6 +176,11 @@ export default function Detail() {
   const [aiLoading,setAiLoading] = useState(true);
   const isVisionDescription = aiDescription?.engine === 'thi-giac-san-pham' || aiDescription?.engine === 'qwen3-vl:8b';
   const [reviewData,setReviewData]=useState<ProductReviews|null>(null);
+  // Phí giao và số ngày đổi/trả lấy từ máy chủ, không ghi cứng — cửa hàng đổi
+  // chính sách một chỗ là mọi màn hình đổi theo. Chưa tải xong thì để '—' thay
+  // vì đoán một con số, vì đây chính là con số khách dựa vào để quyết định.
+  const [shipFee,setShipFee]=useState<number|null>(null);
+  const [returnDays,setReturnDays]=useState(30);
   const loadReviews=()=>getProductReviews(p.slug,user?.id||'').then(setReviewData).catch(()=>setReviewData(null));
   useEffect(()=>{
     let live=true;
@@ -184,6 +189,8 @@ export default function Detail() {
     setAiLoading(true);
     void getProductAiDescription(p.slug).then(data=>{if(live)setAiDescription(data);}).catch(()=>undefined).finally(()=>{if(live)setAiLoading(false);});
     void getProductReviews(p.slug,user?.id||'').then(data=>{if(live)setReviewData(data);}).catch(()=>undefined);
+    void getShop().then(shop=>{if(live&&Number.isFinite(Number(shop?.shipFee)))setShipFee(Number(shop.shipFee));}).catch(()=>undefined);
+    void getFulfillmentPolicy().then(policy=>{const days=Number(policy?.timers?.returnWindowDays);if(live&&days>0)setReturnDays(days);}).catch(()=>undefined);
     if(isAuthenticated)void trackInteraction({userId:user!.id,type:'view',productId:p.slug,value:1}).catch(()=>undefined);
     return ()=>{live=false;};
   },[isAuthenticated,p.slug,user]);
@@ -318,6 +325,32 @@ export default function Detail() {
             </Text>
           )}
 
+          {/* Chi phí và điều kiện đổi trả, nói TRƯỚC khi khách vào giỏ.
+              Nguyên nhân bỏ giỏ hàng được ghi nhận nhiều nhất là phát sinh phí
+              bất ngờ ở bước thanh toán (Baymard). Phí giao và cửa sổ đổi/trả
+              của JAPANO trước đây chỉ xuất hiện ở màn thanh toán và trang chính
+              sách — tức là khách chỉ biết sau khi đã chọn xong hàng. */}
+          <View style={st.trust}>
+            <View style={st.trustRow}>
+              <Ionicons name="cube-outline" size={15} color={C.ai} />
+              <Text style={st.trustT}>
+                Phí giao hàng {shipFee === null ? '—' : shipFee === 0 ? 'miễn phí' : money(shipFee)}
+                {shipFee ? ' · tính một lần cho cả đơn' : ''}
+              </Text>
+            </View>
+            <View style={st.trustRow}>
+              <Ionicons name="refresh-outline" size={15} color={C.ai} />
+              <Text style={st.trustT}>Đổi/trả trong {returnDays} ngày kể từ khi bạn xác nhận đã nhận hàng</Text>
+            </View>
+            <View style={st.trustRow}>
+              <Ionicons name="shield-checkmark-outline" size={15} color={C.ai} />
+              <Text style={st.trustT}>Thanh toán COD, thẻ Stripe hoặc VNPay — hoàn tiền về đúng phương thức đã trả</Text>
+            </View>
+            <Pressable onPress={()=>router.push('/policy' as any)} hitSlop={8}>
+              <Text style={st.trustLink}>Xem đầy đủ quy trình giao – nhận – đổi/trả →</Text>
+            </Pressable>
+          </View>
+
           {/* CULTURE */}
           <SectionHeader kanji="物語" label={story.title} />
           <StoryBlock kanji={story.kanji} title="Nguồn gốc & ý nghĩa">
@@ -384,15 +417,19 @@ export default function Detail() {
 
       {/* sticky bar */}
       <View style={st.sticky}>
-        <Btn label="Thử đồ thông minh" variant="ghost" style={{ flex:1 }} onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)} />
-        <Btn label="Mục tiêu" variant="ink" style={{ flex:1 }} onPress={()=>openMemberRoute({ pathname:'/goals', params:{ productId:p.slug } } as any)} />
-        <Btn label={outOfStock?'Hết hàng':'Thêm giỏ'} disabled={outOfStock} style={{ flex:1.3 }} onPress={()=>addToCart(p.slug, colorName, chosenSize)} />
+        <View style={st.stickyTryOn}><Btn label="Thử đồ thông minh" variant="ghost" style={st.stickyButton} onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)} /></View>
+        <View style={st.stickyGoal}><Btn label="Mục tiêu" variant="ink" style={st.stickyButton} onPress={()=>openMemberRoute({ pathname:'/goals', params:{ productId:p.slug } } as any)} /></View>
+        <View style={st.stickyCart}><Btn label={outOfStock?'Hết hàng':'Thêm giỏ'} disabled={outOfStock} style={st.stickyButton} onPress={()=>addToCart(p.slug, colorName, chosenSize)} /></View>
       </View>
     </View>
   );
 }
 const st = StyleSheet.create({
   round:{ width:46, height:46, borderRadius:23, backgroundColor:'rgba(26,20,16,0.9)', borderWidth:2, borderColor:'rgba(255,255,255,0.9)', alignItems:'center', justifyContent:'center', elevation:6, shadowColor:'#000', shadowOpacity:.28, shadowRadius:8, shadowOffset:{width:0,height:3} },
+  trust:{ marginTop:14, backgroundColor:C.aiSoft, borderRadius:12, padding:12, gap:8 },
+  trustRow:{ flexDirection:'row', alignItems:'flex-start', gap:8 },
+  trustT:{ flex:1, fontFamily:F.body, fontSize:11.5, color:C.ink, lineHeight:16 },
+  trustLink:{ fontFamily:F.bodyB, fontSize:11.5, color:C.ai, marginTop:2 },
   flag:{ position:'absolute', left:14, bottom:14, backgroundColor:C.shu, paddingVertical:2, paddingHorizontal:6, borderRadius:6 },
   dots:{ position:'absolute', bottom:14, right:14, flexDirection:'row', gap:5 },
   dot:{ width:5, height:5, borderRadius:3, backgroundColor:'#fff', opacity:0.9 },
@@ -424,5 +461,9 @@ const st = StyleSheet.create({
   aiReason:{ fontFamily:F.bodyB, fontSize:12.5, lineHeight:20, color:C.shuDeep, marginTop:10 },
   goalLink:{ flexDirection:'row', alignItems:'center', gap:7, borderTopWidth:1, borderTopColor:C.hair, paddingTop:12, marginTop:12 },
   goalLinkText:{ flex:1, fontFamily:F.bodyB, fontSize:12.5, color:C.shu },
-  sticky:{ position:'absolute', left:0, right:0, bottom:0, flexDirection:'row', gap:10, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
+  sticky:{ position:'absolute', left:0, right:0, bottom:0, flexDirection:'row', alignItems:'stretch', gap:8, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
+  stickyTryOn:{ flex:1.55 },
+  stickyGoal:{ flex:.82 },
+  stickyCart:{ flex:1.05 },
+  stickyButton:{ width:'100%' },
 });
