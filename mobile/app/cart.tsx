@@ -61,7 +61,7 @@ export default function Cart() {
                 <Text style={{ fontFamily:F.body, fontSize:11.5, color:C.muted, marginTop:2 }}>{it.color} · {it.size}</Text>
                 {stock!==null && <Text style={{ fontFamily:F.bodyM, fontSize:10.5, marginTop:1, marginBottom:6, color:stock<=5?C.danger:C.ok }}>{stock===0?'Hết hàng':`Còn ${stock} sản phẩm`}</Text>}
                 <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginTop:stock!==null?0:6 }}>
-                  <Text style={{ fontFamily:F.bodyX, fontSize:14, color:C.shu }}>{money(variantPrice(p, it.color, it.size)*it.qty)}</Text>
+                  <Text style={{ fontFamily:F.bodyX, fontSize:14, color:C.ink }}>{money(variantPrice(p, it.color, it.size)*it.qty)}</Text>
                   <View style={st.qty}>
                     <Pressable onPress={()=>decQty(i)} hitSlop={6}><Ionicons name="remove" size={16} color={C.ink} /></Pressable>
                     <Text style={{ fontFamily:F.bodyB, marginHorizontal:12 }}>{it.qty}</Text>
@@ -82,11 +82,11 @@ export default function Cart() {
           <View style={{ height:1, backgroundColor:C.hair, marginVertical:8 }} />
           <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
             <Text style={{ fontFamily:F.bodyX, fontSize:15 }}>Tổng</Text>
-            <Text style={{ fontFamily:F.bodyX, fontSize:16, color:C.shu }}>{money(grand)}</Text>
+            <Text style={{ fontFamily:F.bodyX, fontSize:16, color:C.ink }}>{money(grand)}</Text>
           </View>
         </View>
         <View style={[st.flagProgress, grand >= FLAGCARD_MIN && st.flagProgressReady]}>
-          <Ionicons name="flag" size={20} color={grand >= FLAGCARD_MIN ? '#F6D6B4' : C.shu} />
+          <Ionicons name="flag" size={20} color={grand >= FLAGCARD_MIN ? 'rgba(255,255,255,0.72)' : C.shu} />
           <Text style={[st.flagProgressText, grand >= FLAGCARD_MIN && { color:'#fff' }]}>
             {grand >= FLAGCARD_MIN
               ? 'Đơn này đã đủ điều kiện nhận 1 Flagcard ngay khi đặt hàng thành công.'
@@ -108,7 +108,7 @@ const st = StyleSheet.create({
   card:{ flexDirection:'row', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:10, marginBottom:10 },
   qty:{ flexDirection:'row', alignItems:'center', borderWidth:1, borderColor:C.line, borderRadius:8, paddingHorizontal:8, paddingVertical:2 },
   summary:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4 },
-  flagProgress:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.shuSoft, borderWidth:1, borderColor:C.shu, borderRadius:14, padding:13, marginTop:10 },
+  flagProgress:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.washi2, borderWidth:1, borderColor:C.primary, borderRadius:14, padding:13, marginTop:10 },
   flagProgressReady:{ backgroundColor:C.sumi, borderColor:C.kin },
   flagProgressText:{ flex:1, fontFamily:F.bodyB, fontSize:11.5, lineHeight:17, color:C.shuDeep },
   stripeHint:{ flexDirection:'row',alignItems:'center',gap:8,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginVertical:7 },

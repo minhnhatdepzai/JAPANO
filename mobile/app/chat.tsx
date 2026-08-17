@@ -120,7 +120,7 @@ export default function Chat() {
                         <SmartImage source={p.images[0]} style={{ width: 54, height: 66, borderRadius: 9 }} recyclingKey={`${p.slug}-chat`} />
                         <View style={{ marginLeft: 10, maxWidth: 140 }}>
                           <Text style={{ fontFamily: F.bodyB, fontSize: 12.5, color: C.ink }} numberOfLines={1}>{p.name}</Text>
-                          <Text style={{ fontFamily: F.bodyX, fontSize: 12, color: C.shu }}>{p.price.toLocaleString('vi-VN')}₫</Text>
+                          <Text style={{ fontFamily: F.bodyX, fontSize: 12, color: C.ink }}>{p.price.toLocaleString('vi-VN')}₫</Text>
                           <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
                             <Pressable accessibilityLabel="Thêm vào yêu thích" style={[st.miniBtn, isWished(p.slug) && st.wishOn]} onPress={() => addFavorite(p)}>
                               <Ionicons name={isWished(p.slug) ? 'heart' : 'heart-outline'} size={13} color={isWished(p.slug) ? '#fff' : C.shu} />
@@ -139,7 +139,7 @@ export default function Chat() {
           ))}
           {loading && (
             <View style={[st.bubble, st.ai, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
-              <ActivityIndicator size="small" color={C.shu} />
+              <ActivityIndicator size="small" color={C.ink} />
               <Text style={st.aiT}>Ori đang nghĩ…</Text>
             </View>
           )}
@@ -173,17 +173,17 @@ const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: C.hair },
   bubble: { maxWidth: '85%', padding: 12, borderRadius: 16 },
   ai: { alignSelf: 'flex-start', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderTopLeftRadius: 4 },
-  me: { alignSelf: 'flex-end', backgroundColor: C.shu, borderTopRightRadius: 4 },
+  me: { alignSelf: 'flex-end', backgroundColor: C.primary, borderTopRightRadius: 4 },
   aiT: { fontFamily: F.body, fontSize: 13.5, color: C.ink, lineHeight: 20 },
   meT: { fontFamily: F.body, fontSize: 13.5, color: '#fff', lineHeight: 20 },
   mini: { flexDirection: 'row', backgroundColor: C.paper, borderRadius: 12, padding: 8, width: 300 },
   miniBtn: { borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: '#fff' },
-  miniOn: { backgroundColor: C.shu, borderColor: C.shu },
-  wishOn: { backgroundColor: C.shu, borderColor: C.shu },
+  miniOn: { backgroundColor: C.primary, borderColor: C.primary },
+  wishOn: { backgroundColor: C.primary, borderColor: C.primary },
   buyBtn: { backgroundColor: C.ai, borderColor: C.ai },
   miniBtnT: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   sug: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#fff' },
   inputBar: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.hair, backgroundColor: C.washi },
   input: { flex: 1, height: 44, borderRadius: 22, borderWidth: 1, borderColor: C.line, backgroundColor: '#fff', paddingHorizontal: 16, justifyContent: 'center' },
-  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.shu, alignItems: 'center', justifyContent: 'center' },
+  send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
 });

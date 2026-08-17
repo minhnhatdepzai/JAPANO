@@ -58,13 +58,13 @@ export default function Register() {
         <Field label="Mật khẩu" ph="••••••••" secure value={password} onChangeText={setPassword} />
         {!!password&&<>
           <View style={{ flexDirection:'row', gap:4, marginBottom:4 }}>
-            {[0,1,2,3].map(i=><View key={i} style={[st.bar,{ backgroundColor:i<STRENGTH_BARS[strength]?(strength==='weak'?C.danger:strength==='medium'?'#D98A2E':C.matcha):C.hair }]} />)}
+            {[0,1,2,3].map(i=><View key={i} style={[st.bar,{ backgroundColor:i<STRENGTH_BARS[strength]?(strength==='weak'?C.danger:strength==='medium'?C.warning:C.matcha):C.hair }]} />)}
           </View>
-          <Text style={{ fontFamily:F.body, fontSize:10.5, color:strength==='weak'?C.danger:strength==='medium'?'#D98A2E':C.matcha, marginBottom:14 }}>{STRENGTH_LABEL[strength]}{strength==='weak'?' — cần ít nhất 8 ký tự, kết hợp chữ hoa/thường/số':''}</Text>
+          <Text style={{ fontFamily:F.body, fontSize:10.5, color:strength==='weak'?C.danger:strength==='medium'?C.warning:C.matcha, marginBottom:14 }}>{STRENGTH_LABEL[strength]}{strength==='weak'?' — cần ít nhất 8 ký tự, kết hợp chữ hoa/thường/số':''}</Text>
         </>}
         <Btn label={submitting?'Đang đăng ký…':'Đăng ký'} onPress={()=>void submit()} />
-        {submitting && <View style={{ marginTop:10, alignItems:'center' }}><ActivityIndicator color={C.shu} size="small" /></View>}
-        <Text style={st.foot}>Đã có tài khoản? <Text style={{ color:C.shu, fontFamily:F.bodyB }} onPress={()=>router.replace('/login')}>Đăng nhập</Text></Text>
+        {submitting && <View style={{ marginTop:10, alignItems:'center' }}><ActivityIndicator color={C.ink} size="small" /></View>}
+        <Text style={st.foot}>Đã có tài khoản? <Text style={{ color:C.ink, fontFamily:F.bodyB }} onPress={()=>router.replace('/login')}>Đăng nhập</Text></Text>
         <Pressable onPress={continueAsGuest}><Text style={st.guest}>Tiếp tục xem sản phẩm không cần tài khoản</Text></Pressable>
       </ScrollView>
     </Screen>
@@ -76,5 +76,5 @@ const st = StyleSheet.create({
   input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink },
   bar:{ flex:1, height:4, borderRadius:2 },
   foot:{ textAlign:'center', marginTop:16, fontFamily:F.body, fontSize:13, color:C.muted },
-  guest:{ textAlign:'center', marginTop:14, fontFamily:F.bodyB, fontSize:12.5, color:C.shu },
+  guest:{ textAlign:'center', marginTop:14, fontFamily:F.bodyB, fontSize:12.5, color:C.ink },
 });

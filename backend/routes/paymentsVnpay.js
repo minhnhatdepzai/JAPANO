@@ -209,7 +209,7 @@ function makeVnpayHelpers(ctx) {
 }
 
 module.exports = function registerVnpayRoutes(api, ctx) {
-  const { read, write, httpError, requireAuth } = ctx;
+  const { read, write, httpError, requireAuth, requireAdmin } = ctx;
   const { finalizeVnpayReturnFromParams, vnpayQueryTransaction } = makeVnpayHelpers(ctx);
   const createOrderInState = makeCreateOrderInState(ctx);
 
@@ -328,7 +328,8 @@ module.exports = function registerVnpayRoutes(api, ctx) {
 
   // Đối soát các giao dịch VNPay còn "pending" quá lâu (app có thể đã bị đóng
   // trước khi kịp gửi /vnpay/return) bằng API tra soát chính thức (querydr).
-  api.post('/vnpay/reconcile', async (req, res) => {
+  // Đối soát gọi ngược sang cổng thanh toán và ghi lại trạng thái giao dịch.
+  api.post('/vnpay/reconcile', requireAdmin, async (req, res) => {
     if (!vnpayEnabled()) return res.status(503).json({ ok: false, message: 'Chế độ thử nghiệm VNPay chưa sẵn sàng.' });
     const snapshot = read();
     const candidates = (snapshot.payments || [])

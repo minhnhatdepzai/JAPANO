@@ -4,7 +4,7 @@ const { successfulLiveOrder } = require('../lib/orderStatus');
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 
 module.exports = function registerReviewRoutes(api, ctx) {
-  const { read, update, httpError, moderateReview, REVIEW_MODERATION_MODEL, uploadReviewMedia } = ctx;
+  const { read, update, httpError, moderateReview, REVIEW_MODERATION_MODEL, uploadReviewMedia, requireAdmin } = ctx;
 
   function reviewPurchaseOrders(state, userId, productId) {
     return (state.orders || []).filter((order) => String(order.userId || order.customer?.id || '') === String(userId)
@@ -117,7 +117,9 @@ module.exports = function registerReviewRoutes(api, ctx) {
     }
   });
 
-  api.get('/reviews/admin', (req, res) => {
+  // Danh sách kiểm duyệt để lộ cả đánh giá đang chờ/bị từ chối và dữ liệu
+  // chấm điểm nội bộ, nên chỉ quản trị viên mới được đọc.
+  api.get('/reviews/admin', requireAdmin, (req, res) => {
     const state = read();
     const items = [...(state.reviews || [])].sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0)).map((review) => ({
       ...review,
@@ -127,7 +129,8 @@ module.exports = function registerReviewRoutes(api, ctx) {
     res.json({ ok: true, model: { name: REVIEW_MODERATION_MODEL, semantic: true, antiEvasion: true, learnedRejectedSamples: state.moderationSamples.length }, items });
   });
 
-  api.patch('/reviews/:id/moderation', (req, res) => {
+  // Duyệt/ẩn đánh giá là hành vi kiểm duyệt nội dung công khai — bắt buộc quản trị viên.
+  api.patch('/reviews/:id/moderation', requireAdmin, (req, res) => {
     try {
       const status = String(req.body?.status || '');
       if (!['approved', 'rejected', 'pending'].includes(status)) throw httpError(400, 'Trạng thái kiểm duyệt không hợp lệ.');

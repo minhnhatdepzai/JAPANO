@@ -18,7 +18,7 @@ export function MediaAttachPicker({ value, onChange }:{ value:ReviewMediaPick|nu
     <View style={mst.wrap}>
       {value ? (
         <View style={mst.chip}>
-          <Ionicons name={value.kind === 'video' ? 'videocam' : 'musical-notes'} size={16} color={C.shu} />
+          <Ionicons name={value.kind === 'video' ? 'videocam' : 'musical-notes'} size={16} color={C.ink} />
           <Text style={mst.chipT} numberOfLines={1}>{value.name}</Text>
           <Pressable hitSlop={8} onPress={() => onChange(null)}><Ionicons name="close-circle" size={18} color={C.muted} /></Pressable>
         </View>

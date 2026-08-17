@@ -5,11 +5,15 @@ const { makeStripeHelpers } = require('./paymentsStripe');
 const { makeVnpayHelpers } = require('./paymentsVnpay');
 
 module.exports = function registerPaymentsRoutes(api, ctx) {
-  const { read, stripe, stripeEnabled, requireAdmin } = ctx;
+  const { read, stripe, stripeEnabled, requireAdmin, requireAuth, roleAtLeast } = ctx;
   const { finalizeStripePaymentIntent, issueStripeRefund } = makeStripeHelpers(ctx);
   const { issueVnpayRefund } = makeVnpayHelpers(ctx);
 
-  api.get('/payments/:id', async (req, res) => {
+  // Mã giao dịch có dạng PAY-JP240784 nên đoán được cả dải. Trước đây điểm cuối
+  // này mở cho mọi người và trả về NGUYÊN đơn hàng kèm tên, số điện thoại và
+  // địa chỉ giao — chỉ cần đếm lên là đọc được thông tin cá nhân của khách khác.
+  // Nay bắt buộc đăng nhập và chỉ chủ giao dịch (hoặc nhân viên trở lên) mới xem được.
+  api.get('/payments/:id', requireAuth, async (req, res) => {
     let state = read();
     let payment = findPayment(state, req.params.id);
     if (!payment) return res.status(404).json({ ok: false, message: 'Không tìm thấy giao dịch.' });
@@ -26,6 +30,12 @@ module.exports = function registerPaymentsRoutes(api, ctx) {
       payment = findPayment(state, req.params.id);
     }
     const order = state.orders.find((item) => item.id === payment.orderId) || null;
+    // Trả 404 chứ không 403: 403 xác nhận mã giao dịch có thật, đủ để dò ra dải
+    // mã đang dùng dù không đọc được nội dung (cùng cách xử lý với GET /orders/:id).
+    const ownerId = String(payment.userId || order?.userId || '');
+    if (!roleAtLeast(req.user.role, 'staff') && ownerId !== String(req.user.id)) {
+      return res.status(404).json({ ok: false, message: 'Không tìm thấy giao dịch.' });
+    }
     res.json({ ok: true, payment, order });
   });
 

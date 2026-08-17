@@ -23,7 +23,7 @@ function VoucherRow({ v, subtotal, onPick }:{ v:ApiVoucher; subtotal:number; onP
         <Text style={st.desc}>{discountLabel(v)}{v.min?` · Đơn từ ${money(v.min)}`:''} · HSD {v.expiry}</Text>
         {!eligible && <Text style={st.needMore}>Mua thêm {money((v.min||0)-subtotal)} để dùng mã này</Text>}
       </View>
-      {eligible && <Ionicons name="chevron-forward" size={16} color={C.shu} />}
+      {eligible && <Ionicons name="chevron-forward" size={16} color={C.ink} />}
     </Pressable>
   );
 }
@@ -64,14 +64,14 @@ export function VoucherField({ subtotal, voucher, onApply, onClear, userId }:{
     <View>
       {voucher ? (
         <View style={st.applied}>
-          <Ionicons name="pricetag" size={16} color={C.shu} />
+          <Ionicons name="pricetag" size={16} color={C.ink} />
           <Text style={{ flex:1, fontFamily:F.bodyB, fontSize:13, color:C.shuDeep }}>{voucher.code} · -{money(voucherDiscountFor(subtotal, voucher))}</Text>
           <Pressable onPress={()=>setOpen(true)} hitSlop={6} style={{ marginRight:14 }}><Text style={st.link}>Đổi</Text></Pressable>
           <Pressable onPress={onClear} hitSlop={6}><Text style={st.linkMuted}>Bỏ</Text></Pressable>
         </View>
       ) : (
         <Pressable style={st.trigger} onPress={()=>setOpen(true)}>
-          <Ionicons name="pricetag-outline" size={16} color={C.shu} />
+          <Ionicons name="pricetag-outline" size={16} color={C.ink} />
           <Text style={{ flex:1, fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Chọn hoặc nhập mã giảm giá</Text>
           <Ionicons name="chevron-forward" size={16} color={C.muted} />
         </Pressable>
@@ -85,7 +85,7 @@ export function VoucherField({ subtotal, voucher, onApply, onClear, userId }:{
               <Pressable onPress={()=>setOpen(false)} hitSlop={8}><Ionicons name="close" size={22} color={C.muted} /></Pressable>
             </View>
             <ScrollView style={{ maxHeight:340 }} contentContainerStyle={{ paddingBottom:8 }}>
-              {list===null && <ActivityIndicator color={C.shu} style={{ marginVertical:24 }} />}
+              {list===null && <ActivityIndicator color={C.ink} style={{ marginVertical:24 }} />}
               {list!==null && !list.length && <Text style={st.empty}>Chưa có mã giảm giá khả dụng lúc này.</Text>}
               {(list||[]).map(v => <VoucherRow key={v.code} v={v} subtotal={subtotal} onPick={apply} />)}
             </ScrollView>
@@ -106,8 +106,8 @@ export function VoucherField({ subtotal, voucher, onApply, onClear, userId }:{
 
 const st = StyleSheet.create({
   trigger:{ flexDirection:'row', alignItems:'center', gap:9, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13 },
-  applied:{ flexDirection:'row', alignItems:'center', gap:8, borderWidth:1, borderColor:C.shu, backgroundColor:C.shuSoft, borderRadius:12, padding:12 },
-  link:{ fontFamily:F.bodyB, fontSize:12, color:C.shu },
+  applied:{ flexDirection:'row', alignItems:'center', gap:8, borderWidth:1, borderColor:C.primary, backgroundColor:C.washi2, borderRadius:12, padding:12 },
+  link:{ fontFamily:F.bodyB, fontSize:12, color:C.ink },
   linkMuted:{ fontFamily:F.bodyB, fontSize:12, color:C.muted },
 
   backdrop:{ flex:1, backgroundColor:'rgba(17,12,8,0.5)', justifyContent:'flex-end' },
@@ -118,16 +118,16 @@ const st = StyleSheet.create({
 
   row:{ flexDirection:'row', alignItems:'center', gap:11, paddingVertical:12, borderBottomWidth:1, borderBottomColor:C.hair },
   rowDisabled:{ opacity:0.45 },
-  tag:{ width:34, height:34, borderRadius:10, backgroundColor:C.shuSoft, alignItems:'center', justifyContent:'center' },
-  tagFlag:{ backgroundColor:'#F6D6B4' },
+  tag:{ width:34, height:34, borderRadius:10, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },
+  tagFlag:{ backgroundColor:'rgba(255,255,255,0.72)' },
   code:{ fontFamily:F.bodyX, fontSize:13, color:C.ink, letterSpacing:0.3 },
   flagBadge:{ backgroundColor:C.sumi, borderRadius:999, paddingVertical:2, paddingHorizontal:7 },
-  flagBadgeT:{ fontFamily:F.bodyB, fontSize:9, color:'#F6D6B4' },
+  flagBadgeT:{ fontFamily:F.bodyB, fontSize:9, color:'rgba(255,255,255,0.72)' },
   desc:{ fontFamily:F.body, fontSize:11, color:C.muted, marginTop:2 },
   needMore:{ fontFamily:F.body, fontSize:10.5, color:C.danger, marginTop:2 },
 
   manualRow:{ flexDirection:'row', gap:8, marginTop:12 },
   manualInput:{ flex:1, minHeight:46, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:13, color:C.ink },
-  manualBtn:{ height:46, paddingHorizontal:16, borderRadius:12, backgroundColor:C.shu, alignItems:'center', justifyContent:'center' },
+  manualBtn:{ height:46, paddingHorizontal:16, borderRadius:12, backgroundColor:C.primary, alignItems:'center', justifyContent:'center' },
   msg:{ fontFamily:F.body, fontSize:11.5, color:C.danger, marginTop:8 },
 });

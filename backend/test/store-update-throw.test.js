@@ -9,17 +9,27 @@
 //
 // Cách đúng: ghi nhận kết quả vào biến, để update() ghi state xong, rồi mới ném
 // lỗi bên ngoài (xem routes/auth.js — /auth/reset-password).
+// Bài kiểm thử này thao tác trên store dạng TỆP. Nếu môi trường có MONGODB_URI
+// thì createStore() sẽ chuyển sang MongoDB và bài kiểm thử treo chờ kết nối.
+// Xoá biến môi trường trước khi nạp module để bài kiểm thử luôn độc lập môi trường.
+delete process.env.MONGODB_URI;
+delete process.env.MONGODB_DB;
+
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { createStore } = require('../lib/store');
+const { emptyState } = require('../seed');
 
 function tempStore() {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'japano-upd-')), 'db.json');
   const store = createStore(file);
-  store.write({ ...store.read(), users: [{ id: 'u1', email: 'a@b.vn', resetCodeAttempts: 0 }] });
+  // Phải dựng trên emptyState(): nếu lấy state đã seed rồi thay mảng users thì
+  // toàn bộ đơn hàng/giỏ hàng của bản seed trở thành tham chiếu mồ côi và
+  // assertValid() sẽ chặn lượt ghi bằng lỗi INVALID_RELATIONSHIP.
+  store.write({ ...emptyState(), users: [{ id: 'u1', email: 'a@b.vn', resetCodeAttempts: 0 }] });
   return store;
 }
 

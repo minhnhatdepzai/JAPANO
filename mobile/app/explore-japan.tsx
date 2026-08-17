@@ -119,11 +119,11 @@ function SpotDetail({ spot }: { spot: JapanSpot }) {
     <>
       <SmartImage source={{ uri: spot.photoUrl }} style={st.heroImg} recyclingKey={`explore-detail-${spot.place}`} />
       <Text style={st.photoCredit}>{PHOTO_ATTRIBUTION}</Text>
-      <View style={st.info}><Ionicons name="camera-outline" size={19} color={C.shu} /><View style={{ flex: 1 }}><Text style={st.time}>{spot.time}</Text><Text style={st.tip}>{spot.tip}</Text></View></View>
+      <View style={st.info}><Ionicons name="camera-outline" size={19} color={C.ink} /><View style={{ flex: 1 }}><Text style={st.time}>{spot.time}</Text><Text style={st.tip}>{spot.tip}</Text></View></View>
 
       <GuideSection icon="navigate-circle-outline" title="NẰM Ở ĐÂU?">
         <Text style={st.guideText}>{spot.where}</Text>
-        <Pressable style={st.mapButton} onPress={openMap}><Ionicons name="map-outline" size={14} color={C.shu} /><Text style={st.mapButtonText}>Mở vị trí trên bản đồ</Text><Ionicons name="open-outline" size={12} color={C.shu} /></Pressable>
+        <Pressable style={st.mapButton} onPress={openMap}><Ionicons name="map-outline" size={14} color={C.ink} /><Text style={st.mapButtonText}>Mở vị trí trên bản đồ</Text><Ionicons name="open-outline" size={12} color={C.ink} /></Pressable>
       </GuideSection>
       <GuideSection icon="time-outline" title="LỊCH SỬ NGẮN">
         <Text style={st.guideText}>{spot.history}</Text>
@@ -177,7 +177,7 @@ function PrefectureVideo({ videoId, prefecture }: { videoId: string; prefecture:
 }
 
 function GuideSection({ icon, title, children }: { icon: keyof typeof Ionicons.glyphMap; title: string; children: React.ReactNode }) {
-  return <View style={st.section}><View style={st.sectionTitle}><View style={st.sectionIcon}><Ionicons name={icon} size={14} color={C.shu} /></View><Text style={st.sectionTitleText}>{title}</Text></View>{children}</View>;
+  return <View style={st.section}><View style={st.sectionTitle}><View style={st.sectionIcon}><Ionicons name={icon} size={14} color={C.ink} /></View><Text style={st.sectionTitleText}>{title}</Text></View>{children}</View>;
 }
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -226,7 +226,7 @@ function ReviewsBox({ place, prefecture }: { place: string; prefecture: string }
         <Text style={st.reviewTitle}>Đánh giá & bình luận</Text>
         {!!reviews.length && <Text style={st.reviewAvg}><Ionicons name="star" size={12} color={C.kin} /> {average.toFixed(1)} · {reviews.length} đánh giá</Text>}
       </View>
-      {loading && <ActivityIndicator color={C.shu} style={{ marginVertical: 10 }} />}
+      {loading && <ActivityIndicator color={C.ink} style={{ marginVertical: 10 }} />}
       {!loading && !reviews.length && <Text style={st.reviewEmpty}>Chưa có đánh giá nào — hãy là người đầu tiên chia sẻ cảm nhận.</Text>}
       {reviews.map(r => (
         <View key={r.id} style={st.reviewItem}>
@@ -310,7 +310,7 @@ function SuggestionBox({ prefecture }: { prefecture: string }) {
       <Text style={st.suggestSub}>Cùng xây bản đồ địa điểm đẹp của Nhật Bản cho cả cộng đồng JAPANO.</Text>
       {!!reward && (
         <View style={st.rewardBanner}>
-          <Ionicons name="gift" size={19} color="#8A6518" />
+          <Ionicons name="gift" size={19} color={C.ink} />
           <View style={{ flex: 1 }}>
             <Text style={st.rewardBannerTitle}>Đóng góp được duyệt → nhận {reward.amount.toLocaleString('vi-VN')}₫</Text>
             <Text style={st.rewardBannerBody}>Voucher giảm {reward.amount.toLocaleString('vi-VN')}₫ cho đơn từ {reward.minOrder.toLocaleString('vi-VN')}₫, hạn dùng {reward.validityDays} ngày. Mỗi địa điểm hợp lệ được thưởng một lần.</Text>
@@ -330,7 +330,7 @@ function SuggestionBox({ prefecture }: { prefecture: string }) {
         style={[st.suggestInput, { marginTop: 8 }]}
       />
       <Btn label={sending ? 'Đang gửi…' : 'Gửi đóng góp để nhận thưởng'} onPress={() => { if (!sending) void submit(); }} style={{ marginTop: 8 }} />
-      {loading && <ActivityIndicator color={C.shu} style={{ marginTop: 10 }} />}
+      {loading && <ActivityIndicator color={C.ink} style={{ marginTop: 10 }} />}
       {!loading && !!mine.length && (
         <View style={{ marginTop: 12 }}>
           <Text style={st.suggestListTitle}>Đóng góp của bạn</Text>
@@ -374,15 +374,15 @@ function SuggestionBox({ prefecture }: { prefecture: string }) {
 const st = StyleSheet.create({
   intro: { fontFamily: F.body, fontSize: 12.5, lineHeight: 19, color: C.muted, marginBottom: 14 },
   notebook: { backgroundColor: C.sumi, borderRadius: 18, padding: 16, marginBottom: 14 },
-  notebookKicker: { fontFamily: F.bodyX, fontSize: 10, letterSpacing: 1.4, color: '#F6D6B4' },
-  notebookText: { fontFamily: F.body, fontSize: 12, lineHeight: 19, color: '#D8D2CB', marginTop: 8 },
+  notebookKicker: { fontFamily: F.bodyX, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.72)' },
+  notebookText: { fontFamily: F.body, fontSize: 12, lineHeight: 19, color: 'rgba(255,255,255,0.70)', marginTop: 8 },
   mapHint: { fontFamily: F.body, fontSize: 11, color: C.muted, marginBottom: 6, textAlign: 'center' },
   mapWrap: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 18, paddingVertical: 10, marginBottom: 16 },
   videoBox: { marginBottom: 16 },
   videoTitle: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink, marginBottom: 8 },
   regionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 10 },
   regionKanji: { width: 46, height: 46, borderRadius: 13, backgroundColor: C.sumi, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  regionKanjiT: { fontFamily: F.display, fontSize: 19, color: '#F6D6B4' },
+  regionKanjiT: { fontFamily: F.display, fontSize: 19, color: C.card },
   regionName: { fontFamily: F.bodyB, fontSize: 14.5, color: C.ink },
   regionSub: { fontFamily: F.body, fontSize: 11.5, color: C.muted, marginTop: 2 },
   prefCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
@@ -392,21 +392,21 @@ const st = StyleSheet.create({
   spotCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
   spotImg: { width: 58, height: 68, borderRadius: 10 },
   spotName: { fontFamily: F.bodyB, fontSize: 13.5, color: C.ink },
-  spotTime: { fontFamily: F.bodyM, fontSize: 11, color: C.shu, marginTop: 2 },
+  spotTime: { fontFamily: F.bodyM, fontSize: 11, color: C.ink, marginTop: 2 },
   spotTip: { fontFamily: F.body, fontSize: 11, color: C.muted, marginTop: 2, lineHeight: 15.5 },
   heroImg: { width: '100%', height: 200, borderRadius: 16, marginBottom: 4 },
   photoCredit: { fontFamily: F.body, fontSize: 9.5, color: C.muted, marginBottom: 10, textAlign: 'right' },
-  info: { flexDirection: 'row', gap: 9, backgroundColor: '#FFF7EA', borderRadius: 12, padding: 11 },
+  info: { flexDirection: 'row', gap: 9, backgroundColor: C.washi2, borderRadius: 12, padding: 11 },
   time: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink }, tip: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.muted, marginTop: 2 },
-  section: { marginTop: 16 }, sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 7 }, sectionIcon: { width: 26, height: 26, borderRadius: 8, backgroundColor: C.shuSoft, alignItems: 'center', justifyContent: 'center' }, sectionTitleText: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1.15, color: C.shuDeep },
+  section: { marginTop: 16 }, sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 7 }, sectionIcon: { width: 26, height: 26, borderRadius: 8, backgroundColor: C.washi2, alignItems: 'center', justifyContent: 'center' }, sectionTitleText: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1.15, color: C.shuDeep },
   guideText: { fontFamily: F.body, fontSize: 11.5, lineHeight: 18, color: C.ink },
-  mapButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8C7BD', backgroundColor: '#FFF8F5', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7, marginTop: 9 }, mapButtonText: { fontFamily: F.bodyB, fontSize: 10.5, color: C.shu },
+  mapButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8C7BD', backgroundColor: '#FFF8F5', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7, marginTop: 9 }, mapButtonText: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 7 }, bullet: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.kin, marginTop: 7 }, bulletText: { flex: 1, fontFamily: F.body, fontSize: 11.5, lineHeight: 17.5, color: C.ink },
-  photoSpot: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: C.hair, borderRadius: 11, padding: 10, marginBottom: 7 }, photoIndex: { fontFamily: F.displayX, fontSize: 17, color: '#C8A65B' }, photoName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink }, photoTip: { fontFamily: F.body, fontSize: 10.5, lineHeight: 15.5, color: C.muted, marginTop: 2 },
-  source: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F7F0DF', borderRadius: 9, padding: 9, marginTop: 14 }, sourceText: { flex: 1, fontFamily: F.bodyM, fontSize: 9.5, lineHeight: 13, color: '#82651F' },
+  photoSpot: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: C.hair, borderRadius: 11, padding: 10, marginBottom: 7 }, photoIndex: { fontFamily: F.displayX, fontSize: 17, color: C.ink }, photoName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink }, photoTip: { fontFamily: F.body, fontSize: 10.5, lineHeight: 15.5, color: C.muted, marginTop: 2 },
+  source: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.washi2, borderRadius: 9, padding: 9, marginTop: 14 }, sourceText: { flex: 1, fontFamily: F.bodyM, fontSize: 9.5, lineHeight: 13, color: C.muted },
   outfitDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 }, dividerLine: { height: 1, flex: 1, backgroundColor: C.line }, dividerText: { fontFamily: F.bodyX, fontSize: 8.5, letterSpacing: 1, color: C.muted },
   outfit: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 9, marginTop: 11 }, thumb: { width: 58, height: 68, borderRadius: 9 },
-  outfitLabel: { fontFamily: F.bodyX, fontSize: 8.5, letterSpacing: 1, color: C.kin }, product: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink, marginTop: 3 }, price: { fontFamily: F.bodyX, fontSize: 12, color: C.shu, marginTop: 3 },
+  outfitLabel: { fontFamily: F.bodyX, fontSize: 8.5, letterSpacing: 1, color: C.kin }, product: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink, marginTop: 3 }, price: { fontFamily: F.bodyX, fontSize: 12, color: C.ink, marginTop: 3 },
   reviewBox: { marginTop: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14 },
   reviewHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   reviewTitle: { fontFamily: F.display, fontSize: 15, color: C.sumi },
@@ -418,7 +418,7 @@ const st = StyleSheet.create({
   reviewForm: { marginTop: 14, borderTopWidth: 1, borderTopColor: C.hair, paddingTop: 12 },
   reviewFormLabel: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, marginBottom: 7 },
   reviewInput: { minHeight: 70, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, marginTop: 9, textAlignVertical: 'top' },
-  suggestBox: { marginTop: 6, marginBottom: 16, backgroundColor: C.shuSoft, borderRadius: 16, padding: 14 },
+  suggestBox: { marginTop: 6, marginBottom: 16, backgroundColor: C.washi2, borderRadius: 16, padding: 14 },
   suggestTitle: { fontFamily: F.bodyB, fontSize: 13, color: C.ink },
   suggestSub: { fontFamily: F.body, fontSize: 11, color: C.muted, marginTop: 3, marginBottom: 10 },
   suggestInput: { minHeight: 60, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, textAlignVertical: 'top' },
@@ -430,7 +430,7 @@ const st = StyleSheet.create({
   suggestStatus: { fontFamily: F.bodyB, fontSize: 10.5, color: C.muted },
   suggestVoucher: { fontFamily: F.bodyX, fontSize: 11, color: '#1F6B44', marginTop: 5 },
   suggestNote: { fontFamily: F.body, fontSize: 10.5, lineHeight: 16, color: C.muted, marginTop: 4 },
-  rewardBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: '#FBF1DA', borderWidth: 1, borderColor: '#EBD6A3', borderRadius: 12, padding: 11, marginBottom: 10 },
-  rewardBannerTitle: { fontFamily: F.bodyB, fontSize: 12, color: '#7A5A15' },
-  rewardBannerBody: { fontFamily: F.body, fontSize: 10.5, lineHeight: 16, color: '#8A6518', marginTop: 3 },
+  rewardBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: C.washi2, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 11, marginBottom: 10 },
+  rewardBannerTitle: { fontFamily: F.bodyB, fontSize: 12, color: C.ink },
+  rewardBannerBody: { fontFamily: F.body, fontSize: 10.5, lineHeight: 16, color: C.ink, marginTop: 3 },
 });

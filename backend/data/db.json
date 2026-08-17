@@ -14188,7 +14188,35 @@
       "status": "active",
       "tryons": 4,
       "joinedAt": 1760592972477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 2,
+      "spent": 2580000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u10",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u9",
@@ -14198,7 +14226,35 @@
       "status": "active",
       "tryons": 3,
       "joinedAt": 1762925772477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 3,
+      "spent": 2480000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u9",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u6",
@@ -14208,7 +14264,35 @@
       "status": "active",
       "tryons": 0,
       "joinedAt": 1769924172477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 2,
+      "spent": 1440000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u6",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "admin-1784883154949",
@@ -14218,7 +14302,53 @@
       "role": "super_admin",
       "status": "active",
       "joinedAt": 1784883155012,
-      "stripeCustomerId": "cus_UxCr4ABzaY5DdI"
+      "stripeCustomerId": "cus_UxCr4ABzaY5DdI",
+      "orders": 5,
+      "spent": 7094500,
+      "vip": "VIP",
+      "vipMembership": {
+        "userId": "admin-1784883154949",
+        "isVip": true,
+        "tier": "VIP",
+        "membership": {
+          "id": "vip-admin-1784883154949-2026-08",
+          "userId": "admin-1784883154949",
+          "discountRuleId": "discount-vip-10",
+          "qualifyingPeriod": "2026-08",
+          "qualifyingOrderIds": [
+            "o1786081939640",
+            "o1786083664020"
+          ],
+          "qualifiedSpend": 5804500,
+          "threshold": 5000000,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "startedAt": 1786083737139,
+          "expiresAt": 1788675737139,
+          "status": "active",
+          "createdAt": 1786083737139,
+          "updatedAt": 1786898427417
+        },
+        "startedAt": 1786083737139,
+        "expiresAt": 1788675737139,
+        "daysRemaining": 21,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 5804500,
+          "threshold": 5000000,
+          "remaining": 0,
+          "progressPercent": 100
+        },
+        "benefit": {
+          "available": true,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u1",
@@ -14228,7 +14358,35 @@
       "status": "active",
       "tryons": 0,
       "joinedAt": 1781588172477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 4,
+      "spent": 5520000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u1",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u2",
@@ -14238,7 +14396,35 @@
       "status": "active",
       "tryons": 1,
       "joinedAt": 1779255372477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 3,
+      "spent": 2140000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u2",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u3",
@@ -14248,7 +14434,35 @@
       "status": "active",
       "tryons": 2,
       "joinedAt": 1776922572477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 4,
+      "spent": 2050000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u3",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u4",
@@ -14258,7 +14472,35 @@
       "status": "active",
       "tryons": 3,
       "joinedAt": 1774589772477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 3,
+      "spent": 640000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u4",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u5",
@@ -14268,7 +14510,35 @@
       "status": "active",
       "tryons": 4,
       "joinedAt": 1772256972477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 4,
+      "spent": 5810000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u5",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u7",
@@ -14278,7 +14548,35 @@
       "status": "locked",
       "tryons": 1,
       "joinedAt": 1767591372477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 3,
+      "spent": 2210000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u7",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u8",
@@ -14288,7 +14586,35 @@
       "status": "active",
       "tryons": 2,
       "joinedAt": 1765258572477,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 2,
+      "spent": 700000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u8",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "demo-minh",
@@ -14298,7 +14624,35 @@
       "status": "active",
       "tryons": 0,
       "joinedAt": 1784162249095,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 13,
+      "spent": 11805000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "demo-minh",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1784883377086-fma6ou",
@@ -14308,7 +14662,35 @@
       "role": "super_admin",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1784883377086
+      "joinedAt": 1784883377086,
+      "orders": 2,
+      "spent": 931000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1784883377086-fma6ou",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1784886327902-2s55kn",
@@ -14318,7 +14700,35 @@
       "status": "active",
       "tryons": 0,
       "joinedAt": 1784886328291,
-      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK"
+      "passwordHash": "$2b$10$SjFmdnUNiEH/I.Lwauh9juQ4zGQbooTCJQGRWsDoHonZVXJFh0pLK",
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1784886327902-2s55kn",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786359445534-mc156p",
@@ -14328,7 +14738,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786359445534
+      "joinedAt": 1786359445534,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786359445534-mc156p",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786359754642-oqucd7",
@@ -14338,7 +14776,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786359754642
+      "joinedAt": 1786359754642,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786359754642-oqucd7",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786359849747-ukzvqm",
@@ -14351,7 +14817,35 @@
       "joinedAt": 1786359849747,
       "resetCodeHash": "874038108d211a2584d67b7d4e454c1fb49264b27d2e78d66d5cef950d94be88",
       "resetCodeExpiresAt": 1786443699605,
-      "stripeCustomerId": "cus_V2xk1z7KnhnoiV"
+      "stripeCustomerId": "cus_V2xk1z7KnhnoiV",
+      "orders": 1,
+      "spent": 2700000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786359849747-ukzvqm",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 2700000,
+          "threshold": 5000000,
+          "remaining": 2300000,
+          "progressPercent": 54
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786447530231-jcdqmw",
@@ -14365,7 +14859,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786447530231
+      "joinedAt": 1786447530231,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786447530231-jcdqmw",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786603491374-qx7ut2",
@@ -14375,7 +14897,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786603491374
+      "joinedAt": 1786603491374,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786603491374-qx7ut2",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786606980123-jn0tk9",
@@ -14385,7 +14935,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786606980123
+      "joinedAt": 1786606980123,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786606980123-jn0tk9",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786607110331-xk2vu2",
@@ -14395,7 +14973,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786607110331
+      "joinedAt": 1786607110331,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786607110331-xk2vu2",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786607259050-f6v9rf",
@@ -14405,7 +15011,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786607259050
+      "joinedAt": 1786607259050,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786607259050-f6v9rf",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786607430422-2ykxjv",
@@ -14415,7 +15049,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786607430422
+      "joinedAt": 1786607430422,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786607430422-2ykxjv",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786607585563-utk6ja",
@@ -14425,7 +15087,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786607585563
+      "joinedAt": 1786607585563,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786607585563-utk6ja",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786634366406-ph3avg",
@@ -14435,7 +15125,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786634366406
+      "joinedAt": 1786634366406,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786634366406-ph3avg",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-1786634423582-24lrz9",
@@ -14445,7 +15163,35 @@
       "role": "customer",
       "status": "active",
       "tryons": 0,
-      "joinedAt": 1786634423582
+      "joinedAt": 1786634423582,
+      "orders": 0,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-1786634423582-24lrz9",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-0",
@@ -14459,7 +15205,52 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 3,
+      "spent": 6273000,
+      "vip": "VIP",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-0",
+        "isVip": true,
+        "tier": "VIP",
+        "membership": {
+          "id": "vip-u-demo-1786639187664-0-2026-08",
+          "userId": "u-demo-1786639187664-0",
+          "discountRuleId": "discount-vip-10",
+          "qualifyingPeriod": "2026-08",
+          "qualifyingOrderIds": [
+            "o-demo-flag-1786639265651-0"
+          ],
+          "qualifiedSpend": 5670000,
+          "threshold": 5000000,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "startedAt": 1785606065651,
+          "expiresAt": 1788198065651,
+          "status": "active",
+          "createdAt": 1785606065651,
+          "updatedAt": 1786898427417
+        },
+        "startedAt": 1785606065651,
+        "expiresAt": 1788198065651,
+        "daysRemaining": 16,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 5670000,
+          "threshold": 5000000,
+          "remaining": 0,
+          "progressPercent": 100
+        },
+        "benefit": {
+          "available": true,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-1",
@@ -14473,7 +15264,52 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 5,
+      "spent": 11011500,
+      "vip": "VIP",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-1",
+        "isVip": true,
+        "tier": "VIP",
+        "membership": {
+          "id": "vip-u-demo-1786639187664-1-2026-08",
+          "userId": "u-demo-1786639187664-1",
+          "discountRuleId": "discount-vip-10",
+          "qualifyingPeriod": "2026-08",
+          "qualifyingOrderIds": [
+            "o-demo-flag-1786639265651-1"
+          ],
+          "qualifiedSpend": 5800000,
+          "threshold": 5000000,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "startedAt": 1785519665651,
+          "expiresAt": 1788111665651,
+          "status": "active",
+          "createdAt": 1785519665651,
+          "updatedAt": 1786898427417
+        },
+        "startedAt": 1785519665651,
+        "expiresAt": 1788111665651,
+        "daysRemaining": 15,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 5800000,
+          "threshold": 5000000,
+          "remaining": 0,
+          "progressPercent": 100
+        },
+        "benefit": {
+          "available": true,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-2",
@@ -14487,7 +15323,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 4,
+      "spent": 3209000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-2",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-3",
@@ -14501,7 +15365,53 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 6,
+      "spent": 9326000,
+      "vip": "VIP",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-3",
+        "isVip": true,
+        "tier": "VIP",
+        "membership": {
+          "id": "vip-u-demo-1786639187664-3-2026-07",
+          "userId": "u-demo-1786639187664-3",
+          "discountRuleId": "discount-vip-10",
+          "qualifyingPeriod": "2026-07",
+          "qualifyingOrderIds": [
+            "o-demo-1786639187664-19",
+            "o-demo-1786639187664-7"
+          ],
+          "qualifiedSpend": 6374000,
+          "threshold": 5000000,
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "startedAt": 1785087587664,
+          "expiresAt": 1787679587664,
+          "status": "active",
+          "createdAt": 1785087587664,
+          "updatedAt": 1786898427417
+        },
+        "startedAt": 1785087587664,
+        "expiresAt": 1787679587664,
+        "daysRemaining": 10,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": true,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-4",
@@ -14515,7 +15425,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 3,
+      "spent": 1594000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-4",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-5",
@@ -14529,7 +15467,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 2,
+      "spent": 801000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-5",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-6",
@@ -14543,7 +15509,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 2,
+      "spent": 2210000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-6",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-7",
@@ -14557,7 +15551,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 1,
+      "spent": 0,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-7",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-8",
@@ -14571,7 +15593,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 2,
+      "spent": 190000,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-8",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     },
     {
       "id": "u-demo-1786639187664-9",
@@ -14585,7 +15635,35 @@
       "passwordHash": "$2b$10$Tgs/4F1X6NTgeL/hJSbi3.SsjO9wXn57EdDvfF75yO7HjxjQJHFyC",
       "authProviders": [
         "password"
-      ]
+      ],
+      "orders": 2,
+      "spent": 1491500,
+      "vip": "Thành viên",
+      "vipMembership": {
+        "userId": "u-demo-1786639187664-9",
+        "isVip": false,
+        "tier": "Thành viên",
+        "membership": null,
+        "startedAt": null,
+        "expiresAt": null,
+        "daysRemaining": 0,
+        "currentMonth": {
+          "key": "2026-08",
+          "startsAt": 1785517200000,
+          "endsAt": 1788195600000,
+          "spend": 0,
+          "threshold": 5000000,
+          "remaining": 5000000,
+          "progressPercent": 0
+        },
+        "benefit": {
+          "available": false,
+          "discountRuleId": "discount-vip-10",
+          "discountPercent": 10,
+          "discountedUnitsPerOrder": 1,
+          "description": "Giảm 10% cho 1 đơn vị sản phẩm tự chọn trong mỗi đơn hàng."
+        }
+      }
     }
   ],
   "addresses": [
@@ -15847,33 +16925,14 @@
         "o1784206566598"
       ],
       "qualifiedSpend": 5949000,
+      "threshold": 5000000,
+      "discountPercent": 10,
+      "discountedUnitsPerOrder": 1,
       "startedAt": 1784206908261,
       "expiresAt": 1786798908261,
-      "status": "active",
+      "status": "expired",
       "createdAt": 1784206908261,
-      "updatedAt": 1786639301858,
-      "threshold": 5000000,
-      "discountPercent": 10,
-      "discountedUnitsPerOrder": 1
-    },
-    {
-      "id": "vip-admin-1784883154949-2026-08",
-      "userId": "admin-1784883154949",
-      "discountRuleId": "discount-vip-10",
-      "qualifyingPeriod": "2026-08",
-      "qualifyingOrderIds": [
-        "o1786081939640",
-        "o1786083664020"
-      ],
-      "qualifiedSpend": 5804500,
-      "startedAt": 1786083737139,
-      "expiresAt": 1788675737139,
-      "status": "active",
-      "createdAt": 1786083737139,
-      "updatedAt": 1786639301858,
-      "threshold": 5000000,
-      "discountPercent": 10,
-      "discountedUnitsPerOrder": 1
+      "updatedAt": 1786898427417
     },
     {
       "id": "vip-u-demo-1786639187664-3-2026-07",
@@ -15885,14 +16944,14 @@
         "o-demo-1786639187664-7"
       ],
       "qualifiedSpend": 6374000,
+      "threshold": 5000000,
+      "discountPercent": 10,
+      "discountedUnitsPerOrder": 1,
       "startedAt": 1785087587664,
       "expiresAt": 1787679587664,
       "status": "active",
       "createdAt": 1785087587664,
-      "updatedAt": 1786639301858,
-      "threshold": 5000000,
-      "discountPercent": 10,
-      "discountedUnitsPerOrder": 1
+      "updatedAt": 1786898427417
     },
     {
       "id": "vip-u-demo-1786639187664-1-2026-08",
@@ -15903,14 +16962,14 @@
         "o-demo-flag-1786639265651-1"
       ],
       "qualifiedSpend": 5800000,
+      "threshold": 5000000,
+      "discountPercent": 10,
+      "discountedUnitsPerOrder": 1,
       "startedAt": 1785519665651,
       "expiresAt": 1788111665651,
       "status": "active",
       "createdAt": 1785519665651,
-      "updatedAt": 1786639301858,
-      "threshold": 5000000,
-      "discountPercent": 10,
-      "discountedUnitsPerOrder": 1
+      "updatedAt": 1786898427417
     },
     {
       "id": "vip-u-demo-1786639187664-0-2026-08",
@@ -15921,14 +16980,33 @@
         "o-demo-flag-1786639265651-0"
       ],
       "qualifiedSpend": 5670000,
+      "threshold": 5000000,
+      "discountPercent": 10,
+      "discountedUnitsPerOrder": 1,
       "startedAt": 1785606065651,
       "expiresAt": 1788198065651,
       "status": "active",
       "createdAt": 1785606065651,
-      "updatedAt": 1786639301858,
+      "updatedAt": 1786898427417
+    },
+    {
+      "id": "vip-admin-1784883154949-2026-08",
+      "userId": "admin-1784883154949",
+      "discountRuleId": "discount-vip-10",
+      "qualifyingPeriod": "2026-08",
+      "qualifyingOrderIds": [
+        "o1786081939640",
+        "o1786083664020"
+      ],
+      "qualifiedSpend": 5804500,
       "threshold": 5000000,
       "discountPercent": 10,
-      "discountedUnitsPerOrder": 1
+      "discountedUnitsPerOrder": 1,
+      "startedAt": 1786083737139,
+      "expiresAt": 1788675737139,
+      "status": "active",
+      "createdAt": 1786083737139,
+      "updatedAt": 1786898427417
     }
   ],
   "flagcardConfig": {
@@ -22548,6 +23626,35 @@
       "createdAt": 1782664787664,
       "source": "demo",
       "demoBatch": "demo-2026-08"
+    },
+    {
+      "id": "i1786721270648cg2op",
+      "userId": "u-1786447530231-jcdqmw",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1786721270648,
+      "source": "mobile"
+    },
+    {
+      "id": "i17867681435534dgl0",
+      "userId": "u-1786447530231-jcdqmw",
+      "productId": "kimono-hong",
+      "type": "view",
+      "value": 1,
+      "metadata": {},
+      "createdAt": 1786768143553,
+      "source": "mobile"
+    },
+    {
+      "id": "tryon-i-1786768435548-0",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "type": "tryon",
+      "value": 1,
+      "createdAt": 1786768435548,
+      "source": "mobile"
     }
   ],
   "searchLogs": [
@@ -24455,6 +25562,19 @@
       "engine": "fashn-vton-1.5+demo-seed",
       "createdAt": 1785602387664,
       "demoBatch": "demo-2026-08"
+    },
+    {
+      "id": "tryon-1786768435548",
+      "userId": "demo-minh",
+      "productId": "kimono-hong",
+      "productIds": [
+        "kimono-hong"
+      ],
+      "accessoryIds": [],
+      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+      "createdAt": 1786768435548,
+      "appliedAccessories": [],
+      "skippedAccessories": []
     }
   ],
   "goals": [
@@ -25040,7 +26160,7 @@
         "achievedOrderId": null,
         "achievedOrderCode": null,
         "achievedAt": null,
-        "updatedAt": 1786639301857
+        "updatedAt": 1786894825208
       }
     },
     {
@@ -25085,7 +26205,7 @@
         "achievedOrderId": null,
         "achievedOrderCode": null,
         "achievedAt": null,
-        "updatedAt": 1786639301857
+        "updatedAt": 1786894825208
       },
       "createdAt": 1783183187664,
       "updatedAt": 1786552787664,
@@ -25133,7 +26253,7 @@
         "achievedOrderId": null,
         "achievedOrderCode": null,
         "achievedAt": null,
-        "updatedAt": 1786639301857
+        "updatedAt": 1786894825208
       },
       "createdAt": 1785083987664,
       "updatedAt": 1786552787664,
@@ -25181,7 +26301,7 @@
         "achievedOrderId": null,
         "achievedOrderCode": null,
         "achievedAt": null,
-        "updatedAt": 1786639301857
+        "updatedAt": 1786894825208
       },
       "createdAt": 1781455187664,
       "updatedAt": 1786552787664,
@@ -25189,24 +26309,6 @@
     }
   ],
   "aiDescriptions": [
-    {
-      "productId": "kimono-hong",
-      "generatedAt": 1785037034406,
-      "description": {
-        "headline": "Kimono truyền thống Hồng — một điểm nhấn Nhật dễ đưa vào tủ đồ",
-        "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
-        "details": [
-          "Thiết kế thuộc nhóm trang phục truyền thống Nhật, bám đúng tên sản phẩm “Kimono truyền thống Hồng”.",
-          "Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
-          "Tông hồng tạo cá tính rõ mà vẫn dễ phối với màu trung tính."
-        ],
-        "stylingTip": "Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.",
-        "purchaseReason": "Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
-        "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
-        "engine": "catalog-grounded-fallback"
-      },
-      "id": "aiDescriptions-1"
-    },
     {
       "productId": "yukata-xanh",
       "generatedAt": 1785301160621,
@@ -25229,7 +26331,7 @@
     },
     {
       "productId": "cardigan-dai",
-      "generatedAt": 1786605941617,
+      "generatedAt": 1786894766786,
       "description": {
         "headline": "Áo len khoác dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ",
         "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
@@ -25243,7 +26345,7 @@
         "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
         "engine": "catalog-grounded-fallback"
       },
-      "id": "aiDescriptions-4"
+      "id": "aiDescriptions-1"
     },
     {
       "productId": "so-mi-trang",
@@ -25301,18 +26403,18 @@
       "id": "aiDescriptions-5"
     },
     {
-      "productId": "haori-dang-dai",
-      "generatedAt": 1784992573853,
+      "productId": "kimono-hong",
+      "generatedAt": 1786838903550,
       "description": {
-        "headline": "Áo choàng Haori dáng dài — một điểm nhấn Nhật dễ đưa vào tủ đồ",
+        "headline": "Kimono truyền thống Hồng — một điểm nhấn Nhật dễ đưa vào tủ đồ",
         "visualSummary": "Dựa trên tên, danh mục và ảnh sản phẩm, mẫu này có phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
         "details": [
-          "Thiết kế thuộc nhóm áo khoác và trang phục phối nhiều lớp, bám đúng tên sản phẩm “Áo choàng Haori dáng dài”.",
+          "Thiết kế thuộc nhóm trang phục truyền thống Nhật, bám đúng tên sản phẩm “Kimono truyền thống Hồng”.",
           "Điểm nhìn chính là phom dài tạo đường nét thanh thoát và hiệu ứng phối lớp rõ ràng.",
-          "Bảng màu dễ kết hợp cùng đen, kem, chàm hoặc nâu."
+          "Tông hồng tạo cá tính rõ mà vẫn dễ phối với màu trung tính."
         ],
         "stylingTip": "Phối cùng lớp trong trơn và một phụ kiện nhỏ để giữ đúng tinh thần tối giản Nhật.",
-        "purchaseReason": "Phù hợp nếu bạn muốn một món áo khoác và trang phục phối nhiều lớp có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
+        "purchaseReason": "Phù hợp nếu bạn muốn một món trang phục truyền thống Nhật có nhận diện rõ, dễ phối lại nhiều lần thay vì chỉ mặc cho một dịp.",
         "confidence": "Mô tả được tạo từ dữ liệu sản phẩm; không suy đoán chất liệu chưa được xác nhận.",
         "engine": "catalog-grounded-fallback"
       },
@@ -25335,26 +26437,6 @@
         "engine": "catalog-grounded-fallback"
       },
       "id": "aiDescriptions-8"
-    },
-    {
-      "productId": "blazer-kaki",
-      "generatedAt": 1784651509055,
-      "description": {
-        "headline": "Áo khoác kaki dáng dài - Tinh tế từ phong cách Nhật Bản",
-        "visualSummary": "Áo khoác màu be dịu nhẹ với cổ áo đứng thanh lịch, thiết kế 2 hàng nút tròn chắc chắn. Tay áo có viền kẻ sọc trắng đen khi cuộn lên, chất liệu mềm mại phù hợp công sở. Phối cùng áo trắng và quần jeans tạo vẻ năng động, tinh tế.",
-        "details": [
-          "Màu be trung tính dễ phối đồ",
-          "Cổ áo đứng tôn dáng chuẩn phong cách Nhật Bản",
-          "2 hàng nút tròn đồng bộ tạo điểm nhấn sang trọng",
-          "Tay áo có viền kẻ sọc trắng đen khi cuộn lên",
-          "Chất liệu mềm mại, phù hợp công sở và dạo phố"
-        ],
-        "stylingTip": "Kết hợp với áo trắng đơn giản và quần jeans ống rộng để tạo vẻ thanh lịch, năng động. Có thể thêm phụ kiện nhỏ như vòng cổ hoặc đồng hồ để tăng điểm nhấn.",
-        "purchaseReason": "Dễ phối đồ với nhiều phong cách từ công sở đến dạo phố, mang đến sự tự tin mỗi ngày",
-        "confidence": "95%",
-        "engine": "thi-giac-san-pham"
-      },
-      "id": "aiDescriptions-9"
     },
     {
       "productId": "guoc-geta",

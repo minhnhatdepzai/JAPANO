@@ -14,8 +14,8 @@ import { ReviewMediaPlayer } from '../../components/MediaAttach';
 
 const W = Dimensions.get('window').width;
 const COLORS = [
-  { hex:'#1A1410', name:'Mực' }, { hex:'#A33A2F', name:'Đỏ son' },
-  { hex:'#243244', name:'Chàm' }, { hex:'#6B7255', name:'Xanh trà' }, { hex:'#B08D3C', name:'Vàng kim' },
+  { hex:C.ink, name:'Mực' }, { hex:'#A33A2F', name:'Đỏ son' },
+  { hex:'#243244', name:'Chàm' }, { hex:'#6B7255', name:'Xanh trà' }, { hex:C.ink, name:'Vàng kim' },
 ];
 const DEFAULT_SIZES = ['S','M','L','XL','XXL','XXXL','4XL','5XL'];
 
@@ -136,7 +136,7 @@ export default function Detail() {
       const name = String(v.colorName || 'Mặc định');
       if (seen.has(name)) return;
       seen.add(name);
-      list.push({ name, hex: String(v.colorHex || '#1A1410') });
+      list.push({ name, hex: String(v.colorHex || C.ink) });
     });
     return list;
   }, [variants]);
@@ -229,7 +229,7 @@ export default function Detail() {
           {!!badgeLabel && <View style={st.flag}><Text style={{ color:'#fff', fontFamily:F.bodyX, fontSize:10 }}>{badgeLabel}</Text></View>}
           {media.length>1 && (
             <View style={st.dots}>
-              {media.map((_,i)=>(<View key={i} style={[st.dot, i===page&&{ width:22, backgroundColor:C.shu }]} />))}
+              {media.map((_,i)=>(<View key={i} style={[st.dot, i===page&&{ width:22, backgroundColor:C.primary }]} />))}
             </View>
           )}
         </View>
@@ -264,7 +264,7 @@ export default function Detail() {
             </View>
             {aiLoading ? (
               <View style={{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:12 }}>
-                <ActivityIndicator size="small" color={C.shu} />
+                <ActivityIndicator size="small" color={C.ink} />
                 <Text style={st.aiMuted}>Đang đọc ảnh và đối chiếu “{p.name}”…</Text>
               </View>
             ) : aiDescription ? (
@@ -278,9 +278,9 @@ export default function Detail() {
               </>
             ) : <Text style={st.aiMuted}>Chưa tải được mô tả tự động; thông tin bên dưới vẫn dùng dữ liệu sản phẩm đã xác nhận.</Text>}
             <Pressable style={st.goalLink} onPress={()=>openMemberRoute({ pathname:'/goals', params:{ productId:p.slug } } as any)}>
-              <Ionicons name="flag-outline" size={16} color={C.shu} />
+              <Ionicons name="flag-outline" size={16} color={C.ink} />
               <Text style={st.goalLinkText}>Lập lộ trình để mua món này</Text>
-              <Ionicons name="chevron-forward" size={16} color={C.shu} />
+              <Ionicons name="chevron-forward" size={16} color={C.ink} />
             </Pressable>
           </View>
 
@@ -302,7 +302,7 @@ export default function Detail() {
           {/* sizes */}
           <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginTop:16 }}>
             <Text style={{ fontFamily:F.bodyB, fontSize:13, color:C.ink }}>Kích thước</Text>
-            <Pressable onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)}><Text style={{ fontFamily:F.bodyB, fontSize:11.5, color:C.shu }}>Gợi ý kích cỡ cho tôi →</Text></Pressable>
+            <Pressable onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)}><Text style={{ fontFamily:F.bodyB, fontSize:11.5, color:C.ink }}>Gợi ý kích cỡ cho tôi →</Text></Pressable>
           </View>
           <View style={{ flexDirection:'row', flexWrap:'wrap', gap:8, marginTop:8 }}>
             {currentSizes.map((s)=>{
@@ -376,7 +376,7 @@ export default function Detail() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap:12 }}>
                 {outfitItems.map(item=>(
                   <Pressable key={item.slug} style={{ width:120 }} onPress={()=>router.push(`/product/${item.slug}`)}>
-                    <SmartImage source={item.images[0]} style={{ width:'100%', height:150, borderRadius:12, borderWidth:item.slug===p.slug?2:0, borderColor:C.shu }} recyclingKey={`${item.slug}-outfit`} />
+                    <SmartImage source={item.images[0]} style={{ width:'100%', height:150, borderRadius:12, borderWidth:item.slug===p.slug?2:0, borderColor:C.primary }} recyclingKey={`${item.slug}-outfit`} />
                     <Text style={{ fontFamily:F.bodyB, fontSize:12, color:C.ink, marginTop:6 }} numberOfLines={1}>{item.name}</Text>
                     <Price value={item.price} size={12} />
                   </Pressable>
@@ -435,7 +435,7 @@ const st = StyleSheet.create({
   dot:{ width:5, height:5, borderRadius:3, backgroundColor:'#fff', opacity:0.9 },
   lbl:{ fontFamily:F.bodyB, fontSize:13, color:C.ink, marginTop:16 },
   sw:{ width:34, height:34, borderRadius:9, borderWidth:2, borderColor:'transparent', alignItems:'center', justifyContent:'center' },
-  swSel:{ borderColor:C.shu },
+  swSel:{ borderColor:C.primary },
   swEmpty:{ opacity:0.3 },
   size:{ width:42, height:42, borderRadius:10, borderWidth:1, borderColor:C.line, backgroundColor:'#fff', alignItems:'center', justifyContent:'center' },
   sizeSel:{ backgroundColor:C.sumi, borderColor:C.sumi },
@@ -445,9 +445,9 @@ const st = StyleSheet.create({
   spec:{ fontFamily:F.bodyB, fontSize:12, color:C.ink }, specV:{ fontFamily:F.body, fontSize:11, color:C.muted },
   reviewTop:{ flexDirection:'row', gap:14, alignItems:'center', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14 },
   barBg:{ flex:1, height:5, backgroundColor:C.hair, borderRadius:3, overflow:'hidden' },
-  barFill:{ height:'100%', backgroundColor:C.shu },
+  barFill:{ height:'100%', backgroundColor:C.primary },
   review:{ marginTop:10, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:12 },
-  reaction:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:6,paddingHorizontal:10,backgroundColor:'#fff'},reactionOn:{borderColor:C.shu,backgroundColor:C.shuSoft},reactionText:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink},
+  reaction:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:6,paddingHorizontal:10,backgroundColor:'#fff'},reactionOn:{borderColor:C.primary,backgroundColor:C.washi2},reactionText:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink},
   aiCard:{ marginTop:14, backgroundColor:'#fff', borderWidth:1, borderColor:'#DAC7BB', borderRadius:16, padding:14 },
   aiIcon:{ width:34, height:34, borderRadius:10, backgroundColor:C.ai, alignItems:'center', justifyContent:'center' },
   aiLabel:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:.7, color:C.ai },
@@ -460,7 +460,7 @@ const st = StyleSheet.create({
   aiTipTitle:{ fontFamily:F.bodyX, fontSize:11, color:C.ai },
   aiReason:{ fontFamily:F.bodyB, fontSize:12.5, lineHeight:20, color:C.shuDeep, marginTop:10 },
   goalLink:{ flexDirection:'row', alignItems:'center', gap:7, borderTopWidth:1, borderTopColor:C.hair, paddingTop:12, marginTop:12 },
-  goalLinkText:{ flex:1, fontFamily:F.bodyB, fontSize:12.5, color:C.shu },
+  goalLinkText:{ flex:1, fontFamily:F.bodyB, fontSize:12.5, color:C.ink },
   sticky:{ position:'absolute', left:0, right:0, bottom:0, flexDirection:'row', alignItems:'stretch', gap:8, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
   stickyTryOn:{ flex:1.55 },
   stickyGoal:{ flex:.82 },

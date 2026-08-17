@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: GET /reviews/admin — không cho ẩn danh đọc toàn bộ đánh giá
+ok 1 - GET /reviews/admin — không cho ẩn danh đọc toàn bộ đánh giá
+  ---
+  duration_ms: 23.070727
+  type: 'test'
+  ...
+# Subtest: PATCH /reviews/:id/moderation — không cho ẩn danh kiểm duyệt
+ok 2 - PATCH /reviews/:id/moderation — không cho ẩn danh kiểm duyệt
+  ---
+  duration_ms: 7.362635
+  type: 'test'
+  ...
+# Subtest: POST /flagcards/admin/grant — không cho ẩn danh tự cấp thẻ thưởng
+ok 3 - POST /flagcards/admin/grant — không cho ẩn danh tự cấp thẻ thưởng
+  ---
+  duration_ms: 2.729501
+  type: 'test'
+  ...
+# Subtest: GET /payments/:id — không để lộ đơn hàng và thông tin cá nhân cho ẩn danh
+ok 4 - GET /payments/:id — không để lộ đơn hàng và thông tin cá nhân cho ẩn danh
+  ---
+  duration_ms: 3.584712
+  type: 'test'
+  ...
+# Subtest: GET /japan-spots/admin — không cho ẩn danh đọc hàng chờ kiểm duyệt
+ok 5 - GET /japan-spots/admin — không cho ẩn danh đọc hàng chờ kiểm duyệt
+  ---
+  duration_ms: 1.860546
+  type: 'test'
+  ...
+# Subtest: POST /stripe/reconcile — không cho ẩn danh kích hoạt đối soát
+ok 6 - POST /stripe/reconcile — không cho ẩn danh kích hoạt đối soát
+  ---
+  duration_ms: 3.186057
+  type: 'test'
+  ...
+# Subtest: POST /vnpay/reconcile — không cho ẩn danh kích hoạt đối soát
+ok 7 - POST /vnpay/reconcile — không cho ẩn danh kích hoạt đối soát
+  ---
+  duration_ms: 1.865749
+  type: 'test'
+  ...
+# Subtest: GET /state — không cho ẩn danh đọc toàn bộ cơ sở dữ liệu
+ok 8 - GET /state — không cho ẩn danh đọc toàn bộ cơ sở dữ liệu
+  ---
+  duration_ms: 1.816246
+  type: 'test'
+  ...
+# Subtest: GET /orders — không cho ẩn danh đọc đơn hàng
+ok 9 - GET /orders — không cho ẩn danh đọc đơn hàng
+  ---
+  duration_ms: 11.101695
+  type: 'test'
+  ...
+# Subtest: Các điểm cuối công khai vẫn phải mở cho khách chưa đăng nhập
+ok 10 - Các điểm cuối công khai vẫn phải mở cho khách chưa đăng nhập
+  ---
+  duration_ms: 1054.02566
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1144.285732

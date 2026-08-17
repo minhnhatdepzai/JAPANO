@@ -56,11 +56,11 @@ export function DailyJapanSpot(){
       </View>
       <ScrollView style={st.body} contentContainerStyle={st.bodyContent} showsVerticalScrollIndicator={false}>
         {suggestion.place!=='Làng Shirakawa-go'&&<Text style={st.photoCredit}>{PHOTO_ATTRIBUTION}</Text>}
-        <View style={st.info}><Ionicons name="camera-outline" size={19} color={C.shu}/><View style={{flex:1}}><Text style={st.time}>{suggestion.time}</Text><Text style={st.tip}>{suggestion.tip}</Text></View></View>
+        <View style={st.info}><Ionicons name="camera-outline" size={19} color={C.ink}/><View style={{flex:1}}><Text style={st.time}>{suggestion.time}</Text><Text style={st.tip}>{suggestion.tip}</Text></View></View>
 
         <GuideSection icon="navigate-circle-outline" title="NẰM Ở ĐÂU?">
           <Text style={st.guideText}>{suggestion.where}</Text>
-          <Pressable style={st.mapButton} onPress={openMap}><Ionicons name="map-outline" size={14} color={C.shu}/><Text style={st.mapButtonText}>Mở vị trí trên bản đồ</Text><Ionicons name="open-outline" size={12} color={C.shu}/></Pressable>
+          <Pressable style={st.mapButton} onPress={openMap}><Ionicons name="map-outline" size={14} color={C.ink}/><Text style={st.mapButtonText}>Mở vị trí trên bản đồ</Text><Ionicons name="open-outline" size={12} color={C.ink}/></Pressable>
         </GuideSection>
 
         <GuideSection icon="time-outline" title="LỊCH SỬ NGẮN">
@@ -91,7 +91,7 @@ export function DailyJapanSpot(){
 }
 
 function GuideSection({icon,title,children}:{icon:keyof typeof Ionicons.glyphMap;title:string;children:React.ReactNode}){
-  return <View style={st.section}><View style={st.sectionTitle}><View style={st.sectionIcon}><Ionicons name={icon} size={14} color={C.shu}/></View><Text style={st.sectionTitleText}>{title}</Text></View>{children}</View>;
+  return <View style={st.section}><View style={st.sectionTitle}><View style={st.sectionIcon}><Ionicons name={icon} size={14} color={C.ink}/></View><Text style={st.sectionTitleText}>{title}</Text></View>{children}</View>;
 }
 
 const st=StyleSheet.create({
@@ -99,17 +99,17 @@ const st=StyleSheet.create({
   card:{width:'100%',maxWidth:410,maxHeight:'94%',backgroundColor:C.paper,borderRadius:22,overflow:'hidden',borderWidth:1,borderColor:'rgba(255,255,255,.5)'},
   close:{position:'absolute',right:11,top:11,zIndex:4,width:32,height:32,borderRadius:16,backgroundColor:'rgba(26,20,16,.75)',alignItems:'center',justifyContent:'center'},
   hero:{height:176,justifyContent:'flex-end'},heroTint:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(26,20,16,.43)'},heroCopy:{padding:16},
-  eyebrow:{fontFamily:F.bodyB,fontSize:9.5,letterSpacing:1.6,color:'#F4D6A0'},place:{fontFamily:F.displayX,fontSize:24,color:'#fff',marginTop:4},region:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff',marginTop:4},
-  body:{flexShrink:1},bodyContent:{padding:15,paddingBottom:18},photoCredit:{fontFamily:F.body,fontSize:9,color:C.muted,textAlign:'right',marginBottom:8},info:{flexDirection:'row',gap:9,backgroundColor:'#FFF7EA',borderRadius:12,padding:11},time:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},tip:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:2},
-  section:{marginTop:16},sectionTitle:{flexDirection:'row',alignItems:'center',gap:7,marginBottom:7},sectionIcon:{width:26,height:26,borderRadius:8,backgroundColor:C.shuSoft,alignItems:'center',justifyContent:'center'},sectionTitleText:{fontFamily:F.bodyX,fontSize:9.5,letterSpacing:1.15,color:C.shuDeep},
+  eyebrow:{fontFamily:F.bodyB,fontSize:9.5,letterSpacing:1.6,color:'rgba(255,255,255,0.72)'},place:{fontFamily:F.displayX,fontSize:24,color:'#fff',marginTop:4},region:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff',marginTop:4},
+  body:{flexShrink:1},bodyContent:{padding:15,paddingBottom:18},photoCredit:{fontFamily:F.body,fontSize:9,color:C.muted,textAlign:'right',marginBottom:8},info:{flexDirection:'row',gap:9,backgroundColor:C.washi2,borderRadius:12,padding:11},time:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},tip:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:2},
+  section:{marginTop:16},sectionTitle:{flexDirection:'row',alignItems:'center',gap:7,marginBottom:7},sectionIcon:{width:26,height:26,borderRadius:8,backgroundColor:C.washi2,alignItems:'center',justifyContent:'center'},sectionTitleText:{fontFamily:F.bodyX,fontSize:9.5,letterSpacing:1.15,color:C.shuDeep},
   guideText:{fontFamily:F.body,fontSize:11.5,lineHeight:18,color:C.ink},
-  mapButton:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:6,borderWidth:1,borderColor:'#E8C7BD',backgroundColor:'#FFF8F5',borderRadius:999,paddingHorizontal:10,paddingVertical:7,marginTop:9},mapButtonText:{fontFamily:F.bodyB,fontSize:10.5,color:C.shu},
+  mapButton:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:6,borderWidth:1,borderColor:'#E8C7BD',backgroundColor:'#FFF8F5',borderRadius:999,paddingHorizontal:10,paddingVertical:7,marginTop:9},mapButtonText:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink},
   bulletRow:{flexDirection:'row',alignItems:'flex-start',gap:8,marginBottom:7},bullet:{width:5,height:5,borderRadius:3,backgroundColor:C.kin,marginTop:7},bulletText:{flex:1,fontFamily:F.body,fontSize:11.5,lineHeight:17.5,color:C.ink},
-  photoSpot:{flexDirection:'row',alignItems:'flex-start',gap:10,backgroundColor:'#fff',borderWidth:1,borderColor:C.hair,borderRadius:11,padding:10,marginBottom:7},photoIndex:{fontFamily:F.displayX,fontSize:17,color:'#C8A65B'},photoName:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},photoTip:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:2},
-  source:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:'#F7F0DF',borderRadius:9,padding:9,marginTop:14},sourceText:{flex:1,fontFamily:F.bodyM,fontSize:9.5,lineHeight:13,color:'#82651F'},
+  photoSpot:{flexDirection:'row',alignItems:'flex-start',gap:10,backgroundColor:'#fff',borderWidth:1,borderColor:C.hair,borderRadius:11,padding:10,marginBottom:7},photoIndex:{fontFamily:F.displayX,fontSize:17,color:C.ink},photoName:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},photoTip:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:2},
+  source:{flexDirection:'row',alignItems:'center',gap:6,backgroundColor:C.washi2,borderRadius:9,padding:9,marginTop:14},sourceText:{flex:1,fontFamily:F.bodyM,fontSize:9.5,lineHeight:13,color:C.muted},
   outfitDivider:{flexDirection:'row',alignItems:'center',gap:8,marginTop:18},dividerLine:{height:1,flex:1,backgroundColor:C.line},dividerText:{fontFamily:F.bodyX,fontSize:8.5,letterSpacing:1,color:C.muted},
   outfit:{flexDirection:'row',alignItems:'center',gap:11,backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:13,padding:9,marginTop:11},thumb:{width:58,height:68,borderRadius:9},
-  outfitLabel:{fontFamily:F.bodyX,fontSize:8.5,letterSpacing:1,color:C.kin},product:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink,marginTop:3},price:{fontFamily:F.bodyX,fontSize:12,color:C.shu,marginTop:3},
-  button:{height:45,borderRadius:12,backgroundColor:C.shu,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,marginTop:12},buttonText:{fontFamily:F.bodyB,fontSize:13,color:'#fff'},
+  outfitLabel:{fontFamily:F.bodyX,fontSize:8.5,letterSpacing:1,color:C.kin},product:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink,marginTop:3},price:{fontFamily:F.bodyX,fontSize:12,color:C.ink,marginTop:3},
+  button:{height:45,borderRadius:12,backgroundColor:C.primary,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,marginTop:12},buttonText:{fontFamily:F.bodyB,fontSize:13,color:'#fff'},
   note:{fontFamily:F.body,fontSize:9.5,color:C.muted,textAlign:'center',marginTop:8},
 });

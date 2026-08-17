@@ -338,7 +338,7 @@ function makeStripeHelpers(ctx) {
 module.exports = function registerStripeRoutes(api, ctx) {
   const {
     read, write, httpError, stripe, stripeEnabled,
-    STRIPE_PUBLISHABLE_KEY, STRIPE_MERCHANT_DISPLAY_NAME, requireAuth,
+    STRIPE_PUBLISHABLE_KEY, STRIPE_MERCHANT_DISPLAY_NAME, requireAuth, requireAdmin,
   } = ctx;
   const {
     finalizeStripeCheckout, finalizeStripePaymentIntent, stripeLandingPage,
@@ -715,7 +715,8 @@ module.exports = function registerStripeRoutes(api, ctx) {
     }));
   });
 
-  api.post('/stripe/reconcile', async (req, res) => {
+  // Đối soát gọi ngược sang cổng thanh toán và ghi lại trạng thái giao dịch.
+  api.post('/stripe/reconcile', requireAdmin, async (req, res) => {
     if (!stripeEnabled()) return res.status(503).json({ ok: false, message: 'Chế độ thử nghiệm Stripe chưa sẵn sàng.' });
     const { applyStripeRefundToState, markStripeCheckoutFailed } = makeStripeHelpers(ctx);
     const snapshot = read();

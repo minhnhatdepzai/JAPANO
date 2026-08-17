@@ -85,10 +85,10 @@ export default function Login() {
         </View>
         <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginVertical:14 }}>
           <Text style={{ color:C.muted, fontFamily:F.body, fontSize:12.5 }}>Ghi nhớ đăng nhập</Text>
-          <Pressable onPress={()=>router.push('/forgot-password')} hitSlop={8}><Text style={{ color:C.shu, fontFamily:F.bodyB, fontSize:12.5 }}>Quên mật khẩu?</Text></Pressable>
+          <Pressable onPress={()=>router.push('/forgot-password')} hitSlop={8}><Text style={{ color:C.ink, fontFamily:F.bodyB, fontSize:12.5 }}>Quên mật khẩu?</Text></Pressable>
         </View>
         <Btn label={signingIn?'Đang đăng nhập…':'Đăng nhập'} onPress={submit} />
-        {signingIn && <View style={{ marginTop:10, alignItems:'center' }}><ActivityIndicator color={C.shu} size="small" /></View>}
+        {signingIn && <View style={{ marginTop:10, alignItems:'center' }}><ActivityIndicator color={C.ink} size="small" /></View>}
         <View style={st.orRow}><View style={st.hr} /><Text style={st.or}>hoặc</Text><View style={st.hr} /></View>
         <View style={{ flexDirection:'row', gap:10 }}>
           <Pressable
@@ -101,9 +101,9 @@ export default function Login() {
           </Pressable>
           <Pressable style={[st.social]} onPress={()=>soon('Đăng nhập bằng Apple')}><Ionicons name="logo-apple" size={18} color={C.ink} /><Text style={st.socialT}>Bằng Apple</Text></Pressable>
         </View>
-        <Text style={st.foot}>Chưa có tài khoản? <Text style={{ color:C.shu, fontFamily:F.bodyB }} onPress={()=>router.push('/register')}>Đăng ký</Text></Text>
+        <Text style={st.foot}>Chưa có tài khoản? <Text style={{ color:C.ink, fontFamily:F.bodyB }} onPress={()=>router.push('/register')}>Đăng ký</Text></Text>
         <Pressable style={st.guest} onPress={continueAsGuest}>
-          <Ionicons name="grid-outline" size={17} color={C.shu} />
+          <Ionicons name="grid-outline" size={17} color={C.ink} />
           <Text style={st.guestT}>Tiếp tục xem sản phẩm không cần đăng nhập</Text>
         </Pressable>
       </ScrollView>
@@ -120,6 +120,6 @@ const st = StyleSheet.create({
   social:{ flex:1, height:46, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8 },
   socialT:{ fontFamily:F.bodyM, color:C.ink, fontSize:13 },
   foot:{ textAlign:'center', marginTop:18, fontFamily:F.body, fontSize:13, color:C.muted },
-  guest:{ marginTop:14, minHeight:46, borderWidth:1, borderColor:C.shu, borderRadius:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, paddingHorizontal:12 },
-  guestT:{ color:C.shu, fontFamily:F.bodyB, fontSize:12.5, textAlign:'center' },
+  guest:{ marginTop:14, minHeight:46, borderWidth:1, borderColor:C.primary, borderRadius:12, flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, paddingHorizontal:12 },
+  guestT:{ color:C.ink, fontFamily:F.bodyB, fontSize:12.5, textAlign:'center' },
 });

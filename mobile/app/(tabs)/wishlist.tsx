@@ -18,7 +18,7 @@ export default function Wishlist() {
       <View style={{ paddingHorizontal:18, paddingTop:8 }}>
         <Text style={{ fontFamily:F.display, fontSize:24, color:C.sumi }}>Sản phẩm đã lưu</Text>
         <Text style={{ fontFamily:F.body, fontSize:13, color:C.muted, marginTop:2 }}>{saved.length} sản phẩm yêu thích</Text>
-        <View style={{ width:44, height:4, backgroundColor:C.shu, borderRadius:2, marginTop:12, marginBottom:14 }} />
+        <View style={{ width:44, height:4, backgroundColor:C.borderStrong, borderRadius:2, marginTop:12, marginBottom:14 }} />
       </View>
       {saved.length===0 ? (
         <View style={{ flex:1, alignItems:'center', justifyContent:'center', padding:30 }}>
@@ -55,8 +55,8 @@ export default function Wishlist() {
 const st = StyleSheet.create({
   grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', rowGap:14 },
   tile:{ height:178, borderRadius:14, overflow:'hidden', backgroundColor:C.washi2, borderWidth:1.5, borderColor:C.blue },
-  heart:{ position:'absolute', top:8, right:8, width:30, height:30, borderRadius:15, backgroundColor:C.shu, alignItems:'center', justifyContent:'center' },
+  heart:{ position:'absolute', top:8, right:8, width:30, height:30, borderRadius:15, backgroundColor:C.primary, alignItems:'center', justifyContent:'center' },
   mini:{ flex:1, alignItems:'center', paddingVertical:6, borderRadius:999, borderWidth:1, borderColor:C.line, backgroundColor:'#fff' },
-  miniOn:{ backgroundColor:C.shu, borderColor:C.shu },
+  miniOn:{ backgroundColor:C.primary, borderColor:C.primary },
   miniT:{ fontFamily:F.bodyM, fontSize:11, color:C.ink },
 });

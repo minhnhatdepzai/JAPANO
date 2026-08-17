@@ -19,7 +19,7 @@ export default function Success() {
       <View style={{ flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:22 }}>
         <View style={{ width:120, height:120, alignItems:'center', justifyContent:'center' }}>
           <View style={{ position:'absolute' }}><Enso size={120} sw={7} /></View>
-          <Ionicons name="checkmark" size={44} color={C.shu} />
+          <Ionicons name="checkmark" size={44} color={C.ink} />
         </View>
         <Text style={{ fontFamily:F.display, fontSize:24, color:C.sumi, marginTop:6 }}>Đặt hàng thành công</Text>
         <Text style={{ fontFamily:F.displaySb, color:C.kin, fontSize:13, marginTop:2 }}>Cảm ơn bạn</Text>
@@ -40,7 +40,7 @@ export default function Success() {
         )}
         {qualifies && !receivedCard && (
           <View style={st.flagBanner}>
-            <Ionicons name="flag" size={18} color="#F6D6B4" />
+            <Ionicons name="flag" size={18} color={'rgba(255,255,255,0.72)'} />
             <Text style={st.flagText}>
               Đơn này đủ điều kiện nhận <Text style={st.flagStrong}>thẻ địa danh</Text> — thẻ sẽ hiện ngay khi thanh toán được xác nhận.
             </Text>
@@ -62,14 +62,14 @@ export default function Success() {
 
 const st = StyleSheet.create({
   awardCard:{ width:'100%', maxWidth:330, backgroundColor:C.sumi, borderWidth:1, borderColor:C.kin, borderRadius:20, padding:17, marginTop:16, alignItems:'center' },
-  awardEyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.1, color:'#F6D6B4' },
+  awardEyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.1, color:'rgba(255,255,255,0.72)' },
   awardGlyph:{ fontSize:42, marginTop:6 },
   awardTitle:{ fontFamily:F.display, fontSize:18, color:'#fff', textAlign:'center', marginTop:3 },
-  awardRegion:{ fontFamily:F.body, fontSize:11, color:'#D8D2CB', marginTop:3 },
-  awardButton:{ backgroundColor:C.shu, borderRadius:12, paddingVertical:10, paddingHorizontal:18, marginTop:12 },
+  awardRegion:{ fontFamily:F.body, fontSize:11, color:'rgba(255,255,255,0.70)', marginTop:3 },
+  awardButton:{ backgroundColor:C.primary, borderRadius:12, paddingVertical:10, paddingHorizontal:18, marginTop:12 },
   awardButtonText:{ fontFamily:F.bodyB, fontSize:11.5, color:'#fff' },
   flagBanner:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.sumi, borderRadius:14, padding:13, marginTop:16, maxWidth:320 },
-  flagText:{ flex:1, fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'#D8D2CB' },
-  flagStrong:{ fontFamily:F.bodyB, color:'#F6D6B4' },
+  flagText:{ flex:1, fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'rgba(255,255,255,0.70)' },
+  flagStrong:{ fontFamily:F.bodyB, color:'rgba(255,255,255,0.72)' },
   flagHint:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.muted, textAlign:'center', marginTop:14, maxWidth:280 },
 });

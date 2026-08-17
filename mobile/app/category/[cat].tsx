@@ -38,6 +38,6 @@ export default function Category() {
   );
 }
 const st = StyleSheet.create({
-  norenTag:{ position:'absolute', bottom:0, left:0, right:0, backgroundColor:C.shu, paddingVertical:12, alignItems:'center' },
+  norenTag:{ position:'absolute', bottom:0, left:0, right:0, backgroundColor:C.overlay, paddingVertical:12, alignItems:'center' },
   grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'center', columnGap:12, rowGap:12, width:'100%', alignSelf:'center' },
 });

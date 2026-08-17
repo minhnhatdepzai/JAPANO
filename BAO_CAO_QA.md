@@ -1,6 +1,6 @@
 # BÁO CÁO KIỂM TRA CHẤT LƯỢNG — baocaototnghiep_hoan_thien.docx
 
-**Ngày thực hiện:** 16/08/2026
+**Ngày thực hiện:** 16/08/2026 · **Cập nhật lần 2:** sửa 6 điểm mô hình dữ liệu · **Cập nhật lần 3:** định tuyến lại toàn bộ dây nối ERD
 **Bản gốc:** `baocaototnghiep.docx` — **giữ nguyên, không bị ghi đè** (thời điểm sửa cuối vẫn là 16/08/2026 11:57).
 **Sản phẩm:** `baocaototnghiep_hoan_thien.docx`, `baocaototnghiep_hoan_thien.pdf`
 **Quy trình áp dụng:** Skill `.claude/skills/bao-cao-tot-nghiep/SKILL.md` (được tạo mới cho nhiệm vụ này và sử dụng xuyên suốt).
@@ -11,11 +11,11 @@
 
 | Chỉ tiêu | Bản gốc | Bản hoàn thiện |
 |---|---|---|
-| Số trang (A4) | không xác định (khổ Letter) | **161** |
+| Số trang (A4) | không xác định (khổ Letter) | **163** |
 | Khổ giấy | US Letter 21,6 × 27,9 cm | **A4 21 × 29,7 cm** |
 | Lề | trái 2,4 · phải 2,0 · trên 2,0 · dưới 2,0 cm | **trái 3,0 · phải 2,0 · trên 2,5 · dưới 2,5 cm** |
 | Số hình có chú thích | 4 (không có chú thích) | **80** |
-| Số bảng có chú thích | 23 (3 chú thích viết tay) | **39** |
+| Số bảng có chú thích | 23 (3 chú thích viết tay) | **37** |
 | Ảnh nhúng trong tệp | 48 | **81** |
 | Mục trong mục lục | mục lục cũ đã lỗi thời | **164** |
 | Section | 1 | **3** (có 1 trang ngang cho sơ đồ ERD) |
@@ -38,10 +38,10 @@
 ### 2.2. ERD (mục 4.2)
 
 - **Nguồn:** `erd.drawio` trong workspace. Tệp `JAPANO_ERD_36_bang_tinh_chinh_theo_mau.drawio` nêu trong yêu cầu **không tồn tại**; `erd.drawio` chính là bản đó (tên diagram: *"ERD JAPANO – 36 bảng – Tên chuẩn hoá theo mẫu"*).
-- **Đã kiểm tra:** đúng **36 bảng**, đúng **51 quan hệ**; mọi khoá ngoại nối đúng hàng khoá chính (đối chiếu bằng cách phân tích `source`/`target` của từng cạnh trong XML — tất cả đều trỏ tới `*-ref-row-*` chứ không trỏ vào thân bảng); không có bảng chồng nhau; nền trắng.
+- **Đã kiểm tra:** đúng **36 bảng**, **50 quan hệ** (sau khi sửa, xem mục 3.4); mọi khoá ngoại nối đúng hàng khoá chính (đối chiếu bằng cách phân tích `source`/`target` của từng cạnh trong XML — tất cả đều trỏ tới `*-ref-row-*` chứ không trỏ vào thân bảng); không có bảng chồng nhau; nền trắng.
 - **Cấp 1:** Hình 4.1 — ERD tổng thể trên **trang ngang A4 riêng** (section 2), rộng 24,7 cm.
 - **Cấp 2:** Hình 4.2 – 4.8 — bảy sơ đồ phóng to theo nhóm, **vẽ lại bằng bố cục hai cột với dây nối chạy trong máng giữa** nên không có đường nối cắt qua bảng; ký hiệu chân chim / gạch đơn / vòng tròn lấy đúng từ `startArrow`/`endArrow` của tệp gốc.
-- **Bảng 4.2:** 51 dòng quan hệ khoá chính – khoá ngoại, **trích tự động từ `erd.drawio`** nên chắc chắn khớp hình vẽ.
+- **Bảng 4.2:** 50 dòng quan hệ khoá chính – khoá ngoại, **trích tự động từ `erd.drawio`** nên chắc chắn khớp hình vẽ.
 - Mục 4.2.4 nêu rõ đây là **mô hình dữ liệu mức logic trên các collection MongoDB**, không phải lược đồ quan hệ SQL.
 
 ### 2.3. Đặc tả Use Case (mục 3.3)
@@ -116,6 +116,83 @@ Toàn bộ phát hiện dưới đây được xác minh bằng `grep` trên wor
 
 **Kết quả quét bản PDF cuối:** không có `sk_test_*`, `pk_test_*`, `AIza*`, chuỗi kết nối MongoDB có mật khẩu, hay bất kỳ cặp email/mật khẩu nào. Ba địa chỉ thư điện tử còn lại là của chính ba sinh viên trong Bảng 1.2 (thông tin nhóm thực hiện, vốn có trong bản gốc).
 
+### 3.4. Rà soát lại ERD (lần sửa thứ hai)
+
+Sau khi bàn giao lần đầu, người dùng rà soát lại mô hình dữ liệu và phát hiện thêm. Đối chiếu với mã nguồn và dữ liệu thật cho ra **6 điểm cần sửa**, đã sửa toàn bộ trong `erd.drawio` rồi dựng lại báo cáo.
+
+| # | Vấn đề | Bằng chứng | Đã sửa thành |
+|---|---|---|---|
+| 1 | `Quy Tắc Giảm Giá.Mã voucher` khiến người đọc tưởng là khoá ngoại trỏ sang `Phiếu Giảm Giá` | `discount_rules.code` có chỉ mục duy nhất **riêng** (`uq_discount_rules_code`); mã của nó (`JAPANO-VIP10`, `CHAOMUNG`, `THUVANG`) **không trùng** bất kỳ mã nào trong `vouchers` | Đổi tên thành **`Mã chương trình`**, giữ nguyên không thêm khoá ngoại |
+| 2 | `Sản Phẩm.FK2 Mã người dùng → Người Dùng` — khoá ngoại **không tồn tại** | Bảng `products` không có trường `userId` hay `createdBy`; **0/35** bản ghi có giá trị | **Xoá** hẳn trường và quan hệ |
+| 3 | `Đơn Hàng → Phiếu Giảm Giá` đánh là bắt buộc | **0/94** đơn hàng có mã giảm giá | Đổi sang **0..1** |
+| 4 | `Phiếu Giảm Giá → Người Dùng` (cả `Mã người tạo` và `Mã người dùng`) đánh là bắt buộc | **1/4** phiếu có giá trị — chỉ phiếu bù đắp do quản trị viên cấp | Đổi sang **0..1** |
+| 5 | `Yêu Cầu Trả Hàng → Thanh Toán` đánh là bắt buộc | **5/8** yêu cầu có `paymentId`; đơn thanh toán khi nhận hàng không có giao dịch trực tuyến | Đổi sang **0..1** |
+| 6 | `Biến Thể Sản Phẩm.Giá riêng` không cho biết là tuỳ chọn | `backend/lib/pricing.js`: `unitPrice = variantOwnPrice(variant) ?? (product.price + sizeSurcharge(size))`; **34/35** sản phẩm để trống trường này | Đổi tên thành **`Giá riêng (tuỳ chọn)`** kèm giải thích trong mục 4.2.2 |
+
+**Kéo theo trong báo cáo:** số quan hệ 51 → **50** ở ba chỗ (chú thích Hình 4.1, đoạn dẫn mục 4.2.1, chú thích Bảng 4.2); xuất lại Hình 4.1 và bảy hình nhóm 4.2 – 4.8; dựng lại Bảng 4.2 (50 dòng, trích tự động từ `erd.drawio`).
+
+**Nội dung bổ sung** để hai vấn đề trên không tái diễn:
+
+- **Mục 4.2.2, nhóm sản phẩm** — thêm đoạn giải thích quy tắc tính giá: giá riêng của biến thể là tuỳ chọn, để trống thì lấy giá sản phẩm cộng phụ thu theo cỡ (bảng phụ thu là hằng số trong mã nguồn, không nằm trong cơ sở dữ liệu nên không xuất hiện trên sơ đồ); danh sách hiển thị khoảng giá dạng "từ …" khi các biến thể lệch giá; máy chủ luôn tính lại đơn giá khi tạo đơn.
+- **Mục 4.2.2, nhóm khuyến mãi** — tách rõ hai cơ chế: phiếu giảm giá khách tự nhập, và ưu đãi tự động theo quy tắc; nói thẳng `Mã chương trình` là mã định danh của chính quy tắc, không phải khoá ngoại.
+- **Mục 4.2.4** — thêm mục ràng buộc **"Khoá ngoại không bắt buộc"** liệt kê đủ 4 quan hệ 0..1 và điều kiện để chúng có giá trị.
+
+**Hai lỗi trình bày phát hiện thêm trong lần dựng này, đã sửa:**
+
+1. **Hai chú thích mồ côi** `Bảng 6.2: Test case người dùng` và `Bảng 6.3: Test case quản trị viên` — bảng gốc đã bị thay ở vòng trước nhưng chú thích còn sót lại rồi bị đánh số lại, gây trùng số với hai bảng kịch bản kiểm thử mới. Đã xoá.
+2. **Chú thích bảng đặt không thống nhất** — ba bảng của bản gốc (1.1, 1.2, 2.1) có chú thích nằm **dưới** bảng trong khi toàn bộ bảng mới đặt **trên**. Đã chuyển cả ba lên trên.
+
+Kiểm tra lại sau khi sửa: chú thích mồ côi **0**; Hình 80 và Bảng 37 đánh số liên tục không trùng; **281/281** mục lục khớp trang thật; **0/162** trang có chữ vượt lề; 0 trang trắng.
+
+### 3.5. Định tuyến lại dây nối ERD (lần sửa thứ ba)
+
+Yêu cầu: sơ đồ nhìn không bị rối, mỗi dây phải thấy rõ nối từ khoá ngoại nào tới khoá chính nào, và dây phải dính chặt vào đúng ô cột. **Chỉ sửa dây — không đụng bảng, cột, quan hệ hay bản số.**
+
+**Chẩn đoán bản cũ.** Về mặt cấu trúc bản cũ đã đúng: cả 50 cạnh đều neo vào ô hàng (`source`/`target` trỏ tới `*-ref-row-*`), không cạnh nào neo vào khung bảng. Vấn đề nằm ở đường đi: **39.816 px dây chạy đè lên nhau ở 71 cặp**. Ví dụ rõ nhất là ba quan hệ Biến Thể Sản Phẩm, Hình Ảnh và Mô Tả Sản Phẩm Tạo Bởi AI cùng trỏ về `Sản Phẩm.Mã sản phẩm`: cả ba chạy trên **đúng một đường dọc** ở mép trái, không cách nào biết dây nào đi đâu.
+
+**Cách làm.** Viết bộ định tuyến trực giao riêng (`erd_route.py`):
+
+- Dựng lưới định tuyến 57 cột × 96 hàng từ mép các bảng cộng khoảng hở 22 px, các làn dọc trong hành lang giữa hai dải bảng, các làn ngang trong khoảng trống theo chiều dọc, cộng lề ngoài của sơ đồ.
+- Đánh dấu mọi đoạn lưới đâm vào thân bảng là **cấm đi**, nên không đường nào có thể xuyên qua bảng.
+- Tìm đường bằng A\* với ba loại chi phí: độ dài, **phạt điểm gãy** (320) để đường ít gấp khúc, **phạt tắc nghẽn** (550) để hai dây không nằm chồng lên nhau, và **phạt cắt ngang** (5000) để tránh giao nhau.
+- Với mỗi cạnh thử cả bốn tổ hợp cạnh ra/vào (trái–trái, trái–phải, phải–trái, phải–phải) rồi chọn đường rẻ nhất, nhờ vậy bảng nhiều quan hệ như Người Dùng nhận dây từ **cả hai phía** thay vì dồn về một bên.
+- **Giới hạn độ vòng**: đường đi không được dài quá 1,9 lần đường thẳng; vượt ngưỡng thì tự hạ dần mức phạt cho riêng cạnh đó để rút ngắn lại. Không có giới hạn này, bộ định tuyến sẵn sàng cho một dây đi vòng gấp 4 lần chỉ để né một chỗ cắt.
+- Chạy 6 vòng gỡ ra định tuyến lại: mỗi vòng tháo từng dây rồi tìm lại đường trong bối cảnh các dây còn lại, để những dây định tuyến sớm không chiếm hết làn tốt.
+
+Đã dò 33 tổ hợp tham số, chọn tổ hợp cho kết quả cân bằng nhất.
+
+**Kết quả**
+
+| Chỉ tiêu | Trước | Sau | |
+|---|---|---|---|
+| Dây đâm qua bảng khác | 0 | **0** | giữ |
+| Chỗ cắt nhau | 56 | **44** | ↓ 21% |
+| Dây chồng lên nhau | 39.816 px (71 cặp) | **3.227 px (28 cặp)** | ↓ 92% |
+| Điểm gãy | 188 | 202 | ↑ 7% |
+| Tổng chiều dài | 68.960 | 80.172 | ↑ 16% |
+| Đường vòng xa nhất | ×1,7 | **×1,7** | giữ |
+
+Đánh đổi: đường dài thêm 16% và nhiều hơn 14 điểm gãy, để đổi lấy việc **gần như không còn dây nào chạy đè lên dây khác** — đây chính là nguyên nhân gây rối mà bạn nêu.
+
+Lưu ý về cách đo: chỉ số "dây chồng" tách riêng hai loại. Nhiều khoá ngoại cùng trỏ về một ô khoá chính thì đoạn cuối tất yếu trùng nhau — đó là hình rẽ nhánh bình thường, không tính là lỗi. Con số nêu trên chỉ đếm **dây không liên quan chạy đè lên nhau**.
+
+**Kiểm tra bàn giao** (`erd_validate.py`, toàn bộ đều đạt)
+
+```
+LƯỢC ĐỒ      36 bảng · 321 cột · tên, vị trí, kích thước, danh sách cột giữ nguyên
+QUAN HỆ      50 quan hệ · không thêm, không xoá · id cạnh giữ nguyên · bản số giữ nguyên
+NEO          50/50 source trỏ vào ô cột FK · 50/50 target trỏ vào ô cột PK
+             0 cạnh neo vào khung bảng · 50/50 có điểm ra/vào cố định tại TÂM hàng
+ĐỊNH TUYẾN   50/50 dùng orthogonalEdgeStyle · 1 kiểu dáng duy nhất
+             252 đoạn, 0 đoạn xiên · 0 dây đâm qua bảng · 0 vi phạm khoảng hở 14 px
+```
+
+Vì `source`/`target` vẫn trỏ tới ô cột chứ không phải toạ độ cố định, **kéo bảng trong draw.io thì dây vẫn dính đúng ô**; chỉ các điểm gãy trung gian cần chỉnh lại, đúng như bản chất của waypoint.
+
+**Kéo theo:** Hình 4.1 trong báo cáo lấy trực tiếp từ `erd.drawio` nên đã xuất lại và dựng lại tệp Word cùng PDF. Bảy hình nhóm 4.2 – 4.8 do bộ vẽ riêng sinh ra, không phụ thuộc phần định tuyến này nên giữ nguyên.
+
+**Bản sao lưu trước khi sửa:** `erd.before-edge-cleanup.drawio`.
+
 ---
 
 ## 4. Kết quả sáu vòng kiểm tra
@@ -146,18 +223,19 @@ Kiểm tra tự động trên bản PDF, **chỉ tính phần thân bài** (bỏ
 
 ```
 Hình: 80 mục · chương 3: 8, chương 4: 72 · liên tục, không trùng, không nhảy số ✅
-Bảng: 36 mục · chương 1: 2, 2: 1, 3: 14, 4: 2, 5: 12, 6: 3, 7: 2 · ✅
-Số trang trong mục lục / danh mục hình / danh mục bảng: 280/280 mục khớp trang thật ✅
+Bảng: 37 mục · chương 1: 2, 2: 1, 3: 14, 4: 2, 5: 12, 6: 3, 7: 3 · ✅
+Chú thích mồ côi (không kèm hình/bảng): 0 ✅
+Số trang trong mục lục / danh mục hình / danh mục bảng: 281/281 mục khớp trang thật ✅
 Chuỗi "Error! Reference source not found": 0 ✅
 ```
 
 ### Vòng 5 — Bố cục trực quan ✅
 
-Render `soffice --headless --convert-to pdf` rồi `pdftoppm` toàn bộ **161 trang**, xem từng trang qua 5 bảng contact sheet.
+Render `soffice --headless --convert-to pdf` rồi `pdftoppm` toàn bộ **163 trang**, xem từng trang qua 5 bảng contact sheet.
 
 | Kiểm tra | Kết quả |
 |---|---|
-| Chữ vượt ra ngoài lề | **0/161 trang** (đo bằng `pdftotext -bbox`, so với khung 3/2/2,5/2,5 cm) |
+| Chữ vượt ra ngoài lề | **0/163 trang** (đo bằng `pdftotext -bbox`, so với khung 3/2/2,5/2,5 cm) |
 | Trang trắng | **0** |
 | Ảnh vượt vùng nội dung | 0 — ảnh rộng nhất 24,7 cm (trang ngang), cao nhất 20,0 cm |
 | Bảng vượt lề | 0 — 5 bảng của bản gốc rộng 17,2 cm đã thu về 16 cm theo tỉ lệ |
@@ -180,10 +258,11 @@ Render `soffice --headless --convert-to pdf` rồi `pdftoppm` toàn bộ **161 t
 DOCX toàn vẹn (zipfile.testzip)      : OK
 Ảnh trong gói                        : 85 tệp
 Ảnh được chèn vào nội dung           : 81
-Bảng                                 : 39
+Bảng                                 : 37
 Section                              : 3 (dọc → ngang cho ERD → dọc)
 Khổ giấy PDF                         : 595,3 × 841,9 pt = A4 ✅
 Trang ngang                          : trang 55, đúng 841,9 × 595,3 pt ✅
+Chú thích mồ côi                     : 0
 Placeholder / khung rỗng còn lại     : 0
 Bí mật, khoá API, mật khẩu           : 0
 Bản gốc bị ghi đè                    : không
@@ -244,5 +323,7 @@ Bản gốc bị ghi đè                    : không
 | Báo cáo kiểm tra chất lượng | `/home/nhat/Downloads/japano/BAO_CAO_QA.md` |
 | Quy trình đã dùng | `/home/nhat/Downloads/japano/.claude/skills/bao-cao-tot-nghiep/SKILL.md` |
 | Bản gốc (không đổi) | `/home/nhat/Downloads/japano/baocaototnghiep.docx` |
+| Sơ đồ ERD (đã sửa dây) | `/home/nhat/Downloads/japano/erd.drawio` |
+| Sao lưu ERD trước khi sửa dây | `/home/nhat/Downloads/japano/erd.before-edge-cleanup.drawio` |
 
 **Tệp trung gian** (giữ lại để dựng lại khi cần) nằm ở `~/japano-baocao-work/`: `build_report.py`, `docx_lib.py`, `content.py`, `content_admin.py`, `make_diagrams.py`, `make_deploy.py`, `erd_group_svg.py`, `pass2.sh`, thư mục `diagrams/` (11 sơ đồ SVG + PNG) và `shots/` (19 ảnh chụp cổng quản trị).

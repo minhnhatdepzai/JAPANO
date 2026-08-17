@@ -23,7 +23,7 @@ export default function Culture() {
         <LinearGradient colors={['rgba(26,20,16,0.35)','rgba(26,20,16,0.65)']} style={StyleSheet.absoluteFill} />
         <View style={{ position:'absolute', top:8, left:0, right:0 }}><Header /></View>
         <View style={{ position:'absolute', left:18, bottom:16 }}>
-          <Text style={{ fontFamily:F.displaySb, letterSpacing:4, fontSize:11, color:'#f0d9b6' }}>VĂN HOÁ</Text>
+          <Text style={{ fontFamily:F.displaySb, letterSpacing:4, fontSize:11, color:'rgba(255,255,255,0.72)' }}>VĂN HOÁ</Text>
           <Text style={{ fontFamily:F.displayX, fontSize:28, color:'#fff', marginTop:4 }}>Tinh thần Nhật Bản</Text>
         </View>
       </View>
@@ -34,7 +34,7 @@ export default function Culture() {
         <Block kanji="" title="Khoảng lặng và tối giản" text="Ít hơn nhưng chất hơn. Mua đúng vài món phối được nhiều cách — tiết kiệm mà vẫn phong cách." />
         <Block kanji="" title="Tinh thần người thợ" text="Từng đường kim của người thợ. JAPANO chọn đối tác may đo kỹ lưỡng, ưu tiên độ bền và sự tử tế với người mặc." />
         <View style={st.cta}>
-          <Text style={{ fontFamily:F.displaySb, color:'#f0d9b6', letterSpacing:3, fontSize:11 }}>PHONG CÁCH CÁCH TÂN</Text>
+          <Text style={{ fontFamily:F.displaySb, color:'rgba(255,255,255,0.72)', letterSpacing:3, fontSize:11 }}>PHONG CÁCH CÁCH TÂN</Text>
           <Text style={{ fontFamily:F.displayX, color:'#fff', fontSize:19, marginTop:6, marginBottom:10 }}>Đổi mới phong cách hôm nay</Text>
           <Btn label="Khám phá bộ sưu tập Nhật" onPress={()=>router.push('/(tabs)/products')} />
         </View>

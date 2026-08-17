@@ -164,7 +164,8 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
     return removed;
   }
 
-  api.get('/japan-spots/admin', async (req, res) => {
+  // Hàng chờ kiểm duyệt nội dung cộng đồng — chỉ quản trị viên.
+  api.get('/japan-spots/admin', requireAdmin, async (req, res) => {
     try {
       const [reviews, suggestions] = await Promise.all([
         loadSpotCollection('japanSpotReviews', 'japanSpotReviews'),
@@ -269,7 +270,9 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
   });
 
   // ---- Admin: công cụ thử bộ lọc kiểm duyệt AI (không lưu, không học) ---------
-  api.post('/moderation/test', async (req, res) => {
+  // Công cụ thử bộ kiểm duyệt: gọi thẳng mô hình ngôn ngữ nên vừa tốn tài nguyên
+  // vừa là công cụ nội bộ.
+  api.post('/moderation/test', requireAdmin, async (req, res) => {
     try {
       const text = String(req.body?.text || '');
       if (!text.trim()) throw httpError(400, 'Nhập nội dung cần kiểm tra.');

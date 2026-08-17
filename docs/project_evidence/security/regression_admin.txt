@@ -1,0 +1,7 @@
+=== HỒI QUY 1: quản trị viên hợp lệ vẫn dùng được bình thường ===
+  GET /reviews/admin           → HTTP 200
+  GET /japan-spots/admin       → HTTP 200
+  GET /state                   → HTTP 200
+  GET /analytics               → HTTP 200
+  GET /admin/live              → HTTP 200
+  GET /payments/PAY-JP240784   → HTTP 200

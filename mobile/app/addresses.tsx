@@ -107,7 +107,7 @@ export default function Addresses() {
             <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>
               {shownProvinces.map(p => (
                 <Pressable key={p.code} style={st.opt} onPress={() => { setDraft(d => ({ ...d, province: p, ward: null })); setProvinceQuery(p.name); setProvinceOpen(false); setWardQuery(''); setWardOpen(true); }}>
-                  <Ionicons name="location" size={14} color={C.shu} />
+                  <Ionicons name="location" size={14} color={C.ink} />
                   <Text style={{ flex: 1, fontFamily: F.body, fontSize: 13, color: C.ink }}>{p.name}</Text>
                 </Pressable>
               ))}
@@ -123,7 +123,7 @@ export default function Addresses() {
             <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>
               {wards.map(item => (
                 <Pressable key={item.code} style={st.opt} onPress={() => { setDraft(d => ({ ...d, ward: item })); setWardQuery(item.name); setWardOpen(false); }}>
-                  <Ionicons name="navigate" size={14} color={C.shu} />
+                  <Ionicons name="navigate" size={14} color={C.ink} />
                   <Text style={{ fontFamily: F.body, fontSize: 13, color: C.ink }}>{item.name}</Text>
                 </Pressable>
               ))}
@@ -146,7 +146,7 @@ export default function Addresses() {
           <Text style={st.emptyText}>Chưa có địa chỉ nào. Thêm một địa chỉ để lần sau thanh toán không cần nhập lại.</Text>
         )}
         {items.map(item => (
-          <View key={item.id} style={[st.card, item.isDefault && { borderColor: C.shu }]}>
+          <View key={item.id} style={[st.card, item.isDefault && { borderColor: C.primary }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontFamily: F.bodyB, fontSize: 14, color: C.ink }}>{item.title}</Text>
               {item.isDefault && <View style={st.badge}><Text style={{ color: '#fff', fontFamily: F.bodyB, fontSize: 10 }}>Mặc định</Text></View>}
@@ -175,13 +175,13 @@ const FieldRow = ({ label, value, onChangeText, placeholder, keyboardType }: { l
 
 const st = StyleSheet.create({
   card: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, marginBottom: 12 },
-  badge: { backgroundColor: C.shu, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
-  action: { fontFamily: F.bodyB, fontSize: 12, color: C.shu },
+  badge: { backgroundColor: C.primary, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
+  action: { fontFamily: F.bodyB, fontSize: 12, color: C.ink },
   emptyText: { fontFamily: F.body, fontSize: 12.5, lineHeight: 19, color: C.muted, marginBottom: 14 },
   lbl: { fontFamily: F.bodyM, color: C.muted, fontSize: 11, marginBottom: 5 },
   input: { minHeight: 48, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', paddingHorizontal: 13, fontFamily: F.body, fontSize: 14, color: C.ink, justifyContent: 'center' },
   suggestInput: { flex: 1, minHeight: 46, fontFamily: F.body, fontSize: 14, color: C.ink, paddingHorizontal: 8 },
   arrow: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
-  dropdown: { maxHeight: 260, borderWidth: 1, borderColor: C.shu, borderTopWidth: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', marginTop: -2, backgroundColor: '#fff' },
+  dropdown: { maxHeight: 260, borderWidth: 1, borderColor: C.primary, borderTopWidth: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', marginTop: -2, backgroundColor: '#fff' },
   opt: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 12, borderTopWidth: 1, borderTopColor: C.hair, backgroundColor: '#fff' },
 });

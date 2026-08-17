@@ -67,7 +67,7 @@ const st = StyleSheet.create({
   q:{ fontFamily:F.bodyM, fontSize:14, color:C.ink, marginTop:10, marginBottom:2 },
   grid:{ flexDirection:'row', flexWrap:'wrap', gap:10, marginVertical:14 },
   opt:{ width:'47%', flexGrow:1, borderWidth:1.5, borderColor:C.line, borderRadius:14, overflow:'hidden', backgroundColor:'#fff' },
-  optSel:{ borderColor:C.shu },
+  optSel:{ borderColor:C.primary },
   optLbl:{ padding:8, fontFamily:F.bodyB, fontSize:12, textAlign:'center', color:C.ink },
   skip:{ textAlign:'center', marginTop:10, fontFamily:F.body, fontSize:12.5, color:C.muted },
 });

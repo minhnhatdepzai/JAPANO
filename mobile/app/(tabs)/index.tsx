@@ -105,7 +105,7 @@ export default function Home() {
             <Text style={{ fontSize:20 }}>🔥</Text>
             <View style={{ flex:1, marginLeft:10 }}>
               <Text style={{ fontFamily:F.bodyB, fontSize:12.5, color:'#fff' }}>Trả lời câu hỏi hôm nay để giữ chuỗi {streak} ngày</Text>
-              <Text style={{ fontFamily:F.body, fontSize:11, color:'#f0d9b6', marginTop:2 }}>Chỉ mất 10 giây — nhận gợi ý đồ Nhật hợp gu hơn</Text>
+              <Text style={{ fontFamily:F.body, fontSize:11, color:'rgba(255,255,255,0.70)', marginTop:2 }}>Chỉ mất 10 giây — nhận gợi ý đồ Nhật hợp gu hơn</Text>
             </View>
             <Streak label={`${streak} 🔥`} />
           </Pressable>
@@ -116,9 +116,9 @@ export default function Home() {
           <SmartImage source={heroImg} style={StyleSheet.absoluteFill as any} recyclingKey="home-hero" />
           <LinearGradient colors={['rgba(26,20,16,0)','rgba(26,20,16,0.75)']} style={StyleSheet.absoluteFill} />
           <View style={{ position:'absolute', left:18, bottom:16, right:18 }}>
-            <Text style={{ fontFamily:F.displaySb, letterSpacing:3, fontSize:10, color:'#f0d9b6' }}>KHÁM PHÁ NHẬT BẢN</Text>
+            <Text style={{ fontFamily:F.displaySb, letterSpacing:3, fontSize:10, color:'rgba(255,255,255,0.70)' }}>KHÁM PHÁ NHẬT BẢN</Text>
             <Text style={{ fontFamily:F.displayX, fontSize:26, color:'#fff', marginTop:4, marginBottom:8 }}>Từ Hokkaido đến{'\n'}Okinawa, đi cùng JAPANO</Text>
-            <Text style={{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'#EDE6DC', marginBottom:10 }} numberOfLines={2}>Địa điểm nổi tiếng, gợi ý chụp ảnh đẹp và câu chuyện từng vùng — có thật, có nguồn kiểm chứng.</Text>
+            <Text style={{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.washi2, marginBottom:10 }} numberOfLines={2}>Địa điểm nổi tiếng, gợi ý chụp ảnh đẹp và câu chuyện từng vùng — có thật, có nguồn kiểm chứng.</Text>
             <Pressable style={st.heroBtn} onPress={()=>router.push('/explore-japan')}>
               <Text style={{ color:'#fff', fontFamily:F.bodyB, fontSize:13 }}>Khám phá →</Text>
             </Pressable>
@@ -155,13 +155,13 @@ export default function Home() {
               <SmartImage source={bySlug('yukata-xanh').images[0]} style={StyleSheet.absoluteFill as any} recyclingKey="home-culture" />
               <LinearGradient colors={['rgba(26,20,16,0.6)','transparent']} start={{x:0,y:0}} end={{x:1,y:0}} style={StyleSheet.absoluteFill} />
               <View style={{ position:'absolute', left:14, top:16 }}>
-                <Text style={{ fontFamily:F.displaySb, letterSpacing:3, fontSize:11, color:'#f0d9b6' }}>PHONG CÁCH CÁCH TÂN</Text>
+                <Text style={{ fontFamily:F.displaySb, letterSpacing:3, fontSize:11, color:'rgba(255,255,255,0.70)' }}>PHONG CÁCH CÁCH TÂN</Text>
                 <Text style={{ fontFamily:F.displayX, fontSize:20, color:'#fff', marginTop:4, maxWidth:200 }}>Đổi mới phong cách theo lối Nhật</Text>
               </View>
             </View>
             <View style={st.cultureBand}>
               <Text style={{ fontFamily:F.body, fontSize:12.5, color:C.ink, flex:1 }}>Tối giản · bền · tinh tế — mặc ít mà chất hơn.</Text>
-              <Text style={{ fontFamily:F.bodyB, color:C.shu, fontSize:12 }}>Tìm hiểu →</Text>
+              <Text style={{ fontFamily:F.bodyB, color:C.ink, fontSize:12 }}>Tìm hiểu →</Text>
             </View>
           </Pressable>
 
@@ -175,7 +175,7 @@ export default function Home() {
             </View>
             <View style={{ flex:1, marginLeft:10 }}>
               <Text style={{ fontFamily:F.bodyB, fontSize:13.5, color:C.ink }} numberOfLines={1}>{outfit?.title||'Bộ đồ đi làm thanh lịch'}</Text>
-              <Text style={{ fontFamily:F.body, fontSize:11.5, color:C.muted, marginTop:2 }}>{outfit?.items.length||3} món · <Text style={{ color:C.shu, fontFamily:F.bodyB }}>{money(outfit?.totalPrice??2290000)}</Text></Text>
+              <Text style={{ fontFamily:F.body, fontSize:11.5, color:C.muted, marginTop:2 }}>{outfit?.items.length||3} món · <Text style={{ color:C.ink, fontFamily:F.bodyB }}>{money(outfit?.totalPrice??2290000)}</Text></Text>
             </View>
             <Pressable style={st.addSet} onPress={()=>{if(requireAuth())(outfit?.items||[]).forEach(i=>addToCart(i.slug));}}><Text style={{ color:'#fff', fontFamily:F.bodyB, fontSize:11 }}>Thêm cả bộ</Text></Pressable>
           </Pressable>
@@ -189,15 +189,15 @@ export default function Home() {
           {/* quick actions */}
           <View style={[st.grid,{ marginTop:16, marginBottom:24 }]}>
             <Pressable style={st.quick} onPress={()=>{if(requireAuth('/camera'))router.push('/camera');}}>
-              <Ionicons name="camera-outline" size={26} color={C.shu} />
+              <Ionicons name="camera-outline" size={26} color={C.ink} />
               <Text style={st.quickT}>Ống kính JAPANO</Text><Text style={st.quickS}>chụp → gợi ý đồ</Text>
             </Pressable>
             <Pressable style={st.quick} onPress={()=>{if(requireAuth('/goals'))router.push('/goals');}}>
-              <Ionicons name="flag-outline" size={26} color={C.shu} />
+              <Ionicons name="flag-outline" size={26} color={C.ink} />
               <Text style={st.quickT}>Mục tiêu</Text><Text style={st.quickS}>mua sắm · sức khoẻ · Nhật Bản</Text>
             </Pressable>
             <Pressable style={st.quick} onPress={()=>router.push('/explore-japan')}>
-              <Ionicons name="compass-outline" size={26} color={C.shu} />
+              <Ionicons name="compass-outline" size={26} color={C.ink} />
               <Text style={st.quickT}>Khám phá Nhật Bản</Text><Text style={st.quickS}>địa điểm · chụp ảnh đẹp</Text>
             </Pressable>
           </View>
@@ -214,9 +214,9 @@ const st = StyleSheet.create({
   countBadge:{ position:'absolute', top:-4, right:-4, minWidth:18, height:18, borderRadius:9, backgroundColor:C.shu, alignItems:'center', justifyContent:'center', paddingHorizontal:4, borderWidth:1.5, borderColor:C.washi },
   countT:{ color:'#fff', fontFamily:F.bodyX, fontSize:10 },
   hero:{ height:222, overflow:'hidden', borderBottomLeftRadius:26, borderBottomRightRadius:26 },
-  heroBtn:{ backgroundColor:C.shu, alignSelf:'flex-start', paddingVertical:8, paddingHorizontal:14, borderRadius:11 },
+  heroBtn:{ backgroundColor:C.primary, alignSelf:'flex-start', paddingVertical:8, paddingHorizontal:14, borderRadius:11 },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
-  chipOn:{ backgroundColor:C.shu, borderColor:C.shu },
+  chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
   culture:{ borderRadius:18, overflow:'hidden', borderWidth:1, borderColor:C.line, marginTop:18 },
   cultureBand:{ flexDirection:'row', alignItems:'center', padding:14, backgroundColor:'rgba(26,20,16,0.03)' },
   look:{ flexDirection:'row', alignItems:'center', padding:10, borderWidth:1, borderColor:C.line, borderRadius:14, backgroundColor:'#fff' },

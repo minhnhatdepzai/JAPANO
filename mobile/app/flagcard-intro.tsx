@@ -89,7 +89,7 @@ export default function FlagcardIntro() {
 
         {loading && (
           <View style={{ height:420, alignItems:'center', justifyContent:'center' }}>
-            <ActivityIndicator color={C.shu} />
+            <ActivityIndicator color={C.ink} />
           </View>
         )}
 
@@ -137,10 +137,10 @@ const st = StyleSheet.create({
   close:{ position:'absolute', right:16, top:14, zIndex:10, width:32, height:32, borderRadius:16, backgroundColor:'#fff', alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:C.line },
 
   slide:{ flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:30 },
-  introEyebrow:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:1.5, color:C.shu, marginTop:12 },
+  introEyebrow:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:1.5, color:C.ink, marginTop:12 },
   introTitle:{ fontFamily:F.display, fontSize:21, lineHeight:29, color:C.sumi, textAlign:'center', marginTop:8 },
   introSub:{ fontFamily:F.body, fontSize:12.5, lineHeight:20, color:C.muted, textAlign:'center', marginTop:12, maxWidth:290 },
-  introHint:{ fontFamily:F.bodyB, fontSize:11.5, color:C.shu, marginTop:16 },
+  introHint:{ fontFamily:F.bodyB, fontSize:11.5, color:C.ink, marginTop:16 },
 
   glyphBig:{ width:88, height:88, borderRadius:24, alignItems:'center', justifyContent:'center' },
   ownedTag:{ flexDirection:'row', alignItems:'center', gap:5, backgroundColor:'#E4EEE6', borderRadius:999, paddingVertical:4, paddingHorizontal:11, marginTop:12 },
@@ -150,15 +150,15 @@ const st = StyleSheet.create({
   cardJp:{ fontFamily:F.displaySb, fontSize:13, color:C.kin, marginTop:4 },
   cardSummary:{ fontFamily:F.body, fontSize:12.5, lineHeight:20, color:C.ink, textAlign:'center', marginTop:12, maxWidth:290 },
 
-  cta:{ backgroundColor:C.shu, borderRadius:14, paddingVertical:13, paddingHorizontal:26, marginTop:20 },
+  cta:{ backgroundColor:C.primary, borderRadius:14, paddingVertical:13, paddingHorizontal:26, marginTop:20 },
 
   dots:{ flexDirection:'row', gap:6, justifyContent:'center', marginTop:8 },
   dot:{ width:6, height:6, borderRadius:3, backgroundColor:C.hair },
-  dotOn:{ width:18, backgroundColor:C.shu },
+  dotOn:{ width:18, backgroundColor:C.primary },
 
   nav:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:20, marginTop:16 },
   navBtn:{ flexDirection:'row', alignItems:'center', gap:2, paddingVertical:10, paddingHorizontal:6 },
   navBtnDisabled:{ opacity:0.5 },
   navT:{ fontFamily:F.bodyM, fontSize:13, color:C.ink },
-  navBtnPrimary:{ flexDirection:'row', alignItems:'center', gap:4, backgroundColor:C.shu, borderRadius:14, paddingVertical:11, paddingHorizontal:20 },
+  navBtnPrimary:{ flexDirection:'row', alignItems:'center', gap:4, backgroundColor:C.primary, borderRadius:14, paddingVertical:11, paddingHorizontal:20 },
 });

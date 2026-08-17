@@ -1,0 +1,220 @@
+TAP version 13
+# Subtest: ba lô đeo sau lưng, không phải cầm tay
+ok 1 - ba lô đeo sau lưng, không phải cầm tay
+  ---
+  duration_ms: 0.820185
+  type: 'test'
+  ...
+# Subtest: túi xách vẫn là món cầm tay, không nhầm sang ba lô
+ok 2 - túi xách vẫn là món cầm tay, không nhầm sang ba lô
+  ---
+  duration_ms: 0.555162
+  type: 'test'
+  ...
+# Subtest: đai obi thắt ngang eo
+ok 3 - đai obi thắt ngang eo
+  ---
+  duration_ms: 0.30168
+  type: 'test'
+  ...
+# Subtest: món cầm tay: quạt, khăn, gấu bông, kiếm gỗ
+ok 4 - món cầm tay: quạt, khăn, gấu bông, kiếm gỗ
+  ---
+  duration_ms: 0.184492
+  type: 'test'
+  ...
+# Subtest: món đội/đeo trên đầu tách làm ba loại neo khác nhau
+ok 5 - món đội/đeo trên đầu tách làm ba loại neo khác nhau
+  ---
+  duration_ms: 0.098614
+  type: 'test'
+  ...
+# Subtest: món đi vào chân
+ok 6 - món đi vào chân
+  ---
+  duration_ms: 0.116315
+  type: 'test'
+  ...
+# Subtest: dù đi đường riêng vì phải dựng đứng và che đầu
+ok 7 - dù đi đường riêng vì phải dựng đứng và che đầu
+  ---
+  duration_ms: 0.109305
+  type: 'test'
+  ...
+# Subtest: mọi phụ kiện trong catalog đều có điểm neo cụ thể
+ok 8 - mọi phụ kiện trong catalog đều có điểm neo cụ thể
+  ---
+  duration_ms: 5.338176
+  type: 'test'
+  ...
+# Subtest: từng phụ kiện thật trong catalog gắn đúng bộ phận
+ok 9 - từng phụ kiện thật trong catalog gắn đúng bộ phận
+  ---
+  duration_ms: 0.396295
+  type: 'test'
+  ...
+# Subtest: analytics trả đủ chuỗi thời gian và ba model dự báo hữu hạn
+ok 10 - analytics trả đủ chuỗi thời gian và ba model dự báo hữu hạn
+  ---
+  duration_ms: 17.726554
+  type: 'test'
+  ...
+# Subtest: wishlist bị xoá không còn được tính là tín hiệu nhu cầu
+ok 11 - wishlist bị xoá không còn được tính là tín hiệu nhu cầu
+  ---
+  duration_ms: 0.221219
+  type: 'test'
+  ...
+# Subtest: market basket tính support, confidence và lift cho cặp mua lặp lại
+ok 12 - market basket tính support, confidence và lift cho cặp mua lặp lại
+  ---
+  duration_ms: 0.158663
+  type: 'test'
+  ...
+# Subtest: hybrid recommender chỉ trả slug hợp lệ, không trùng và có model provenance
+ok 13 - hybrid recommender chỉ trả slug hợp lệ, không trùng và có model provenance
+  ---
+  duration_ms: 14.667495
+  type: 'test'
+  ...
+# Subtest: cache recommendation cô lập giữa các state khác nhau
+ok 14 - cache recommendation cô lập giữa các state khác nhau
+  ---
+  duration_ms: 0.638991
+  type: 'test'
+  ...
+# Subtest: autoregressive next-item expert học chuyển tiếp A sang B theo session
+ok 15 - autoregressive next-item expert học chuyển tiếp A sang B theo session
+  ---
+  duration_ms: 0.283472
+  type: 'test'
+  ...
+# Subtest: diagnostics chỉ bật ranker khi có causal training pair thật và ghi nhận feedback âm
+ok 16 - diagnostics chỉ bật ranker khi có causal training pair thật và ghi nhận feedback âm
+  ---
+  duration_ms: 0.378943
+  type: 'test'
+  ...
+# Subtest: botchat trả provenance của mLSTM memory và sparse MoE router
+ok 17 - botchat trả provenance của mLSTM memory và sparse MoE router
+  ---
+  duration_ms: 5.857664
+  type: 'test'
+  ...
+# Subtest: analytics tổng hợp telemetry botchat và diagnostics model thật
+ok 18 - analytics tổng hợp telemetry botchat và diagnostics model thật
+  ---
+  duration_ms: 5.074992
+  type: 'test'
+  ...
+# Subtest: tín hiệu tìm kiếm và thử đồ được đưa vào phân tích nhu cầu và sức khỏe mô hình gợi ý
+ok 19 - tín hiệu tìm kiếm và thử đồ được đưa vào phân tích nhu cầu và sức khỏe mô hình gợi ý
+  ---
+  duration_ms: 2.084677
+  type: 'test'
+  ...
+# Subtest: search intelligence gộp đúng từ khoá hot và từ khoá không ra kết quả
+ok 20 - search intelligence gộp đúng từ khoá hot và từ khoá không ra kết quả
+  ---
+  duration_ms: 0.181933
+  type: 'test'
+  ...
+# Subtest: search intelligence không vỡ khi chưa có log tìm kiếm nào
+ok 21 - search intelligence không vỡ khi chưa có log tìm kiếm nào
+  ---
+  duration_ms: 0.318297
+  type: 'test'
+  ...
+# Subtest: mô tả ảnh fallback luôn bám đúng tên sản phẩm và không bịa chất liệu
+ok 22 - mô tả ảnh fallback luôn bám đúng tên sản phẩm và không bịa chất liệu
+  ---
+  duration_ms: 1.752934
+  type: 'test'
+  ...
+# Subtest: mô tả Qwen giữ nhãn thị giác sau khi chuẩn hóa và đọc lại từ cache
+ok 23 - mô tả Qwen giữ nhãn thị giác sau khi chuẩn hóa và đọc lại từ cache
+  ---
+  duration_ms: 1.936103
+  type: 'test'
+  ...
+# Subtest: mục tiêu kết hợp quỹ mua sắm và lộ trình giảm cân có giới hạn an toàn
+ok 24 - mục tiêu kết hợp quỹ mua sắm và lộ trình giảm cân có giới hạn an toàn
+  ---
+  duration_ms: 1.488505
+  type: 'test'
+  ...
+# Subtest: phụ kiện được định tuyến tới đúng điểm neo pose
+ok 25 - phụ kiện được định tuyến tới đúng điểm neo pose
+  ---
+  duration_ms: 0.448736
+  type: 'test'
+  ...
+# Subtest: Flagcard chỉ cấp một lần cho đơn thành công từ 5 triệu
+ok 26 - Flagcard chỉ cấp một lần cho đơn thành công từ 5 triệu
+  ---
+  duration_ms: 0.54701
+  type: 'test'
+  ...
+# Subtest: đủ 7 Flagcard cấp đúng một voucher cá nhân 50% toàn sản phẩm
+ok 27 - đủ 7 Flagcard cấp đúng một voucher cá nhân 50% toàn sản phẩm
+  ---
+  duration_ms: 0.60056
+  type: 'test'
+  ...
+# Subtest: kiểm duyệt chặn câu công kích cố tình chen ký tự và bỏ dấu
+ok 28 - kiểm duyệt chặn câu công kích cố tình chen ký tự và bỏ dấu
+  ---
+  duration_ms: 0.504853
+  type: 'test'
+  ...
+# Subtest: kiểm duyệt không chặn phê bình sản phẩm trung thực
+ok 29 - kiểm duyệt không chặn phê bình sản phẩm trung thực
+  ---
+  duration_ms: 0.215357
+  type: 'test'
+  ...
+# Subtest: danh mục địa chỉ có đủ 34 tỉnh và 3321 phường xã
+ok 30 - danh mục địa chỉ có đủ 34 tỉnh và 3321 phường xã
+  ---
+  duration_ms: 1.289154
+  type: 'test'
+  ...
+# [15:54:34] [33mWARN[39m: [36mKhông gọi được embedding service — bỏ qua semantic matching, các tín hiệu khác vẫn hoạt động bình thường.[39m
+#     err: {
+#       "type": "TypeError",
+#       "message": "fetch failed: connect ECONNREFUSED 127.0.0.1:7865",
+#       "stack":
+#           TypeError: fetch failed
+#               at node:internal/deps/undici/undici:15141:13
+#               at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+#               at async fetchWithTimeout (/home/nhat/Downloads/japano/backend/lib/httpFetch.js:13:16)
+#               at async embedTexts (/home/nhat/Downloads/japano/backend/lib/embeddings.js:58:20)
+#               at async refreshProductEmbeddings (/home/nhat/Downloads/japano/backend/lib/embeddings.js:98:21)
+#           caused by: Error: connect ECONNREFUSED 127.0.0.1:7865
+#               at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1638:16)
+#     }
+# Subtest: 200 lượt update() đồng thời không làm mất một cập nhật nào
+ok 31 - 200 lượt update() đồng thời không làm mất một cập nhật nào
+  ---
+  duration_ms: 45.832251
+  type: 'test'
+  ...
+# Subtest: kiểm-tra-rồi-trừ tồn kho không bán vượt số lượng còn lại
+ok 32 - kiểm-tra-rồi-trừ tồn kho không bán vượt số lượng còn lại
+  ---
+  duration_ms: 3.799241
+  type: 'test'
+  ...
+# Subtest: mutator ném lỗi giữa chừng không để lại thay đổi dở dang
+ok 33 - mutator ném lỗi giữa chừng không để lại thay đổi dở dang
+  ---
+  duration_ms: 0.605663
+  type: 'test'
+  ...
+# Subtest: hoàn kho là thao tác chỉ có tác dụng một lần (idempotent)
+ok 34 - hoàn kho là thao tác chỉ có tác dụng một lần (idempotent)
+  ---
+  duration_ms: 0.50311
+  type: 'test'
+  ...
+===DONE===

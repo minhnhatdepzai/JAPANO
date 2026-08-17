@@ -41,9 +41,9 @@ const Item = ({ it,canReview,onReview,reviewed,vipDiscount }:{ it:ApiOrder['item
       <View style={{ flex:1, marginLeft:12 }}>
         <Text style={{ fontFamily:F.bodyB, fontSize:13, color:C.ink }}>{it.name}</Text>
         <Text style={{ fontFamily:F.body, fontSize:11.5, color:C.muted }}>{it.colorName} · {it.size} · x{it.qty}</Text>
-        {!!vipDiscount&&<View style={st.vipItemBadge}><Ionicons name="diamond" size={10} color="#8A6518"/><Text style={st.vipItemBadgeT}>VIP -10% cho 1 món · tiết kiệm {money(vipDiscount)}</Text></View>}
+        {!!vipDiscount&&<View style={st.vipItemBadge}><Ionicons name="diamond" size={10} color={C.onPrimary}/><Text style={st.vipItemBadgeT}>VIP -10% cho 1 món · tiết kiệm {money(vipDiscount)}</Text></View>}
       </View>
-      <View style={{alignItems:'flex-end',gap:7}}><Text style={{ fontFamily:F.bodyX, fontSize:13, color:C.shu }}>{money(it.price*it.qty)}</Text>{(canReview||reviewed)&&<Pressable style={reviewed?st.reviewedBtn:st.reviewBtn} disabled={reviewed} onPress={onReview}><Text style={reviewed?st.reviewedBtnT:st.reviewBtnT}>{reviewed?'✓ Đã đánh giá':'Đánh giá'}</Text></Pressable>}</View>
+      <View style={{alignItems:'flex-end',gap:7}}><Text style={{ fontFamily:F.bodyX, fontSize:13, color:C.ink }}>{money(it.price*it.qty)}</Text>{(canReview||reviewed)&&<Pressable style={reviewed?st.reviewedBtn:st.reviewBtn} disabled={reviewed} onPress={onReview}><Text style={reviewed?st.reviewedBtnT:st.reviewBtnT}>{reviewed?'✓ Đã đánh giá':'Đánh giá'}</Text></Pressable>}</View>
     </View>
   );
 };
@@ -119,7 +119,7 @@ export default function OrderDetail() {
   if (order === undefined) {
     return (
       <Screen><Header title={`Đơn #${id||''}`} />
-        <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}><ActivityIndicator color={C.shu} /></View>
+        <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}><ActivityIndicator color={C.ink} /></View>
       </Screen>
     );
   }
@@ -232,8 +232,8 @@ export default function OrderDetail() {
     <Screen>
       <Header title={`Đơn #${order.code}`} />
       <ScrollView contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>void load()} tintColor={C.shu} colors={[C.shu]} />}>
-        <View style={[st.track, (cancelled||returned) && { backgroundColor:returned?'#6D28D9':C.danger }]}> 
-          <Text style={{ fontFamily:F.displaySb, color:'#f0d9b6', fontSize:11, letterSpacing:2 }}>TRẠNG THÁI · {STAGE[order.status]||''}</Text>
+        <View style={[st.track, (cancelled||returned) && { backgroundColor:returned?C.ink:C.danger }]}> 
+          <Text style={{ fontFamily:F.displaySb, color:'rgba(255,255,255,0.72)', fontSize:11, letterSpacing:2 }}>TRẠNG THÁI · {STAGE[order.status]||''}</Text>
           <Text style={{ fontFamily:F.bodyX, fontSize:15, color:'#fff', marginTop:4 }}>
             {cancelled ? 'Đơn hàng đã bị huỷ'
               : returned ? 'Đã trả hàng và hoàn tiền'
@@ -242,7 +242,7 @@ export default function OrderDetail() {
               : `Mã đơn ${order.code}`}
           </Text>
           <Pressable style={st.policyLink} onPress={()=>router.push('/policy' as any)} hitSlop={6}>
-            <Ionicons name="shield-checkmark-outline" size={12} color="#f0d9b6" />
+            <Ionicons name="shield-checkmark-outline" size={12} color={'rgba(255,255,255,0.72)'} />
             <Text style={st.policyLinkT}>Xem quy trình giao – nhận – đổi/trả</Text>
           </Pressable>
           {!cancelled&&!returned && (
@@ -296,7 +296,7 @@ export default function OrderDetail() {
         {returnRequests.map(request=>(
           <View key={request.id} style={st.returnCard}>
             <View style={{flexDirection:'row',alignItems:'center',gap:9}}>
-              <Ionicons name={request.kind==='cancel'?'close-circle-outline':'return-down-back'} size={22} color="#6D28D9" />
+              <Ionicons name={request.kind==='cancel'?'close-circle-outline':'return-down-back'} size={22} color={C.ink} />
               <View style={{flex:1}}>
                 <Text style={st.returnTitle}>{request.kind==='cancel'?'Yêu cầu huỷ đơn':request.coversWholeOrder?'Trả toàn bộ đơn':'Trả một phần đơn'} · {request.code}</Text>
                 <Text style={st.returnStatus}>{returnStatusLabel(request.status,request.kind)}</Text>
@@ -312,7 +312,7 @@ export default function OrderDetail() {
             <Text style={st.returnMeta}>Lý do: {request.reason}</Text>
             {request.kind==='return'&&(
               <>
-                <Text style={st.returnMeta}>Số tiền hoàn dự kiến: <Text style={{fontFamily:F.bodyX,color:'#6D28D9'}}>{money(request.amount)}</Text></Text>
+                <Text style={st.returnMeta}>Số tiền hoàn dự kiến: <Text style={{fontFamily:F.bodyX,color:C.ink}}>{money(request.amount)}</Text></Text>
                 {!!request.refundBreakdown&&(
                   <Text style={st.returnBreakdown}>
                     Tiền hàng {money(request.refundBreakdown.itemsValue)}
@@ -352,7 +352,7 @@ export default function OrderDetail() {
           {!!otherDiscount&&<Row k="Giảm giá khác" v={`-${money(otherDiscount)}`} shu />}
           <Row k="Phí vận chuyển" v={money(order.ship)} />
           <View style={{ height:1, backgroundColor:C.hair, marginVertical:6 }} />
-          <View style={{ flexDirection:'row', justifyContent:'space-between' }}><Text style={{ fontFamily:F.bodyX }}>Tổng</Text><Text style={{ fontFamily:F.bodyX, color:C.shu }}>{money(order.total)}</Text></View>
+          <View style={{ flexDirection:'row', justifyContent:'space-between' }}><Text style={{ fontFamily:F.bodyX }}>Tổng</Text><Text style={{ fontFamily:F.bodyX, color:C.ink }}>{money(order.total)}</Text></View>
         </View>
       </ScrollView>
       <Modal visible={returnOpen} transparent animationType="fade" onRequestClose={()=>setReturnOpen(false)}>
@@ -456,7 +456,7 @@ function ShipBackCard({request,onDone}:{request:ReturnRequest;onDone:()=>void}){
   return (
     <View style={st.shipBackCard}>
       <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
-        <Ionicons name="send-outline" size={19} color="#6D28D9" />
+        <Ionicons name="send-outline" size={19} color={C.ink} />
         <Text style={st.returnTitle}>Bước tiếp theo: gửi hàng về cửa hàng</Text>
       </View>
       <Text style={st.returnMeta}>Gửi {request.items?.map(item=>`${item.name} ×${item.qty}`).join(', ')} qua đơn vị vận chuyển{deadline?` trước ngày ${deadline}`:''}, rồi nhập mã vận đơn bên dưới để cửa hàng theo dõi.</Text>
@@ -470,52 +470,52 @@ function ShipBackCard({request,onDone}:{request:ReturnRequest;onDone:()=>void}){
 const st = StyleSheet.create({
   track:{ backgroundColor:C.ai, borderRadius:14, padding:14, marginTop:4 },
   policyLink:{ flexDirection:'row', alignItems:'center', gap:5, marginTop:9 },
-  policyLinkT:{ fontFamily:F.bodyB, fontSize:10.5, color:'#f0d9b6', textDecorationLine:'underline' },
+  policyLinkT:{ fontFamily:F.bodyB, fontSize:10.5, color:'rgba(255,255,255,0.72)', textDecorationLine:'underline' },
   confirmCard:{ backgroundColor:'#F0F7F0', borderWidth:1, borderColor:'#CBE3CC', borderRadius:14, padding:13, marginTop:12 },
   confirmTitle:{ fontFamily:F.bodyB, fontSize:13, color:'#1F6B44' },
   returnItems:{ marginTop:8, gap:2 },
   returnItemT:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.ink },
   returnBreakdown:{ fontFamily:F.body, fontSize:10.5, lineHeight:16, color:C.muted, marginTop:4 },
   returnExhausted:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.muted, textAlign:'center', marginTop:12 },
-  withdrawBtn:{ alignSelf:'flex-start', marginTop:9, borderWidth:1, borderColor:'#D9CFFF', borderRadius:9, paddingVertical:6, paddingHorizontal:11 },
-  withdrawBtnT:{ fontFamily:F.bodyB, fontSize:10.5, color:'#6D28D9' },
-  shipBackCard:{ backgroundColor:'#fff', borderWidth:1.5, borderColor:'#D9CFFF', borderRadius:14, padding:13, marginTop:12 },
+  withdrawBtn:{ alignSelf:'flex-start', marginTop:9, borderWidth:1, borderColor:C.line, borderRadius:9, paddingVertical:6, paddingHorizontal:11 },
+  withdrawBtnT:{ fontFamily:F.bodyB, fontSize:10.5, color:C.ink },
+  shipBackCard:{ backgroundColor:'#fff', borderWidth:1.5, borderColor:C.line, borderRadius:14, padding:13, marginTop:12 },
   shipInput:{ borderWidth:1, borderColor:C.line, borderRadius:11, paddingHorizontal:11, paddingVertical:10, marginTop:9, fontFamily:F.bodyM, fontSize:12.5, color:C.ink, backgroundColor:'#fff' },
   pickRow:{ flexDirection:'row', alignItems:'center', gap:8, borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:8, backgroundColor:'#fff' },
-  pickRowOn:{ borderColor:'#6D28D9', backgroundColor:'#F7F4FF' },
+  pickRowOn:{ borderColor:C.ink, backgroundColor:C.washi2 },
   pickName:{ fontFamily:F.bodyB, fontSize:12, color:C.ink },
   pickMeta:{ fontFamily:F.body, fontSize:10.5, lineHeight:15, color:C.muted, marginTop:2 },
   stepper:{ flexDirection:'row', alignItems:'center', gap:4, borderWidth:1, borderColor:C.line, borderRadius:9, paddingHorizontal:4, paddingVertical:2 },
   stepBtn:{ width:24, height:24, alignItems:'center', justifyContent:'center' },
   stepValue:{ minWidth:18, textAlign:'center', fontFamily:F.bodyX, fontSize:13, color:C.ink },
   pickMax:{ fontFamily:F.body, fontSize:11, color:C.muted },
-  estimateBox:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', backgroundColor:'#F2EEFF', borderRadius:11, padding:11, marginTop:4 },
-  estimateLabel:{ fontFamily:F.bodyB, fontSize:12, color:'#4C1D95' },
-  estimateValue:{ fontFamily:F.displayX, fontSize:18, color:'#6D28D9' },
+  estimateBox:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', backgroundColor:C.washi2, borderRadius:11, padding:11, marginTop:4 },
+  estimateLabel:{ fontFamily:F.bodyB, fontSize:12, color:C.ink },
+  estimateValue:{ fontFamily:F.displayX, fontSize:18, color:C.ink },
   estimateNote:{ fontFamily:F.body, fontSize:10.5, lineHeight:16, color:C.muted, marginTop:6 },
   feeNote:{ fontFamily:F.bodyM, fontSize:10.5, lineHeight:16, color:C.muted, marginTop:2, marginBottom:4 },
-  policyMore:{ fontFamily:F.bodyB, fontSize:10.5, color:C.shu, marginTop:7 },
+  policyMore:{ fontFamily:F.bodyB, fontSize:10.5, color:C.ink, marginTop:7 },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:16, marginBottom:8 },
   item:{ flexDirection:'row', alignItems:'center', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:10 },
   itemFallback:{ width:56, height:68, borderRadius:9 },
-  vipItemBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:4,backgroundColor:'#F7E8B8',borderRadius:999,paddingHorizontal:7,paddingVertical:3,marginTop:5},vipItemBadgeT:{fontFamily:F.bodyB,fontSize:9,color:'#8A6518'},
+  vipItemBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:4,backgroundColor:C.primary,borderRadius:999,paddingHorizontal:7,paddingVertical:3,marginTop:5},vipItemBadgeT:{fontFamily:F.bodyB,fontSize:9,color:C.ink},
   addr:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:12 },
   summary:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:12, marginTop:12 },
-  returnCard:{backgroundColor:'#F2EEFF',borderWidth:1,borderColor:'#D9CFFF',borderRadius:14,padding:13,marginTop:12},
+  returnCard:{backgroundColor:C.washi2,borderWidth:1,borderColor:C.line,borderRadius:14,padding:13,marginTop:12},
   returnOffer:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:14,padding:13,marginTop:12},
-  returnTitle:{fontFamily:F.bodyB,fontSize:13,color:C.ink},returnStatus:{fontFamily:F.bodyB,fontSize:11,color:'#6D28D9',marginTop:2},
-  returnMeta:{fontFamily:F.body,fontSize:11.5,lineHeight:16,color:C.muted,marginTop:6},returnCode:{fontFamily:F.bodyM,fontSize:10.5,color:'#6D28D9',marginTop:6},
-  returnBtn:{backgroundColor:'#6D28D9',borderRadius:10,paddingVertical:9,paddingHorizontal:11},returnBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11},
+  returnTitle:{fontFamily:F.bodyB,fontSize:13,color:C.ink},returnStatus:{fontFamily:F.bodyB,fontSize:11,color:C.ink,marginTop:2},
+  returnMeta:{fontFamily:F.body,fontSize:11.5,lineHeight:16,color:C.muted,marginTop:6},returnCode:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink,marginTop:6},
+  returnBtn:{backgroundColor:C.ink,borderRadius:10,paddingVertical:9,paddingHorizontal:11},returnBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11},
   modalShade:{flex:1,backgroundColor:'rgba(26,20,16,.48)',alignItems:'center',justifyContent:'center',padding:22},modalBox:{width:'100%',maxWidth:430,backgroundColor:C.paper,borderRadius:20,padding:17},
   modalTitle:{fontFamily:F.display,fontSize:18,color:C.sumi},modalSub:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginVertical:10},
-  reason:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginBottom:7,backgroundColor:'#fff'},reasonOn:{borderColor:'#6D28D9',backgroundColor:'#F5F2FF'},
-  radio:{width:17,height:17,borderRadius:9,borderWidth:1.5,borderColor:C.line},radioOn:{borderWidth:5,borderColor:'#6D28D9'},reasonT:{flex:1,fontFamily:F.bodyM,fontSize:12,color:C.ink},
+  reason:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginBottom:7,backgroundColor:'#fff'},reasonOn:{borderColor:C.ink,backgroundColor:'#F5F2FF'},
+  radio:{width:17,height:17,borderRadius:9,borderWidth:1.5,borderColor:C.line},radioOn:{borderWidth:5,borderColor:C.ink},reasonT:{flex:1,fontFamily:F.bodyM,fontSize:12,color:C.ink},
   note:{minHeight:70,textAlignVertical:'top',borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,fontFamily:F.body,fontSize:12,color:C.ink,backgroundColor:'#fff',marginVertical:4},returnError:{fontFamily:F.bodyM,fontSize:11,color:C.danger,marginBottom:7},
-  reviewBtn:{backgroundColor:C.shu,borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewBtnT:{fontFamily:F.bodyB,fontSize:10,color:'#fff'},reviewedBtn:{backgroundColor:'#E8F6EC',borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewedBtnT:{fontFamily:F.bodyB,fontSize:10,color:C.ok},
+  reviewBtn:{backgroundColor:C.primary,borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewBtnT:{fontFamily:F.bodyB,fontSize:10,color:'#fff'},reviewedBtn:{backgroundColor:'#E8F6EC',borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewedBtnT:{fontFamily:F.bodyB,fontSize:10,color:C.ok},
   reviewNotice:{flexDirection:'row',alignItems:'center',gap:8,backgroundColor:'#E8F6EC',borderRadius:11,padding:10},reviewNoticeT:{flex:1,fontFamily:F.bodyM,fontSize:11.5,color:C.ok},stars:{flexDirection:'row',justifyContent:'center',gap:8,marginBottom:10},moderationHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginVertical:8},
   photoLabel:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginTop:6,marginBottom:8},
-  photoThumbWrap:{width:64,height:64,borderRadius:10,overflow:'visible'},photoThumb:{width:64,height:64,borderRadius:10,backgroundColor:'#EFEAE3'},
+  photoThumbWrap:{width:64,height:64,borderRadius:10,overflow:'visible'},photoThumb:{width:64,height:64,borderRadius:10,backgroundColor:C.washi2},
   photoRemove:{position:'absolute',top:-6,right:-6,width:20,height:20,borderRadius:10,backgroundColor:'#C24444',alignItems:'center',justifyContent:'center'},
   photoAdd:{width:64,height:64,borderRadius:10,borderWidth:1.5,borderColor:C.line,borderStyle:'dashed',alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},
-  policyBox:{backgroundColor:'#F7F4EF',borderRadius:11,padding:11,marginTop:12,marginBottom:4},policyTitle:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginBottom:5},policyText:{fontFamily:F.body,fontSize:10.5,lineHeight:16,color:C.muted},
+  policyBox:{backgroundColor:C.washi2,borderRadius:11,padding:11,marginTop:12,marginBottom:4},policyTitle:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginBottom:5},policyText:{fontFamily:F.body,fontSize:10.5,lineHeight:16,color:C.muted},
 });

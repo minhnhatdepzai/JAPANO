@@ -5,6 +5,7 @@ import { syncLocalNotifications } from '../lib/localNotify';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { C } from '../theme/tokens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StoreProvider } from '../lib/store';
 import { CatalogProvider } from '../lib/data';
@@ -134,7 +135,7 @@ export default function RootLayout() {
       <PushNotificationRouter />
       <NotificationBridge />
       <DailyJapanSpot />
-      <Stack screenOptions={{ headerShown:false, contentStyle:{ backgroundColor:'#F4EDE1' }, animation:'slide_from_right' }}>
+      <Stack screenOptions={{ headerShown:false, contentStyle:{ backgroundColor:C.washi }, animation:'slide_from_right' }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="login" />

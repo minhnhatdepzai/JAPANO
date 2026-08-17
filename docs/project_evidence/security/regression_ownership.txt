@@ -1,0 +1,6 @@
+=== HỒI QUY 2: quyền sở hữu giao dịch (khách u9) ===
+  token khách: eyJhbGciOiJIUz…
+  GET /payments/pay-migrated-o9  [của chính mình] → HTTP 200  (mong đợi 200)
+  GET /payments/pay-migrated-o15 [của người khác] → HTTP 404  (mong đợi 404)
+  GET /payments/pay-migrated-o9  [không đăng nhập] → HTTP 401  (mong đợi 401)
+  GET /reviews/admin             [khách thường] → HTTP 403  (mong đợi 403)

@@ -10,12 +10,12 @@ import { SmartImage } from '../components/SmartImage';
 import { useAuth } from '../lib/auth';
 
 const STATUS:Record<string,{label:string;bg:string;fg:string}> = {
-  pending:{ label:'Chờ xử lý', bg:C.shuSoft, fg:C.shuDeep },
+  pending:{ label:'Chờ xử lý', bg:C.warningSoft, fg:C.warning },
   confirmed:{ label:'Đã xác nhận', bg:C.aiSoft, fg:C.ai },
   shipping:{ label:'Đang giao', bg:C.aiSoft, fg:C.ai },
-  completed:{ label:'Đã nhận', bg:'#E4EEE6', fg:C.ok },
-  cancelled:{ label:'Đã huỷ', bg:'#F6E3E3', fg:C.danger },
-  returned:{ label:'Đã trả & hoàn tiền', bg:'#F2EEFF', fg:'#6D28D9' },
+  completed:{ label:'Đã nhận', bg:C.okSoft, fg:C.ok },
+  cancelled:{ label:'Đã huỷ', bg:C.dangerSoft, fg:C.danger },
+  returned:{ label:'Đã trả & hoàn tiền', bg:C.washi2, fg:C.muted },
 };
 const CHAIN = ['pending','confirmed','shipping','completed'];
 
@@ -55,7 +55,7 @@ function OrderCard({ order }:{ order:ApiOrder }) {
       )}
       {step>=0 && order.status!=='cancelled' && <Timeline step={step} />}
       <View style={st.cardFoot}>
-        <Text style={st.footT}>{order.items.length} món · <Text style={{ color:C.shu, fontFamily:F.bodyB }}>{money(order.total)}</Text></Text>
+        <Text style={st.footT}>{order.items.length} món · <Text style={{ color:C.ink, fontFamily:F.bodyB }}>{money(order.total)}</Text></Text>
         <View style={order.status==='completed'?st.ghostBtn:st.trackBtn}>
           <Text style={{ color:order.status==='completed'?C.ink:'#fff', fontFamily:order.status==='completed'?F.bodyM:F.bodyB, fontSize:11 }}>{order.status==='completed'?'Đánh giá':order.status==='cancelled'?'Chi tiết':'Theo dõi'}</Text>
         </View>
@@ -99,7 +99,7 @@ export default function Orders() {
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={()=>void load()} tintColor={C.shu} colors={[C.shu]} />}>
         {orders===null && !error && (
-          <View style={{ alignItems:'center', paddingVertical:60 }}><ActivityIndicator color={C.shu} /></View>
+          <View style={{ alignItems:'center', paddingVertical:60 }}><ActivityIndicator color={C.ink} /></View>
         )}
         {!!error && (
           <View style={{ alignItems:'center', paddingVertical:50 }}>
@@ -124,13 +124,13 @@ const st = StyleSheet.create({
   segItem:{ flex:1, alignItems:'center', paddingVertical:12 },
   segOn:{ borderBottomWidth:2, borderBottomColor:C.shu },
   segT:{ fontFamily:F.bodyM, fontSize:14, color:C.muted },
-  segTOn:{ color:C.shu, fontFamily:F.bodyB },
+  segTOn:{ color:C.ink, fontFamily:F.bodyB },
   card:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:12 },
   cardTop:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
   oid:{ fontFamily:F.bodyB, fontSize:13, color:C.ink },
   thumb:{ width:50, height:60, borderRadius:8 },
   cardFoot:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginTop:8 },
   footT:{ fontFamily:F.body, fontSize:12, color:C.muted },
-  trackBtn:{ backgroundColor:C.shu, borderRadius:999, paddingVertical:6, paddingHorizontal:12 },
+  trackBtn:{ backgroundColor:C.primary, borderRadius:999, paddingVertical:6, paddingHorizontal:12 },
   ghostBtn:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:6, paddingHorizontal:12, backgroundColor:'#fff' },
 });

@@ -10,7 +10,7 @@ import { sendTestNotification } from '../lib/localNotify';
 
 const Row = ({ icon, label, description, right }:{icon:string;label:string;description?:string;right:React.ReactNode}) => (
   <View style={st.row}>
-    <View style={st.ic}><Ionicons name={icon as any} size={17} color={C.shu} /></View>
+    <View style={st.ic}><Ionicons name={icon as any} size={17} color={C.ink} /></View>
     <View style={{ flex:1 }}>
       <Text style={st.lbl}>{label}</Text>
       {!!description && <Text style={st.description}>{description}</Text>}
@@ -77,12 +77,12 @@ export default function Settings() {
           right={<Switch value={noti} onValueChange={setNoti} trackColor={{ false:C.hair, true:C.shu }} />}
         />
         <Pressable style={st.row} onPress={onTest} disabled={testing}>
-          <View style={st.ic}><Ionicons name="send-outline" size={17} color={C.shu} /></View>
+          <View style={st.ic}><Ionicons name="send-outline" size={17} color={C.ink} /></View>
           <View style={{ flex:1 }}>
             <Text style={st.lbl}>Gửi thông báo thử</Text>
             <Text style={st.description}>Kiểm tra thông báo có hiện ở khay thông báo máy bạn không</Text>
           </View>
-          <Text style={{ fontFamily:F.bodyB, fontSize:12, color:C.shu }}>{testing ? 'Đang gửi…' : 'Gửi thử'}</Text>
+          <Text style={{ fontFamily:F.bodyB, fontSize:12, color:C.ink }}>{testing ? 'Đang gửi…' : 'Gửi thử'}</Text>
         </Pressable>
         <Row icon="trash-outline" label="Xoá dữ liệu đã xem" right={<Arrow />} />
         <Text style={st.grp}>KHÁC</Text>
@@ -95,7 +95,7 @@ export default function Settings() {
 const st = StyleSheet.create({
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:16, marginBottom:2 },
   row:{ flexDirection:'row', alignItems:'center', gap:12, paddingVertical:14, borderBottomWidth:1, borderBottomColor:C.hair },
-  ic:{ width:34, height:34, borderRadius:10, backgroundColor:C.shuSoft, alignItems:'center', justifyContent:'center' },
+  ic:{ width:34, height:34, borderRadius:10, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },
   lbl:{ flex:1, fontFamily:F.bodyM, fontSize:14, color:C.ink },
   description:{ fontFamily:F.body, fontSize:10.5, lineHeight:15, color:C.muted, marginTop:2 },
 });

@@ -77,14 +77,14 @@ export default function Notifications() {
 
   return (
     <Screen>
-      <Header title="Thông báo" right={<Pressable onPress={() => void markRead()}><Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.shu }}>Đọc hết</Text></Pressable>} />
+      <Header title="Thông báo" right={<Pressable onPress={() => void markRead()}><Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.ink }}>Đọc hết</Text></Pressable>} />
       <View style={st.seg}>
         {['Tất cả', 'Đơn hàng', 'Khuyến mãi'].map((t, i) => (
           <Pressable key={t} style={[st.segItem, tab === i && st.segOn]} onPress={() => setTab(i)}><Text style={[st.segT, tab === i && st.segTOn]}>{t}</Text></Pressable>
         ))}
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 24 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onPullRefresh} tintColor={C.shu} colors={[C.shu]} />}>
-        {loading && <ActivityIndicator style={{ marginTop: 20 }} color={C.shu} />}
+        {loading && <ActivityIndicator style={{ marginTop: 20 }} color={C.ink} />}
         {!loading && !filtered.length && <Text style={{ textAlign: 'center', marginTop: 30, color: C.muted, fontFamily: F.body }}>Chưa có thông báo nào.</Text>}
         {filtered.map((n) => {
           const meta = ICON[n.type || ''] || { ic: '✦', bg: C.aiSoft };
@@ -112,7 +112,7 @@ const st = StyleSheet.create({
   seg: { flexDirection: 'row', marginHorizontal: 18, marginBottom: 6, borderBottomWidth: 1, borderBottomColor: C.hair },
   segItem: { flex: 1, alignItems: 'center', paddingVertical: 12 },
   segOn: { borderBottomWidth: 2, borderBottomColor: C.shu },
-  segT: { fontFamily: F.bodyM, fontSize: 13, color: C.muted }, segTOn: { color: C.shu, fontFamily: F.bodyB },
+  segT: { fontFamily: F.bodyM, fontSize: 13, color: C.muted }, segTOn: { color: C.ink, fontFamily: F.bodyB },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.hair },
   ic: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

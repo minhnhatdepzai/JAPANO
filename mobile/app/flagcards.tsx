@@ -95,7 +95,7 @@ function DetailBlock({ icon, title, text }:{ icon:string; title:string; text:str
   return (
     <View style={{ marginTop:10 }}>
       <View style={{ flexDirection:'row', alignItems:'center', gap:6 }}>
-        <Ionicons name={icon as any} size={13} color={C.shu} />
+        <Ionicons name={icon as any} size={13} color={C.ink} />
         <Text style={st.detailTitle}>{title}</Text>
       </View>
       <Text style={st.detailText}>{text}</Text>
@@ -220,7 +220,7 @@ export default function Flagcards() {
       {celebrate && <CelebrationOverlay voucherCode={data?.rewardVoucher?.code} onClose={()=>setCelebrate(false)} />}
       {loading && (
         <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}>
-          <ActivityIndicator color={C.shu} />
+          <ActivityIndicator color={C.ink} />
         </View>
       )}
       {!loading && (error || !data) && (
@@ -251,7 +251,7 @@ export default function Flagcards() {
           {!!data.rewardVoucher && (
             <View style={st.voucherCard}>
               <View style={st.voucherRow}>
-                <Ionicons name="pricetags" size={20} color="#F6D6B4" />
+                <Ionicons name="pricetags" size={20} color={'rgba(255,255,255,0.72)'} />
                 <Text style={st.voucherTitle}>Mã giảm giá {data.rewardVoucher.value}% toàn bộ sản phẩm</Text>
               </View>
               <Text selectable style={st.voucherCode}>{data.rewardVoucher.code}</Text>
@@ -286,29 +286,29 @@ const st = StyleSheet.create({
   celebrateTitle:{ fontFamily:F.display, fontSize:20, color:C.sumi, marginTop:8, textAlign:'center' },
   celebrateSub:{ fontFamily:F.body, fontSize:12.5, lineHeight:19, color:C.muted, textAlign:'center', marginTop:8 },
   celebrateCode:{ fontFamily:F.displayX, fontSize:19, color:C.shu, letterSpacing:1.2, marginTop:14 },
-  celebrateBtn:{ backgroundColor:C.shu, borderRadius:14, paddingVertical:12, paddingHorizontal:28, marginTop:18 },
+  celebrateBtn:{ backgroundColor:C.primary, borderRadius:14, paddingVertical:12, paddingHorizontal:28, marginTop:18 },
 
-  newCardToast:{ position:'absolute', top:8, left:14, right:14, zIndex:40, flexDirection:'row', alignItems:'center', gap:11, backgroundColor:'#fff', borderRadius:16, padding:12, borderWidth:1, borderColor:C.shu,
+  newCardToast:{ position:'absolute', top:8, left:14, right:14, zIndex:40, flexDirection:'row', alignItems:'center', gap:11, backgroundColor:'#fff', borderRadius:16, padding:12, borderWidth:1, borderColor:C.primary,
     shadowColor:'#000', shadowOpacity:0.18, shadowRadius:10, shadowOffset:{ width:0, height:5 }, elevation:8 },
-  newCardLabel:{ fontFamily:F.bodyX, fontSize:10.5, color:C.shu },
+  newCardLabel:{ fontFamily:F.bodyX, fontSize:10.5, color:C.ink },
   newCardTitle:{ fontFamily:F.bodyB, fontSize:13, color:C.ink, marginTop:1 },
   hero:{ backgroundColor:C.sumi, borderRadius:18, padding:18, marginTop:6 },
-  eyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.2, color:'#F6D6B4' },
+  eyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.2, color:'rgba(255,255,255,0.72)' },
   heroTitle:{ fontFamily:F.display, fontSize:20, lineHeight:28, color:'#fff', marginTop:6 },
-  heroSub:{ fontFamily:F.body, fontSize:11.5, lineHeight:18, color:'#D8D2CB', marginTop:9 },
+  heroSub:{ fontFamily:F.body, fontSize:11.5, lineHeight:18, color:'rgba(255,255,255,0.70)', marginTop:9 },
 
   progressCard:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:16, padding:16, marginTop:12 },
   progressBig:{ fontFamily:F.displayX, fontSize:30, color:C.sumi },
   progressOf:{ fontFamily:F.display, fontSize:18, color:C.muted },
-  progressLabel:{ fontFamily:F.bodyB, fontSize:12, color:C.shu, marginBottom:4 },
+  progressLabel:{ fontFamily:F.bodyB, fontSize:12, color:C.ink, marginBottom:4 },
   track:{ height:9, borderRadius:5, backgroundColor:C.hair, overflow:'hidden', marginTop:10 },
   trackOn:{ height:'100%', borderRadius:5, backgroundColor:C.matcha },
 
   voucherCard:{ backgroundColor:C.sumi, borderRadius:16, padding:16, marginTop:12 },
   voucherRow:{ flexDirection:'row', alignItems:'center', gap:8 },
   voucherTitle:{ fontFamily:F.bodyB, fontSize:13, color:'#fff', flex:1 },
-  voucherCode:{ fontFamily:F.displayX, fontSize:22, color:'#F6D6B4', letterSpacing:1.5, marginTop:10 },
-  voucherHint:{ fontFamily:F.body, fontSize:10.5, lineHeight:16, color:'#D8D2CB', marginTop:8 },
+  voucherCode:{ fontFamily:F.displayX, fontSize:22, color:C.card, letterSpacing:1.5, marginTop:10 },
+  voucherHint:{ fontFamily:F.body, fontSize:10.5, lineHeight:16, color:'rgba(255,255,255,0.70)', marginTop:8 },
 
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:20, marginBottom:8 },
 
@@ -324,7 +324,7 @@ const st = StyleSheet.create({
 
   detail:{ marginTop:12, borderTopWidth:1, borderTopColor:C.hair, paddingTop:12 },
   detailJp:{ fontFamily:F.displaySb, fontSize:13, color:C.kin, marginBottom:4 },
-  detailTitle:{ fontFamily:F.bodyX, fontSize:11, color:C.shu, marginTop:10 },
+  detailTitle:{ fontFamily:F.bodyX, fontSize:11, color:C.ink, marginTop:10 },
   detailText:{ fontFamily:F.body, fontSize:12, lineHeight:19, color:C.ink, marginTop:3 },
   bullet:{ fontFamily:F.body, fontSize:12, lineHeight:19, color:C.ink, marginTop:3 },
 
@@ -332,13 +332,13 @@ const st = StyleSheet.create({
   checkinName:{ fontFamily:F.bodyB, fontSize:12, color:C.ink },
   checkinTip:{ fontFamily:F.body, fontSize:11, lineHeight:16, color:C.muted, marginTop:2 },
 
-  outfitBox:{ backgroundColor:C.shuSoft, borderRadius:12, padding:11, marginTop:12 },
+  outfitBox:{ backgroundColor:C.washi2, borderRadius:12, padding:11, marginTop:12 },
   outfitStyle:{ fontFamily:F.bodyX, fontSize:11, color:C.shuDeep },
   outfitLine:{ fontFamily:F.body, fontSize:11.5, lineHeight:18, color:C.ink, marginTop:5 },
   outfitK:{ fontFamily:F.bodyB, color:C.ink },
   outfitReason:{ fontFamily:F.body, fontSize:11, lineHeight:16, color:C.muted, marginTop:6, fontStyle:'italic' },
 
-  productChip:{ borderWidth:1, borderColor:C.shu, borderRadius:999, paddingVertical:6, paddingHorizontal:11, maxWidth:180 },
+  productChip:{ borderWidth:1, borderColor:C.primary, borderRadius:999, paddingVertical:6, paddingHorizontal:11, maxWidth:180 },
   productChipText:{ fontFamily:F.bodyM, fontSize:11, color:C.shuDeep },
 
   awardText:{ fontFamily:F.body, fontSize:10.5, color:C.muted, marginTop:12 },

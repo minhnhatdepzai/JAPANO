@@ -75,7 +75,7 @@ export default function PaymentResult(){
   return <Screen>
     <View style={st.wrap}>
       <View style={[st.icon,{backgroundColor:paid?'#E4F5E9':refunded?'#EFE9FF':'#FCE8E8'}]}>
-        {loading?<ActivityIndicator size="large" color={C.shu}/>:<Ionicons name={icon as any} size={45} color={paid?'#15803D':refunded?'#6D28D9':C.danger}/>}
+        {loading?<ActivityIndicator size="large" color={C.ink}/>:<Ionicons name={icon as any} size={45} color={paid?'#15803D':refunded?'#6D28D9':C.danger}/>}
       </View>
       <View style={[st.mode,isVnpay&&{backgroundColor:'#004993'}]}><Ionicons name="shield-checkmark" size={12} color="#fff"/><Text style={st.modeT}>{badgeText}</Text></View>
       <Text style={st.title}>{title}</Text>
@@ -89,7 +89,7 @@ export default function PaymentResult(){
           <Text style={st.flagTitle}>{awardedCard.title}</Text>
           <Text style={st.flagRegion}>{awardedCard.region} · chạm để khám phá</Text>
         </View>
-        <Pressable onPress={()=>router.replace('/flagcards')} hitSlop={8}><Ionicons name="chevron-forward" size={21} color="#F6D6B4"/></Pressable>
+        <Pressable onPress={()=>router.replace('/flagcards')} hitSlop={8}><Ionicons name="chevron-forward" size={21} color={'rgba(255,255,255,0.72)'}/></Pressable>
       </View>}
 
       {(payment||order)&&<View style={st.card}>
@@ -126,9 +126,9 @@ const st=StyleSheet.create({
   error:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:C.danger,textAlign:'center',marginTop:8},
   flagAward:{width:'100%',flexDirection:'row',alignItems:'center',gap:11,backgroundColor:C.sumi,borderWidth:1,borderColor:C.kin,borderRadius:16,padding:13,marginTop:16},
   flagGlyph:{width:48,height:48,borderRadius:14,alignItems:'center',justifyContent:'center'},
-  flagEyebrow:{fontFamily:F.bodyX,fontSize:9.5,letterSpacing:0.8,color:'#F6D6B4'},
+  flagEyebrow:{fontFamily:F.bodyX,fontSize:9.5,letterSpacing:0.8,color:'rgba(255,255,255,0.72)'},
   flagTitle:{fontFamily:F.bodyB,fontSize:13.5,color:'#fff',marginTop:2},
-  flagRegion:{fontFamily:F.body,fontSize:10.5,color:'#D8D2CB',marginTop:2},
+  flagRegion:{fontFamily:F.body,fontSize:10.5,color:'rgba(255,255,255,0.70)',marginTop:2},
   card:{width:'100%',backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:14,marginTop:20},
   row:{flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start',gap:12,paddingVertical:7,borderBottomWidth:StyleSheet.hairlineWidth,borderBottomColor:C.hair},
   label:{fontFamily:F.body,fontSize:11.5,color:C.muted},

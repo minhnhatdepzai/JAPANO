@@ -88,7 +88,7 @@ export default function ForgotPassword() {
           <>
             <View style={{ flexDirection:'row', alignItems:'center', flexWrap:'wrap', marginBottom:12 }}>
               <Text style={[st.sub,{ marginBottom:0 }]}>Đã gửi mã 6 số tới <Text style={{ color:C.ink, fontFamily:F.bodyB }}>{email}</Text>. </Text>
-              <Pressable onPress={editEmail} hitSlop={8}><Text style={{ color:C.shu, fontFamily:F.bodyB, fontSize:13 }}>Sửa email</Text></Pressable>
+              <Pressable onPress={editEmail} hitSlop={8}><Text style={{ color:C.ink, fontFamily:F.bodyB, fontSize:13 }}>Sửa email</Text></Pressable>
             </View>
             {expiresIn > 0
               ? <Text style={st.expiry}>Mã còn hiệu lực {Math.floor(expiresIn/60)} phút {String(expiresIn%60).padStart(2,'0')} giây</Text>
@@ -105,9 +105,9 @@ export default function ForgotPassword() {
             {!!newPassword && (
               <>
                 <View style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
-                  {[0, 1, 2, 3].map(i => <View key={i} style={[st.bar, { backgroundColor: i < STRENGTH_BARS[strength] ? (strength === 'weak' ? C.danger : strength === 'medium' ? '#D98A2E' : C.matcha) : C.hair }]} />)}
+                  {[0, 1, 2, 3].map(i => <View key={i} style={[st.bar, { backgroundColor: i < STRENGTH_BARS[strength] ? (strength === 'weak' ? C.danger : strength === 'medium' ? C.warning : C.matcha) : C.hair }]} />)}
                 </View>
-                <Text style={{ fontFamily: F.body, fontSize: 10.5, color: strength === 'weak' ? C.danger : strength === 'medium' ? '#D98A2E' : C.matcha, marginBottom: 14 }}>{STRENGTH_LABEL[strength]}</Text>
+                <Text style={{ fontFamily: F.body, fontSize: 10.5, color: strength === 'weak' ? C.danger : strength === 'medium' ? C.warning : C.matcha, marginBottom: 14 }}>{STRENGTH_LABEL[strength]}</Text>
               </>
             )}
             <Btn label={sending ? 'Đang xử lý…' : 'Đặt lại mật khẩu'} onPress={() => void submitReset()} />
@@ -119,8 +119,8 @@ export default function ForgotPassword() {
             <Text style={st.hint}>Không thấy thư? Kiểm tra thêm mục Quảng cáo và Spam trong hộp thư.</Text>
           </>
         )}
-        {sending && <View style={{ marginTop: 10, alignItems: 'center' }}><ActivityIndicator color={C.shu} size="small" /></View>}
-        <Text style={st.foot}>Nhớ ra mật khẩu rồi? <Text style={{ color: C.shu, fontFamily: F.bodyB }} onPress={() => router.replace('/login')}>Đăng nhập</Text></Text>
+        {sending && <View style={{ marginTop: 10, alignItems: 'center' }}><ActivityIndicator color={C.ink} size="small" /></View>}
+        <Text style={st.foot}>Nhớ ra mật khẩu rồi? <Text style={{ color: C.ink, fontFamily: F.bodyB }} onPress={() => router.replace('/login')}>Đăng nhập</Text></Text>
       </ScrollView>
     </Screen>
   );
@@ -132,7 +132,7 @@ const st = StyleSheet.create({
   bar: { flex: 1, height: 4, borderRadius: 2 },
   previewBox: { backgroundColor: C.aiSoft, borderRadius: 11, padding: 11, marginBottom: 14 },
   previewT: { fontFamily: F.bodyM, fontSize: 11.5, color: C.ai, lineHeight: 16 },
-  resend: { textAlign: 'center', marginTop: 14, fontFamily: F.bodyB, fontSize: 12.5, color: C.shu },
+  resend: { textAlign: 'center', marginTop: 14, fontFamily: F.bodyB, fontSize: 12.5, color: C.ink },
   warn: { fontFamily: F.bodyM, fontSize: 11.5, color: C.danger, marginTop: -6, marginBottom: 12 },
   expiry: { fontFamily: F.bodyM, fontSize: 11.5, color: C.muted, marginBottom: 12 },
   hint: { textAlign: 'center', marginTop: 8, fontFamily: F.body, fontSize: 11, color: C.muted, lineHeight: 16 },

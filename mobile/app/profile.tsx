@@ -50,7 +50,7 @@ export default function Profile() {
 const st = StyleSheet.create({
   lbl:{ fontFamily:F.bodyM, color:C.muted, fontSize:11, marginBottom:5 },
   input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink },
-  editDot:{ position:'absolute', bottom:2, right:2, width:28, height:28, borderRadius:14, backgroundColor:C.shu, alignItems:'center', justifyContent:'center', borderWidth:2, borderColor:C.washi },
+  editDot:{ position:'absolute', bottom:2, right:2, width:28, height:28, borderRadius:14, backgroundColor:C.primary, alignItems:'center', justifyContent:'center', borderWidth:2, borderColor:C.washi },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:12, backgroundColor:'#fff' },
-  chipOn:{ backgroundColor:C.shu, borderColor:C.shu },
+  chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
 });

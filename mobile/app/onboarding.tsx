@@ -69,10 +69,10 @@ export default function Onboarding() {
       </ScrollView>
       <View style={{ paddingHorizontal:22, paddingBottom:10 }}>
         <View style={st.dots}>
-          {SLIDES.map((_,i)=>(<View key={i} style={[st.dot, i===page&&{ width:22, backgroundColor:C.shu }]} />))}
+          {SLIDES.map((_,i)=>(<View key={i} style={[st.dot, i===page&&{ width:22, backgroundColor:C.primary }]} />))}
         </View>
         <Btn label={last?'Đăng nhập để bắt đầu':'Tiếp theo'} onPress={next} />
-        <Text style={st.foot}>Hoặc <Text style={{ color:C.shu, fontFamily:F.bodyB }} onPress={browseAsGuest}>chỉ xem sản phẩm</Text></Text>
+        <Text style={st.foot}>Hoặc <Text style={{ color:C.ink, fontFamily:F.bodyB }} onPress={browseAsGuest}>chỉ xem sản phẩm</Text></Text>
       </View>
     </Screen>
   );

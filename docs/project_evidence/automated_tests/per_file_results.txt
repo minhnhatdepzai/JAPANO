@@ -1,0 +1,21 @@
+accessory-kind.test.js                       9 đạt /   0 hỏng   đạt
+analytics-recommend.test.js                 21 đạt /   0 hỏng   đạt
+checkout-concurrency.test.js                 4 đạt /   0 hỏng   đạt
+embeddings.test.js                           4 đạt /   0 hỏng   đạt
+fulfillment-policy.test.js                   8 đạt /   0 hỏng   đạt
+goal-fund.test.js                            9 đạt /   0 hỏng   đạt
+google-auth.test.js                          9 đạt /   0 hỏng   đạt
+gpu-queue.test.js                            3 đạt /   0 hỏng   đạt
+inventory-restock.test.js                   10 đạt /   0 hỏng   đạt
+orders.test.js                               7 đạt /   0 hỏng   đạt
+pricing.test.js                              8 đạt /   0 hỏng   đạt
+product-roundtrip.test.js                    9 đạt /   0 hỏng   đạt
+refund-per-item.test.js                      9 đạt /   0 hỏng   đạt
+security-authz.test.js                      10 đạt /   0 hỏng   đạt
+store-update-throw.test.js                   3 đạt /   0 hỏng   đạt
+tryon.test.js                               20 đạt /   0 hỏng   đạt
+user-credentials.test.js                     6 đạt /   0 hỏng   đạt
+vip.test.js                                  7 đạt /   0 hỏng   đạt
+
+TỔNG: 156 đạt · 0 hỏng · 0 tệp hết giờ
+Thời điểm: 17/08/2026 12:50

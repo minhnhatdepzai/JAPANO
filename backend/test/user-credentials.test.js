@@ -6,6 +6,12 @@
 // SERVER_MANAGED_FIELDS, trang quản trị vẫn gửi trả cả mảng users qua
 // PUT /api/state. Nếu chỉ lọc chiều ra mà quên khôi phục ở chiều vào thì lần
 // lưu kế tiếp sẽ xoá sạch mật khẩu của mọi người.
+// Bài kiểm thử này thao tác trên store dạng TỆP. Nếu môi trường có MONGODB_URI
+// thì createStore() sẽ chuyển sang MongoDB và bài kiểm thử treo chờ kết nối.
+// Xoá biến môi trường trước khi nạp module để bài kiểm thử luôn độc lập môi trường.
+delete process.env.MONGODB_URI;
+delete process.env.MONGODB_DB;
+
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
@@ -13,6 +19,7 @@ const os = require('os');
 const path = require('path');
 
 const { scrubUsers, createStore } = require('../lib/store');
+const { emptyState } = require('../seed');
 
 const HASH = '$2b$10$abcdefghijklmnopqrstuv';
 const users = () => ([
@@ -45,7 +52,7 @@ test('scrubUsers không sửa mảng gốc trong state', () => {
 
 test('PUT /api/state từ trang quản trị KHÔNG xoá mật khẩu đã lưu', () => {
   const store = tempStore();
-  store.write({ ...store.read(), users: users() });
+  store.write({ ...emptyState(), users: users() });
 
   // Đúng những gì trang quản trị nhận được và gửi trả lại: users đã bị lọc.
   const asAdminSees = scrubUsers(store.read().users);
@@ -65,7 +72,7 @@ test('googleId cũng được bảo vệ như mật khẩu', () => {
   assert.equal(safe[1].googleId, undefined, 'googleId không được lọt ra trang quản trị');
 
   const store = tempStore();
-  store.write({ ...store.read(), users: users() });
+  store.write({ ...emptyState(), users: users() });
   // Kẻ tấn công chiếm phiên quản trị thử nối tài khoản admin sang Google của mình,
   // để rồi bấm "Đăng nhập bằng Google" là vào thẳng.
   store.replaceFromAdmin({ users: [{ id: 'u2', name: 'Lan', email: 'lan@japano.vn', googleId: 'google-cua-ke-tan-cong' }] });
@@ -74,7 +81,7 @@ test('googleId cũng được bảo vệ như mật khẩu', () => {
 
 test('trang quản trị không thể tự đặt hash mật khẩu cho tài khoản có sẵn', () => {
   const store = tempStore();
-  store.write({ ...store.read(), users: users() });
+  store.write({ ...emptyState(), users: users() });
 
   // Kẻ tấn công chiếm được phiên quản trị thử ghi đè hash bằng mật khẩu chúng biết.
   store.replaceFromAdmin({ users: [{ id: 'u1', name: 'Minh', email: 'minh@japano.vn', passwordHash: '$2b$10$hash-cua-ke-tan-cong' }] });
@@ -84,7 +91,7 @@ test('trang quản trị không thể tự đặt hash mật khẩu cho tài kho
 
 test('người dùng mới do quản trị viên tạo vẫn thêm được (chưa có hash)', () => {
   const store = tempStore();
-  store.write({ ...store.read(), users: users() });
+  store.write({ ...emptyState(), users: users() });
 
   store.replaceFromAdmin({ users: [...scrubUsers(store.read().users), { id: 'u3', name: 'Nam', email: 'nam@japano.vn', role: 'staff' }] });
 

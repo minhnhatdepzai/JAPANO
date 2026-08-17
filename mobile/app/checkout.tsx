@@ -39,7 +39,7 @@ const SaveOption = ({ checked, onToggle, title, note }:{checked:boolean;onToggle
 const cartLineKey = (item:{slug:string;color:string;size:string}) => `${item.slug}::${item.color}::${item.size}`;
 const Step = ({ n, label, on }:{n:number;label:string;on?:boolean}) => (
   <View style={{ alignItems:'center', flex:1 }}>
-    <View style={[st.stepN, on&&{ backgroundColor:C.shu }]}><Text style={{ color:on?'#fff':C.muted, fontFamily:F.bodyB, fontSize:12 }}>{n}</Text></View>
+    <View style={[st.stepN, on&&{ backgroundColor:C.primary }]}><Text style={{ color:on?'#fff':C.muted, fontFamily:F.bodyB, fontSize:12 }}>{n}</Text></View>
     <Text style={{ fontFamily:F.bodyM, fontSize:11, color:on?C.ink:C.muted, marginTop:4 }}>{label}</Text>
   </View>
 );
@@ -74,7 +74,7 @@ export default function Checkout() {
   },[]);
 
   if(!configLoaded){
-    return <Screen><Header title="Thanh toán" /><View style={st.configLoading}><ActivityIndicator color={C.shu}/><Text style={st.configLoadingText}>Đang chuẩn bị thanh toán an toàn…</Text></View></Screen>;
+    return <Screen><Header title="Thanh toán" /><View style={st.configLoading}><ActivityIndicator color={C.ink}/><Text style={st.configLoadingText}>Đang chuẩn bị thanh toán an toàn…</Text></View></Screen>;
   }
   if(stripeConfig?.enabled&&stripeConfig.publishableKey){
     return <StripeProvider publishableKey={stripeConfig.publishableKey} urlScheme="japano">
@@ -198,7 +198,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
     setSending(true);
     const items = cart.map(c => {
       const p = PRODUCTS.find(x => x.slug === c.slug);
-      return { slug: c.slug, name: p?.name || c.slug, colorName: c.color, colorHex: '#1A1410', size: c.size, qty: c.qty, price: p?.price || 0 };
+      return { slug: c.slug, name: p?.name || c.slug, colorName: c.color, colorHex: C.ink, size: c.size, qty: c.qty, price: p?.price || 0 };
     });
     // Chống tạo trùng đơn nếu requestJson thử lại (đổi base URL) hoặc mạng chập
     // chờn khiến app không nhận được phản hồi dù server đã tạo đơn thành công.
@@ -344,8 +344,8 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
             {provinceOpen && (
               <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>
                 {shownProvinces.map((p)=>(
-                  <Pressable key={p.code} style={[st.opt, p.code===province?.code&&{ backgroundColor:C.shuSoft }]} onPress={()=>{setProvince(p);setProvinceQuery(p.name);setProvinceOpen(false);setWard(null);setWardQuery('');setWardOpen(true);}}>
-                    <Ionicons name="location" size={14} color={C.shu} />
+                  <Pressable key={p.code} style={[st.opt, p.code===province?.code&&{ backgroundColor:C.washi2 }]} onPress={()=>{setProvince(p);setProvinceQuery(p.name);setProvinceOpen(false);setWard(null);setWardQuery('');setWardOpen(true);}}>
+                    <Ionicons name="location" size={14} color={C.ink} />
                     <Text style={{flex:1,fontFamily:p.code===province?.code?F.bodyB:F.body,fontSize:13,color:p.code===province?.code?C.shuDeep:C.ink}}>{p.name}</Text><Text style={st.countHint}>{p.wardCount} phường/xã</Text>
                   </Pressable>
                 ))}
@@ -354,7 +354,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
             <View style={{ height:12 }} />
             <Text style={st.lbl}>Phường / Xã / Đặc khu</Text>
             <View style={[st.input,{flexDirection:'row',alignItems:'center',borderColor:wardOpen?C.shu:C.line,paddingRight:5,opacity:province?1:.6}]}><TextInput editable={Boolean(province)} value={wardQuery} onChangeText={value=>{setWardQuery(value);setWard(null);setWardOpen(true);}} onFocus={()=>province&&setWardOpen(true)} placeholder={province?'Nhập tên, AI sẽ gợi ý':'Chọn tỉnh/thành trước'} placeholderTextColor={C.muted} style={st.suggestInput}/><Pressable disabled={!province} accessibilityLabel="Mở danh sách phường xã" style={st.arrow} onPress={()=>setWardOpen(value=>!value)}><Ionicons name={wardOpen?'chevron-up':'chevron-down'} size={18} color={C.muted}/></Pressable></View>
-            {wardOpen&&province&&<ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>{locationLoading?<Text style={st.loadingText}>Đang gợi ý…</Text>:wards.map(item=><Pressable key={item.code} style={[st.opt,item.code===ward?.code&&{backgroundColor:C.shuSoft}]} onPress={()=>{setWard(item);setWardQuery(item.name);setWardOpen(false);}}><Ionicons name="navigate" size={14} color={C.shu}/><Text style={{fontFamily:item.code===ward?.code?F.bodyB:F.body,fontSize:13,color:C.ink}}>{item.name}</Text></Pressable>)}</ScrollView>}
+            {wardOpen&&province&&<ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={st.dropdown}>{locationLoading?<Text style={st.loadingText}>Đang gợi ý…</Text>:wards.map(item=><Pressable key={item.code} style={[st.opt,item.code===ward?.code&&{backgroundColor:C.washi2}]} onPress={()=>{setWard(item);setWardQuery(item.name);setWardOpen(false);}}><Ionicons name="navigate" size={14} color={C.ink}/><Text style={{fontFamily:item.code===ward?.code?F.bodyB:F.body,fontSize:13,color:C.ink}}>{item.name}</Text></Pressable>)}</ScrollView>}
             <View style={{height:12}}/><Field label="Số nhà / Tên đường" value={street} onChangeText={setStreet} placeholder="Ví dụ: 123 Lê Lợi" />
             <View style={st.preview}><Text style={{ fontFamily:F.body, fontSize:12, color:C.ai }}><Text style={{ fontFamily:F.bodyB }}>Giao tới: </Text>{fullAddress||'Chưa đủ thông tin địa chỉ'}</Text></View>
             <SaveOption
@@ -366,13 +366,13 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
           </>
         )}
         <Text style={st.grp}>PHƯƠNG THỨC THANH TOÁN</Text>
-        <Pressable style={[st.pay, pay==='cod'&&{ borderColor:C.shu }]} onPress={()=>setPay('cod')}>
+        <Pressable style={[st.pay, pay==='cod'&&{ borderColor:C.primary }]} onPress={()=>setPay('cod')}>
           <View style={[st.radio, pay==='cod'&&st.radioOn]} />
           <Text style={{ flex:1, fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thanh toán khi nhận hàng</Text><Text>💵</Text>
         </Pressable>
-        <Pressable style={[st.pay, pay==='card'&&{ borderColor:C.shu },!stripeAvailable&&{opacity:.62}]} onPress={()=>{if(stripeAvailable){setCardholderName(value=>value||name);setPay('card');setOrderError('');}else showCheckoutError(stripeSetupError||'Thanh toán thẻ hiện chưa sẵn sàng.');}}>
+        <Pressable style={[st.pay, pay==='card'&&{ borderColor:C.primary },!stripeAvailable&&{opacity:.62}]} onPress={()=>{if(stripeAvailable){setCardholderName(value=>value||name);setPay('card');setOrderError('');}else showCheckoutError(stripeSetupError||'Thanh toán thẻ hiện chưa sẵn sàng.');}}>
           <View style={[st.radio, pay==='card'&&st.radioOn]} />
-          <View style={{flex:1}}><Text style={{ fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thẻ tín dụng hoặc ghi nợ</Text><Text style={st.stripeOffer}>{stripeAvailable?'Visa, Mastercard, JCB · giảm thêm 10%':'Thanh toán thẻ hiện chưa sẵn sàng'}</Text></View><Ionicons name="card-outline" size={22} color={C.shu}/>
+          <View style={{flex:1}}><Text style={{ fontFamily:F.bodyM, fontSize:13, color:C.ink }}>Thẻ tín dụng hoặc ghi nợ</Text><Text style={st.stripeOffer}>{stripeAvailable?'Visa, Mastercard, JCB · giảm thêm 10%':'Thanh toán thẻ hiện chưa sẵn sàng'}</Text></View><Ionicons name="card-outline" size={22} color={C.ink}/>
         </Pressable>
         <Pressable style={[st.pay, pay==='vnpay'&&{ borderColor:'#004993' },!vnpayAvailable&&{opacity:.62}]} onPress={()=>{if(vnpayAvailable){setPay('vnpay');setOrderError('');}else showCheckoutError('Thanh toán VNPay hiện chưa sẵn sàng.');}}>
           <View style={[st.radio, pay==='vnpay'&&{borderWidth:5,borderColor:'#004993'}]} />
@@ -438,7 +438,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
                 disabled={sending}
                 defaultValues={{countryCode:'VN'}}
                 placeholders={{number:'Số thẻ',expiration:'MM / YY',cvc:'CVC',postalCode:'Mã bưu chính'}}
-                cardStyle={{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#D8D0C4',borderRadius:12,textColor:C.ink,placeholderColor:'#8E867D',textErrorColor:C.danger,cursorColor:C.shu,fontSize:15}}
+                cardStyle={{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:C.line,borderRadius:12,textColor:C.ink,placeholderColor:C.muted,textErrorColor:C.danger,cursorColor:C.shu,fontSize:15}}
                 style={st.cardForm}
                 onFormComplete={(details)=>setCardComplete(details.complete)}
               />
@@ -453,13 +453,13 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
               />
             )}
             <View style={st.secureHint}><Ionicons name="shield-checkmark" size={14} color="#15803D"/><Text style={st.secureHintText}>{usingSavedCard?'Thẻ đã lưu được Stripe mã hoá — JAPANO chỉ giữ 4 số cuối để bạn nhận diện.':'Số thẻ và CVC được mã hóa bởi Stripe. JAPANO không lưu thông tin thẻ trên hệ thống, chỉ Stripe lưu (nếu bạn dùng lại thẻ này lần sau).'}</Text></View>
-            {stripeMode==='test' && <View style={st.secureHint}><Ionicons name="flask-outline" size={14} color="#B45309"/><Text style={[st.secureHintText,{color:'#B45309'}]}>Cổng thẻ đang chạy ở chế độ Stripe Test — dùng số thẻ thử nghiệm của Stripe, tiền không được trừ thật.</Text></View>}
+            {stripeMode==='test' && <View style={st.secureHint}><Ionicons name="flask-outline" size={14} color={C.warning}/><Text style={[st.secureHintText,{color:C.warning}]}>Cổng thẻ đang chạy ở chế độ Stripe Test — dùng số thẻ thử nghiệm của Stripe, tiền không được trừ thật.</Text></View>}
           </View>
         )}
 
         <Text style={st.grp}>ƯU ĐÃI VIP</Text>
         <View style={[st.vipBox,vip?.isVip&&st.vipBoxActive]}>
-          {vipLoading ? <View style={st.vipLoading}><ActivityIndicator size="small" color={C.shu}/><Text style={st.vipHint}>Đang kiểm tra hạng thành viên…</Text></View> : vip?.isVip ? (
+          {vipLoading ? <View style={st.vipLoading}><ActivityIndicator size="small" color={C.ink}/><Text style={st.vipHint}>Đang kiểm tra hạng thành viên…</Text></View> : vip?.isVip ? (
             <>
               <View style={st.vipHead}>
                 <View style={st.vipCrown}><Ionicons name="diamond" size={18} color="#fff"/></View>
@@ -563,7 +563,7 @@ function VnpayWebViewModal({ session, onCancel, onResult }:{
           onNavigationStateChange={onNavChange}
           onShouldStartLoadWithRequest={onShouldStart}
           startInLoadingState
-          renderLoading={()=><ActivityIndicator style={{marginTop:60}} color={C.shu} size="large"/>}
+          renderLoading={()=><ActivityIndicator style={{marginTop:60}} color={C.ink} size="large"/>}
           originWhitelist={['*']}
           javaScriptEnabled
           domStorageEnabled
@@ -583,7 +583,7 @@ const st = StyleSheet.create({
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:14, marginBottom:8 },
   lbl:{ fontFamily:F.bodyM, color:C.muted, fontSize:11, marginBottom:5 },
   input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink, justifyContent:'center' },
-  dropdown:{ maxHeight:260, borderWidth:1, borderColor:C.shu, borderTopWidth:0, borderBottomLeftRadius:12, borderBottomRightRadius:12, overflow:'hidden', marginTop:-2, backgroundColor:'#fff' },
+  dropdown:{ maxHeight:260, borderWidth:1, borderColor:C.primary, borderTopWidth:0, borderBottomLeftRadius:12, borderBottomRightRadius:12, overflow:'hidden', marginTop:-2, backgroundColor:'#fff' },
   opt:{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:11, paddingHorizontal:12, borderTopWidth:1, borderTopColor:C.hair, backgroundColor:'#fff' },
   suggestInput:{flex:1,minHeight:46,fontFamily:F.body,fontSize:14,color:C.ink,paddingHorizontal:8},
   arrow:{width:42,height:42,alignItems:'center',justifyContent:'center'},
@@ -591,38 +591,38 @@ const st = StyleSheet.create({
   loadingText:{fontFamily:F.bodyM,fontSize:12,color:C.muted,textAlign:'center',padding:18},
   preview:{ backgroundColor:C.aiSoft, borderRadius:10, padding:10, marginTop:2 },
   lockedAddr:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4, marginBottom:4 },
-  changeAddr:{ fontFamily:F.bodyB, fontSize:11.5, color:C.shu },
+  changeAddr:{ fontFamily:F.bodyB, fontSize:11.5, color:C.ink },
   lockedName:{ fontFamily:F.bodyB, fontSize:13, color:C.ink, marginTop:6 },
   lockedLine:{ fontFamily:F.body, fontSize:12.5, color:C.muted, marginTop:2 },
   pay:{ flexDirection:'row', alignItems:'center', gap:10, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, backgroundColor:'#fff', marginBottom:10 },
   radio:{ width:18, height:18, borderRadius:9, borderWidth:1.5, borderColor:C.line },
-  radioOn:{ borderWidth:5, borderColor:C.shu },
+  radioOn:{ borderWidth:5, borderColor:C.primary },
   vipBox:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:13,marginBottom:2},
-  vipBoxActive:{borderColor:'#B08D3C',backgroundColor:'#FFF9EC'},
+  vipBoxActive:{borderColor:C.ink,backgroundColor:C.washi2},
   vipLoading:{flexDirection:'row',alignItems:'center',gap:9,paddingVertical:5},
   vipHead:{flexDirection:'row',alignItems:'center',gap:10},
-  vipCrown:{width:38,height:38,borderRadius:12,backgroundColor:'#9A7423',alignItems:'center',justifyContent:'center'},
+  vipCrown:{width:38,height:38,borderRadius:12,backgroundColor:C.ink,alignItems:'center',justifyContent:'center'},
   vipTitle:{fontFamily:F.bodyB,fontSize:13.5,color:C.ink},
   vipHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
-  vipExpiry:{fontFamily:F.bodyB,fontSize:9.5,color:'#8A6518',backgroundColor:'#F7E8B8',borderRadius:999,paddingHorizontal:8,paddingVertical:5},
+  vipExpiry:{fontFamily:F.bodyB,fontSize:9.5,color:C.onPrimary,backgroundColor:C.primary,borderRadius:999,paddingHorizontal:8,paddingVertical:5},
   vipChoice:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginTop:9,backgroundColor:'#fff'},
-  vipChoiceOn:{borderColor:'#B08D3C',backgroundColor:'#FFF4D6'},
+  vipChoiceOn:{borderColor:C.ink,backgroundColor:C.washi2},
   vipProductName:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   vipSaving:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
   vipSkip:{fontFamily:F.bodyM,fontSize:10.5,color:C.muted,textAlign:'center',marginTop:9},
   vipProgress:{height:8,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginTop:12},
-  vipProgressOn:{height:'100%',borderRadius:5,backgroundColor:'#B08D3C'},
+  vipProgressOn:{height:'100%',borderRadius:5,backgroundColor:C.ink},
   vipProgressText:{flexDirection:'row',justifyContent:'space-between',marginTop:5},
-  cardBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#332A22',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
+  cardBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
   paymentHeader:{ flexDirection:'row',alignItems:'center',gap:10,marginBottom:12 },
-  paymentIcon:{ width:40,height:40,borderRadius:12,backgroundColor:C.shu,alignItems:'center',justifyContent:'center' },
+  paymentIcon:{ width:40,height:40,borderRadius:12,backgroundColor:C.primary,alignItems:'center',justifyContent:'center' },
   paymentHead:{ fontFamily:F.bodyB,fontSize:13.5,color:C.ink },
   paymentSub:{ fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2 },
   securityBadge:{flexDirection:'row',alignItems:'center',gap:3,backgroundColor:'#E8F6EC',borderRadius:999,paddingHorizontal:7,paddingVertical:5},
   securityBadgeText:{fontFamily:F.bodyB,fontSize:8.5,color:'#166534'},
   stripeOffer:{ fontFamily:F.bodyB,fontSize:10.5,color:'#15803D',marginTop:2 },
   vnpayOffer:{ fontFamily:F.bodyB,fontSize:10.5,color:'#004993',marginTop:2 },
-  vnpayBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#332A22',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
+  vnpayBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
   vnpayHint:{ fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:12 },
   vnpayModal:{ flex:1, backgroundColor:'#fff', paddingTop:48 },
   vnpayHeader:{ flexDirection:'row',alignItems:'center',gap:10,paddingHorizontal:16,paddingBottom:12,borderBottomWidth:1,borderBottomColor:C.line },
@@ -633,13 +633,13 @@ const st = StyleSheet.create({
   cardFieldLabel:{fontFamily:F.bodyX,fontSize:9,color:C.muted,letterSpacing:.9,marginTop:13,marginBottom:6},
   saveRow:{flexDirection:'row',alignItems:'flex-start',gap:10,backgroundColor:C.aiSoft,borderRadius:11,padding:12,marginTop:10},
   saveBox:{width:20,height:20,borderRadius:5,borderWidth:1.5,borderColor:C.muted,alignItems:'center',justifyContent:'center',marginTop:1,backgroundColor:'#fff'},
-  saveBoxOn:{backgroundColor:C.shu,borderColor:C.shu},
+  saveBoxOn:{backgroundColor:C.primary,borderColor:C.primary},
   saveTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},
   saveNote:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:3},
   savedCard:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:11,marginBottom:8,backgroundColor:'#fff'},
-  savedCardOn:{borderColor:C.shu,backgroundColor:C.shuSoft},
+  savedCardOn:{borderColor:C.primary,backgroundColor:C.washi2},
   savedCardT:{flex:1,fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
-  cardholderInput:{height:52,borderWidth:1,borderColor:'#D8D0C4',borderRadius:12,backgroundColor:'#fff',paddingHorizontal:14,fontFamily:F.bodyM,fontSize:14,color:C.ink,letterSpacing:.25},
+  cardholderInput:{height:52,borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:'#fff',paddingHorizontal:14,fontFamily:F.bodyM,fontSize:14,color:C.ink,letterSpacing:.25},
   cardFormShell:{height:200,borderWidth:1,borderColor:'transparent',borderRadius:13,backgroundColor:'#fff',overflow:'hidden'},
   cardFieldComplete:{borderColor:'#49A766'},
   cardForm:{width:'100%',height:200},

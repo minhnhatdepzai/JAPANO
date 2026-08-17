@@ -33,7 +33,7 @@ export const Heart = React.memo(({ slug }:{ slug:string }) => {
       accessibilityLabel={on?'Bỏ khỏi danh sách yêu thích':'Thêm vào danh sách yêu thích'}
     >
       <Animated.View style={{ transform:[{ scale:pop }] }}>
-        <Ionicons name={on?'heart':'heart-outline'} size={16} color={C.shu} />
+        <Ionicons name={on?'heart':'heart-outline'} size={16} color={C.ink} />
       </Animated.View>
     </Pressable>
   );

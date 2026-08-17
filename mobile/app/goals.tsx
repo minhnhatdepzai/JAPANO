@@ -130,7 +130,7 @@ export default function Goals(){
       <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={{paddingHorizontal:18,paddingBottom:38}}>
         <View style={st.hero}>
           <View style={{flex:1}}><Text style={st.eyebrow}>MỤC TIÊU BỀN VỮNG</Text><Text style={st.heroTitle}>Rõ ràng từng mục tiêu:{`\n`}mua sắm, sức khoẻ, hoặc một chuyến đi Nhật Bản.</Text><Text style={st.heroSub}>Chọn đúng mục tiêu bạn đang theo đuổi ở tab bên dưới.</Text></View>
-          <Ionicons name="sparkles" size={34} color="#F6D6B4" />
+          <Ionicons name="sparkles" size={34} color={'rgba(255,255,255,0.72)'} />
         </View>
 
         <TabBar tab={tab} setTab={setTab} />
@@ -183,7 +183,7 @@ export default function Goals(){
           </>
         )}
 
-        {(tab==='shopping'||tab==='health') && loading&&<View style={st.loading}><ActivityIndicator color={C.shu}/><Text style={st.loadingText}>Hệ thống đang kết hợp mục tiêu cụ thể, thói quen nếu–thì và ngân sách thực tế…</Text></View>}
+        {(tab==='shopping'||tab==='health') && loading&&<View style={st.loading}><ActivityIndicator color={C.ink}/><Text style={st.loadingText}>Hệ thống đang kết hợp mục tiêu cụ thể, thói quen nếu–thì và ngân sách thực tế…</Text></View>}
         {(tab==='shopping'||tab==='health') && !!error&&<Text style={st.error}>{error}</Text>}
 
         {tab==='shopping' && plan && (
@@ -321,7 +321,7 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
         <>
           <Pressable style={st.ledgerToggle} onPress={()=>setShowLedger(value=>!value)}>
             <Text style={st.ledgerToggleT}>Lịch sử tích luỹ ({fund.deposits.length})</Text>
-            <Ionicons name={showLedger?'chevron-up':'chevron-down'} size={15} color={C.shu} />
+            <Ionicons name={showLedger?'chevron-up':'chevron-down'} size={15} color={C.ink} />
           </Pressable>
           {showLedger&&[...fund.deposits].reverse().map(item=>(
             <View key={item.id} style={st.ledgerRow}>
@@ -341,7 +341,7 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
 function CoachCard({plan}:{plan:GoalPlan}){
   return (
     <View style={[st.resultCard,{backgroundColor:C.sumi,borderColor:C.sumi}]}>
-      <Text style={[st.resultKicker,{color:'#F6D6B4'}]}>HUẤN LUYỆN VIÊN THÔNG MINH</Text>
+      <Text style={[st.resultKicker,{color:'rgba(255,255,255,0.70)'}]}>HUẤN LUYỆN VIÊN THÔNG MINH</Text>
       <Text style={st.coachTitle}>{plan.coaching.motivation}</Text>
       <Text style={st.identity}>"{plan.coaching.identityStatement}"</Text>
       <Text style={st.coachSub}>Kế hoạch nếu–thì</Text>
@@ -392,7 +392,7 @@ function JapanGoalTab(){
         </Pressable>
       ))}
       <Pressable style={st.exploreLink} onPress={()=>router.push('/explore-japan')}>
-        <Ionicons name="compass-outline" size={15} color={C.shu} /><Text style={st.exploreLinkT}>Xem chi tiết địa điểm ở Khám phá Nhật Bản</Text>
+        <Ionicons name="compass-outline" size={15} color={C.ink} /><Text style={st.exploreLinkT}>Xem chi tiết địa điểm ở Khám phá Nhật Bản</Text>
       </Pressable>
 
       <Title icon="wallet-outline" title="Ngân sách chuyến đi" sub="Tự tính theo số tiền và thời gian bạn nhập, không cần kết nối máy chủ." />
@@ -418,45 +418,45 @@ function JapanGoalTab(){
 
 const st=StyleSheet.create({
   hero:{flexDirection:'row',gap:12,backgroundColor:C.sumi,borderRadius:18,padding:18,marginTop:6},
-  eyebrow:{fontFamily:F.bodyX,fontSize:10,letterSpacing:1.2,color:'#F6D6B4'},
+  eyebrow:{fontFamily:F.bodyX,fontSize:10,letterSpacing:1.2,color:'rgba(255,255,255,0.70)'},
   heroTitle:{fontFamily:F.display,fontSize:19,lineHeight:27,color:'#fff',marginTop:6},
-  heroSub:{fontFamily:F.body,fontSize:11.5,lineHeight:18,color:'#D8D2CB',marginTop:7},
+  heroSub:{fontFamily:F.body,fontSize:11.5,lineHeight:18,color:'rgba(255,255,255,0.70)',marginTop:7},
   tabs:{flexDirection:'row',gap:8,marginTop:16},
   tab:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:10,backgroundColor:'#fff'},
-  tabOn:{backgroundColor:C.shu,borderColor:C.shu},
+  tabOn:{backgroundColor:C.primary,borderColor:C.primary},
   tabT:{fontFamily:F.bodyB,fontSize:11.5,color:C.muted},
   titleRow:{flexDirection:'row',alignItems:'center',gap:10,marginTop:22,marginBottom:10},
-  titleIcon:{width:36,height:36,borderRadius:11,backgroundColor:C.shu,alignItems:'center',justifyContent:'center'},
+  titleIcon:{width:36,height:36,borderRadius:11,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},
   title:{fontFamily:F.display,fontSize:16,color:C.sumi},sub:{fontFamily:F.body,fontSize:10.5,lineHeight:16,color:C.muted,marginTop:1},
   product:{width:124,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:7},
-  productOn:{borderWidth:2,borderColor:C.shu},productImg:{width:'100%',height:112,borderRadius:10},
-  productName:{fontFamily:F.bodyB,fontSize:11.5,lineHeight:16,color:C.ink,minHeight:34,marginTop:6},productPrice:{fontFamily:F.bodyX,fontSize:11,color:C.shu,marginTop:2},
-  check:{position:'absolute',right:10,top:10,width:24,height:24,borderRadius:12,backgroundColor:C.shu,alignItems:'center',justifyContent:'center'},
-  selected:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:C.shuSoft,borderRadius:14,padding:10,marginTop:10},selectedImg:{width:50,height:60,borderRadius:9},
-  selectedName:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},selectedPrice:{fontFamily:F.bodyX,fontSize:12,color:C.shu,marginTop:3},view:{fontFamily:F.bodyB,fontSize:12,color:C.shu},
+  productOn:{borderWidth:2,borderColor:C.primary},productImg:{width:'100%',height:112,borderRadius:10},
+  productName:{fontFamily:F.bodyB,fontSize:11.5,lineHeight:16,color:C.ink,minHeight:34,marginTop:6},productPrice:{fontFamily:F.bodyX,fontSize:11,color:C.ink,marginTop:2},
+  check:{position:'absolute',right:10,top:10,width:24,height:24,borderRadius:12,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},
+  selected:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:C.washi2,borderRadius:14,padding:10,marginTop:10},selectedImg:{width:50,height:60,borderRadius:9},
+  selectedName:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},selectedPrice:{fontFamily:F.bodyX,fontSize:12,color:C.ink,marginTop:3},view:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   formGrid:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',rowGap:10},fieldWrap:{width:'48%'},fieldLabel:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink,marginBottom:5},
   field:{height:46,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:'#fff',paddingHorizontal:11},input:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},suffix:{fontFamily:F.body,fontSize:11,color:C.muted},
-  safety:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:C.muted,backgroundColor:'#FFF8E7',borderRadius:10,padding:10,marginTop:10},
+  safety:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:C.muted,backgroundColor:C.washi2,borderRadius:10,padding:10,marginTop:10},
   loading:{flexDirection:'row',alignItems:'center',gap:8,justifyContent:'center',padding:12},loadingText:{fontFamily:F.body,fontSize:11,color:C.muted,flex:1},error:{fontFamily:F.bodyB,fontSize:12,color:C.danger,textAlign:'center',marginTop:10},
-  resultCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:15},resultKicker:{fontFamily:F.bodyX,fontSize:10.5,letterSpacing:1,color:C.shu},resultBig:{fontFamily:F.displayX,fontSize:30,color:C.sumi,marginTop:5},
-  progress:{height:9,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginVertical:9},progressOn:{height:'100%',borderRadius:5,backgroundColor:C.matcha},resultText:{fontFamily:F.body,fontSize:12,lineHeight:19,color:C.ink},strong:{fontFamily:F.bodyX,color:C.shu},item:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:C.ink,marginTop:6},
-  metricRow:{flexDirection:'row',gap:8,marginVertical:12},metric:{flex:1,alignItems:'center',backgroundColor:C.washi2,borderRadius:11,padding:9},metricN:{fontFamily:F.display,fontSize:20,color:C.sumi},metricL:{fontFamily:F.body,fontSize:9.5,color:C.muted,textAlign:'center'},warning:{fontFamily:F.bodyB,fontSize:10.5,lineHeight:17,color:C.shuDeep,backgroundColor:C.shuSoft,borderRadius:10,padding:9},
-  coachTitle:{fontFamily:F.display,fontSize:17,lineHeight:25,color:'#fff',marginTop:10},identity:{fontFamily:F.bodyB,fontSize:12.5,lineHeight:20,color:'#F6D6B4',marginTop:10},coachSub:{fontFamily:F.bodyX,fontSize:11,color:'#fff',marginTop:13,marginBottom:3},coachItem:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:'#DDD7D0',marginTop:4},question:{fontFamily:F.bodyB,fontSize:12,lineHeight:20,color:'#F6D6B4',borderTopWidth:1,borderTopColor:'#4A4038',paddingTop:10,marginTop:12},disclaimer:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:'#B9B2AA',textAlign:'center',marginTop:10},
-  pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:'#fff'},pillOn:{backgroundColor:C.shu,borderColor:C.shu},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
+  resultCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:15},resultKicker:{fontFamily:F.bodyX,fontSize:10.5,letterSpacing:1,color:C.ink},resultBig:{fontFamily:F.displayX,fontSize:30,color:C.sumi,marginTop:5},
+  progress:{height:9,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginVertical:9},progressOn:{height:'100%',borderRadius:5,backgroundColor:C.matcha},resultText:{fontFamily:F.body,fontSize:12,lineHeight:19,color:C.ink},strong:{fontFamily:F.bodyX,color:C.ink},item:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:C.ink,marginTop:6},
+  metricRow:{flexDirection:'row',gap:8,marginVertical:12},metric:{flex:1,alignItems:'center',backgroundColor:C.washi2,borderRadius:11,padding:9},metricN:{fontFamily:F.display,fontSize:20,color:C.sumi},metricL:{fontFamily:F.body,fontSize:9.5,color:C.muted,textAlign:'center'},warning:{fontFamily:F.bodyB,fontSize:10.5,lineHeight:17,color:C.shuDeep,backgroundColor:C.washi2,borderRadius:10,padding:9},
+  coachTitle:{fontFamily:F.display,fontSize:17,lineHeight:25,color:'#fff',marginTop:10},identity:{fontFamily:F.bodyB,fontSize:12.5,lineHeight:20,color:'rgba(255,255,255,0.70)',marginTop:10},coachSub:{fontFamily:F.bodyX,fontSize:11,color:'#fff',marginTop:13,marginBottom:3},coachItem:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:C.line,marginTop:4},question:{fontFamily:F.bodyB,fontSize:12,lineHeight:20,color:'rgba(255,255,255,0.70)',borderTopWidth:1,borderTopColor:C.muted,paddingTop:10,marginTop:12},disclaimer:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:'#B9B2AA',textAlign:'center',marginTop:10},
+  pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:'#fff'},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
   spotPick:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:11,paddingHorizontal:13,backgroundColor:'#fff',marginBottom:8},
-  spotPickOn:{backgroundColor:C.shu,borderColor:C.shu},spotPickT:{fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
-  exploreLink:{flexDirection:'row',alignItems:'center',gap:7,marginTop:2,marginBottom:6},exploreLinkT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  spotPickOn:{backgroundColor:C.primary,borderColor:C.primary},spotPickT:{fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
+  exploreLink:{flexDirection:'row',alignItems:'center',gap:7,marginTop:2,marginBottom:6},exploreLinkT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   fundBig:{fontFamily:F.displayX,fontSize:24,color:C.sumi,marginTop:7},fundTarget:{fontFamily:F.body,fontSize:13,color:C.muted},
   fundHint:{fontFamily:F.body,fontSize:11,lineHeight:17,color:C.muted,marginTop:9},
   quickRow:{flexDirection:'row',gap:7,marginTop:10},
   quick:{flex:1,alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:10,paddingVertical:9,backgroundColor:C.washi2},
-  quickT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  quickT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   depositRow:{flexDirection:'row',gap:8,marginTop:9,alignItems:'center'},
-  depositBtn:{backgroundColor:C.shu,borderRadius:12,height:46,paddingHorizontal:15,alignItems:'center',justifyContent:'center'},
+  depositBtn:{backgroundColor:C.primary,borderRadius:12,height:46,paddingHorizontal:15,alignItems:'center',justifyContent:'center'},
   depositBtnT:{fontFamily:F.bodyB,fontSize:12.5,color:'#fff'},
   ledgerNote:{fontFamily:F.body,fontSize:10,lineHeight:15,color:C.muted,marginTop:8,fontStyle:'italic'},
   ledgerToggle:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderTopWidth:1,borderTopColor:C.hair,marginTop:12,paddingTop:10},
-  ledgerToggleT:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
+  ledgerToggleT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   ledgerRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.hair},
   ledgerAmount:{fontFamily:F.bodyX,fontSize:12.5,color:C.ink},ledgerMeta:{fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2},
   rewardBox:{backgroundColor:'#F0F7F0',borderWidth:1,borderColor:'#CBE3CC',borderRadius:13,padding:12,marginTop:11},

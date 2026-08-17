@@ -55,7 +55,7 @@ export default function Me() {
           <View style={{ flex:1 }}>
             <Text style={{ fontFamily:F.display, fontSize:20, color:C.sumi }}>{user?.name||'Thành viên JAPANO'}</Text>
             <Text style={{ fontFamily:F.body, fontSize:12, color:C.muted }}>{user?.email||''}</Text>
-            <View style={[st.memberBadge,vip?.isVip&&st.memberBadgeVip]}><Ionicons name={vip?.isVip?'diamond':'person'} size={11} color={vip?.isVip?'#8A6518':C.muted}/><Text style={[st.memberBadgeT,vip?.isVip&&st.memberBadgeTVip]}>{vip?.isVip?`VIP · còn ${vip.daysRemaining} ngày`:'Thành viên JAPANO'}</Text></View>
+            <View style={[st.memberBadge,vip?.isVip&&st.memberBadgeVip]}><Ionicons name={vip?.isVip?'diamond':'person'} size={11} color={vip?.isVip?C.onPrimary:C.muted}/><Text style={[st.memberBadgeT,vip?.isVip&&st.memberBadgeTVip]}>{vip?.isVip?`VIP · còn ${vip.daysRemaining} ngày`:'Thành viên JAPANO'}</Text></View>
           </View>
           <Pressable style={st.editChip} onPress={()=>router.push('/profile')}><Text style={{ fontFamily:F.bodyM, fontSize:11, color:C.ink }}>Sửa</Text></Pressable>
         </View>
@@ -82,7 +82,7 @@ export default function Me() {
         <Row icon="notifications-outline" label="Thông báo" to="/notifications" />
         <Row icon="flag-outline" label="Mục tiêu mua sắm & làm đẹp" to="/goals" />
         <Pressable style={st.row} onPress={()=>router.push('/flagcards')}>
-          <View style={st.ic}><Ionicons name="albums-outline" size={17} color={C.shu} /></View>
+          <View style={st.ic}><Ionicons name="albums-outline" size={17} color={C.ink} /></View>
           <Text style={st.rowLbl}>Thẻ sưu tầm địa danh</Text>
           {!!flagProgress && (
             <View style={[st.flagBadge, flagProgress.completed && st.flagBadgeDone]}>
@@ -107,18 +107,18 @@ export default function Me() {
 }
 const st = StyleSheet.create({
   memberBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:4,backgroundColor:C.washi2,borderRadius:999,paddingHorizontal:8,paddingVertical:4,marginTop:5},
-  memberBadgeVip:{backgroundColor:'#F7E8B8'},memberBadgeT:{fontFamily:F.bodyB,fontSize:9.5,color:C.muted},memberBadgeTVip:{color:'#8A6518'},
-  vipCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:14,marginTop:15},vipCardActive:{backgroundColor:'#FFF9EC',borderColor:'#B08D3C'},
-  vipIcon:{width:42,height:42,borderRadius:13,backgroundColor:'#9A7423',alignItems:'center',justifyContent:'center'},vipTitle:{fontFamily:F.display,fontSize:15,color:C.sumi},vipSub:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
-  vipTrack:{height:8,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginTop:12},vipTrackOn:{height:'100%',borderRadius:5,backgroundColor:'#B08D3C'},vipMeta:{flexDirection:'row',justifyContent:'space-between',marginTop:6},vipMetaT:{fontFamily:F.bodyB,fontSize:10,color:C.muted},
+  memberBadgeVip:{backgroundColor:C.primary},memberBadgeT:{fontFamily:F.bodyB,fontSize:9.5,color:C.muted},memberBadgeTVip:{color:C.onPrimary},
+  vipCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:14,marginTop:15},vipCardActive:{backgroundColor:C.washi2,borderColor:C.primary},
+  vipIcon:{width:42,height:42,borderRadius:13,backgroundColor:C.ink,alignItems:'center',justifyContent:'center'},vipTitle:{fontFamily:F.display,fontSize:15,color:C.sumi},vipSub:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
+  vipTrack:{height:8,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginTop:12},vipTrackOn:{height:'100%',borderRadius:5,backgroundColor:C.primary},vipMeta:{flexDirection:'row',justifyContent:'space-between',marginTop:6},vipMetaT:{fontFamily:F.bodyB,fontSize:10,color:C.muted},
   editChip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:7, paddingHorizontal:13, backgroundColor:'#fff' },
   stat:{ flex:1, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:12, alignItems:'center' },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:16, marginBottom:2 },
   row:{ flexDirection:'row', alignItems:'center', gap:12, paddingVertical:14, borderBottomWidth:1, borderBottomColor:C.hair },
-  ic:{ width:34, height:34, borderRadius:10, backgroundColor:C.shuSoft, alignItems:'center', justifyContent:'center' },
+  ic:{ width:34, height:34, borderRadius:10, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },
   rowLbl:{ flex:1, fontFamily:F.bodyM, fontSize:14, color:C.ink },
   flagBadge:{ backgroundColor:C.washi2, borderRadius:999, paddingVertical:3, paddingHorizontal:9, marginRight:8 },
-  flagBadgeDone:{ backgroundColor:C.shuSoft },
+  flagBadgeDone:{ backgroundColor:C.washi2 },
   flagBadgeT:{ fontFamily:F.bodyB, fontSize:10.5, color:C.muted },
   flagBadgeTDone:{ color:C.shuDeep },
 });

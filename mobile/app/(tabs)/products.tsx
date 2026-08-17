@@ -125,7 +125,7 @@ export default function Products() {
         {sortOpen && (
           <View style={st.sortMenu}>
             {SORTS.map(s=>(
-              <Pressable key={s.key} style={[st.sortOpt, s.key===sort&&{ backgroundColor:C.shuSoft }]} onPress={()=>{ setSort(s.key); setSortOpen(false); }}>
+              <Pressable key={s.key} style={[st.sortOpt, s.key===sort&&{ backgroundColor:C.washi2 }]} onPress={()=>{ setSort(s.key); setSortOpen(false); }}>
                 <Text style={{ fontFamily:s.key===sort?F.bodyB:F.body, fontSize:13, color:s.key===sort?C.shuDeep:C.ink }}>{s.label}</Text>
                 {s.key===sort && <Ionicons name="checkmark" size={15} color={C.shuDeep} />}
               </Pressable>
@@ -163,7 +163,7 @@ export default function Products() {
 const st = StyleSheet.create({
   search:{ flexDirection:'row', alignItems:'center', gap:8, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, marginBottom:12 },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
-  chipOn:{ backgroundColor:C.shu, borderColor:C.shu },
+  chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
   sortMenu:{ borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', marginBottom:10, overflow:'hidden' },
   sortOpt:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:11, paddingHorizontal:14, borderTopWidth:1, borderTopColor:C.hair },
 });

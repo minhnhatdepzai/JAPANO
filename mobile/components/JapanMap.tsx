@@ -54,7 +54,7 @@ export function JapanMap({ activeRegion, availableRegions, onSelect, height = 40
         return (
           <Line key={`line-${p.region}`}
             x1={CALLOUT_X + 6} y1={p.labelY - 8} x2={p.cx} y2={p.cy}
-            stroke={on ? C.shu : '#B9AE9E'} strokeWidth={on ? 2.5 : 1.5}
+            stroke={on ? C.shu : C.borderStrong} strokeWidth={on ? 2.5 : 1.5}
           />
         );
       })}
@@ -70,7 +70,7 @@ export function JapanMap({ activeRegion, availableRegions, onSelect, height = 40
         const on = activeRegion === p.region;
         const enabled = available.has(p.region);
         const pos = directLabelPos(p);
-        const fill = enabled ? '#241B14' : C.muted;
+        const fill = enabled ? C.ink : C.muted;
         return (
           <React.Fragment key={p.region}>
             <Circle
@@ -84,7 +84,7 @@ export function JapanMap({ activeRegion, availableRegions, onSelect, height = 40
                 <SvgText x={pos.x} y={pos.y - 8} fontSize={34} fontWeight="700" fontFamily={F.bodyB} fill={fill} textAnchor={pos.anchor} onPress={() => enabled && onSelect(p.region)}>
                   {p.label}
                 </SvgText>
-                <SvgText x={pos.x} y={pos.y + 24} fontSize={26} fontFamily={F.body} fill="#5C5348" textAnchor={pos.anchor} onPress={() => enabled && onSelect(p.region)}>
+                <SvgText x={pos.x} y={pos.y + 24} fontSize={26} fontFamily={F.body} fill={C.muted} textAnchor={pos.anchor} onPress={() => enabled && onSelect(p.region)}>
                   {p.note}
                 </SvgText>
               </>
@@ -115,14 +115,14 @@ export function JapanMap({ activeRegion, availableRegions, onSelect, height = 40
         return (
           <React.Fragment key={`label-${p.region}`}>
             <Circle cx={CALLOUT_X} cy={p.labelY - 12} r={5} fill={enabled ? C.shuDeep : C.hair} />
-            <SvgText x={CALLOUT_X + 16} y={p.labelY - 4} fontSize={32} fontWeight="700" fontFamily={F.bodyB} fill={enabled ? '#241B14' : C.muted} textAnchor="start" onPress={() => enabled && onSelect(p.region)}>
+            <SvgText x={CALLOUT_X + 16} y={p.labelY - 4} fontSize={32} fontWeight="700" fontFamily={F.bodyB} fill={enabled ? C.ink : C.muted} textAnchor="start" onPress={() => enabled && onSelect(p.region)}>
               {p.label}
             </SvgText>
           </React.Fragment>
         );
       })}
 
-      <SvgText x={OKINAWA_DOT.cx + OKINAWA_DOT.r + GAP} y={OKINAWA_DOT.cy + 10} fontSize={32} fontWeight="700" fontFamily={F.bodyB} fill={available.has('Kyūshū & Okinawa') ? '#241B14' : C.muted} textAnchor="start" onPress={() => available.has('Kyūshū & Okinawa') && onSelect('Kyūshū & Okinawa')}>
+      <SvgText x={OKINAWA_DOT.cx + OKINAWA_DOT.r + GAP} y={OKINAWA_DOT.cy + 10} fontSize={32} fontWeight="700" fontFamily={F.bodyB} fill={available.has('Kyūshū & Okinawa') ? C.ink : C.muted} textAnchor="start" onPress={() => available.has('Kyūshū & Okinawa') && onSelect('Kyūshū & Okinawa')}>
         Okinawa
       </SvgText>
     </Svg>

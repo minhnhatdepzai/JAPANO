@@ -1,0 +1,588 @@
+{
+  "generatedAt": "2026-08-16T15:47:56.354Z",
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "k": 5,
+  "products": 35,
+  "limitation": "Bộ đánh giá chỉ gồm 24 truy vấn trên 35 sản phẩm nên kết quả mang tính tham khảo, chưa đủ lớn để kết luận thống kê chặt chẽ.",
+  "embedProductsMs": 46,
+  "embedQueriesMs": 18,
+  "queriesWithNoKeywordMatch": 0,
+  "keyword": {
+    "queries": 24,
+    "hitRate1": 0.7917,
+    "hitRate5": 0.9167,
+    "precision5": 0.3667,
+    "recall5": 0.7431,
+    "mrr": 0.8458
+  },
+  "semantic": {
+    "queries": 24,
+    "hitRate1": 0.7083,
+    "hitRate5": 0.9167,
+    "precision5": 0.3167,
+    "recall5": 0.6632,
+    "mrr": 0.7934
+  },
+  "perQuery": [
+    {
+      "query": "đồ mặc đi lễ hội mùa hè Nhật Bản",
+      "relevant": [
+        "yukata-xanh",
+        "happi-le-hoi",
+        "du-nhat",
+        "sensu-quat-gap"
+      ],
+      "keywordTop": [
+        "du-nhat",
+        "sensu-quat-gap",
+        "khoac-nhat",
+        "kimono-hong",
+        "yukata-xanh"
+      ],
+      "semanticTop": [
+        "du-nhat",
+        "khoac-nhat",
+        "sensu-quat-gap",
+        "balo-vai",
+        "yukata-xanh"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "trang phục truyền thống trang trọng đi lễ tốt nghiệp",
+      "relevant": [
+        "hakama-nu",
+        "hakama-do",
+        "kimono-hong"
+      ],
+      "keywordTop": [
+        "hakama-nu",
+        "trang-suc",
+        "hakama-do",
+        "ao-len-co-lo",
+        "dong-phuc-thuy-thu"
+      ],
+      "semanticTop": [
+        "hakama-nu",
+        "obi-lua",
+        "chan-vay-xep-ly",
+        "dong-phuc-thuy-thu",
+        "yumeko"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "áo giữ ấm mùa đông",
+      "relevant": [
+        "ao-len-co-lo",
+        "gang-tay",
+        "chup-tai",
+        "cardigan-dai"
+      ],
+      "keywordTop": [
+        "ao-len-co-lo",
+        "cardigan-dai",
+        "gang-tay",
+        "chup-tai",
+        "yukata-xanh"
+      ],
+      "semanticTop": [
+        "ao-len-co-lo",
+        "khoac-nhat",
+        "gang-tay",
+        "cardigan-dai",
+        "chup-tai"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đồ đi làm công sở lịch sự",
+      "relevant": [
+        "so-mi-trang",
+        "blazer-kaki",
+        "cardigan-dai",
+        "chan-vay-xep-ly"
+      ],
+      "keywordTop": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "blazer-kaki",
+        "kimono-hong",
+        "furina"
+      ],
+      "semanticTop": [
+        "cardigan-dai",
+        "so-mi-trang",
+        "furoshiki-vai",
+        "trang-suc",
+        "ao-len-cardigan"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "hóa trang nhân vật hoạt hình",
+      "relevant": [
+        "naruto",
+        "furina",
+        "yumeko",
+        "yae-miko"
+      ],
+      "keywordTop": [
+        "naruto",
+        "furina",
+        "yumeko",
+        "yae-miko",
+        "samue-thien"
+      ],
+      "semanticTop": [
+        "yumeko",
+        "yae-miko",
+        "naruto",
+        "furina",
+        "kiem-go"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "phụ kiện cài lên tóc",
+      "relevant": [
+        "kanzashi-trau-cai",
+        "kep-no"
+      ],
+      "keywordTop": [
+        "kanzashi-trau-cai",
+        "gang-tay",
+        "kep-no",
+        "du-nhat",
+        "balo-vai"
+      ],
+      "semanticTop": [
+        "kanzashi-trau-cai",
+        "kep-no",
+        "trang-suc",
+        "so-mi-trang",
+        "ao-len-cardigan"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "giày dép truyền thống Nhật",
+      "relevant": [
+        "guoc-geta",
+        "giay-dep",
+        "tabi-chia-ngon"
+      ],
+      "keywordTop": [
+        "giay-dep",
+        "guoc-geta",
+        "trang-suc",
+        "kimono-hong",
+        "haori-dang-dai"
+      ],
+      "semanticTop": [
+        "giay-dep",
+        "khoac-nhat",
+        "mu-nhat",
+        "chan-vay-xep-ly",
+        "balo-vai"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đồ mặc ở nhà cho thoải mái",
+      "relevant": [
+        "samue-thien"
+      ],
+      "keywordTop": [
+        "samue-thien",
+        "balo-vai",
+        "giay-dep",
+        "haori-dang-dai",
+        "du-nhat"
+      ],
+      "semanticTop": [
+        "samue-thien",
+        "ao-len-co-lo",
+        "blazer-kaki",
+        "cardigan-dai",
+        "khoac-nhat"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "quà tặng thủ công nhỏ gọn",
+      "relevant": [
+        "sensu-quat-gap",
+        "furoshiki-vai",
+        "kanzashi-trau-cai"
+      ],
+      "keywordTop": [
+        "sensu-quat-gap",
+        "obi-lua",
+        "kanzashi-trau-cai",
+        "cardigan-dai",
+        "dong-phuc-thuy-thu"
+      ],
+      "semanticTop": [
+        "furoshiki-vai",
+        "sensu-quat-gap",
+        "trang-suc",
+        "ao-len-cardigan",
+        "so-mi-trang"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "túi đựng đồ đi học",
+      "relevant": [
+        "balo-vai"
+      ],
+      "keywordTop": [
+        "dong-phuc-thuy-thu",
+        "balo-vai",
+        "vo-tat",
+        "yumeko"
+      ],
+      "semanticTop": [
+        "balo-vai",
+        "vo-tat",
+        "dong-phuc-thuy-thu",
+        "sensu-quat-gap",
+        "so-mi-trang"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đồng phục học sinh Nhật",
+      "relevant": [
+        "dong-phuc-thuy-thu",
+        "vo-tat"
+      ],
+      "keywordTop": [
+        "dong-phuc-thuy-thu",
+        "balo-vai",
+        "ao-len-co-lo",
+        "yumeko",
+        "giay-dep"
+      ],
+      "semanticTop": [
+        "balo-vai",
+        "dong-phuc-thuy-thu",
+        "khoac-nhat",
+        "sensu-quat-gap",
+        "yumeko"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "áo khoác dáng dài mặc ngoài",
+      "relevant": [
+        "haori-dang-dai",
+        "cardigan-dai",
+        "blazer-kaki",
+        "khoac-nhat"
+      ],
+      "keywordTop": [
+        "cardigan-dai",
+        "blazer-kaki",
+        "haori-dang-dai",
+        "ao-len-cardigan",
+        "khoac-nhat"
+      ],
+      "semanticTop": [
+        "cardigan-dai",
+        "blazer-kaki",
+        "khoac-nhat",
+        "ao-len-co-lo",
+        "gang-tay"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đạo cụ chụp ảnh cosplay",
+      "relevant": [
+        "kiem-go",
+        "du-nhat"
+      ],
+      "keywordTop": [
+        "kiem-go",
+        "du-nhat",
+        "ao-len-co-lo",
+        "cardigan-dai",
+        "naruto"
+      ],
+      "semanticTop": [
+        "furina",
+        "yae-miko",
+        "naruto",
+        "yumeko",
+        "kiem-go"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đồ dùng kèm với kimono",
+      "relevant": [
+        "obi-lua",
+        "tabi-chia-ngon",
+        "guoc-geta",
+        "kanzashi-trau-cai"
+      ],
+      "keywordTop": [
+        "kimono-hong",
+        "chan-vay-xep-ly",
+        "obi-lua",
+        "tabi-chia-ngon",
+        "furoshiki-vai"
+      ],
+      "semanticTop": [
+        "obi-lua",
+        "chan-vay-xep-ly",
+        "kimono-hong",
+        "mu-nhat",
+        "khoac-nhat"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "quần áo màu hồng nữ tính",
+      "relevant": [
+        "kimono-hong",
+        "yae-miko"
+      ],
+      "keywordTop": [
+        "kimono-hong",
+        "hakama-nu",
+        "cardigan-dai",
+        "dong-phuc-thuy-thu",
+        "trang-suc"
+      ],
+      "semanticTop": [
+        "ao-len-co-lo",
+        "yae-miko",
+        "obi-lua",
+        "yumeko",
+        "hakama-nu"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "áo len dệt kim nhẹ",
+      "relevant": [
+        "ao-len-cardigan",
+        "ao-len-co-lo",
+        "cardigan-dai"
+      ],
+      "keywordTop": [
+        "ao-len-cardigan",
+        "ao-len-co-lo",
+        "cardigan-dai",
+        "kimono-hong",
+        "hakama-nu"
+      ],
+      "semanticTop": [
+        "ao-len-cardigan",
+        "ao-len-co-lo",
+        "tabi-chia-ngon",
+        "khoac-nhat",
+        "yukata-xanh"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "thứ che nắng che mưa khi ra ngoài",
+      "relevant": [
+        "du-nhat",
+        "mu-nhat"
+      ],
+      "keywordTop": [
+        "sensu-quat-gap",
+        "dong-phuc-thuy-thu",
+        "ao-len-co-lo",
+        "gang-tay",
+        "chup-tai"
+      ],
+      "semanticTop": [
+        "cardigan-dai",
+        "chup-tai",
+        "trang-suc",
+        "ao-len-co-lo",
+        "giay-dep"
+      ],
+      "keywordHitK": 0,
+      "semanticHitK": 0
+    },
+    {
+      "query": "đồ mặc đi đền chùa",
+      "relevant": [
+        "hakama-do",
+        "kimono-hong",
+        "hakama-nu"
+      ],
+      "keywordTop": [
+        "hakama-do",
+        "yukata-xanh",
+        "samue-thien"
+      ],
+      "semanticTop": [
+        "hakama-do",
+        "obi-lua",
+        "hakama-nu",
+        "chan-vay-xep-ly",
+        "happi-le-hoi"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "phụ kiện giữ ấm tay và tai",
+      "relevant": [
+        "gang-tay",
+        "chup-tai"
+      ],
+      "keywordTop": [
+        "gang-tay",
+        "chup-tai",
+        "balo-vai",
+        "giay-dep",
+        "vo-tat"
+      ],
+      "semanticTop": [
+        "gang-tay",
+        "trang-suc",
+        "ao-len-cardigan",
+        "cardigan-dai",
+        "chup-tai"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "váy phối cùng áo truyền thống",
+      "relevant": [
+        "chan-vay-xep-ly"
+      ],
+      "keywordTop": [
+        "trang-suc",
+        "kimono-hong",
+        "haori-dang-dai",
+        "yukata-xanh",
+        "hakama-nu"
+      ],
+      "semanticTop": [
+        "obi-lua",
+        "ao-len-co-lo",
+        "hakama-nu",
+        "chan-vay-xep-ly",
+        "balo-vai"
+      ],
+      "keywordHitK": 0,
+      "semanticHitK": 1
+    },
+    {
+      "query": "khăn vải đa dụng thân thiện môi trường",
+      "relevant": [
+        "furoshiki-vai"
+      ],
+      "keywordTop": [
+        "furoshiki-vai",
+        "balo-vai",
+        "naruto",
+        "furina",
+        "yumeko"
+      ],
+      "semanticTop": [
+        "ao-len-co-lo",
+        "tabi-chia-ngon",
+        "yukata-xanh",
+        "balo-vai",
+        "khoac-nhat"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 0
+    },
+    {
+      "query": "mũ đội phong cách đường phố",
+      "relevant": [
+        "mu-nhat"
+      ],
+      "keywordTop": [
+        "dong-phuc-thuy-thu",
+        "vo-tat",
+        "yumeko",
+        "mu-nhat",
+        "ao-len-co-lo"
+      ],
+      "semanticTop": [
+        "mu-nhat",
+        "blazer-kaki",
+        "cardigan-dai",
+        "chan-vay-xep-ly",
+        "dong-phuc-thuy-thu"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "trang phục nam nữ mặc thiền định",
+      "relevant": [
+        "samue-thien"
+      ],
+      "keywordTop": [
+        "samue-thien",
+        "dong-phuc-thuy-thu",
+        "naruto",
+        "ao-len-co-lo",
+        "furina"
+      ],
+      "semanticTop": [
+        "hakama-nu",
+        "dong-phuc-thuy-thu",
+        "samue-thien",
+        "obi-lua",
+        "chan-vay-xep-ly"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    },
+    {
+      "query": "đồ mặc mùa hè mát mẻ tối giản",
+      "relevant": [
+        "yukata-xanh",
+        "so-mi-trang"
+      ],
+      "keywordTop": [
+        "yukata-xanh",
+        "sensu-quat-gap",
+        "ao-len-co-lo",
+        "gang-tay",
+        "chup-tai"
+      ],
+      "semanticTop": [
+        "yukata-xanh",
+        "ao-len-co-lo",
+        "khoac-nhat",
+        "balo-vai",
+        "mu-nhat"
+      ],
+      "keywordHitK": 1,
+      "semanticHitK": 1
+    }
+  ]
+}

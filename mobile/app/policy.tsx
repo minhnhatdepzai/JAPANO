@@ -12,10 +12,10 @@ import { C, F } from '../theme/tokens';
 // đều đổi theo, không bao giờ lệch nhau.
 
 const ACTOR_STYLE: Record<string, { color: string; bg: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  customer: { color: '#1F5FA8', bg: '#E8F0FA', icon: 'person-outline' },
-  shop: { color: '#A33A2F', bg: '#FBEDEA', icon: 'storefront-outline' },
-  carrier: { color: '#7A5A15', bg: '#FBF1DA', icon: 'car-outline' },
-  gateway: { color: '#4C1D95', bg: '#F2EEFF', icon: 'card-outline' },
+  customer: { color: C.ink, bg: C.washi2, icon: 'person-outline' },
+  shop: { color: C.ink, bg: C.washi2, icon: 'storefront-outline' },
+  carrier: { color: C.ink, bg: C.washi2, icon: 'car-outline' },
+  gateway: { color: C.ink, bg: C.washi2, icon: 'card-outline' },
 };
 
 function StageRow({ stage, index, actors, last }: { stage: PolicyStage; index: number; actors: Record<string, string>; last: boolean }) {
@@ -70,7 +70,7 @@ export default function PolicyScreen() {
     <Screen>
       <Header title="Chính sách & quy trình" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 30 }}>
-        {!policy && !error && <ActivityIndicator color={C.shu} style={{ marginTop: 30 }} />}
+        {!policy && !error && <ActivityIndicator color={C.ink} style={{ marginTop: 30 }} />}
         {!!error && <Text style={st.error}>{error}</Text>}
         {!!policy && (
           <>
@@ -108,7 +108,7 @@ export default function PolicyScreen() {
             <View style={st.plainBox}>
               {policy.return.conditions.map(item => (
                 <View key={item} style={st.condRow}>
-                  <Ionicons name="checkmark-circle-outline" size={14} color={C.shu} style={{ marginTop: 2 }} />
+                  <Ionicons name="checkmark-circle-outline" size={14} color={C.ink} style={{ marginTop: 2 }} />
                   <Text style={st.condText}>{item}</Text>
                 </View>
               ))}
@@ -124,9 +124,9 @@ export default function PolicyScreen() {
 const st = StyleSheet.create({
   error: { fontFamily: F.bodyB, fontSize: 12.5, color: C.danger, textAlign: 'center', marginTop: 24 },
   hero: { backgroundColor: C.sumi, borderRadius: 18, padding: 17, marginTop: 4 },
-  heroKicker: { fontFamily: F.bodyX, fontSize: 10, letterSpacing: 1.3, color: '#F6D6B4' },
+  heroKicker: { fontFamily: F.bodyX, fontSize: 10, letterSpacing: 1.3, color: 'rgba(255,255,255,0.72)' },
   heroTitle: { fontFamily: F.display, fontSize: 18, lineHeight: 26, color: '#fff', marginTop: 7 },
-  heroSub: { fontFamily: F.body, fontSize: 11.5, lineHeight: 18, color: '#D8D2CB', marginTop: 8 },
+  heroSub: { fontFamily: F.body, fontSize: 11.5, lineHeight: 18, color: 'rgba(255,255,255,0.70)', marginTop: 8 },
   timerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
   timer: { width: '48%', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 11, alignItems: 'center' },
   timerN: { fontFamily: F.displayX, fontSize: 24, color: C.shu },

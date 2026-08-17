@@ -1,0 +1,32 @@
+{
+  "note": "Bộ truy vấn đánh giá truy hồi sản phẩm, gán nhãn thủ công dựa trên 35 sản phẩm thật trong backend/data/db.json. Mỗi truy vấn cố ý viết theo lối người dùng nói tự nhiên, KHÔNG lặp lại nguyên văn tên sản phẩm, để phân biệt được truy hồi theo ngữ nghĩa với so khớp từ khoá.",
+  "labelledBy": "nhóm thực hiện đồ án",
+  "productSource": "backend/data/db.json",
+  "limitation": "Bộ đánh giá chỉ gồm 24 truy vấn trên 35 sản phẩm nên kết quả mang tính tham khảo, chưa đủ lớn để kết luận thống kê chặt chẽ.",
+  "queries": [
+    { "query": "đồ mặc đi lễ hội mùa hè Nhật Bản", "relevantProductIds": ["yukata-xanh", "happi-le-hoi", "du-nhat", "sensu-quat-gap"] },
+    { "query": "trang phục truyền thống trang trọng đi lễ tốt nghiệp", "relevantProductIds": ["hakama-nu", "hakama-do", "kimono-hong"] },
+    { "query": "áo giữ ấm mùa đông", "relevantProductIds": ["ao-len-co-lo", "gang-tay", "chup-tai", "cardigan-dai"] },
+    { "query": "đồ đi làm công sở lịch sự", "relevantProductIds": ["so-mi-trang", "blazer-kaki", "cardigan-dai", "chan-vay-xep-ly"] },
+    { "query": "hóa trang nhân vật hoạt hình", "relevantProductIds": ["naruto", "furina", "yumeko", "yae-miko"] },
+    { "query": "phụ kiện cài lên tóc", "relevantProductIds": ["kanzashi-trau-cai", "kep-no"] },
+    { "query": "giày dép truyền thống Nhật", "relevantProductIds": ["guoc-geta", "giay-dep", "tabi-chia-ngon"] },
+    { "query": "đồ mặc ở nhà cho thoải mái", "relevantProductIds": ["samue-thien"] },
+    { "query": "quà tặng thủ công nhỏ gọn", "relevantProductIds": ["sensu-quat-gap", "furoshiki-vai", "kanzashi-trau-cai"] },
+    { "query": "túi đựng đồ đi học", "relevantProductIds": ["balo-vai"] },
+    { "query": "đồng phục học sinh Nhật", "relevantProductIds": ["dong-phuc-thuy-thu", "vo-tat"] },
+    { "query": "áo khoác dáng dài mặc ngoài", "relevantProductIds": ["haori-dang-dai", "cardigan-dai", "blazer-kaki", "khoac-nhat"] },
+    { "query": "đạo cụ chụp ảnh cosplay", "relevantProductIds": ["kiem-go", "du-nhat"] },
+    { "query": "đồ dùng kèm với kimono", "relevantProductIds": ["obi-lua", "tabi-chia-ngon", "guoc-geta", "kanzashi-trau-cai"] },
+    { "query": "quần áo màu hồng nữ tính", "relevantProductIds": ["kimono-hong", "yae-miko"] },
+    { "query": "áo len dệt kim nhẹ", "relevantProductIds": ["ao-len-cardigan", "ao-len-co-lo", "cardigan-dai"] },
+    { "query": "thứ che nắng che mưa khi ra ngoài", "relevantProductIds": ["du-nhat", "mu-nhat"] },
+    { "query": "đồ mặc đi đền chùa", "relevantProductIds": ["hakama-do", "kimono-hong", "hakama-nu"] },
+    { "query": "phụ kiện giữ ấm tay và tai", "relevantProductIds": ["gang-tay", "chup-tai"] },
+    { "query": "váy phối cùng áo truyền thống", "relevantProductIds": ["chan-vay-xep-ly"] },
+    { "query": "khăn vải đa dụng thân thiện môi trường", "relevantProductIds": ["furoshiki-vai"] },
+    { "query": "mũ đội phong cách đường phố", "relevantProductIds": ["mu-nhat"] },
+    { "query": "trang phục nam nữ mặc thiền định", "relevantProductIds": ["samue-thien"] },
+    { "query": "đồ mặc mùa hè mát mẻ tối giản", "relevantProductIds": ["yukata-xanh", "so-mi-trang"] }
+  ]
+}

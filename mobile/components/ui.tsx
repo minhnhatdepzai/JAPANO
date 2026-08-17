@@ -65,9 +65,13 @@ export const Chip = ({ label, active, onPress, small }:{ label:string; active?:b
   </PressScale>
 );
 
+/**
+ * Giá bán. Giá thường để đen cho yên mắt; chỉ khi đang giảm thì giá mới mới lấy
+ * màu nhấn — đó là lúc màu nhấn thực sự nói được điều gì đó.
+ */
 export const Price = ({ value, old, size=16 }:{ value:number; old?:number|null; size?:number }) => (
   <View style={{ flexDirection:'row', alignItems:'baseline', gap:6 }}>
-    <Text style={{ color:C.shu, fontFamily:F.bodyX, fontSize:size }}>{money(value)}</Text>
+    <Text style={{ color:old?C.shu:C.ink, fontFamily:F.bodyX, fontSize:size }}>{money(value)}</Text>
     {!!old && <Text style={{ color:C.muted, fontFamily:F.body, fontSize:size*0.72, textDecorationLine:'line-through' }}>{money(old)}</Text>}
   </View>
 );
@@ -77,9 +81,9 @@ export const SectionHeader = ({ kanji, label, action, onAction }:
   <View>
     <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginTop:18, marginBottom:6 }}>
       <Text style={{ fontFamily:F.display, fontSize:19, color:C.sumi }}>{label}</Text>
-      {!!action && <Pressable onPress={onAction}><Text style={{ color:C.shu, fontFamily:F.bodyB, fontSize:12 }}>{action}</Text></Pressable>}
+      {!!action && <Pressable onPress={onAction}><Text style={{ color:C.ink, fontFamily:F.bodyB, fontSize:12 }}>{action}</Text></Pressable>}
     </View>
-    <View style={{ width:44, height:4, backgroundColor:C.shu, borderRadius:2, marginBottom:12 }} />
+    <View style={{ width:44, height:4, backgroundColor:C.borderStrong, borderRadius:2, marginBottom:12 }} />
   </View>
 );
 
@@ -112,5 +116,5 @@ const s = StyleSheet.create({
   headerTitle:{ flex:1, fontFamily:F.display, fontSize:18, color:C.sumi },
   btn:{ height:50, borderRadius:14, alignItems:'center', justifyContent:'center', flexDirection:'row' },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
-  chipOn:{ backgroundColor:C.shu, borderColor:C.shu },
+  chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
 });

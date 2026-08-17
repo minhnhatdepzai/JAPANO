@@ -4,7 +4,7 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
   const {
     read, update, ensureFlagcardState, reconcileFlagRewards, flagcardCollectionView,
     getOrCreateCollection, ensureRewardVoucher, validateVoucher, VIP_CONFIG, vipStatus,
-    requireSelfOrStaff,
+    requireSelfOrStaff, requireAdmin,
   } = ctx;
 
   // Bộ sưu tập Flagcard lịch sử + voucher cá nhân — voucher là tài sản có giá
@@ -17,7 +17,7 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
     ensureFlagcardState(state);
     res.json({ ok: true, config: state.flagcardConfig, cards: state.flagcards });
   });
-  api.post('/flagcards/reconcile', (req, res) => {
+  api.post('/flagcards/reconcile', requireAdmin, (req, res) => {
     let result;
     const state = update((next) => {
       result = reconcileFlagRewards(next);
@@ -25,7 +25,9 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
     });
     res.json({ ok: true, awards: result.awards, collections: state.flagcardCollections, vouchers: state.vouchers.filter((item) => item.source === 'flagcard-collection') });
   });
-  api.post('/flagcards/admin/grant', (req, res) => {
+  // Cấp thẻ kéo theo phát sinh phiếu thưởng (ensureRewardVoucher) nên đây là
+  // thao tác có giá trị tiền; không được để ngỏ cho người gọi ẩn danh.
+  api.post('/flagcards/admin/grant', requireAdmin, (req, res) => {
     const userId = String(req.body?.userId || '').trim();
     const cardId = String(req.body?.cardId || '').trim();
     if (!userId || !cardId) return res.status(400).json({ ok: false, message: 'Thiếu userId hoặc cardId.' });
