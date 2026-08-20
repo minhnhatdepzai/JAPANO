@@ -9,7 +9,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)
 
 > [!IMPORTANT]
-> JAPANO hiện là **full-stack demo/research prototype**, chưa phải hệ thống production. Backend và Admin đã dùng bcrypt, JWT và phân cấp quyền phía server; tuy nhiên vẫn cần rà soát để mọi endpoint gắn dữ liệu theo người dùng đều lấy identity từ JWT. Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính dùng file JSON cục bộ khi chưa cấu hình MongoDB.
+> JAPANO hiện là **full-stack demo/research prototype**.
 
 ## Mục lục
 
