@@ -236,7 +236,9 @@ if [[ "${JAPANO_SKIP_MOTION:-0}" == "1" ]]; then
 elif motion_is_ready; then
   echo "✓ Dùng One-to-All motion đang chạy tại $JAPANO_MOTION_URL"
 elif [[ ! -x "$MOTION_PYTHON" || ! -f "$ROOT_DIR/backend/motion_service.py" ]]; then
-  echo "· Không tìm thấy One-to-All local tại $MOTION_DIR — tính năng Ảnh sống sẽ tạm ẩn."
+  echo "✗ Không tìm thấy One-to-All local tại $MOTION_DIR." >&2
+  echo "  Full stack yêu cầu .venv và backend/motion_service.py; chỉ bỏ qua khi bạn tự đặt JAPANO_SKIP_MOTION=1." >&2
+  exit 1
 else
   echo "→ Khởi động $JAPANO_MOTION_ENGINE_LABEL CUDA + quality gate…"
   (
@@ -247,16 +249,19 @@ else
   for ((attempt = 1; attempt <= 60; attempt += 1)); do
     if motion_is_ready; then break; fi
     if ! kill -0 "$MOTION_PID" 2>/dev/null; then
-      echo "· One-to-All không khởi động được; app vẫn dùng thử đồ ảnh. Log: $MOTION_LOG"
-      MOTION_PID=""
-      break
+      echo "✗ One-to-All dừng trước khi sẵn sàng. Log gần nhất:" >&2
+      tail -n 60 "$MOTION_LOG" >&2 || true
+      exit 1
     fi
     sleep 0.5
   done
-  if [[ -n "$MOTION_PID" ]] && motion_is_ready; then
-    echo "✓ One-to-All sẵn sàng: $JAPANO_MOTION_URL"
-    echo "  Motion log: $MOTION_LOG"
+  if ! motion_is_ready; then
+    echo "✗ One-to-All chưa sẵn sàng sau 30 giây. Xem log: $MOTION_LOG" >&2
+    tail -n 60 "$MOTION_LOG" >&2 || true
+    exit 1
   fi
+  echo "✓ One-to-All sẵn sàng: $JAPANO_MOTION_URL"
+  echo "  Motion log: $MOTION_LOG"
 fi
 
 # CatVTON là phương án dự phòng (fallback) khi FASHN lỗi/không đạt quality gate —
@@ -363,15 +368,19 @@ elif [[ -x "${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb" ]]; then
   ADB_BIN="${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb"
 else
   echo "✗ Không tìm thấy adb. Hãy cài Android SDK Platform-Tools hoặc đặt JAPANO_ADB_BIN." >&2
-  exit 1
+  echo "· Không có ADB — giữ Backend/AI ở chế độ server-only (Ctrl+C để dừng)." >&2
+  wait
+  exit 0
 fi
 
 "$ADB_BIN" start-server >/dev/null
 mapfile -t ANDROID_DEVICES < <("$ADB_BIN" devices | awk '$2 == "device" { print $1 }')
 if (( ${#ANDROID_DEVICES[@]} == 0 )); then
-  echo "✗ Chưa có Android emulator/device ở trạng thái online." >&2
-  echo "  Hãy mở Pixel 8 Pro trong Android Studio, chờ máy khởi động xong rồi chạy lại." >&2
-  exit 1
+  echo "· Không có Android emulator/device online — giữ Backend/AI ở chế độ server-only." >&2
+  echo "  Web Admin/API vẫn chạy; APK release từ xa không cần ADB/Metro." >&2
+  echo "  Nhấn Ctrl+C để dừng toàn bộ process do script tạo." >&2
+  wait
+  exit 0
 fi
 
 ANDROID_SERIAL="${JAPANO_ANDROID_SERIAL:-}"

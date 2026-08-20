@@ -116,11 +116,23 @@ function NotificationBridge() {
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  // Không để việc tải font chặn toàn bộ ứng dụng. Ở một số máy Android cũ,
+  // Expo Font có thể không trả kết quả sau khi app được khôi phục từ nền; cách
+  // cũ `return null` biến tình huống đó thành một màn hình nền trống vĩnh viễn.
+  // React Native sẽ dùng font hệ thống cho tới khi Arimo sẵn sàng.
+  const [fontsLoaded, fontError] = useFonts({
     Arimo_400Regular, Arimo_500Medium, Arimo_600SemiBold, Arimo_700Bold,
   });
-  useEffect(() => { if (loaded) SplashScreen.hideAsync(); }, [loaded]);
-  if (!loaded) return null;
+  useEffect(() => {
+    // Ẩn splash ngay cả khi font lỗi; nội dung vẫn phải luôn có thể sử dụng.
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+      return;
+    }
+    // Mạng/font cache lỗi không được phép giữ người dùng trên splash mãi mãi.
+    const fallback = setTimeout(() => { void SplashScreen.hideAsync(); }, 1200);
+    return () => clearTimeout(fallback);
+  }, [fontsLoaded, fontError]);
 
   return (
     <SafeAreaProvider>

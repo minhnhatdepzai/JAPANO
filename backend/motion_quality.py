@@ -11,6 +11,12 @@ import cv2
 import numpy as np
 
 
+MOTION_ALIASES = {
+    "walk_natural": "runway_walk",
+    "turn_show": "spin",
+}
+
+
 def read_video(path: Path) -> tuple[list[np.ndarray], float]:
     capture = cv2.VideoCapture(str(path))
     fps = float(capture.get(cv2.CAP_PROP_FPS) or 12.0)
@@ -110,9 +116,14 @@ def validate_action(motion: str, metrics: dict[str, float]) -> str | None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", type=Path, required=True)
-    parser.add_argument("--motion", choices=["runway_walk", "spin", "jump", "pose_sway", "sit_stand"], required=True)
+    parser.add_argument(
+        "--motion",
+        choices=["walk_natural", "turn_show", "runway_walk", "spin", "jump", "pose_sway", "sit_stand"],
+        required=True,
+    )
     parser.add_argument("--repo", type=Path, required=True)
     args = parser.parse_args()
+    quality_motion = MOTION_ALIASES.get(args.motion, args.motion)
 
     frames, fps = read_video(args.video)
     height, width = frames[0].shape[:2]
@@ -137,11 +148,12 @@ def main() -> int:
             rejection = "không giữ được một nhân vật toàn thân rõ xuyên suốt video"
         else:
             action = action_metrics(poses)
-            rejection = validate_action(args.motion, action)
+            rejection = validate_action(quality_motion, action)
 
     report = {
         "ok": rejection is None,
         "motion": args.motion,
+        "qualityMotion": quality_motion,
         "frames": len(frames),
         "fps": round(fps, 3),
         "width": width,

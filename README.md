@@ -1,6 +1,6 @@
 # JAPANO
 
-Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng dụng mobile, Web Admin, backend API, recommendation engine, trợ lý mua sắm và pipeline thử đồ AI cục bộ.
+Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng dụng mobile, Web Admin, backend API, recommendation engine, trợ lý mua sắm và pipeline thử đồ AI chủ yếu chạy cục bộ. Một script Gemini Omni Flash tùy chọn chỉ dùng để thử nghiệm tạo video thủ công, không nằm trên luồng chạy mặc định của ứng dụng.
 
 ![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
@@ -9,7 +9,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)
 
 > [!IMPORTANT]
-> JAPANO hiện là **full-stack demo/research prototype**, chưa phải hệ thống production. Backend và Admin chưa có xác thực/RBAC phía server; Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính mặc định nằm trong file JSON cục bộ.
+> JAPANO hiện là **full-stack demo/research prototype**, chưa phải hệ thống production. Backend và Admin đã dùng bcrypt, JWT và phân cấp quyền phía server; tuy nhiên vẫn cần rà soát để mọi endpoint gắn dữ liệu theo người dùng đều lấy identity từ JWT. Stripe chỉ chạy Test Mode, VNPay dùng Sandbox và dữ liệu chính dùng file JSON cục bộ khi chưa cấu hình MongoDB.
 
 ## Mục lục
 
@@ -129,6 +129,8 @@ view · search · wishlist · cart · try-on · chat · purchase
 - REST API chia theo domain trong [`backend/routes`](backend/routes).
 - MongoDB là nguồn dữ liệu chính khi có `MONGODB_URI`; `app_state` phục vụ runtime và các collection theo thực thể phục vụ Compass/reporting.
 - Cloudinary giữ file media; MongoDB chỉ lưu URL và metadata media.
+- Đăng ký/đăng nhập dùng bcrypt + JWT; mobile lưu token trong SecureStore, Admin kiểm tra phiên và role trước khi gọi API.
+- Role gồm `customer < staff < admin < super_admin`; các endpoint nhạy cảm như state, analytics, payment/refund và moderation có middleware kiểm tra quyền.
 - Giá, voucher, payment promotion và VIP discount được tính lại phía server.
 - Log hành vi nuôi recommendation gồm view, search, wishlist, cart, try-on, chat, goal và purchase.
 - Cache recommendation tách theo state, TTL 60 giây và invalidation khi dữ liệu thay đổi.
@@ -339,6 +341,8 @@ Full AI stack:
 ./start-all.sh
 ```
 
+Ở chế độ mặc định, FASHN/FLUX thử đồ và One-to-All tạo video đều là thành phần bắt buộc. Nếu một service không sẵn sàng, script báo lỗi và dừng thay vì mở app với tính năng AI bị thiếu.
+
 Chỉ chạy core, không yêu cầu FASHN/motion:
 
 ```bash
@@ -362,19 +366,15 @@ PORT=4200 ./start-all.sh
 
 1. Kiểm tra/cài Node dependencies khi cần.
 2. Khởi động FASHN + FLUX.2 nếu không skip.
-3. Khởi động One-to-All khi installation có sẵn.
+3. Khởi động và bắt buộc xác nhận One-to-All sẵn sàng để tạo video thử đồ (trừ khi người chạy chủ động đặt `JAPANO_SKIP_MOTION=1`).
 4. Bỏ qua CatVTON theo mặc định.
 5. Khởi động Backend + Admin.
-6. Chọn Android device, thiết lập `adb reverse` và mở Expo/native development client.
+6. Nếu có Android device online, thiết lập `adb reverse` và mở Expo/native development client; nếu không có ADB/device, giữ Backend + AI ở chế độ server-only để APK release từ xa dùng qua Tailscale.
 7. Dừng các process do script tạo khi nhận `Ctrl+C`.
 
-### 6. Chạy Web hoặc iOS
+`start-all.sh` không chạy backend, Web Admin, AI hay Metro ngầm khi chưa được gọi. Ở chế độ server-only, script vẫn giữ terminal mở để các process sống; nhấn `Ctrl+C` sẽ dừng toàn bộ process do script tạo.
 
-Web preview:
-
-```bash
-EXPO_PUBLIC_API_URL=http://localhost:4100 npm run mobile:web
-```
+### 6. Chạy iOS
 
 iOS trên macOS:
 
@@ -382,7 +382,7 @@ iOS trên macOS:
 EXPO_PUBLIC_API_URL=http://localhost:4100 npm --workspace mobile run ios
 ```
 
-Các tính năng native payment/try-on nên được kiểm tra trên Android/iOS development build.
+Repository hiện chỉ hỗ trợ Android/iOS development build; không có script hay cấu hình Web được duy trì. Các tính năng native payment/try-on cần được kiểm tra trên thiết bị Android/iOS.
 
 ## Cấu hình môi trường
 
@@ -397,6 +397,15 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 | `EXPO_PUBLIC_API_URL` | Tự dò | Base URL của mobile |
 | `EXPO_PUBLIC_API_PORT` | `4100` | Cổng fallback mobile |
 | `JAPANO_API_URL` | `http://127.0.0.1:4100` | Base URL cho smoke test |
+
+### Xác thực và bảo vệ API
+
+| Biến | Mục đích |
+|---|---|
+| `JWT_SECRET`, `JWT_TTL` | Ký và đặt thời hạn JWT; production bắt buộc đặt secret riêng |
+| `JAPANO_ADMIN_EMAIL`, `JAPANO_ADMIN_PASSWORD` | Khởi tạo hoặc thăng hạng một tài khoản admin lúc boot |
+| `JAPANO_RATE_LIMIT_MAX`, `JAPANO_AUTH_RATE_LIMIT_MAX` | Giới hạn request API và endpoint xác thực |
+| `JAPANO_ALLOWED_ORIGINS` | Danh sách origin cách nhau bởi dấu phẩy; cần đặt khi triển khai public |
 
 ### Storage và media tùy chọn
 
@@ -429,6 +438,18 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 | `JAPANO_ONE_TO_ALL_HOME`, `JAPANO_ONE_TO_ALL_PYTHON` | Motion installation |
 | `JAPANO_SKIP_FASHN`, `JAPANO_SKIP_MOTION` | Bỏ qua service trong `start-all.sh` |
 | `JAPANO_SKIP_CATVTON`, `JAPANO_CATVTON_FALLBACK` | Điều khiển CatVTON service và route fallback |
+| `GEMINI_API_KEY` | Key cho script test video Gemini tùy chọn; không đặt tiền tố `EXPO_PUBLIC_` |
+| `JAPANO_GEMINI_VIDEO_MODEL`, `JAPANO_GEMINI_VIDEO_TIMEOUT_MS` | Model và timeout cho script test Gemini |
+
+### Test video Gemini Omni Flash tùy chọn
+
+Luồng ứng dụng chính không phụ thuộc Gemini. Khi cần so sánh chất lượng video cloud, script [`scripts/test-gemini-video.mjs`](scripts/test-gemini-video.mjs) gửi một ảnh tham chiếu tới Gemini Omni Flash và lưu MP4 kết quả:
+
+```bash
+node scripts/test-gemini-video.mjs <duong-dan-anh> [duong-dan-output.mp4]
+```
+
+`GEMINI_API_KEY` phải có sẵn trong environment của tiến trình; script không tự đọc `backend/.env.server`. Đây là model cloud có thể phát sinh chi phí, nên không đưa key vào mobile, không commit key và không dùng lệnh này trong smoke test.
 
 ## Scripts
 
@@ -437,7 +458,6 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 | `npm run backend` | Chạy Backend + Admin |
 | `npm run backend:dev` | Hiện chạy giống backend start; chưa có hot reload |
 | `npm run mobile` | Mở Expo dev server |
-| `npm run mobile:web` | Mở Expo web |
 | `npm run dev:android` | Alias của `./start-all.sh` |
 | `npm run check` | Backend tests + mobile TypeScript typecheck |
 | `npm --workspace backend test` | Chỉ chạy backend tests |
@@ -508,7 +528,8 @@ japano/
 │   ├── lib/
 │   └── assets/
 ├── scripts/
-│   └── verify.mjs              # API smoke test
+│   ├── verify.mjs              # API smoke test
+│   └── test-gemini-video.mjs   # Gemini Omni Flash test thủ công (tùy chọn)
 ├── .env.example
 ├── package.json
 ├── start-all.sh
@@ -546,8 +567,8 @@ Test suite hiện bao phủ recommendation provenance, cache isolation, next-ite
 
 ## Giới hạn hiện tại
 
-- Admin chưa có màn login; các mutation endpoint chưa có server-side authentication/authorization.
-- Mobile login/register hiện lưu local bằng AsyncStorage, chưa có JWT/session/password verification.
+- Admin và mobile đã có login thật cùng JWT/RBAC, nhưng một số endpoint thu thập hành vi hoặc đồng bộ dữ liệu khách vẫn nhận `userId` từ request body. Chúng cần được chuyển hoàn toàn sang identity lấy từ JWT trước production.
+- CORS mở cho mọi origin khi chưa đặt `JAPANO_ALLOWED_ORIGINS`; CSP của Admin hiện tắt vì phần JavaScript thuần chưa được audit đầy đủ. Cả hai phải được siết chặt khi public.
 - Một số wrapper mobile cho camera, try-on, goals, Japan community và return vẫn fallback về demo user; cần chuẩn hóa identity trước production.
 - Cập nhật state hiện giữ API đồng bộ để tương thích route hiện có; nếu cần nhiều backend ghi đồng thời, bước tiếp theo là chuyển các mutation sang transaction MongoDB theo từng collection.
 - Stripe chỉ nhận test keys và VNPay dùng sandbox/demo configuration.
@@ -555,7 +576,7 @@ Test suite hiện bao phủ recommendation provenance, cache isolation, next-ite
 - AI checkpoints và Python environments không nằm trong repo và không được cài bởi npm.
 - Recommendation SSM/GNN/mLSTM là lightweight inspired implementations; chưa có offline NDCG/Recall benchmark.
 - Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
-- Trước production cần thêm auth/RBAC, rate limiting, request validation, secret management, migrations, audit log, observability và CI/CD.
+- Trước production cần hoàn tất audit authorization cho từng route, request validation, secret management, MongoDB transaction/migration, audit log, observability và CI/CD.
 
 ## Trước khi push lên GitHub
 
