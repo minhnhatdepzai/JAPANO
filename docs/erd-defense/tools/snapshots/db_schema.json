@@ -1,0 +1,4022 @@
+{
+  "addresses": {
+    "count": 11,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_addresses_id"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_addresses_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "title": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "name": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "phone": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "street": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "wardCode": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "ward": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "provinceCode": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "province": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 100
+      },
+      "isDefault": {
+        "present": 11,
+        "types": {
+          "boolean": 11
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 11,
+        "types": {
+          "number": 11
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 11,
+        "types": {
+          "number": 11
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 55
+      }
+    }
+  },
+  "ai_descriptions": {
+    "count": 10,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 100
+      },
+      "generatedAt": {
+        "present": 10,
+        "types": {
+          "number": 10
+        },
+        "pct": 100
+      },
+      "description": {
+        "present": 10,
+        "types": {
+          "object": 10
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 100
+      }
+    }
+  },
+  "banners": {
+    "count": 3,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "title": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "img": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "link": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "active": {
+        "present": 3,
+        "types": {
+          "boolean": 3
+        },
+        "pct": 100
+      },
+      "order": {
+        "present": 3,
+        "types": {
+          "number": 3
+        },
+        "pct": 100
+      }
+    }
+  },
+  "cart_items": {
+    "count": 6,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_cart_items_id"
+      },
+      {
+        "key": {
+          "userId": 1,
+          "productId": 1,
+          "color": 1,
+          "size": 1
+        },
+        "unique": true,
+        "name": "uq_cart_items_selection"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "color": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "size": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "quantity": {
+        "present": 6,
+        "types": {
+          "number": 6
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 6,
+        "types": {
+          "number": 6
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 67
+      }
+    }
+  },
+  "categories": {
+    "count": 5,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_categories_id"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "name": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "kanji": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      }
+    }
+  },
+  "chats": {
+    "count": 68,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 68,
+        "types": {
+          "string": 68
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 68,
+        "types": {
+          "string": 68
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 71
+      },
+      "role": {
+        "present": 68,
+        "types": {
+          "string": 68
+        },
+        "pct": 100
+      },
+      "message": {
+        "present": 68,
+        "types": {
+          "string": 68
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 68,
+        "types": {
+          "number": 68
+        },
+        "pct": 100
+      },
+      "productIds": {
+        "present": 31,
+        "types": {
+          "array": 31
+        },
+        "pct": 46
+      },
+      "engine": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 19
+      },
+      "intent": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 19
+      },
+      "confidence": {
+        "present": 13,
+        "types": {
+          "number": 13
+        },
+        "pct": 19
+      },
+      "modelTrace": {
+        "present": 10,
+        "types": {
+          "object": 10
+        },
+        "pct": 15
+      },
+      "generationModel": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 15
+      },
+      "latencyMs": {
+        "present": 13,
+        "types": {
+          "number": 13
+        },
+        "pct": 19
+      },
+      "fallbackReason": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 15
+      },
+      "demoBatch": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 9
+      }
+    }
+  },
+  "discount_rules": {
+    "count": 3,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_discount_rules_id"
+      },
+      {
+        "key": {
+          "code": 1
+        },
+        "unique": true,
+        "name": "uq_discount_rules_code"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "name": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "scope": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "type": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "value": {
+        "present": 3,
+        "types": {
+          "number": 3
+        },
+        "pct": 100
+      },
+      "maxUnitsPerOrder": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "qualificationType": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 33
+      },
+      "qualificationValue": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "validityDays": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "active": {
+        "present": 3,
+        "types": {
+          "boolean": 3
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 67
+      }
+    }
+  },
+  "flagcard_collections": {
+    "count": 4,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "cardIds": {
+        "present": 4,
+        "types": {
+          "array": 4
+        },
+        "pct": 100
+      },
+      "awards": {
+        "present": 4,
+        "types": {
+          "array": 4
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      }
+    }
+  },
+  "flagcards": {
+    "count": 7,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "order": {
+        "present": 7,
+        "types": {
+          "number": 7
+        },
+        "pct": 100
+      },
+      "glyph": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "accent": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "title": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "japanese": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "region": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "summary": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "formationHistory": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "legend": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "funFacts": {
+        "present": 7,
+        "types": {
+          "array": 7
+        },
+        "pct": 100
+      },
+      "checkins": {
+        "present": 7,
+        "types": {
+          "array": 7
+        },
+        "pct": 100
+      },
+      "outfit": {
+        "present": 7,
+        "types": {
+          "object": 7
+        },
+        "pct": 100
+      },
+      "recommendedProductIds": {
+        "present": 7,
+        "types": {
+          "array": 7
+        },
+        "pct": 100
+      },
+      "sourceUrl": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 100
+      },
+      "active": {
+        "present": 7,
+        "types": {
+          "boolean": 7
+        },
+        "pct": 100
+      }
+    }
+  },
+  "goals": {
+    "count": 8,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "product": {
+        "present": 8,
+        "types": {
+          "object": 8
+        },
+        "pct": 100
+      },
+      "input": {
+        "present": 8,
+        "types": {
+          "object": 8
+        },
+        "pct": 100
+      },
+      "plan": {
+        "present": 8,
+        "types": {
+          "object": 8
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 8,
+        "types": {
+          "number": 8
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 8,
+        "types": {
+          "number": 8
+        },
+        "pct": 100
+      },
+      "fund": {
+        "present": 4,
+        "types": {
+          "object": 4
+        },
+        "pct": 50
+      },
+      "demoBatch": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 38
+      }
+    }
+  },
+  "interactions": {
+    "count": 685,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 685,
+        "types": {
+          "string": 685
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 685,
+        "types": {
+          "string": 685
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 541,
+        "types": {
+          "string": 541
+        },
+        "pct": 79
+      },
+      "productId": {
+        "present": 685,
+        "types": {
+          "string": 685
+        },
+        "pct": 100
+      },
+      "type": {
+        "present": 685,
+        "types": {
+          "string": 685
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 685,
+        "types": {
+          "number": 685
+        },
+        "pct": 100
+      },
+      "source": {
+        "present": 685,
+        "types": {
+          "string": 685
+        },
+        "pct": 100
+      },
+      "value": {
+        "present": 585,
+        "types": {
+          "number": 585
+        },
+        "pct": 85
+      },
+      "metadata": {
+        "present": 294,
+        "types": {
+          "object": 294
+        },
+        "pct": 43
+      },
+      "demoBatch": {
+        "present": 150,
+        "types": {
+          "string": 150
+        },
+        "pct": 22
+      }
+    }
+  },
+  "japan_spot_reviews": {
+    "count": 5,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "place": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "prefecture": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userName": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "rating": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "comment": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "media": {
+        "present": 4,
+        "types": {
+          "null": 4
+        },
+        "pct": 80
+      },
+      "status": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 80
+      },
+      "moderation": {
+        "present": 4,
+        "types": {
+          "object": 4
+        },
+        "pct": 80
+      },
+      "createdAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 60
+      }
+    }
+  },
+  "japan_spot_suggestions": {
+    "count": 5,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "prefecture": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userName": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "suggestion": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "place": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "moderation": {
+        "present": 1,
+        "types": {
+          "object": 1
+        },
+        "pct": 20
+      },
+      "reward": {
+        "present": 1,
+        "types": {
+          "object": 1
+        },
+        "pct": 20
+      },
+      "createdAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 80
+      }
+    }
+  },
+  "moderation_samples": {
+    "count": 6,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "reviewId": {
+        "present": 6,
+        "types": {
+          "null": 6
+        },
+        "pct": 100
+      },
+      "label": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "normalizedText": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "learnedPhrases": {
+        "present": 6,
+        "types": {
+          "array": 6
+        },
+        "pct": 100
+      },
+      "source": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 6,
+        "types": {
+          "number": 6
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 33
+      }
+    }
+  },
+  "notifications": {
+    "count": 48,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 45,
+        "types": {
+          "string": 40,
+          "null": 5
+        },
+        "pct": 94
+      },
+      "title": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 100
+      },
+      "body": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 100
+      },
+      "type": {
+        "present": 48,
+        "types": {
+          "string": 48
+        },
+        "pct": 100
+      },
+      "action": {
+        "present": 39,
+        "types": {
+          "string": 39
+        },
+        "pct": 81
+      },
+      "reach": {
+        "present": 48,
+        "types": {
+          "number": 48
+        },
+        "pct": 100
+      },
+      "at": {
+        "present": 48,
+        "types": {
+          "number": 48
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 23
+      }
+    }
+  },
+  "order_items": {
+    "count": 154,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_order_items_id"
+      },
+      {
+        "key": {
+          "orderId": 1
+        },
+        "unique": false,
+        "name": "ix_order_items_order"
+      },
+      {
+        "key": {
+          "productId": 1
+        },
+        "unique": false,
+        "name": "ix_order_items_product"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "colorName": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "colorHex": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "size": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "qty": {
+        "present": 154,
+        "types": {
+          "number": 154
+        },
+        "pct": 100
+      },
+      "price": {
+        "present": 154,
+        "types": {
+          "number": 154
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "orderId": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "productSlug": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "productName": {
+        "present": 154,
+        "types": {
+          "string": 154
+        },
+        "pct": 100
+      },
+      "position": {
+        "present": 154,
+        "types": {
+          "number": 154
+        },
+        "pct": 100
+      }
+    }
+  },
+  "orders": {
+    "count": 94,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_orders_id"
+      },
+      {
+        "key": {
+          "code": 1
+        },
+        "unique": true,
+        "name": "uq_orders_code"
+      },
+      {
+        "key": {
+          "userId": 1,
+          "createdAt": -1
+        },
+        "unique": false,
+        "name": "ix_orders_user_created"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 93,
+        "types": {
+          "string": 93
+        },
+        "pct": 99
+      },
+      "customer": {
+        "present": 94,
+        "types": {
+          "object": 94
+        },
+        "pct": 100
+      },
+      "address": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "total": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "ship": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "history": {
+        "present": 94,
+        "types": {
+          "array": 94
+        },
+        "pct": 100
+      },
+      "source": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "voucherId": {
+        "present": 94,
+        "types": {
+          "null": 92,
+          "string": 2
+        },
+        "pct": 100
+      },
+      "subtotal": {
+        "present": 57,
+        "types": {
+          "number": 57
+        },
+        "pct": 61
+      },
+      "discount": {
+        "present": 57,
+        "types": {
+          "number": 57
+        },
+        "pct": 61
+      },
+      "discountCode": {
+        "present": 57,
+        "types": {
+          "string": 57
+        },
+        "pct": 61
+      },
+      "flagcardAward": {
+        "present": 5,
+        "types": {
+          "object": 5
+        },
+        "pct": 5
+      },
+      "addressDetails": {
+        "present": 54,
+        "types": {
+          "object": 54
+        },
+        "pct": 57
+      },
+      "voucherDiscount": {
+        "present": 56,
+        "types": {
+          "number": 56
+        },
+        "pct": 60
+      },
+      "paymentDiscount": {
+        "present": 56,
+        "types": {
+          "number": 56
+        },
+        "pct": 60
+      },
+      "paymentPromotion": {
+        "present": 56,
+        "types": {
+          "object": 42,
+          "null": 14
+        },
+        "pct": 60
+      },
+      "clientRequestId": {
+        "present": 9,
+        "types": {
+          "string": 8,
+          "null": 1
+        },
+        "pct": 10
+      },
+      "vipDiscount": {
+        "present": 42,
+        "types": {
+          "number": 42
+        },
+        "pct": 45
+      },
+      "vipPromotion": {
+        "present": 42,
+        "types": {
+          "null": 42
+        },
+        "pct": 45
+      },
+      "returnStatus": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 6
+      },
+      "completedAt": {
+        "present": 20,
+        "types": {
+          "number": 20
+        },
+        "pct": 21
+      },
+      "demoBatch": {
+        "present": 33,
+        "types": {
+          "string": 33
+        },
+        "pct": 35
+      },
+      "deliveredAt": {
+        "present": 3,
+        "types": {
+          "number": 3
+        },
+        "pct": 3
+      },
+      "autoCompleted": {
+        "present": 3,
+        "types": {
+          "boolean": 3
+        },
+        "pct": 3
+      },
+      "stockRestoredAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 5
+      },
+      "stockRestoredReason": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 5
+      }
+    }
+  },
+  "payments": {
+    "count": 94,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_payments_id"
+      },
+      {
+        "key": {
+          "orderId": 1
+        },
+        "unique": false,
+        "name": "ix_payments_order"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_payments_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "orderId": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "orderCode": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "provider": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "method": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "amount": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "currency": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "transactionCode": {
+        "present": 94,
+        "types": {
+          "string": 94
+        },
+        "pct": 100
+      },
+      "paymentIntentId": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 33
+      },
+      "checkoutSessionId": {
+        "present": 30,
+        "types": {
+          "string": 30
+        },
+        "pct": 32
+      },
+      "refundable": {
+        "present": 94,
+        "types": {
+          "boolean": 94
+        },
+        "pct": 100
+      },
+      "refunds": {
+        "present": 94,
+        "types": {
+          "array": 94
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 94,
+        "types": {
+          "number": 94
+        },
+        "pct": 100
+      },
+      "originalAmount": {
+        "present": 19,
+        "types": {
+          "number": 19
+        },
+        "pct": 20
+      },
+      "discount": {
+        "present": 19,
+        "types": {
+          "number": 19
+        },
+        "pct": 20
+      },
+      "voucherDiscount": {
+        "present": 19,
+        "types": {
+          "number": 19
+        },
+        "pct": 20
+      },
+      "paymentDiscount": {
+        "present": 19,
+        "types": {
+          "number": 19
+        },
+        "pct": 20
+      },
+      "promotionCode": {
+        "present": 19,
+        "types": {
+          "string": 19
+        },
+        "pct": 20
+      },
+      "amountSubtotal": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 2
+      },
+      "paidAt": {
+        "present": 35,
+        "types": {
+          "number": 35
+        },
+        "pct": 37
+      },
+      "chargeId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 9
+      },
+      "receiptUrl": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 9
+      },
+      "paymentMethodType": {
+        "present": 12,
+        "types": {
+          "string": 12
+        },
+        "pct": 13
+      },
+      "customer": {
+        "present": 8,
+        "types": {
+          "object": 8
+        },
+        "pct": 9
+      },
+      "card": {
+        "present": 8,
+        "types": {
+          "object": 8
+        },
+        "pct": 9
+      },
+      "refundedAmount": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 2
+      },
+      "pendingRefundAmount": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 2
+      },
+      "refundId": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 2
+      },
+      "refundedAt": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 2
+      },
+      "failureReason": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 3
+      },
+      "intentStatus": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 7
+      },
+      "nativeAttempt": {
+        "present": 7,
+        "types": {
+          "number": 7
+        },
+        "pct": 7
+      },
+      "vnpCreateDate": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 7
+      },
+      "vnpTransactionNo": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 4
+      },
+      "vnpBankCode": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 4
+      },
+      "vnpCardType": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 4
+      },
+      "vnpPayDate": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 4
+      },
+      "vipDiscount": {
+        "present": 3,
+        "types": {
+          "number": 3
+        },
+        "pct": 3
+      },
+      "vipPromotion": {
+        "present": 3,
+        "types": {
+          "null": 3
+        },
+        "pct": 3
+      },
+      "demoBatch": {
+        "present": 33,
+        "types": {
+          "string": 33
+        },
+        "pct": 35
+      }
+    }
+  },
+  "product_details": {
+    "count": 35,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "productId": 1
+        },
+        "unique": true,
+        "name": "uq_product_details_product"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "description": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "story": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "colorHex": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "tags": {
+        "present": 35,
+        "types": {
+          "array": 35
+        },
+        "pct": 100
+      },
+      "visualTags": {
+        "present": 35,
+        "types": {
+          "array": 35
+        },
+        "pct": 100
+      },
+      "rating": {
+        "present": 35,
+        "types": {
+          "number": 35
+        },
+        "pct": 100
+      },
+      "sold": {
+        "present": 35,
+        "types": {
+          "number": 35
+        },
+        "pct": 100
+      }
+    }
+  },
+  "product_media": {
+    "count": 115,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_product_media_id"
+      },
+      {
+        "key": {
+          "productId": 1,
+          "position": 1
+        },
+        "unique": false,
+        "name": "ix_product_media_product"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 115,
+        "types": {
+          "string": 115
+        },
+        "pct": 100
+      },
+      "url": {
+        "present": 115,
+        "types": {
+          "string": 115
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 115,
+        "types": {
+          "string": 115
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 115,
+        "types": {
+          "string": 115
+        },
+        "pct": 100
+      },
+      "type": {
+        "present": 115,
+        "types": {
+          "string": 115
+        },
+        "pct": 100
+      },
+      "position": {
+        "present": 115,
+        "types": {
+          "number": 115
+        },
+        "pct": 100
+      },
+      "isPrimary": {
+        "present": 115,
+        "types": {
+          "boolean": 115
+        },
+        "pct": 100
+      }
+    }
+  },
+  "product_variants": {
+    "count": 317,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_product_variants_id"
+      },
+      {
+        "key": {
+          "productId": 1
+        },
+        "unique": false,
+        "name": "ix_product_variants_product"
+      },
+      {
+        "key": {
+          "sku": 1
+        },
+        "unique": true,
+        "sparse": true,
+        "name": "uq_product_variants_sku"
+      },
+      {
+        "key": {
+          "productId": 1,
+          "colorName": 1,
+          "size": 1
+        },
+        "unique": true,
+        "name": "uq_product_variants_selection"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "colorName": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "colorHex": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "size": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "sku": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "stock": {
+        "present": 317,
+        "types": {
+          "number": 317
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 317,
+        "types": {
+          "string": 317
+        },
+        "pct": 100
+      },
+      "position": {
+        "present": 317,
+        "types": {
+          "number": 317
+        },
+        "pct": 100
+      },
+      "price": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 1
+      }
+    }
+  },
+  "products": {
+    "count": 35,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_products_id"
+      },
+      {
+        "key": {
+          "slug": 1
+        },
+        "unique": true,
+        "name": "uq_products_slug"
+      },
+      {
+        "key": {
+          "categoryId": 1
+        },
+        "unique": false,
+        "name": "ix_products_category"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "slug": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "name": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "kanji": {
+        "present": 34,
+        "types": {
+          "string": 34
+        },
+        "pct": 97
+      },
+      "sku": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "brand": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "price": {
+        "present": 35,
+        "types": {
+          "number": 35
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 34,
+        "types": {
+          "number": 34
+        },
+        "pct": 97
+      },
+      "categoryId": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 100
+      },
+      "compareAtPrice": {
+        "present": 35,
+        "types": {
+          "number": 14,
+          "null": 21
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 3
+      }
+    }
+  },
+  "profiles": {
+    "count": 12,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": true,
+        "name": "uq_profiles_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 12,
+        "types": {
+          "string": 12
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 12,
+        "types": {
+          "string": 12
+        },
+        "pct": 100
+      },
+      "gender": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 92
+      },
+      "preferredStyles": {
+        "present": 12,
+        "types": {
+          "array": 12
+        },
+        "pct": 100
+      },
+      "skinTone": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 92
+      },
+      "occasion": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 92
+      },
+      "budget": {
+        "present": 11,
+        "types": {
+          "number": 11
+        },
+        "pct": 92
+      },
+      "heightCm": {
+        "present": 12,
+        "types": {
+          "number": 12
+        },
+        "pct": 100
+      },
+      "weightKg": {
+        "present": 12,
+        "types": {
+          "number": 12
+        },
+        "pct": 100
+      },
+      "usualSize": {
+        "present": 11,
+        "types": {
+          "string": 11
+        },
+        "pct": 92
+      },
+      "updatedAt": {
+        "present": 12,
+        "types": {
+          "number": 12
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 12,
+        "types": {
+          "string": 12
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 42
+      }
+    }
+  },
+  "push_tokens": {
+    "count": 4,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "token": 1
+        },
+        "unique": true,
+        "name": "uq_push_tokens_token"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_push_tokens_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "token": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "platform": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 75
+      }
+    }
+  },
+  "return_requests": {
+    "count": 8,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_return_requests_id"
+      },
+      {
+        "key": {
+          "orderId": 1
+        },
+        "unique": false,
+        "name": "ix_return_requests_order"
+      },
+      {
+        "key": {
+          "paymentId": 1
+        },
+        "unique": false,
+        "name": "ix_return_requests_payment"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_return_requests_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "orderId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "orderCode": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "paymentId": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "paymentCode": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "reason": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "note": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "items": {
+        "present": 8,
+        "types": {
+          "array": 8
+        },
+        "pct": 100
+      },
+      "amount": {
+        "present": 8,
+        "types": {
+          "number": 8
+        },
+        "pct": 100
+      },
+      "currency": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 8,
+        "types": {
+          "number": 8
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 8,
+        "types": {
+          "number": 8
+        },
+        "pct": 100
+      },
+      "timeline": {
+        "present": 8,
+        "types": {
+          "array": 8
+        },
+        "pct": 100
+      },
+      "adminNote": {
+        "present": 6,
+        "types": {
+          "string": 6
+        },
+        "pct": 75
+      },
+      "refundId": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 25
+      },
+      "refundStatus": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 25
+      },
+      "kind": {
+        "present": 7,
+        "types": {
+          "string": 7
+        },
+        "pct": 88
+      },
+      "photos": {
+        "present": 7,
+        "types": {
+          "array": 7
+        },
+        "pct": 88
+      },
+      "codManualRefund": {
+        "present": 4,
+        "types": {
+          "boolean": 4
+        },
+        "pct": 50
+      },
+      "coversWholeOrder": {
+        "present": 2,
+        "types": {
+          "boolean": 2
+        },
+        "pct": 25
+      },
+      "stockRestoredAt": {
+        "present": 2,
+        "types": {
+          "number": 2
+        },
+        "pct": 25
+      },
+      "demoBatch": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 25
+      }
+    }
+  },
+  "review_reactions": {
+    "count": 88,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_review_reactions_id"
+      },
+      {
+        "key": {
+          "reviewId": 1,
+          "userId": 1
+        },
+        "unique": true,
+        "name": "uq_review_reactions_review_user"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 88,
+        "types": {
+          "string": 88
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 88,
+        "types": {
+          "string": 88
+        },
+        "pct": 100
+      },
+      "reviewId": {
+        "present": 88,
+        "types": {
+          "string": 88
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 88,
+        "types": {
+          "string": 88
+        },
+        "pct": 100
+      },
+      "value": {
+        "present": 88,
+        "types": {
+          "string": 88
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 88,
+        "types": {
+          "number": 88
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 24,
+        "types": {
+          "string": 24
+        },
+        "pct": 27
+      }
+    }
+  },
+  "reviews": {
+    "count": 31,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_reviews_id"
+      },
+      {
+        "key": {
+          "productId": 1
+        },
+        "unique": false,
+        "name": "ix_reviews_product"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_reviews_user"
+      },
+      {
+        "key": {
+          "orderId": 1
+        },
+        "unique": false,
+        "name": "ix_reviews_order"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "userName": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "orderId": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "orderCode": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "rating": {
+        "present": 31,
+        "types": {
+          "number": 31
+        },
+        "pct": 100
+      },
+      "comment": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "media": {
+        "present": 31,
+        "types": {
+          "null": 31
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 31,
+        "types": {
+          "string": 31
+        },
+        "pct": 100
+      },
+      "moderation": {
+        "present": 31,
+        "types": {
+          "object": 31
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 31,
+        "types": {
+          "number": 31
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 31,
+        "types": {
+          "number": 31
+        },
+        "pct": 100
+      },
+      "adminNote": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 32
+      },
+      "moderatedAt": {
+        "present": 10,
+        "types": {
+          "number": 10
+        },
+        "pct": 32
+      },
+      "demoBatch": {
+        "present": 9,
+        "types": {
+          "string": 9
+        },
+        "pct": 29
+      }
+    }
+  },
+  "search_logs": {
+    "count": 13,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 100
+      },
+      "query": {
+        "present": 13,
+        "types": {
+          "string": 13
+        },
+        "pct": 100
+      },
+      "resultCount": {
+        "present": 13,
+        "types": {
+          "number": 13
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 13,
+        "types": {
+          "number": 13
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 62
+      }
+    }
+  },
+  "settings": {
+    "count": 3,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 100
+      },
+      "mongo": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "cloudinary": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "ai": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "name": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 33
+      },
+      "hotline": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 33
+      },
+      "email": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 33
+      },
+      "address": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 33
+      },
+      "shipFee": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "cod": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "stripe": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "vnpay": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "logo": {
+        "present": 1,
+        "types": {
+          "null": 1
+        },
+        "pct": 33
+      },
+      "active": {
+        "present": 1,
+        "types": {
+          "boolean": 1
+        },
+        "pct": 33
+      },
+      "qualifyingOrderMin": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "requiredCards": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "rewardPercent": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "rewardVoucherMinOrder": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      },
+      "rewardValidityDays": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 33
+      }
+    }
+  },
+  "tryon_history": {
+    "count": 76,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 76,
+        "types": {
+          "string": 76
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 76,
+        "types": {
+          "string": 76
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 62,
+        "types": {
+          "string": 62
+        },
+        "pct": 82
+      },
+      "productId": {
+        "present": 76,
+        "types": {
+          "string": 76
+        },
+        "pct": 100
+      },
+      "accessoryIds": {
+        "present": 76,
+        "types": {
+          "array": 76
+        },
+        "pct": 100
+      },
+      "engine": {
+        "present": 76,
+        "types": {
+          "string": 76
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 76,
+        "types": {
+          "number": 76
+        },
+        "pct": 100
+      },
+      "productIds": {
+        "present": 23,
+        "types": {
+          "array": 23
+        },
+        "pct": 30
+      },
+      "appliedAccessories": {
+        "present": 13,
+        "types": {
+          "array": 13
+        },
+        "pct": 17
+      },
+      "skippedAccessories": {
+        "present": 13,
+        "types": {
+          "array": 13
+        },
+        "pct": 17
+      },
+      "demoBatch": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 13
+      }
+    }
+  },
+  "users": {
+    "count": 36,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_users_id"
+      },
+      {
+        "key": {
+          "email": 1
+        },
+        "unique": false,
+        "name": "ix_users_email"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "name": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "email": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "role": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 36,
+        "types": {
+          "string": 36
+        },
+        "pct": 100
+      },
+      "tryons": {
+        "present": 35,
+        "types": {
+          "number": 35
+        },
+        "pct": 97
+      },
+      "joinedAt": {
+        "present": 36,
+        "types": {
+          "number": 36
+        },
+        "pct": 100
+      },
+      "passwordHash": {
+        "present": 35,
+        "types": {
+          "string": 35
+        },
+        "pct": 97
+      },
+      "stripeCustomerId": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 6
+      },
+      "resetCodeHash": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 3
+      },
+      "resetCodeExpiresAt": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 3
+      },
+      "googleId": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 6
+      },
+      "authProviders": {
+        "present": 12,
+        "types": {
+          "array": 12
+        },
+        "pct": 33
+      },
+      "avatar": {
+        "present": 2,
+        "types": {
+          "string": 2
+        },
+        "pct": 6
+      },
+      "demoBatch": {
+        "present": 10,
+        "types": {
+          "string": 10
+        },
+        "pct": 28
+      }
+    }
+  },
+  "vip_memberships": {
+    "count": 5,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_vip_memberships_id"
+      },
+      {
+        "key": {
+          "userId": 1,
+          "status": 1
+        },
+        "unique": false,
+        "name": "ix_vip_memberships_user_status"
+      },
+      {
+        "key": {
+          "discountRuleId": 1
+        },
+        "unique": false,
+        "name": "ix_vip_memberships_discount_rule"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "discountRuleId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "qualifyingPeriod": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "qualifyingOrderIds": {
+        "present": 5,
+        "types": {
+          "array": 5
+        },
+        "pct": 100
+      },
+      "qualifiedSpend": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "startedAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "expiresAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "status": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "updatedAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      }
+    }
+  },
+  "voucher_redemptions": {
+    "count": 5,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_voucher_redemptions_id"
+      },
+      {
+        "key": {
+          "voucherId": 1
+        },
+        "unique": false,
+        "name": "ix_voucher_redemptions_voucher"
+      },
+      {
+        "key": {
+          "userId": 1
+        },
+        "unique": false,
+        "name": "ix_voucher_redemptions_user"
+      },
+      {
+        "key": {
+          "orderId": 1
+        },
+        "unique": false,
+        "name": "ix_voucher_redemptions_order"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "orderId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "discount": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "redeemedAt": {
+        "present": 5,
+        "types": {
+          "number": 5
+        },
+        "pct": 100
+      },
+      "voucherId": {
+        "present": 5,
+        "types": {
+          "string": 5
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 3,
+        "types": {
+          "string": 3
+        },
+        "pct": 60
+      }
+    }
+  },
+  "vouchers": {
+    "count": 4,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_vouchers_id"
+      },
+      {
+        "key": {
+          "code": 1
+        },
+        "unique": true,
+        "name": "uq_vouchers_code"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "code": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "type": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "value": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "min": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "expiry": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "limit": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "used": {
+        "present": 4,
+        "types": {
+          "number": 4
+        },
+        "pct": 100
+      },
+      "active": {
+        "present": 4,
+        "types": {
+          "boolean": 4
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 4,
+        "types": {
+          "string": 4
+        },
+        "pct": 100
+      },
+      "appliesTo": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 25
+      },
+      "ownerUserId": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 25
+      },
+      "source": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 25
+      },
+      "reason": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 25
+      },
+      "issuedBy": {
+        "present": 1,
+        "types": {
+          "string": 1
+        },
+        "pct": 25
+      },
+      "issuedAt": {
+        "present": 1,
+        "types": {
+          "number": 1
+        },
+        "pct": 25
+      }
+    }
+  },
+  "wishlist_items": {
+    "count": 14,
+    "indexes": [
+      {
+        "key": {
+          "_id": 1
+        },
+        "unique": false,
+        "name": "_id_"
+      },
+      {
+        "key": {
+          "id": 1
+        },
+        "unique": true,
+        "name": "uq_wishlist_items_id"
+      },
+      {
+        "key": {
+          "userId": 1,
+          "productId": 1
+        },
+        "unique": true,
+        "name": "uq_wishlist_items_user_product"
+      }
+    ],
+    "fields": {
+      "_id": {
+        "present": 14,
+        "types": {
+          "string": 14
+        },
+        "pct": 100
+      },
+      "id": {
+        "present": 14,
+        "types": {
+          "string": 14
+        },
+        "pct": 100
+      },
+      "userId": {
+        "present": 14,
+        "types": {
+          "string": 14
+        },
+        "pct": 100
+      },
+      "createdAt": {
+        "present": 14,
+        "types": {
+          "number": 14
+        },
+        "pct": 100
+      },
+      "productId": {
+        "present": 14,
+        "types": {
+          "string": 14
+        },
+        "pct": 100
+      },
+      "demoBatch": {
+        "present": 8,
+        "types": {
+          "string": 8
+        },
+        "pct": 57
+      }
+    }
+  }
+}

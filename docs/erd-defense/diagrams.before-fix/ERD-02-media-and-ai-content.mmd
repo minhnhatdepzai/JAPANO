@@ -1,0 +1,13 @@
+flowchart LR
+  %% ERD-02 — Media và nội dung sản phẩm tạo bởi AI
+  E01["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E02["<b>Hình Ảnh</b><br/><small>logic/nhúng</small><br/>PK Mã hình ảnh<br/>FK1 Mã sản phẩm<br/>Đường dẫn hình ảnh<br/>Thứ tự"]
+  E03["<b>Hình Ảnh Giao Diện Sản Phẩm</b><br/><small>product_media</small><br/>PK Mã hình ảnh giao diện<br/>FK1 Mã sản phẩm<br/>Đường dẫn URL<br/>Loại tệp truyền thông"]
+  E04["<b>Mô Tả Sản Phẩm Tạo Bởi AI</b><br/><small>ai_descriptions</small><br/>PK Mã bản ghi mô tả AI<br/>FK1 Mã sản phẩm<br/>Thời gian khởi tạo<br/>Chi tiết nội dung mô tả"]
+  E05["<b>Quảng Cáo</b><br/><small>banners</small><br/>PK Mã banner<br/>Tiêu đề banner<br/>Đường dẫn hình ảnh<br/>Đường dẫn điều hướng"]
+  E02 -->|"legacy image.productId<br/>product 1 → N images (logic)"| E01
+  E04 -->|"ai_descriptions.productId<br/>product 1 → N generations"| E01
+  E03 -->|"product_media.productId<br/>product 1 → N media"| E01
+  class E01 shared
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

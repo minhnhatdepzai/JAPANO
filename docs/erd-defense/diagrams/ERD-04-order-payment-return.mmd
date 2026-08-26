@@ -1,0 +1,31 @@
+%%{init: {"flowchart": {"defaultRenderer": "elk", "nodeSpacing": 60, "rankSpacing": 90}} }%%
+flowchart LR
+  %% ERD-04 — Đơn hàng, thanh toán và trả hàng
+  E01["<b>Người Dùng</b><br/><small>users</small><br/>PK Mã người dùng<br/>Họ và tên<br/>Email<br/>Mật khẩu mã hóa"]
+  E02["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E03["<b>Đơn Hàng</b><br/><small>orders</small><br/>PK Mã đơn hàng<br/>FK1 Mã người dùng<br/>FK2 Mã phiếu giảm giá<br/>Mã hiển thị đơn hàng"]
+  E04["<b>Chi Tiết Đơn Hàng</b><br/><small>order_items</small><br/>PK Mã chi tiết đơn hàng<br/>FK1 Mã đơn hàng<br/>FK2 Mã sản phẩm<br/>Tên sản phẩm"]
+  E05["<b>Thanh Toán</b><br/><small>payments</small><br/>PK Mã thanh toán<br/>FK1 Mã đơn hàng<br/>FK2 Mã người dùng<br/>Mã hiển thị thanh toán"]
+  E06["<b>Yêu Cầu Trả Hàng</b><br/><small>return_requests</small><br/>PK Mã yêu cầu trả hàng<br/>FK1 Mã đơn hàng<br/>FK2 Mã người dùng<br/>FK3 Mã thanh toán"]
+  E07["<b>Phiếu Giảm Giá</b><br/><small>vouchers</small><br/>PK Mã phiếu giảm giá<br/>FK1 Mã người tạo<br/>FK2 Mã người dùng<br/>Mã hiển thị"]
+  E08["<b>Lượt Sử Dụng Phiếu</b><br/><small>voucher_redemptions</small><br/>PK Mã lượt sử dụng phiếu<br/>FK1 Mã phiếu giảm giá<br/>FK2 Mã người dùng<br/>FK3 Mã đơn hàng"]
+  E04 -->|"order_items.orderId<br/>order 1 → N items"| E03
+  E04 -->|"order_items.productId<br/>product 1 → N sold lines"| E02
+  E03 -->|"orders.userId<br/>user 1 → N orders"| E01
+  E03 -->|"orders.voucherId<br/>voucher 1 → 0..N orders"| E07
+  E05 -->|"payments.orderId<br/>order 1 → N payment attempts"| E03
+  E05 -->|"payments.userId<br/>user 1 → N payments"| E01
+  E06 -->|"return_requests.orderId<br/>order 1 → N requests"| E03
+  E06 -->|"return_requests.userId<br/>user 1 → N requests"| E01
+  E06 -->|"return_requests.paymentId<br/>payment 1 → 0..N requests"| E05
+  E07 -->|"vouchers.issuedBy<br/>user 1 → N issued vouchers"| E01
+  E07 -->|"vouchers.ownerUserId<br/>user 1 → 0..N assigned vouchers"| E01
+  E08 -->|"voucher_redemptions.voucherId<br/>voucher 1 → N redemptions"| E07
+  E08 -->|"voucher_redemptions.userId<br/>user 1 → N redemptions"| E01
+  E08 -->|"voucher_redemptions.orderId<br/>order 1 → 0..N redemptions"| E03
+  class E01 shared
+  class E02 shared
+  class E07 shared
+  class E08 shared
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

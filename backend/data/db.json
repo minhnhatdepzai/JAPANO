@@ -3666,6 +3666,1378 @@
       ],
       "image": "/assets/products/kanzashi-trau-cai_1.jpg",
       "videos": []
+    },
+    {
+      "id": "jp1",
+      "slug": "yukata-hoa-anh-dao",
+      "name": "Yukata hoa anh đào",
+      "kanji": "浴衣",
+      "sku": "JP001",
+      "brand": "JAPANO",
+      "price": 1290000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "yukata",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#1F3A6E",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "lễ hội",
+        "mùa hè"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Yukata hoa anh đào (浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Yukata hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "yukata-hoa-anh-dao_1"
+      ],
+      "tryonFlat": "yukata-hoa-anh-dao_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp2",
+      "slug": "yukata-xanh-indigo",
+      "name": "Yukata xanh chàm",
+      "kanji": "藍染浴衣",
+      "sku": "JP002",
+      "brand": "JAPANO",
+      "price": 1190000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "yukata",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#22417A",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "tối giản"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Yukata xanh chàm (藍染浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Yukata xanh chàm lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "yukata-xanh-indigo_1"
+      ],
+      "tryonFlat": "yukata-xanh-indigo_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp3",
+      "slug": "kimono-furisode-do",
+      "name": "Kimono Furisode tay dài",
+      "kanji": "振袖",
+      "sku": "JP003",
+      "brand": "JAPANO",
+      "price": 4890000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "kimono",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#9B1B30",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "lễ hội",
+        "cao cấp"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Kimono Furisode tay dài (振袖) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Kimono Furisode tay dài lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "kimono-furisode-do_1"
+      ],
+      "tryonFlat": "kimono-furisode-do_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp4",
+      "slug": "kimono-tomesode-den",
+      "name": "Kimono Tomesode đen",
+      "kanji": "留袖",
+      "sku": "JP004",
+      "brand": "JAPANO",
+      "price": 5290000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "kimono",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#1A1A1A",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "thanh lịch",
+        "cao cấp"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Kimono Tomesode đen (留袖) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Kimono Tomesode đen lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "kimono-tomesode-den_1"
+      ],
+      "tryonFlat": "kimono-tomesode-den_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp5",
+      "slug": "haori-seigaiha",
+      "name": "Haori họa tiết Seigaiha",
+      "kanji": "羽織",
+      "sku": "JP005",
+      "brand": "JAPANO",
+      "price": 1490000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "haori",
+      "category": "haori",
+      "garmentType": "haori",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#2E5C8A",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "khoác ngoài"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Haori họa tiết Seigaiha (羽織) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Haori họa tiết Seigaiha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "haori-seigaiha_1"
+      ],
+      "tryonFlat": "haori-seigaiha_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp6",
+      "slug": "haori-song-nami",
+      "name": "Haori họa tiết sóng Nami",
+      "kanji": "波羽織",
+      "sku": "JP006",
+      "brand": "JAPANO",
+      "price": 1590000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "haori",
+      "category": "haori",
+      "garmentType": "haori",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#3A3F44",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "khoác ngoài"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Haori họa tiết sóng Nami (波羽織) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Haori họa tiết sóng Nami lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "haori-song-nami_1"
+      ],
+      "tryonFlat": "haori-song-nami_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp7",
+      "slug": "hakama-nu-tim",
+      "name": "Hakama nữ màu tím",
+      "kanji": "袴",
+      "sku": "JP007",
+      "brand": "JAPANO",
+      "price": 1690000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "hakama",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#5B4B8A",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "học đường"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Hakama nữ màu tím (袴) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Hakama nữ màu tím lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "hakama-nu-tim_1"
+      ],
+      "tryonFlat": "hakama-nu-tim_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp8",
+      "slug": "jinbei-mua-he",
+      "name": "Jinbei mùa hè",
+      "kanji": "甚平",
+      "sku": "JP008",
+      "brand": "JAPANO",
+      "price": 890000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "jinbei",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#2C4A6B",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "mùa hè",
+        "thoải mái"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Jinbei mùa hè (甚平) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Jinbei mùa hè lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "jinbei-mua-he_1"
+      ],
+      "tryonFlat": "jinbei-mua-he_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp9",
+      "slug": "samue-vai-bong",
+      "name": "Samue vải bông",
+      "kanji": "作務衣",
+      "sku": "JP009",
+      "brand": "JAPANO",
+      "price": 1090000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "samue",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#4A4A4A",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "tối giản"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Samue vải bông (作務衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Samue vải bông lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "samue-vai-bong_1"
+      ],
+      "tryonFlat": "samue-vai-bong_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp10",
+      "slug": "noragi-denim",
+      "name": "Noragi denim",
+      "kanji": "野良着",
+      "sku": "JP010",
+      "brand": "JAPANO",
+      "price": 1390000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "haori",
+      "category": "haori",
+      "garmentType": "noragi",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#2B4162",
+      "tags": [
+        "nhật",
+        "streetwear",
+        "khoác ngoài"
+      ],
+      "visualTags": [
+        "nhật",
+        "streetwear"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Noragi denim (野良着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Noragi denim lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "noragi-denim_1"
+      ],
+      "tryonFlat": "noragi-denim_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp11",
+      "slug": "happi-matsuri",
+      "name": "Happi lễ hội Matsuri",
+      "kanji": "法被",
+      "sku": "JP011",
+      "brand": "JAPANO",
+      "price": 790000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "ao-truyen-thong",
+      "category": "ao-truyen-thong",
+      "garmentType": "happi",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#C0392B",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "lễ hội"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Happi lễ hội Matsuri (法被) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Happi lễ hội Matsuri lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "happi-matsuri_1"
+      ],
+      "tryonFlat": "happi-matsuri_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp12",
+      "slug": "obi-vang-kim",
+      "name": "Đai Obi vàng kim",
+      "kanji": "帯",
+      "sku": "JP012",
+      "brand": "JAPANO",
+      "price": 690000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "phu-kien",
+      "category": "phu-kien",
+      "garmentType": "tops",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#C9A227",
+      "tags": [
+        "truyền thống",
+        "nhật",
+        "phụ kiện"
+      ],
+      "visualTags": [
+        "truyền thống",
+        "nhật"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Đai Obi vàng kim (帯) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Đai Obi vàng kim lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "obi-vang-kim_1"
+      ],
+      "tryonFlat": "obi-vang-kim_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp13",
+      "slug": "vay-lien-sakura",
+      "name": "Váy liền thân hoa anh đào",
+      "kanji": "桜ワンピース",
+      "sku": "JP013",
+      "brand": "JAPANO",
+      "price": 1190000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "one-pieces",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#F2B8C6",
+      "tags": [
+        "nhật",
+        "thanh lịch",
+        "nữ tính"
+      ],
+      "visualTags": [
+        "nhật",
+        "thanh lịch"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Váy liền thân hoa anh đào (桜ワンピース) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Váy liền thân hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "vay-lien-sakura_1"
+      ],
+      "tryonFlat": "vay-lien-sakura_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp14",
+      "slug": "vay-xep-ly-nhat",
+      "name": "Chân váy ngắn xếp ly",
+      "kanji": "プリーツスカート",
+      "sku": "JP014",
+      "brand": "JAPANO",
+      "price": 690000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "short_skirt",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#22315B",
+      "tags": [
+        "nhật",
+        "học đường",
+        "streetwear"
+      ],
+      "visualTags": [
+        "nhật",
+        "học đường"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Chân váy ngắn xếp ly (プリーツスカート) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Chân váy ngắn xếp ly lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "vay-xep-ly-nhat_1"
+      ],
+      "tryonFlat": "vay-xep-ly-nhat_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp15",
+      "slug": "crop-top-seigaiha",
+      "name": "Crop top họa tiết Seigaiha",
+      "kanji": "クロップトップ",
+      "sku": "JP015",
+      "brand": "JAPANO",
+      "price": 590000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "crop_top",
+      "adultOnlyTryOn": true,
+      "tearAllowed": false,
+      "colorHex": "#F5F7FA",
+      "tags": [
+        "nhật",
+        "streetwear",
+        "mùa hè"
+      ],
+      "visualTags": [
+        "nhật",
+        "streetwear"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Crop top họa tiết Seigaiha (クロップトップ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Crop top họa tiết Seigaiha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "crop-top-seigaiha_1"
+      ],
+      "tryonFlat": "crop-top-seigaiha_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp16",
+      "slug": "ao-sat-nach-song",
+      "name": "Áo sát nách họa tiết sóng",
+      "kanji": "ノースリーブ",
+      "sku": "JP016",
+      "brand": "JAPANO",
+      "price": 490000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "sleeveless_top",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#EFE6D5",
+      "tags": [
+        "nhật",
+        "mùa hè",
+        "thoải mái"
+      ],
+      "visualTags": [
+        "nhật",
+        "mùa hè"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Áo sát nách họa tiết sóng (ノースリーブ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Áo sát nách họa tiết sóng lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "ao-sat-nach-song_1"
+      ],
+      "tryonFlat": "ao-sat-nach-song_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp17",
+      "slug": "quan-short-hoa-van",
+      "name": "Quần short hoa văn Nhật",
+      "kanji": "ショートパンツ",
+      "sku": "JP017",
+      "brand": "JAPANO",
+      "price": 590000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "shorts",
+      "adultOnlyTryOn": false,
+      "tearAllowed": false,
+      "colorHex": "#D8C9A8",
+      "tags": [
+        "nhật",
+        "mùa hè",
+        "thoải mái"
+      ],
+      "visualTags": [
+        "nhật",
+        "mùa hè"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Quần short hoa văn Nhật (ショートパンツ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Quần short hoa văn Nhật lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "quan-short-hoa-van_1"
+      ],
+      "tryonFlat": "quan-short-hoa-van_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp18",
+      "slug": "do-boi-mot-manh-song",
+      "name": "Áo tắm một mảnh họa tiết sóng",
+      "kanji": "ワンピース水着",
+      "sku": "JP018",
+      "brand": "JAPANO",
+      "price": 890000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "one_piece_swimsuit",
+      "adultOnlyTryOn": true,
+      "tearAllowed": false,
+      "colorHex": "#1E3A5F",
+      "tags": [
+        "nhật",
+        "mùa hè",
+        "đồ bơi"
+      ],
+      "visualTags": [
+        "nhật",
+        "mùa hè"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Áo tắm một mảnh họa tiết sóng (ワンピース水着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Áo tắm một mảnh họa tiết sóng lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "do-boi-mot-manh-song_1"
+      ],
+      "tryonFlat": "do-boi-mot-manh-song_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
+    },
+    {
+      "id": "jp19",
+      "slug": "bikini-hoa-anh-dao",
+      "name": "Bikini hai mảnh hoa anh đào",
+      "kanji": "ビキニ",
+      "sku": "JP019",
+      "brand": "JAPANO",
+      "price": 790000,
+      "old": null,
+      "sale": null,
+      "status": "published",
+      "cat": "trang-phuc",
+      "category": "trang-phuc",
+      "garmentType": "bikini_two_piece",
+      "adultOnlyTryOn": true,
+      "tearAllowed": false,
+      "colorHex": "#F7D9E3",
+      "tags": [
+        "nhật",
+        "mùa hè",
+        "đồ bơi"
+      ],
+      "visualTags": [
+        "nhật",
+        "mùa hè"
+      ],
+      "rating": 4.6,
+      "sold": 0,
+      "desc": "Bikini hai mảnh hoa anh đào (ビキニ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+      "story": "Bikini hai mảnh hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "variants": [
+        {
+          "size": "S",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "M",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "L",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "color": "Mặc định",
+          "stock": 12
+        },
+        {
+          "size": "XXL",
+          "color": "Mặc định",
+          "stock": 12
+        }
+      ],
+      "images": [
+        "bikini-hoa-anh-dao_1"
+      ],
+      "tryonFlat": "bikini-hoa-anh-dao_tryon-flat",
+      "videos": [],
+      "imageSource": "generated-locally-flux2-klein",
+      "createdAt": 1787680318120
     }
   ],
   "orders": [
@@ -24786,795 +26158,6 @@
       "confidence": 0.9,
       "latencyMs": 514,
       "demoBatch": "demo-2026-08"
-    }
-  ],
-  "tryonHistory": [
-    {
-      "id": "tryon-1783934432155",
-      "userId": "demo-minh",
-      "productId": "khoac-nhat",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783934432155
-    },
-    {
-      "id": "tryon-1783935103669",
-      "productId": "ao-len-cardigan",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783935103669
-    },
-    {
-      "id": "tryon-1784162536119",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+secondary-person-lock",
-      "createdAt": 1784162536119
-    },
-    {
-      "id": "tryon-1784545278299",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784545278299
-    },
-    {
-      "id": "tryon-1784626798861",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784626798861
-    },
-    {
-      "id": "tryon-1784629626209",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784629626209
-    },
-    {
-      "id": "tryon-1784954721018",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1784954721018
-    },
-    {
-      "id": "tryon-1784974491012",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1784974491012
-    },
-    {
-      "id": "tryon-1785033641392",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1785033641392
-    },
-    {
-      "id": "tryon-1785639215200",
-      "userId": "demo-minh",
-      "productId": "dong-phuc-thuy-thu",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785639215200
-    },
-    {
-      "id": "tryon-1786061877676",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786061877676
-    },
-    {
-      "id": "tryon-1783922576844",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783922576844
-    },
-    {
-      "id": "tryon-1783929417836",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783929417836
-    },
-    {
-      "id": "tryon-1783930151009",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783930151009
-    },
-    {
-      "id": "tryon-1783930590799",
-      "userId": "demo-minh",
-      "productId": "furina",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783930590799
-    },
-    {
-      "id": "tryon-1783938237451",
-      "productId": "kimono-hong",
-      "accessoryIds": [
-        "mu-nhat",
-        "du-nhat"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+accessory-pose",
-      "createdAt": 1783938237451
-    },
-    {
-      "id": "tryon-1783939475987",
-      "productId": "kimono-hong",
-      "accessoryIds": [
-        "mu-nhat",
-        "du-nhat"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+flux2-klein-4b-accessory-refine",
-      "createdAt": 1783939475987
-    },
-    {
-      "id": "tryon-1784137382405",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "local-preview-last-resort",
-      "createdAt": 1784137382405
-    },
-    {
-      "id": "tryon-1784138417748",
-      "productId": "ao-len-cardigan",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5",
-      "createdAt": 1784138417748
-    },
-    {
-      "id": "tryon-1784543038770",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784543038770
-    },
-    {
-      "id": "tryon-1784951050781",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1784951050781
-    },
-    {
-      "id": "tryon-1785638830344",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1785638830344
-    },
-    {
-      "id": "tryon-1785639029923",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785639029923
-    },
-    {
-      "id": "tryon-1785849669669",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785849669669
-    },
-    {
-      "id": "tryon-1785895618614",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785895618614
-    },
-    {
-      "id": "tryon-1783923811011",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783923811011
-    },
-    {
-      "id": "tryon-1783924782408",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783924782408
-    },
-    {
-      "id": "tryon-1783930451540",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783930451540
-    },
-    {
-      "id": "tryon-1783937381105",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783937381105
-    },
-    {
-      "id": "tryon-1784139163142",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+secondary-person-lock",
-      "createdAt": 1784139163142
-    },
-    {
-      "id": "tryon-1784161955667",
-      "productId": "ao-len-cardigan",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784161955667
-    },
-    {
-      "id": "tryon-1784712474221",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784712474221
-    },
-    {
-      "id": "tryon-1785849608536",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785849608536
-    },
-    {
-      "id": "tryon-1786062057500",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786062057500
-    },
-    {
-      "id": "tryon-1783926237100",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
-      "createdAt": 1783926237100
-    },
-    {
-      "id": "tryon-1783930750343",
-      "userId": "demo-minh",
-      "productId": "furina",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783930750343
-    },
-    {
-      "id": "tryon-1783934125356",
-      "userId": "demo-minh",
-      "productId": "ao-len-cardigan",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783934125356
-    },
-    {
-      "id": "tryon-1783936115370",
-      "userId": "demo-minh",
-      "productId": "so-mi-trang",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
-      "createdAt": 1783936115370
-    },
-    {
-      "id": "tryon-1784543345384",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784543345384
-    },
-    {
-      "id": "tryon-1784544252320",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784544252320
-    },
-    {
-      "id": "tryon-1784550081133",
-      "userId": "demo-minh",
-      "productId": "cardigan-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1784550081133
-    },
-    {
-      "id": "tryon-1784992529548",
-      "productId": "haori-dang-dai",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1784992529548
-    },
-    {
-      "id": "tryon-1785300664442",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1785300664442
-    },
-    {
-      "id": "tryon-1785301618522",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1785301618522
-    },
-    {
-      "id": "tryon-1785314068628",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
-      "createdAt": 1785314068628
-    },
-    {
-      "id": "tryon-1785639325018",
-      "userId": "demo-minh",
-      "productId": "dong-phuc-thuy-thu",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1785639325018
-    },
-    {
-      "id": "tryon-1786359302616",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786359302616
-    },
-    {
-      "id": "tryon-1786360036694",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786360036694
-    },
-    {
-      "id": "tryon-1786360864353",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786360864353
-    },
-    {
-      "id": "tryon-1786361137416",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786361137416
-    },
-    {
-      "id": "tryon-1786537170862",
-      "userId": "demo-minh",
-      "productId": "blazer-kaki",
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786537170862
-    },
-    {
-      "id": "tryon-1786538188740",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786538188740
-    },
-    {
-      "id": "tryon-1786538293526",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786538293526
-    },
-    {
-      "id": "tryon-1786601525915",
-      "userId": "guest",
-      "productId": "cardigan-dai",
-      "productIds": [
-        "cardigan-dai"
-      ],
-      "accessoryIds": [
-        "giay-dep",
-        "kep-no",
-        "chup-tai"
-      ],
-      "engine": "fashn-vton-1.5+adaptive-low-memory+flux2-klein-4b-accessory-refine",
-      "createdAt": 1786601525915,
-      "appliedAccessories": [
-        {
-          "id": "giay-dep",
-          "name": "Dép quai Nhật",
-          "kind": "shoe",
-          "action": "mang đôi dép/giày vào hai bàn chân"
-        },
-        {
-          "id": "chup-tai",
-          "name": "Chụp tai nữ",
-          "kind": "earmuffs",
-          "action": "đeo hai bên tai và vòng qua đỉnh đầu"
-        },
-        {
-          "id": "kep-no",
-          "name": "Kẹp nơ tóc",
-          "kind": "hair_clip",
-          "action": "kẹp vào tóc cạnh thái dương"
-        }
-      ],
-      "skippedAccessories": []
-    },
-    {
-      "id": "tryon-1786603596683",
-      "userId": "guest",
-      "productId": "hakama-nu",
-      "productIds": [
-        "hakama-nu",
-        "happi-le-hoi"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+adaptive-low-memory+upper:fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786603596683,
-      "appliedAccessories": [],
-      "skippedAccessories": []
-    },
-    {
-      "id": "tryon-1786606108399",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "productIds": [
-        "yukata-xanh"
-      ],
-      "accessoryIds": [
-        "giay-dep",
-        "chup-tai",
-        "balo-vai"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786606108399,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Dép quai Nhật",
-        "Balo vải Nhật",
-        "Chụp tai nữ"
-      ]
-    },
-    {
-      "id": "tryon-1786606901629",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "productIds": [
-        "yukata-xanh"
-      ],
-      "accessoryIds": [
-        "mu-nhat",
-        "chup-tai",
-        "balo-vai"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786606901629,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Mũ bo Nhật",
-        "Chụp tai nữ"
-      ]
-    },
-    {
-      "id": "tryon-1786607088201",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "productIds": [
-        "yukata-xanh"
-      ],
-      "accessoryIds": [
-        "mu-nhat",
-        "chup-tai",
-        "balo-vai"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786607088201,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Mũ bo Nhật",
-        "Chụp tai nữ"
-      ]
-    },
-    {
-      "id": "tryon-1786607282457",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "productIds": [
-        "yukata-xanh"
-      ],
-      "accessoryIds": [
-        "mu-nhat",
-        "balo-vai",
-        "chup-tai"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786607282457,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Mũ bo Nhật",
-        "Chụp tai nữ"
-      ]
-    },
-    {
-      "id": "tryon-1786607372434",
-      "userId": "guest",
-      "productId": "happi-le-hoi",
-      "productIds": [
-        "happi-le-hoi"
-      ],
-      "accessoryIds": [
-        "balo-vai",
-        "chup-tai",
-        "mu-nhat"
-      ],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786607372434,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Chụp tai nữ",
-        "Mũ bo Nhật"
-      ]
-    },
-    {
-      "id": "tryon-1786607522479",
-      "userId": "guest",
-      "productId": "happi-le-hoi",
-      "productIds": [
-        "happi-le-hoi"
-      ],
-      "accessoryIds": [
-        "balo-vai",
-        "chup-tai",
-        "mu-nhat"
-      ],
-      "engine": "fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786607522479,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Chụp tai nữ",
-        "Mũ bo Nhật"
-      ]
-    },
-    {
-      "id": "tryon-1786607653805",
-      "userId": "guest",
-      "productId": "happi-le-hoi",
-      "productIds": [
-        "happi-le-hoi"
-      ],
-      "accessoryIds": [
-        "balo-vai",
-        "chup-tai",
-        "mu-nhat"
-      ],
-      "engine": "fashn-vton-1.5+adaptive-low-memory+flux2-klein-4b-accessory-refine",
-      "createdAt": 1786607653805,
-      "appliedAccessories": [
-        {
-          "id": "balo-vai",
-          "name": "Balo vải Nhật",
-          "kind": "backpack",
-          "action": "đeo ba lô sau lưng, quai vắt qua hai vai"
-        },
-        {
-          "id": "chup-tai",
-          "name": "Chụp tai nữ",
-          "kind": "earmuffs",
-          "action": "đeo hai bên tai và vòng qua đỉnh đầu"
-        },
-        {
-          "id": "mu-nhat",
-          "name": "Mũ bo Nhật",
-          "kind": "hat",
-          "action": "đội nón đúng vị trí đầu"
-        }
-      ],
-      "skippedAccessories": []
-    },
-    {
-      "id": "tryon-1786607846308",
-      "userId": "demo-minh",
-      "productId": "yukata-xanh",
-      "productIds": [
-        "yukata-xanh"
-      ],
-      "accessoryIds": [
-        "mu-nhat",
-        "kep-no",
-        "balo-vai"
-      ],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786607846308,
-      "appliedAccessories": [],
-      "skippedAccessories": [
-        "Balo vải Nhật",
-        "Mũ bo Nhật",
-        "Kẹp nơ tóc"
-      ]
-    },
-    {
-      "id": "tryon-demo-1786639187664-0",
-      "userId": "u-demo-1786639187664-6",
-      "productId": "gang-tay",
-      "productIds": [
-        "gang-tay"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1784565587664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-1",
-      "userId": "u-demo-1786639187664-0",
-      "productId": "yae-miko",
-      "productIds": [
-        "yae-miko"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1784133587664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-2",
-      "userId": "u-demo-1786639187664-5",
-      "productId": "gang-tay",
-      "productIds": [
-        "gang-tay"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1783701587664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-3",
-      "userId": "u-demo-1786639187664-2",
-      "productId": "obi-lua",
-      "productIds": [
-        "obi-lua"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1783615187664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-4",
-      "userId": "u-demo-1786639187664-8",
-      "productId": "cardigan-dai",
-      "productIds": [
-        "cardigan-dai"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1784565587664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-5",
-      "userId": "u-demo-1786639187664-6",
-      "productId": "sensu-quat-gap",
-      "productIds": [
-        "sensu-quat-gap"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1785083987664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-6",
-      "userId": "u-demo-1786639187664-0",
-      "productId": "happi-le-hoi",
-      "productIds": [
-        "happi-le-hoi"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1785256787664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-7",
-      "userId": "u-demo-1786639187664-9",
-      "productId": "du-nhat",
-      "productIds": [
-        "du-nhat"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1783442387664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-8",
-      "userId": "u-demo-1786639187664-2",
-      "productId": "ao-len-cardigan",
-      "productIds": [
-        "ao-len-cardigan"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1785775187664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-demo-1786639187664-9",
-      "userId": "u-demo-1786639187664-9",
-      "productId": "furoshiki-vai",
-      "productIds": [
-        "furoshiki-vai"
-      ],
-      "accessoryIds": [],
-      "engine": "fashn-vton-1.5+demo-seed",
-      "createdAt": 1785602387664,
-      "demoBatch": "demo-2026-08"
-    },
-    {
-      "id": "tryon-1786768435548",
-      "userId": "demo-minh",
-      "productId": "kimono-hong",
-      "productIds": [
-        "kimono-hong"
-      ],
-      "accessoryIds": [],
-      "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
-      "createdAt": 1786768435548,
-      "appliedAccessories": [],
-      "skippedAccessories": []
     }
   ],
   "goals": [

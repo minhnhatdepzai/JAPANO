@@ -73,8 +73,6 @@ const REL = [
   ['chats', 'userId', 'users', C.zeroOne, C.zeroMany, 'fk', 'khách vãng lai = rỗng'],
   ['interactions', 'userId', 'users', C.zeroOne, C.zeroMany, 'fk', 'có thể là "guest"'],
   ['interactions', 'productId', 'products', C.one, C.zeroMany, 'fk', 'NGUỒN CHO GỢI Ý'],
-  ['tryon_history', 'userId', 'users', C.zeroOne, C.zeroMany, 'fk', 'có thể là "guest"'],
-  ['tryon_history', 'productId', 'products', C.one, C.zeroMany, 'fk', 'món chính đã thử'],
   ['japan_spot_reviews', 'userId', 'users', C.one, C.zeroMany, 'fk', ''],
   ['japan_spot_suggestions', 'userId', 'users', C.one, C.zeroMany, 'fk', ''],
   // ---- Khuyến mãi
@@ -87,8 +85,6 @@ const REL = [
   ['vip_memberships', 'discountRuleId', 'discount_rules', C.one, C.zeroMany, 'fk', 'VIP dùng LUẬT, không dùng voucher'],
   ['flagcard_collections', 'userId', 'users', C.one, C.zeroOne, 'fk', 'bộ sưu tập của khách'],
   // ---- n–n lưu bằng mảng nhúng
-  ['tryon_history', 'productIds[]', 'products', C.zeroMany, C.zeroMany, 'array', 'thử nhiều món cùng lúc'],
-  ['tryon_history', 'accessoryIds[]', 'products', C.zeroMany, C.zeroMany, 'array', 'phụ kiện đi kèm'],
   ['chats', 'productIds[]', 'products', C.zeroMany, C.zeroMany, 'array', 'sản phẩm bot gợi ý'],
   ['flagcards', 'recommendedProductIds[]', 'products', C.zeroMany, C.zeroMany, 'array', 'gợi ý theo địa danh'],
   ['flagcard_collections', 'cardIds[]', 'flagcards', C.zeroMany, C.zeroMany, 'array', 'thẻ đã sưu tầm'],
@@ -102,7 +98,7 @@ const LAYOUT = [
   { x: 60, tables: ['categories', 'products', 'product_details', 'product_variants', 'product_media', 'ai_descriptions'] },
   { x: 500, tables: ['orders', 'order_items', 'payments', 'return_requests'] },
   { x: 940, tables: ['users', 'addresses', 'profiles', 'push_tokens', 'notifications'] },
-  { x: 1380, tables: ['cart_items', 'wishlist_items', 'goals', 'search_logs', 'chats', 'interactions', 'tryon_history'] },
+  { x: 1380, tables: ['cart_items', 'wishlist_items', 'goals', 'search_logs', 'chats', 'interactions'] },
   { x: 1820, tables: ['vouchers', 'voucher_redemptions', 'discount_rules', 'vip_memberships'] },
   { x: 2260, tables: ['reviews', 'review_reactions', 'moderation_samples', 'japan_spot_reviews', 'japan_spot_suggestions'] },
   { x: 2700, tables: ['flagcards', 'flagcard_collections', 'banners', 'settings'] },

@@ -1,0 +1,22 @@
+flowchart LR
+  %% ERD-03 — Người dùng và ý định mua sắm
+  E01["<b>Người Dùng</b><br/><small>users</small><br/>PK Mã người dùng<br/>Họ và tên<br/>Email<br/>Mật khẩu mã hóa"]
+  E02["<b>Hồ Sơ Người Dùng</b><br/><small>profiles</small><br/>PK Mã hồ sơ người dùng<br/>FK1 Mã người dùng<br/>Giới tính<br/>Phong cách yêu thích"]
+  E03["<b>Địa Chỉ</b><br/><small>addresses</small><br/>PK Mã địa chỉ<br/>FK1 Mã người dùng<br/>Nhãn địa chỉ<br/>Tên người nhận"]
+  E04["<b>Thông Báo</b><br/><small>notifications</small><br/>PK Mã thông báo<br/>FK1 Mã người dùng<br/>Tiêu đề thông báo<br/>Nội dung thông báo"]
+  E05["<b>Chi Tiết Giỏ Hàng</b><br/><small>cart_items</small><br/>PK Mã chi tiết giỏ hàng<br/>FK1 Mã người dùng<br/>FK2 Mã sản phẩm<br/>Màu sắc"]
+  E06["<b>Danh Sách Sản Phẩm Yêu Thích</b><br/><small>wishlist_items</small><br/>PK Mã yêu thích<br/>FK1 Mã người dùng<br/>FK2 Mã sản phẩm<br/>Ngày thêm"]
+  E07["<b>Mục Tiêu Tiết Kiệm</b><br/><small>goals</small><br/>PK Mã mục tiêu<br/>FK1 Mã người dùng<br/>FK2 Mã sản phẩm<br/>Thông tin sản phẩm"]
+  E08["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E03 -->|"addresses.userId<br/>user 1 → N addresses"| E01
+  E02 -->|"profiles.userId<br/>user 1 → 0..1 profile"| E01
+  E04 -->|"notifications.userId<br/>user 1 → N notifications"| E01
+  E05 -->|"cart_items.userId<br/>user 1 → N cart lines"| E01
+  E05 -->|"cart_items.productId<br/>product 1 → N cart lines"| E08
+  E06 -->|"wishlist_items.userId<br/>user 1 → N wishlist rows"| E01
+  E06 -->|"wishlist_items.productId<br/>product 1 → N wishlist rows"| E08
+  E07 -->|"goals.userId<br/>user 1 → N goals"| E01
+  E07 -->|"goals.productId<br/>product 1 → N goals"| E08
+  class E08 shared
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

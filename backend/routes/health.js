@@ -1,6 +1,7 @@
 // Sức khoẻ hệ thống, cấu hình cửa hàng, seed/reset dữ liệu demo, và báo cáo
 // phân tích (analytics) cho dashboard admin.
 const { scrubUsers } = require('../lib/store');
+const { fitConfig } = require('../lib/tryonConfig');
 
 module.exports = function registerHealthRoutes(api, ctx) {
   const {
@@ -33,7 +34,7 @@ module.exports = function registerHealthRoutes(api, ctx) {
       features: ['revenue-ensemble', 'demand-momentum', 'kmeans', 'rfm-churn', 'market-basket', 'hybrid-recommender', 'selective-ssm-sequence', 'lightgcn-user-item', 'autoregressive-next-item', 'adaptive-moe-ranking', 'pairwise-ranking', 'mlstm-style-chat-memory', 'semantic-chat-routing', 'grounded-chat-retrieval', 'behavior-search-learning', 'negative-feedback-learning', 'live-cart-state', 'product-video', 'shared-brand-logo', 'vietnam-34-provinces-3321-wards', 'verified-purchase-reviews', 'semantic-review-moderation', 'review-reactions', 'fashn-vton-1.5', 'flux2-pose-transfer', 'flux2-accessory-refine', 'one-to-all-animation-1.3b-v1', 'resource-guarded-video-generation', 'adaptive-repose-main-subject', 'tryon-quality-gate', 'accessory-quality-gate', 'single-subject-pose-lock', 'pose-accessories', 'product-vision', 'shopping-wellness-goals', 'historical-flagcards', 'flagcard-reward-voucher', 'stripe-test-checkout', 'stripe-card-discount', 'stripe-refunds', 'vnpay-sandbox-checkout', 'vnpay-refunds', 'return-refund-workflow', 'per-item-partial-returns', 'carrier-confirmed-delivery', 'customer-confirmed-receipt', 'return-ship-back-tracking', 'published-fulfillment-policy', 'goal-savings-fund', 'goal-completion-voucher', 'community-spot-contribution-reward'],
       stripe: { enabled: stripeEnabled(), mode: stripeEnabled() ? 'test' : 'disabled', currency: STRIPE_CURRENCY },
       vnpay: { enabled: vnpayEnabled(), mode: vnpayEnabled() ? 'test' : 'disabled', currency: 'VND' },
-      tryon: { forceRepose: FORCE_REPOSE, gpuBusy: tryonGpuBusy() },
+      tryon: { forceRepose: FORCE_REPOSE, gpuBusy: tryonGpuBusy(), fit: fitConfig() },
     });
   });
 

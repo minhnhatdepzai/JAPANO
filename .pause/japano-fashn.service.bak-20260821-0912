@@ -1,0 +1,23 @@
+[Unit]
+Description=JAPANO FASHN VTON 1.5 (thử đồ) cổng 7862
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/nhat/Downloads/japano
+Environment=HF_HOME=/home/nhat/jp/ai/huggingface
+Environment=CUDA_VISIBLE_DEVICES=0
+Environment=JAPANO_FASHN_HOME=/home/nhat/jp/ai/fashn-vton-1.5
+Environment=JAPANO_FLUX_REPOSE_HOME=/home/nhat/jp/ai/FLUX.2-klein-4B
+Environment=JAPANO_TRYON_RUNTIME_DIR=/tmp/japano-tryon-runtime
+Environment=JAPANO_FLUX_OFFLOAD=none
+Environment=JAPANO_TRYON_LOW_MEMORY=0
+Environment=PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+ExecStart=/home/nhat/jp/ai/fashn-vton-1.5/.venv/bin/python -u backend/fashn_service.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/nhat/japano-logs/fashn.log
+StandardError=append:/home/nhat/japano-logs/fashn.log
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,685 @@
+{
+  "schema": {
+    "Danh Mục Sản Phẩm": [
+      "PK",
+      "Mã danh mục",
+      "Tên danh mục",
+      "Tên tiếng Nhật"
+    ],
+    "Sản Phẩm": [
+      "PK",
+      "Mã sản phẩm",
+      "FK1",
+      "Mã danh mục",
+      "Đường dẫn định danh",
+      "Tên sản phẩm",
+      "Tên tiếng Nhật",
+      "Mã quản lý kho",
+      "Thương hiệu",
+      "Giá bán hiện tại",
+      "Giá niêm yết",
+      "Ngày tạo",
+      "Trạng thái",
+      "Ngày cập nhật"
+    ],
+    "Chi Tiết Sản Phẩm": [
+      "PK",
+      "Mã chi tiết sản phẩm",
+      "FK1",
+      "Mã sản phẩm",
+      "Mô tả sản phẩm",
+      "Câu chuyện sản phẩm",
+      "Mã màu đại diện",
+      "Thẻ từ khóa",
+      "Thẻ nhận diện hình ảnh",
+      "Điểm đánh giá trung bình",
+      "Số lượng đã bán"
+    ],
+    "Biến Thể Sản Phẩm": [
+      "PK",
+      "Mã biến thể",
+      "FK1",
+      "Mã sản phẩm",
+      "FK2",
+      "Mã màu sắc",
+      "FK3",
+      "Mã kích thước",
+      "Mã SKU biến thể",
+      "Số lượng tồn kho",
+      "Giá riêng (tuỳ chọn)",
+      "Thứ tự hiển thị"
+    ],
+    "Hình Ảnh": [
+      "PK",
+      "Mã hình ảnh",
+      "FK1",
+      "Mã sản phẩm",
+      "Đường dẫn hình ảnh",
+      "Thứ tự",
+      "Hình ảnh chính"
+    ],
+    "Mô Tả Sản Phẩm Tạo Bởi AI": [
+      "PK",
+      "Mã bản ghi mô tả AI",
+      "FK1",
+      "Mã sản phẩm",
+      "Thời gian khởi tạo",
+      "Chi tiết nội dung mô tả"
+    ],
+    "Đơn Hàng": [
+      "PK",
+      "Mã đơn hàng",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã phiếu giảm giá",
+      "Mã hiển thị đơn hàng",
+      "Thông tin người nhận",
+      "Địa chỉ giao hàng",
+      "Tổng giá trị đơn hàng",
+      "Phí vận chuyển",
+      "Trạng thái đơn hàng",
+      "Tạm tính",
+      "Lịch sử trạng thái",
+      "Số tiền giảm",
+      "Ngày đặt hàng",
+      "Ngày cập nhật"
+    ],
+    "Chi Tiết Đơn Hàng": [
+      "PK",
+      "Mã chi tiết đơn hàng",
+      "FK1",
+      "Mã đơn hàng",
+      "FK2",
+      "Mã sản phẩm",
+      "Tên sản phẩm",
+      "Đường dẫn sản phẩm",
+      "Tên màu sắc",
+      "Mã màu Hex",
+      "Kích cỡ",
+      "Số lượng đặt mua",
+      "Đơn giá mua",
+      "Thứ tự hiển thị"
+    ],
+    "Thanh Toán": [
+      "PK",
+      "Mã thanh toán",
+      "FK1",
+      "Mã đơn hàng",
+      "FK2",
+      "Mã người dùng",
+      "Mã hiển thị thanh toán",
+      "Mã hiển thị đơn hàng",
+      "Nhà cung cấp dịch vụ",
+      "Phương thức thanh toán",
+      "Trạng thái giao dịch",
+      "Số tiền thanh toán",
+      "Đơn vị tiền tệ",
+      "Mã giao dịch ngân hàng",
+      "Mã Payment Intent",
+      "Mã phiên thanh toán",
+      "Khả năng hoàn tiền",
+      "Lịch sử hoàn tiền",
+      "Ngày tạo giao dịch",
+      "Ngày cập nhật",
+      "Các khoản hoàn tiền"
+    ],
+    "Yêu Cầu Trả Hàng": [
+      "PK",
+      "Mã yêu cầu trả hàng",
+      "FK1",
+      "Mã đơn hàng",
+      "FK2",
+      "Mã người dùng",
+      "FK3",
+      "Mã thanh toán",
+      "Mã hiển thị trả hàng",
+      "Mã hiển thị đơn hàng",
+      "Mã hiển thị thanh toán",
+      "Trạng thái yêu cầu",
+      "Lý do trả hàng",
+      "Ghi chú của khách",
+      "Danh sách món hàng trả",
+      "Số tiền hoàn",
+      "Đơn vị tiền tệ",
+      "Ngày tạo yêu cầu",
+      "Ngày cập nhật",
+      "Tiến trình xử lý",
+      "Trạng thái hoàn tiền",
+      "Ghi chú từ Admin",
+      "Mã giao dịch cổng hoàn tiền"
+    ],
+    "Người Dùng": [
+      "PK",
+      "Mã người dùng",
+      "Họ và tên",
+      "Email",
+      "Mật khẩu mã hóa",
+      "Vai trò",
+      "Trạng thái",
+      "Số lượt thử đồ",
+      "Ngày đăng ký",
+      "Mã khách hàng Stripe",
+      "Mã đặt lại mã hóa",
+      "Hạn mã đặt lại mật khẩu",
+      "Mã Google",
+      "Ảnh đại diện"
+    ],
+    "Địa Chỉ": [
+      "PK",
+      "Mã địa chỉ",
+      "FK1",
+      "Mã người dùng",
+      "Nhãn địa chỉ",
+      "Tên người nhận",
+      "Số điện thoại",
+      "Số nhà, tên đường",
+      "Mã phường / xã",
+      "Tên phường / xã",
+      "Mã tỉnh / thành phố",
+      "Tên tỉnh / thành phố",
+      "Địa chỉ mặc định",
+      "Thời gian tạo",
+      "Thời gian cập nhật"
+    ],
+    "Hồ Sơ Người Dùng": [
+      "PK",
+      "Mã hồ sơ người dùng",
+      "FK1",
+      "Mã người dùng",
+      "Giới tính",
+      "Phong cách yêu thích",
+      "Tông màu da",
+      "Dịp mặc",
+      "Ngân sách dự kiến",
+      "Chiều cao (cm)",
+      "Cân nặng (kg)",
+      "Kích cỡ hay mặc",
+      "Ngày cập nhật"
+    ],
+    "Cấu Hình Cửa Hàng": [
+      "PK",
+      "Mã cấu hình",
+      "Tên cửa hàng",
+      "Hotline hỗ trợ",
+      "Email liên hệ",
+      "Địa chỉ cửa hàng",
+      "Phí vận chuyển",
+      "Thanh toán khi nhận hàng",
+      "Thanh toán Stripe",
+      "Thanh toán VNPay",
+      "Đường dẫn Logo"
+    ],
+    "Thông Báo": [
+      "PK",
+      "Mã thông báo",
+      "FK1",
+      "Mã người dùng",
+      "Tiêu đề thông báo",
+      "Nội dung thông báo",
+      "Phân loại thông báo",
+      "Hành động",
+      "Lượt tiếp cận",
+      "Thời gian gửi"
+    ],
+    "Chi Tiết Giỏ Hàng": [
+      "PK",
+      "Mã chi tiết giỏ hàng",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã sản phẩm",
+      "Màu sắc",
+      "Số lượng",
+      "Kích thước",
+      "Thời gian cập nhật"
+    ],
+    "Danh Sách Sản Phẩm Yêu Thích": [
+      "PK",
+      "Mã yêu thích",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã sản phẩm",
+      "Ngày thêm"
+    ],
+    "Mục Tiêu Tiết Kiệm": [
+      "PK",
+      "Mã mục tiêu",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã sản phẩm",
+      "Thông tin sản phẩm",
+      "Thông tin mục tiêu",
+      "Kế hoạch thực hiện",
+      "Ngày tạo",
+      "Ngày cập nhật",
+      "Quỹ tiết kiệm"
+    ],
+    "Lịch Sử Tìm Kiếm": [
+      "PK",
+      "Mã lịch sử tìm kiếm",
+      "FK1",
+      "Mã người dùng",
+      "Từ khóa tìm kiếm",
+      "Số lượng kết quả",
+      "Thời gian tìm kiếm"
+    ],
+    "Tin Nhắn": [
+      "PK",
+      "Mã tin nhắn",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã sản phẩm",
+      "Vai trò người gửi",
+      "Nội dung tin nhắn",
+      "Thời gian gửi"
+    ],
+    "Tương Tác Người Dùng": [
+      "PK",
+      "Mã tương tác",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã sản phẩm",
+      "Nguồn tương tác",
+      "Thời gian tương tác",
+      "Loại tương tác"
+    ],
+    "Lịch Sử Thử Đồ": [
+      "PK",
+      "Mã lịch sử thử đồ",
+      "FK1",
+      "Mã sản phẩm",
+      "FK2",
+      "Mã người dùng",
+      "Công nghệ AI",
+      "Ngày thử đồ"
+    ],
+    "Phiếu Giảm Giá": [
+      "PK",
+      "Mã phiếu giảm giá",
+      "FK1",
+      "Mã người tạo",
+      "FK2",
+      "Mã người dùng",
+      "Mã hiển thị",
+      "Loại giảm giá",
+      "Giá trị giảm",
+      "Giá trị đơn tối thiểu",
+      "Ngày hết hạn",
+      "Giới hạn sử dụng",
+      "Số lượt đã dùng",
+      "Trạng thái",
+      "Đối tượng áp dụng",
+      "Lý do",
+      "Ngày phát hành"
+    ],
+    "Lượt Sử Dụng Phiếu": [
+      "PK",
+      "Mã lượt sử dụng phiếu",
+      "FK1",
+      "Mã phiếu giảm giá",
+      "FK2",
+      "Mã người dùng",
+      "FK3",
+      "Mã đơn hàng",
+      "Mã áp dụng",
+      "Số tiền giảm",
+      "Ngày sử dụng"
+    ],
+    "Quy Tắc Giảm Giá": [
+      "PK",
+      "Mã quy tắc giảm giá",
+      "Mã chương trình",
+      "Tên chương trình giảm giá",
+      "Phạm vi áp dụng",
+      "Hình thức giảm giá",
+      "Giá trị giảm",
+      "Số lượng tối đa",
+      "Loại điều kiện đặt ra",
+      "Giá trị điều kiện cần đạt",
+      "Trạng thái hoạt động",
+      "Thời hạn hiệu lực"
+    ],
+    "Thành Viên VIP": [
+      "PK",
+      "Mã thành viên VIP",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã quy tắc giảm giá",
+      "Kỳ xét duyệt VIP",
+      "Danh sách đơn hàng xét duyệt",
+      "Tổng chi tiêu đủ điều kiện",
+      "Ngày bắt đầu VIP",
+      "Ngày hết hạn VIP",
+      "Trạng thái",
+      "Ngày tạo",
+      "Ngày cập nhật"
+    ],
+    "Đánh Giá Sản Phẩm": [
+      "PK",
+      "Mã đánh giá",
+      "FK1",
+      "Mã sản phẩm",
+      "FK2",
+      "Mã người dùng",
+      "FK3",
+      "Mã đơn hàng",
+      "Tên người dùng",
+      "Mã hiển thị đơn hàng",
+      "Điểm số đánh giá",
+      "Nội dung nhận xét",
+      "Hình ảnh & Video",
+      "Trạng thái hiển thị",
+      "Nội dung kiểm duyệt",
+      "Đối tượng kiểm duyệt",
+      "Ngày viết đánh giá",
+      "Ngày cập nhật",
+      "Ghi chú từ Admin",
+      "Ngày kiểm duyệt"
+    ],
+    "Tương Tác Đánh Giá": [
+      "PK",
+      "Mã tương tác đánh giá",
+      "FK1",
+      "Mã đánh giá",
+      "FK2",
+      "Mã người dùng",
+      "Giá trị tương tác",
+      "Ngày cập nhật"
+    ],
+    "Mẫu Kiểm Duyệt": [
+      "PK",
+      "Mã mẫu kiểm duyệt",
+      "FK1",
+      "Mã đánh giá",
+      "Nhãn phân loại",
+      "Văn bản đã chuẩn hóa",
+      "Cụm từ nhận diện được",
+      "Nguồn thu thập",
+      "Ngày cập nhật"
+    ],
+    "Đánh Giá Địa Điểm Nhật Bản": [
+      "PK",
+      "Mã đánh giá địa điểm",
+      "FK1",
+      "Mã người dùng",
+      "Tên địa điểm",
+      "Tỉnh / Thành phố",
+      "Tên người đánh giá",
+      "Điểm đánh giá",
+      "Nội dung bình luận",
+      "Tệp đính kèm",
+      "Ngày đánh giá"
+    ],
+    "Hình Ảnh Giao Diện Sản Phẩm": [
+      "PK",
+      "Mã hình ảnh giao diện",
+      "FK1",
+      "Mã sản phẩm",
+      "Đường dẫn URL",
+      "Loại tệp truyền thông",
+      "Thứ tự hiển thị",
+      "Ảnh đại diện"
+    ],
+    "Thẻ Địa Danh": [
+      "PK",
+      "Mã thẻ địa danh",
+      "FK1",
+      "Mã sản phẩm",
+      "Thứ tự hiển thị",
+      "Biểu tượng",
+      "Mã màu chủ đạo",
+      "Tên địa danh",
+      "Tên tiếng Nhật",
+      "Khu vực",
+      "Mô tả ngắn",
+      "Lịch sử hình thành",
+      "Truyền thuyết",
+      "Sự thật thú vị",
+      "Danh sách điểm check-in",
+      "Gợi ý trang phục",
+      "Danh sách sản phẩm gợi ý",
+      "Trạng thái hoạt động",
+      "Đường dẫn"
+    ],
+    "Bộ Sưu Tầm Thẻ Của Người Dùng": [
+      "PK",
+      "Mã bộ sưu tầm",
+      "FK1",
+      "Mã người dùng",
+      "FK2",
+      "Mã thẻ địa danh",
+      "Danh sách phần thưởng",
+      "Ngày bắt đầu sưu tầm",
+      "Ngày cập nhật"
+    ],
+    "Quảng Cáo": [
+      "PK",
+      "Mã banner",
+      "Tiêu đề banner",
+      "Đường dẫn hình ảnh",
+      "Đường dẫn điều hướng",
+      "Trạng thái hiển thị",
+      "Thứ tự ưu tiên"
+    ],
+    "Màu Sắc": [
+      "PK",
+      "Mã màu sắc",
+      "Tên màu sắc",
+      "Mã màu"
+    ],
+    "Kích Thước": [
+      "PK",
+      "Mã kích thước",
+      "Tên kích thước",
+      "Thứ tự sắp xếp"
+    ]
+  },
+  "rel": [
+    [
+      "Sản Phẩm",
+      "Danh Mục Sản Phẩm"
+    ],
+    [
+      "Chi Tiết Sản Phẩm",
+      "Sản Phẩm"
+    ],
+    [
+      "Biến Thể Sản Phẩm",
+      "Sản Phẩm"
+    ],
+    [
+      "Biến Thể Sản Phẩm",
+      "Màu Sắc"
+    ],
+    [
+      "Biến Thể Sản Phẩm",
+      "Kích Thước"
+    ],
+    [
+      "Hình Ảnh",
+      "Sản Phẩm"
+    ],
+    [
+      "Mô Tả Sản Phẩm Tạo Bởi AI",
+      "Sản Phẩm"
+    ],
+    [
+      "Chi Tiết Đơn Hàng",
+      "Đơn Hàng"
+    ],
+    [
+      "Chi Tiết Đơn Hàng",
+      "Sản Phẩm"
+    ],
+    [
+      "Đơn Hàng",
+      "Người Dùng"
+    ],
+    [
+      "Đơn Hàng",
+      "Phiếu Giảm Giá"
+    ],
+    [
+      "Thanh Toán",
+      "Đơn Hàng"
+    ],
+    [
+      "Thanh Toán",
+      "Người Dùng"
+    ],
+    [
+      "Yêu Cầu Trả Hàng",
+      "Đơn Hàng"
+    ],
+    [
+      "Yêu Cầu Trả Hàng",
+      "Người Dùng"
+    ],
+    [
+      "Yêu Cầu Trả Hàng",
+      "Thanh Toán"
+    ],
+    [
+      "Địa Chỉ",
+      "Người Dùng"
+    ],
+    [
+      "Hồ Sơ Người Dùng",
+      "Người Dùng"
+    ],
+    [
+      "Thông Báo",
+      "Người Dùng"
+    ],
+    [
+      "Chi Tiết Giỏ Hàng",
+      "Người Dùng"
+    ],
+    [
+      "Chi Tiết Giỏ Hàng",
+      "Sản Phẩm"
+    ],
+    [
+      "Danh Sách Sản Phẩm Yêu Thích",
+      "Người Dùng"
+    ],
+    [
+      "Danh Sách Sản Phẩm Yêu Thích",
+      "Sản Phẩm"
+    ],
+    [
+      "Mục Tiêu Tiết Kiệm",
+      "Người Dùng"
+    ],
+    [
+      "Mục Tiêu Tiết Kiệm",
+      "Sản Phẩm"
+    ],
+    [
+      "Lịch Sử Tìm Kiếm",
+      "Người Dùng"
+    ],
+    [
+      "Tin Nhắn",
+      "Người Dùng"
+    ],
+    [
+      "Tin Nhắn",
+      "Sản Phẩm"
+    ],
+    [
+      "Tương Tác Người Dùng",
+      "Người Dùng"
+    ],
+    [
+      "Tương Tác Người Dùng",
+      "Sản Phẩm"
+    ],
+    [
+      "Lịch Sử Thử Đồ",
+      "Sản Phẩm"
+    ],
+    [
+      "Lịch Sử Thử Đồ",
+      "Người Dùng"
+    ],
+    [
+      "Phiếu Giảm Giá",
+      "Người Dùng"
+    ],
+    [
+      "Phiếu Giảm Giá",
+      "Người Dùng"
+    ],
+    [
+      "Lượt Sử Dụng Phiếu",
+      "Phiếu Giảm Giá"
+    ],
+    [
+      "Lượt Sử Dụng Phiếu",
+      "Người Dùng"
+    ],
+    [
+      "Lượt Sử Dụng Phiếu",
+      "Đơn Hàng"
+    ],
+    [
+      "Thành Viên VIP",
+      "Người Dùng"
+    ],
+    [
+      "Thành Viên VIP",
+      "Quy Tắc Giảm Giá"
+    ],
+    [
+      "Đánh Giá Sản Phẩm",
+      "Sản Phẩm"
+    ],
+    [
+      "Đánh Giá Sản Phẩm",
+      "Người Dùng"
+    ],
+    [
+      "Đánh Giá Sản Phẩm",
+      "Đơn Hàng"
+    ],
+    [
+      "Tương Tác Đánh Giá",
+      "Đánh Giá Sản Phẩm"
+    ],
+    [
+      "Tương Tác Đánh Giá",
+      "Người Dùng"
+    ],
+    [
+      "Mẫu Kiểm Duyệt",
+      "Đánh Giá Sản Phẩm"
+    ],
+    [
+      "Đánh Giá Địa Điểm Nhật Bản",
+      "Người Dùng"
+    ],
+    [
+      "Hình Ảnh Giao Diện Sản Phẩm",
+      "Sản Phẩm"
+    ],
+    [
+      "Thẻ Địa Danh",
+      "Sản Phẩm"
+    ],
+    [
+      "Bộ Sưu Tầm Thẻ Của Người Dùng",
+      "Người Dùng"
+    ],
+    [
+      "Bộ Sưu Tầm Thẻ Của Người Dùng",
+      "Thẻ Địa Danh"
+    ]
+  ]
+}

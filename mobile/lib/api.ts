@@ -45,12 +45,78 @@ export type StylistRecommendation = {
   cheerUp: CheerUp|null;
 };
 
+/** Bảy mức vừa vặn — khớp với lib/fitAnalysis.js ở backend. */
+export type FitVerdict =
+  |'very_tight'|'tight'|'slightly_tight'|'good'|'slightly_loose'|'loose'|'very_loose'|'unknown';
 export type SizeFit = {
   chosen: string;
+  chosenSize?: string;
   recommended: string|null;
+  recommendedSize?: string|null;
   delta: number;
-  verdict: 'good'|'tight'|'loose'|'unknown';
+  verdict: FitVerdict;
+  /** 0 → 1: mức độ lệch, dùng cho cả cường độ hiệu ứng ảnh lẫn màu cảnh báo. */
+  severity?: number;
+  /** Nhãn ngắn hiển thị đè lên ảnh: VỪA / CHẬT / RẤT RỘNG… */
+  label?: string;
+  title?: string;
+  visualEffect?: { tension:number; looseness:number; seamStress:number; tearAllowed:boolean };
+  allowedEffects?: string[];
   message: string;
+};
+/** Ước lượng luôn là KHOẢNG + độ tin cậy, không bao giờ là một con số "chính xác". */
+export type BodyEstimate = {
+  valueCm?: number|null; minCm?: number|null; maxCm?: number|null;
+  valueKg?: number|null; minKg?: number|null; maxKg?: number|null;
+  confidence: number;
+  mode?: string;
+  source?: string;
+  method?: string;
+  model?: string;
+};
+export type BodyAnalysis = {
+  estimatedHeight: BodyEstimate;
+  estimatedWeight: BodyEstimate;
+  estimatedGirths?: { bust?:number; waist?:number; hip?:number };
+  bodyShape?: Record<string, number>;
+  quality?: {
+    fullBodyVisible:boolean; feetVisible:boolean; headVisible:boolean;
+    segmentationAvailable?:boolean; coverage?:string; poseConfidence:number; analysisConfidence:number;
+  };
+  warnings?: string[];
+  sources?: Record<string,string>;
+  recommendedSize?: string;
+  sizeAdvice?: string;
+};
+/** Loại trang phục — khớp lib/garmentCoverage.js ở backend. */
+export type GarmentType =
+  |'bikini_top'|'bikini_bottom'|'bikini_two_piece'|'one_piece_swimsuit'
+  |'crop_top'|'sleeveless_top'|'off_shoulder_top'|'shorts'|'short_skirt'
+  |'tops'|'bottoms'|'one-pieces'
+  |'kimono'|'yukata'|'haori'|'hakama'|'jinbei'|'samue'|'noragi'|'happi';
+
+/** Thông tin an toàn của một lượt thử đồ. */
+export type TryOnSafety = {
+  garmentTypes: GarmentType[];
+  requires18Plus: boolean;
+  containsSwimwear: boolean;
+  /** Vùng da lộ ra ĐÚNG THIẾT Kế — không phải lỗi ảnh. */
+  intentionalSkinExposure: boolean;
+  allowedExposedZones: string[];
+  /** Vùng luôn phải kín, không sản phẩm nào hạ được. */
+  requiredCoveredZones: string[];
+  tearAllowed: boolean;
+  coverageCheck?: { ok:boolean; reasons:string[] }|null;
+};
+
+export type FitEffect = {
+  applied: boolean;
+  requested?: boolean;
+  reason?: string;
+  verdict?: FitVerdict;
+  severity?: number;
+  engine?: string;
+  effects?: string[];
 };
 export type TryOnGarment = { slug:string; name:string; zone:'upper'|'lower'|'overall' };
 export type TryOnResult = {
@@ -59,6 +125,10 @@ export type TryOnResult = {
   recommendedSize?: string;
   engine?: string;
   sizeFit?: SizeFit;
+  bodyAnalysis?: BodyAnalysis;
+  fitEffect?: FitEffect;
+  safety?: TryOnSafety;
+  durationMs?: number;
   warning?: string;
   /** Những món THỰC SỰ lên được ảnh — có thể ít hơn số món đã chọn. */
   garments: TryOnGarment[];
@@ -166,10 +236,13 @@ const trim = (value?: string | null) => String(value || '').trim().replace(/\/+$
 
 class ApiHttpError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Mã lỗi nghiệp vụ do backend trả về (vd ADULT_CONSENT_REQUIRED). */
+  code: string;
+  constructor(status: number, message: string, code = '') {
     super(message);
     this.name = 'ApiHttpError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -236,7 +309,9 @@ export async function requestJson<T = any>(path: string, options: RequestOptions
       const body = await readBody(response);
       if (!response.ok) {
         const message = body?.message || body?.error || body?.detail || `HTTP ${response.status}`;
-        throw new ApiHttpError(response.status, String(message));
+        // Giữ lại mã lỗi: màn thử đồ cần phân biệt lỗi an toàn (thiếu xác nhận
+        // 18+, ảnh không xác định được tuổi) với lỗi kỹ thuật thông thường.
+        throw new ApiHttpError(response.status, String(message), String(body?.code || ''));
       }
       activeBase = base;
       return body as T;
@@ -421,6 +496,32 @@ export async function getSizeAdvice(payload: {
   };
 }
 
+/**
+ * Phân tích vóc dáng từ ảnh vừa chụp/chọn.
+ *
+ * Kết quả là ƯỚC LƯỢNG: màn hình phải hiển thị dạng khoảng ("163–174 cm") kèm
+ * độ tin cậy, và khi backend trả null thì nói thẳng là chưa đủ dữ liệu.
+ */
+export async function analyzeBodyFromPhoto(payload: {
+  personImageBase64: string;
+  profile?: StyleProfile;
+}): Promise<BodyAnalysis & { ok:boolean; message?:string }> {
+  const data: any = await jsonPost('/api/stylist/body-analysis', { userId: USER_ID, ...payload }, 180000);
+  return {
+    ok: Boolean(data?.ok),
+    message: data?.message ? String(data.message) : undefined,
+    estimatedHeight: data?.estimatedHeight || { valueCm:null, minCm:null, maxCm:null, confidence:0 },
+    estimatedWeight: data?.estimatedWeight || { valueKg:null, minKg:null, maxKg:null, confidence:0 },
+    estimatedGirths: data?.estimatedGirths || {},
+    bodyShape: data?.bodyShape || {},
+    quality: data?.quality,
+    warnings: Array.isArray(data?.warnings) ? data.warnings.map(String) : [],
+    sources: data?.sources || {},
+    recommendedSize: data?.recommendedSize ? String(data.recommendedSize) : undefined,
+    sizeAdvice: data?.sizeAdvice ? String(data.sizeAdvice) : undefined,
+  };
+}
+
 function imageFrom(data: any) {
   const raw = data?.imageUrl || data?.resultUrl || data?.finalImageUrl || data?.finalImageBase64 || data?.imageBase64 || data?.result?.imageBase64 || '';
   if (!raw) return '';
@@ -430,16 +531,44 @@ function imageFrom(data: any) {
     : `data:image/png;base64,${value}`;
 }
 
+/** Mã lỗi an toàn từ backend — client phải hiển thị nguyên văn, không đoán lại. */
+export const TRYON_SAFETY_CODES = [
+  'ADULT_CONSENT_REQUIRED', 'MINOR_SUSPECTED', 'AGE_UNVERIFIED',
+  'AGE_VERIFICATION_UNAVAILABLE', 'COVERAGE_UNSAFE',
+] as const;
+export type TryOnSafetyCode = typeof TRYON_SAFETY_CODES[number];
+export class TryOnSafetyError extends Error {
+  code: TryOnSafetyCode;
+  constructor(code: TryOnSafetyCode, message: string) {
+    super(message);
+    this.name = 'TryOnSafetyError';
+    this.code = code;
+  }
+}
+
 export async function generateTryOn(payload: Record<string, unknown>): Promise<TryOnResult> {
   const configured=Number(process.env.EXPO_PUBLIC_TRYON_TIMEOUT_MS||720000);
   const timeout=Number.isFinite(configured)&&configured>=30000?configured:720000;
-  const data: any = await jsonPost('/api/tryon', { userId: USER_ID, ...payload }, timeout);
+  let data: any;
+  try {
+    data = await jsonPost('/api/tryon', { userId: USER_ID, ...payload }, timeout);
+  } catch (error: any) {
+    const code = String(error?.code || error?.data?.code || '');
+    if ((TRYON_SAFETY_CODES as readonly string[]).includes(code)) {
+      throw new TryOnSafetyError(code as TryOnSafetyCode, String(error?.message || 'Lượt thử bị từ chối vì lý do an toàn.'));
+    }
+    throw error;
+  }
   return {
     imageUrl: imageFrom(data),
     message: String(data?.message || (imageFrom(data) ? 'Đã tạo ảnh thử đồ.' : 'Backend chưa trả ảnh kết quả.')),
     recommendedSize: data?.recommendedSize || data?.size,
     engine: String(data?.engine || ''),
     sizeFit: data?.sizeFit,
+    bodyAnalysis: data?.bodyAnalysis,
+    fitEffect: data?.fitEffect,
+    safety: data?.safety,
+    durationMs: Number(data?.durationMs) || undefined,
     warning: String(data?.accessoryWarning || (data?.qualityWarning ? data?.message : '') || ''),
     garments: Array.isArray(data?.garments) ? data.garments as TryOnGarment[] : [],
     skippedGarments: Array.isArray(data?.skippedGarments) ? data.skippedGarments.map(String) : [],

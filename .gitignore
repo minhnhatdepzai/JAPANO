@@ -70,3 +70,22 @@ backend/data/migration-backups/
 # Hệ điều hành
 .DS_Store
 Thumbs.db
+
+# Ảnh chân dung dùng để kiểm thử độ vừa vặn — dữ liệu cá nhân, không đẩy lên git
+backend/test/fixtures/fit/*
+!backend/test/fixtures/fit/README.md
+backend/ai_training/fit_dataset/images/**/*
+!backend/ai_training/fit_dataset/images/**/.gitkeep
+backend/ai_training/body_dataset/images/*
+!backend/ai_training/body_dataset/images/.gitkeep
+backend/ai_training/models/*
+!backend/ai_training/models/.gitkeep
+backend/ai_training/manual_evaluation.csv
+
+# Credential Kaggle — KHÔNG BAO GIỜ commit
+kaggle.json
+.kaggle/
+access_token
+
+# APK build artifacts
+*.apk

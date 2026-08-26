@@ -27,7 +27,7 @@ function assertSameCounts(before, after) {
     'categories', 'products', 'orders', 'reviews', 'reviewReactions', 'users',
     'addresses', 'returnRequests', 'vouchers', 'voucherRedemptions',
     'flagcards', 'flagcardCollections', 'banners', 'interactions', 'chats',
-    'tryonHistory', 'aiDescriptions', 'japanSpotReviews',
+    'aiDescriptions', 'japanSpotReviews',
   ];
   const mismatches = keys.filter((key) => (before[key] || []).length !== (after[key] || []).length)
     .map((key) => `${key}: ${before[key]?.length || 0} -> ${after[key]?.length || 0}`);

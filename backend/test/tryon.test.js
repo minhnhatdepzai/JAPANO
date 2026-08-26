@@ -1,10 +1,24 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const fs = require('node:fs');
 
 const {
   stripDataUri, normalizeImageResult, clothTypeFor, garmentLayerFor, shouldRefineGarment, fashnCategoryFor, makeComputeSizeFit, MAX_TRYON_ACCESSORIES, choosePassingAccessoryCandidate,
 } = require('../routes/tryon');
+
+test('biến coverageFixRequested sống tới lúc dựng response, không làm request treo', () => {
+  // Regression cho lỗi production: biến từng được khai báo bên trong callback
+  // runGpuJob nhưng lại đọc khi res.json ở bên ngoài. Ảnh đã tạo xong rồi
+  // ReferenceError khiến client chờ tới lúc báo Network request failed.
+  const source = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tryon.js'), 'utf8');
+  const declarations = [...source.matchAll(/let coverageFixRequested = false;/g)].map((match) => match.index);
+  assert.equal(declarations.length, 1, 'coverageFixRequested phải chỉ có một khai báo');
+  assert.ok(declarations[0] < source.indexOf("await runGpuJob('tryon'"),
+    'coverageFixRequested phải nằm ngoài callback runGpuJob');
+  assert.ok(source.indexOf('coverageFixRequested,', declarations[0]) > declarations[0],
+    'response phải dùng lại biến đã khai báo ở scope handler');
+});
 
 test('giới hạn ba phụ kiện để không rơi về bản ghép dán thô', () => {
   assert.equal(MAX_TRYON_ACCESSORIES, 3);
@@ -72,14 +86,21 @@ test('computeSizeFit báo "tight" khi khách chọn size nhỏ hơn size gợi �
   const result = computeSizeFit('S', { heightCm: 175, weightKg: 70 });
   assert.equal(result.verdict, 'tight');
   assert.ok(result.delta < 0);
-  assert.match(result.message, /chật/);
+  // Từ "chật" nằm ở tiêu đề banner; phần message mô tả hiệu ứng đang được dựng
+  // trên ảnh, vì đây không còn là một cảnh báo suông nữa.
+  assert.match(result.title, /Chật/);
+  assert.match(result.message, /căng/);
 });
 
-test('computeSizeFit báo "loose" khi khách chọn size lớn hơn size gợi ý', () => {
+// Lệch 3 bậc size không còn được gộp chung với lệch 1 bậc: thang đánh giá giờ
+// có bảy mức, và chính mức này quyết định cường độ hiệu ứng vải rủ trên ảnh.
+test('computeSizeFit báo "very_loose" khi khách chọn size lớn hơn hẳn size gợi ý', () => {
   const computeSizeFit = makeComputeSizeFit(() => ({ size: 'S', advice: '', usedMeasurements: true }));
   const result = computeSizeFit('XL', { heightCm: 150, weightKg: 45 });
-  assert.equal(result.verdict, 'loose');
+  assert.equal(result.verdict, 'very_loose');
   assert.ok(result.delta > 0);
+  assert.ok(result.severity > 0.72);
+  assert.match(result.title, /rộng/);
   assert.match(result.message, /rộng/);
 });
 

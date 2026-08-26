@@ -29,6 +29,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="japano"/>
         <data android:scheme="vn.japano.app"/>
+        <data android:scheme="com.googleusercontent.apps.818888909731-ef99sfuk4784soea0c7fca922u2gkcfg"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>

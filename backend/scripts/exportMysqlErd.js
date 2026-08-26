@@ -50,7 +50,7 @@ function nameForUser(id) {
   return id;
 }
 const REFERENCED_USER_KEYS = ['orders', 'payments', 'returnRequests', 'reviews', 'reviewReactions',
-  'voucherRedemptions', 'flagcardCollections', 'interactions', 'profiles', 'chats', 'tryonHistory',
+  'voucherRedemptions', 'flagcardCollections', 'interactions', 'profiles', 'chats',
   'goals', 'japanSpotReviews', 'japanSpotSuggestions'];
 for (const key of REFERENCED_USER_KEYS) {
   for (const row of state[key] || []) {
@@ -610,28 +610,6 @@ CREATE TABLE \`chat_product_refs\` (
     ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
-CREATE TABLE \`tryon_history\` (
-  \`id\` VARCHAR(80) PRIMARY KEY,
-  \`user_id\` VARCHAR(80),
-  \`product_slug\` VARCHAR(120),
-  \`engine\` VARCHAR(190),
-  \`created_at\` BIGINT,
-  CONSTRAINT \`fk_tryon_user\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`)
-    ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT \`fk_tryon_product\` FOREIGN KEY (\`product_slug\`) REFERENCES \`products\`(\`slug\`)
-    ON UPDATE CASCADE ON DELETE SET NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE \`tryon_accessories\` (
-  \`id\` INT AUTO_INCREMENT PRIMARY KEY,
-  \`tryon_id\` VARCHAR(80) NOT NULL,
-  \`product_slug\` VARCHAR(120),
-  CONSTRAINT \`fk_tacc_tryon\` FOREIGN KEY (\`tryon_id\`) REFERENCES \`tryon_history\`(\`id\`)
-    ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT \`fk_tacc_product\` FOREIGN KEY (\`product_slug\`) REFERENCES \`products\`(\`slug\`)
-    ON UPDATE CASCADE ON DELETE SET NULL
-) ENGINE=InnoDB;
-
 -- ---- Mục tiêu mua sắm / sức khỏe --------------------------------------------
 CREATE TABLE \`goals\` (
   \`id\` VARCHAR(120) PRIMARY KEY,
@@ -852,13 +830,6 @@ const chatIds = new Set(state.chats.filter((c) => userRef(c.userId)).map((c) => 
 state.chats.forEach((c) => { if (chatIds.has(c.id)) (c.productIds || []).forEach((pid) => crefs.push([sql(c.id), sql(toSlug(pid))])); });
 insert('chat_product_refs', ['chat_id', 'product_slug'], crefs);
 
-// tryon_history + accessories
-insert('tryon_history', ['id', 'user_id', 'product_slug', 'engine', 'created_at'],
-  state.tryonHistory.filter((t) => userRef(t.userId)).map((t) => [sql(t.id), sql(userRef(t.userId)), sql(toSlug(t.productId)), sql(t.engine), sql(t.createdAt)]));
-const taccs = [];
-const tryonIds = new Set(state.tryonHistory.filter((t) => userRef(t.userId)).map((t) => t.id));
-state.tryonHistory.forEach((t) => { if (tryonIds.has(t.id)) (t.accessoryIds || []).forEach((pid) => taccs.push([sql(t.id), sql(toSlug(pid))])); });
-insert('tryon_accessories', ['tryon_id', 'product_slug'], taccs);
 
 // goals
 insert('goals', ['id', 'user_id', 'product_slug', 'age', 'height_cm', 'current_weight_kg', 'target_weight_kg', 'monthly_income', 'fixed_expenses', 'current_savings', 'target_months', 'plan', 'created_at', 'updated_at'],

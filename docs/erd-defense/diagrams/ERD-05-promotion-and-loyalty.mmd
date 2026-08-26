@@ -1,0 +1,29 @@
+%%{init: {"flowchart": {"defaultRenderer": "elk", "nodeSpacing": 60, "rankSpacing": 90}} }%%
+flowchart LR
+  %% ERD-05 — Khuyến mãi, VIP và Flagcard
+  E01["<b>Người Dùng</b><br/><small>users</small><br/>PK Mã người dùng<br/>Họ và tên<br/>Email<br/>Mật khẩu mã hóa"]
+  E02["<b>Đơn Hàng</b><br/><small>orders</small><br/>PK Mã đơn hàng<br/>FK1 Mã người dùng<br/>FK2 Mã phiếu giảm giá<br/>Mã hiển thị đơn hàng"]
+  E03["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E04["<b>Phiếu Giảm Giá</b><br/><small>vouchers</small><br/>PK Mã phiếu giảm giá<br/>FK1 Mã người tạo<br/>FK2 Mã người dùng<br/>Mã hiển thị"]
+  E05["<b>Lượt Sử Dụng Phiếu</b><br/><small>voucher_redemptions</small><br/>PK Mã lượt sử dụng phiếu<br/>FK1 Mã phiếu giảm giá<br/>FK2 Mã người dùng<br/>FK3 Mã đơn hàng"]
+  E06["<b>Quy Tắc Giảm Giá</b><br/><small>discount_rules</small><br/>PK Mã quy tắc giảm giá<br/>Mã chương trình<br/>Tên chương trình giảm giá<br/>Phạm vi áp dụng"]
+  E07["<b>Thành Viên VIP</b><br/><small>vip_memberships</small><br/>PK Mã thành viên VIP<br/>FK1 Mã người dùng<br/>FK2 Mã quy tắc giảm giá<br/>Kỳ xét duyệt VIP"]
+  E08["<b>Thẻ Địa Danh</b><br/><small>flagcards</small><br/>PK Mã thẻ địa danh<br/>FK1 Mã sản phẩm<br/>Thứ tự hiển thị<br/>Biểu tượng"]
+  E09["<b>Bộ Sưu Tầm Thẻ Của Người Dùng</b><br/><small>flagcard_collections</small><br/>PK Mã bộ sưu tầm<br/>FK1 Mã người dùng<br/>FK2 Mã thẻ địa danh<br/>Danh sách phần thưởng"]
+  E02 -->|"orders.userId<br/>user 1 → N orders"| E01
+  E02 -->|"orders.voucherId<br/>voucher 1 → 0..N orders"| E04
+  E04 -->|"vouchers.issuedBy<br/>user 1 → N issued vouchers"| E01
+  E04 -->|"vouchers.ownerUserId<br/>user 1 → 0..N assigned vouchers"| E01
+  E05 -->|"voucher_redemptions.voucherId<br/>voucher 1 → N redemptions"| E04
+  E05 -->|"voucher_redemptions.userId<br/>user 1 → N redemptions"| E01
+  E05 -->|"voucher_redemptions.orderId<br/>order 1 → 0..N redemptions"| E02
+  E07 -->|"vip_memberships.userId<br/>user 1 → N membership periods"| E01
+  E07 -->|"vip_memberships.discountRuleId<br/>rule 1 → N memberships"| E06
+  E08 -->|"flagcards.recommendedProductIds[]<br/>flagcard N ↔ N products (array)"| E03
+  E09 -->|"flagcard_collections.userId<br/>user 1 → 0..N collections"| E01
+  E09 -->|"flagcard_collections.cardIds[]<br/>collection N ↔ N flagcards (array)"| E08
+  class E01 shared
+  class E02 shared
+  class E03 shared
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

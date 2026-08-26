@@ -65,8 +65,13 @@ export default function Login() {
       showToast(google.unavailableReason || 'Đăng nhập Google chưa sẵn sàng.','info');
       return;
     }
-    // Chỉ mở màn chọn tài khoản; phần đăng nhập nằm ở callback bên trên.
-    void google.promptAsync();
+    try {
+      // SDK native trả kết quả thẳng về app; callback của useGoogleSignIn sẽ
+      // gửi token cho backend và chuyển màn sau khi xác minh thành công.
+      await google.promptAsync();
+    } catch (error: any) {
+      showToast(error?.message || 'Không đăng nhập được bằng Google.', 'error');
+    }
   };
   return (
     <Screen>

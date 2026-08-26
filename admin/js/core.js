@@ -31,9 +31,16 @@ const ROLE_LABEL={super_admin:'Super Admin',admin:'Quản trị viên',staff:'Nh
 function applyAdminUser(user){
   ADMIN_USER=user;
   STAFF_ONLY=user?.role==='staff';
-  const nameEl=document.getElementById('whoName'),emailEl=document.getElementById('whoEmail');
-  if(nameEl)nameEl.textContent=user?.name||'Quản trị JAPANO';
-  if(emailEl)emailEl.textContent=ROLE_LABEL[user?.role]||'Quản trị viên';
+  const name=user?.name||'Quản trị JAPANO';
+  const role=ROLE_LABEL[user?.role]||'Quản trị viên';
+  const set=(id,text)=>{const el=document.getElementById(id);if(el)el.textContent=text;};
+  set('whoName',name);
+  set('whoEmail',role);
+  // Trình đơn tài khoản hiện đủ tên + email thật; thanh tiêu đề chỉ đủ chỗ cho
+  // tên và vai trò.
+  set('whoMenuName',name);
+  set('whoMenuEmail',user?.email||'—');
+  set('whoAvatar',(name.trim()[0]||'A').toUpperCase());
   applyRoleScope();
 }
 function applyRoleScope(){
@@ -314,6 +321,23 @@ function detectAdminEvents(){
   ADMIN_SEEN=now;
 }
 
+/* Dấu vân tay CHỈ gồm dữ liệu mà trang này thực sự hiển thị.
+ * /admin/live còn trả kèm `ok` và `serverTime: Date.now()` — hai trường đổi ở
+ * MỌI lượt gọi. Trước đây signature lấy nguyên gói JSON.stringify(live), nên
+ * nó luôn khác lần trước và toàn bộ nhánh "dữ liệu có đổi" chạy mỗi 3 giây:
+ * ghi lại ~400KB vào localStorage, dựng lại toàn bộ DOM của khung nhìn (kéo
+ * theo animation riseIn của .panel/.kpi chạy lại) và gọi thêm một lượt
+ * analytics. Người dùng nhìn thấy đúng như trang tự tải lại. Bỏ hai trường
+ * biến động đó ra là guard hoạt động lại đúng như thiết kế ban đầu.
+ * KHÔNG đổi API: backend vẫn trả serverTime cho các máy khách khác. */
+const LIVE_DATA_KEYS=['orders','payments','returnRequests','interactions','carts','reviews','reviewReactions','users','shop'];
+function liveSignature(live){
+  if(!live||typeof live!=='object')return '';
+  const data={};
+  for(const key of LIVE_DATA_KEYS)if(key in live)data[key]=live[key];
+  return JSON.stringify(data);
+}
+
 async function syncLiveSales(render=true){
   if(STAFF_ONLY||_liveSyncBusy||document.hidden||$('#overlay')?.classList.contains('show'))return;
   _liveSyncBusy=true;
@@ -335,7 +359,7 @@ async function syncLiveSales(render=true){
     // analytics — tốn CPU và làm mất vị trí cuộn/ô đang nhập. So dấu vân tay
     // của gói dữ liệu trước khi làm những việc đó; không đổi thì chỉ cập nhật
     // đèn trạng thái kết nối.
-    const signature=JSON.stringify(live);
+    const signature=liveSignature(live);
     NET_OK=true;
     if(signature===_liveSignature){refreshChrome();return;}
     _liveSignature=signature;
@@ -405,22 +429,34 @@ const ORDER_STEP_LABEL={pending:'Xác nhận đơn',confirmed:'Bàn giao vận c
 const PST={published:{t:'Đang bán',c:'b-green'},hidden:{t:'Đã ẩn',c:'b-gray'},draft:{t:'Nháp',c:'b-amber'},out:{t:'Hết hàng',c:'b-red'}};
 const ROLE={super_admin:{t:'Super Admin',c:'b-red'},admin:{t:'Admin',c:'b-violet'},staff:{t:'Nhân viên',c:'b-blue'},customer:{t:'Khách',c:'b-gray'}};
 const badge=(m,k)=>`<span class="bdg ${m[k]?.c||'b-gray'}"><span class="d"></span>${m[k]?.t||k}</span>`;
-const thumb=(p,cls='')=>{const src=(p.images||[])[0]||p.image;return src?`<img class="thumb ${cls}" src="${esc(src)}" alt="${esc(p.name||'Sản phẩm')}" loading="lazy">`:`<div class="thumb ${cls}" style="background:${p.colorHex||'#8A2F26'}">${esc(catKanji(p.cat))}</div>`;};
+/* Ảnh sản phẩm có thể chết (URL cũ, tệp đã xoá trên Cloudinary). Không để
+ * trình duyệt vẽ biểu tượng ảnh vỡ giữa bảng: bắt onerror rồi đổi sang ô màu
+ * kèm kanji danh mục — đúng thứ vẫn hiện khi sản phẩm chưa có ảnh nào. */
+const thumbFallback=(p)=>`this.outerHTML='<div class=\'thumb\' style=\'background:${esc(p.colorHex||'#8A2F26')}\'>${esc(catKanji(p.cat))}</div>'`;
+const thumb=(p,cls='')=>{const src=(p.images||[])[0]||p.image;return src?`<img class="thumb ${cls}" src="${esc(src)}" alt="${esc(p.name||'Sản phẩm')}" loading="lazy" onerror="${thumbFallback(p)}">`:`<div class="thumb ${cls}" style="background:${p.colorHex||'#8A2F26'}">${esc(catKanji(p.cat))}</div>`;};
 
 /* ---------- toast / modal ---------- */
 function toast(msg,type='ok'){const t=document.createElement('div');t.className='toast '+type;
-  const ic=type==='ok'?'✓':type==='err'?'!':'i';
+  const ic=type==='ok'?icon('checkmark'):type==='err'?'!':'i';
   t.innerHTML=`<span class="ti">${ic}</span><span>${esc(msg)}</span>`;$('#toasts').appendChild(t);
   setTimeout(()=>{t.style.transition='.25s';t.style.opacity='0';t.style.transform='translateY(8px)';setTimeout(()=>t.remove(),260);},2200);}
 function openModal(html,cls=''){const o=$('#overlay');o.innerHTML=`<div class="modal ${cls}">${html}</div>`;o.classList.add('show');}
 function openDrawer(html){const o=$('#overlay');o.innerHTML=`<div class="drawer">${html}</div>`;o.classList.add('show');}
 function closeModal(){$('#overlay').classList.remove('show');setTimeout(()=>{if(!$('#overlay').classList.contains('show'))$('#overlay').innerHTML='';},180);}
 $('#overlay')?.addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
+/* Hộp thoại xác nhận. Nhánh `danger` dùng cho thao tác KHÔNG hoàn tác được:
+ * biểu tượng cảnh báo đỏ đặt trước chữ để người dùng nhận ra mức độ trước khi
+ * kịp đọc, kèm một câu nói thẳng là không lùi lại được. Nút xác nhận mang màu
+ * đỏ; nút an toàn (Huỷ) đứng trước và là chỗ mắt rơi vào đầu tiên. */
 function confirmModal(title,msg,onOk,danger){
-  openModal(`<div class="mh"><h3>${esc(title)}</h3><div class="x" onclick="closeModal()">✕</div></div>
-  <div class="mb"><p class="muted" style="font-size:13px">${msg}</p></div>
+  const head=danger
+    ? `<div class="dangerhead"><div class="di">${icon('warning-outline')}</div>
+       <div><h3>${esc(title)}</h3><p class="muted" style="font-size:12.5px;margin-top:4px">Hành động này không thể hoàn tác.</p></div></div>`
+    : `<h3>${esc(title)}</h3>`;
+  openModal(`<div class="mh">${head}<div class="x" onclick="closeModal()">${icon('close',17)}</div></div>
+  <div class="mb"><p class="muted" style="font-size:13.5px;line-height:1.6">${msg}</p></div>
   <div class="mf"><button class="btn" onclick="closeModal()">Huỷ</button>
-  <button class="btn ${danger?'d':'p'}" id="cfmOk">${danger?'Xoá':'Xác nhận'}</button></div>`);
+  <button class="btn ${danger?'d':'p'}" id="cfmOk">${danger?`${icon('trash-outline')} Xoá`:'Xác nhận'}</button></div>`,danger?'sm':'');
   $('#cfmOk').onclick=()=>{closeModal();onOk&&onOk();};
 }
 
@@ -429,7 +465,7 @@ function bars(data,clickSpan=''){const max=Math.max(1,...data.map(d=>d.value));
   return `<div class="bars">${data.map((d,index)=>`<div class="col ${clickSpan?'clickable':''}" ${clickSpan?`onclick="A.revPoint('${escJs(clickSpan)}',${index})"`:''} title="${esc(d.label)} · ${money(d.value)}${d.forecast?' · dự báo':''}"><div class="bv">${d.value?kd(d.value):'0'}</div><div class="bar ${d.forecast?'forecast':''}" style="height:${Math.max(3,d.value/max*100)}%"></div><div class="bl">${esc(d.label)}</div></div>`).join('')}</div>`;}
 function donut(segs,interactive=false){const tot=segs.reduce((s,x)=>s+x.value,0)||1;let a=0;const stops=segs.map(s=>{const from=a/tot*360;a+=s.value;const to=a/tot*360;return `${s.color} ${from}deg ${to}deg`;}).join(',');
   return `<div style="display:flex;gap:18px;align-items:center">
-   <div class="donut" style="background:conic-gradient(${stops})"><div class="hole"><div><div style="font-size:18px;font-weight:800">${tot}</div><div class="faint" style="font-size:10px">đơn</div></div></div></div>
+   <div class="donut" style="background:conic-gradient(${stops})"><div class="hole"><div><div style="font-size:18px;font-weight:800">${tot}</div><div class="faint" style="font-size:10.5px">đơn</div></div></div></div>
    <div class="legend">${segs.map(s=>`<div class="li" ${interactive&&s.status?`onclick="A.orderDrill('${escJs(s.status)}')" style="cursor:pointer;padding:5px;border-radius:6px"`:''}><span class="sw" style="background:${s.color}"></span>${esc(s.label)}<span class="val">${s.value}</span></div>`).join('')}</div></div>`;}
 function hbars(items){const max=Math.max(1,...items.map(i=>i.value));
   return `<div class="hbar">${items.map(i=>`<div class="r"><div class="nm" title="${esc(i.name)}">${esc(i.name)}</div><div class="track"><div class="fill" style="width:${i.value/max*100}%;${i.color?'background:'+i.color:''}"></div></div><div class="v">${i.fmt||i.value}</div></div>`).join('')}</div>`;}
@@ -468,17 +504,29 @@ function refreshChrome(){
   dot('#s-ai',HEALTH.ai,'#s-ai-t','trực tuyến','ngoại tuyến');
   const apiOn=HEALTH.checked?HEALTH.api:NET_OK;
   $('#apiDot').className='dot '+(apiOn===true?'g':apiOn===false?'r':'a');$('#apiText').textContent=apiOn===true?'API trực tuyến':apiOn===false?'API ngoại tuyến':'API chưa rõ';
-  // banner
+  // banner — refreshChrome() chạy ở mọi nhịp đồng bộ, nên chỉ ghi lại khi nội
+  // dung thực sự khác: gán innerHTML giống hệt vẫn dựng lại node và làm
+  // animation của banner chạy lại.
   const b=$('#banner');
-  if(!NET_OK){b.innerHTML=`<div class="banner err"><div class="bi">⚠</div><div><b>Không kết nối được backend</b> — API tại <code>${API}</code> không phản hồi. Đang dùng dữ liệu tạm trên máy.</div><div class="acts"><button class="btn sm" onclick="A.toggleApi()">Thử lại</button></div></div>`;}
-  else if(!DB.seeded){b.innerHTML=`<div class="banner warn"><div class="bi">◔</div><div><b>Cơ sở dữ liệu đang trống.</b> Chưa có sản phẩm, đơn hàng hay người dùng. Hãy nhập dữ liệu hiện có hoặc thêm sản phẩm thật để bắt đầu bán hàng.</div><div class="acts"><button class="btn p sm" onclick="A.addProduct()">＋ Thêm sản phẩm</button><button class="btn sm" onclick="A.importCSV()">⇪ Nhập tệp CSV</button></div></div>`;}
-  else b.innerHTML='';
+  const setBanner=(html)=>{if(b.innerHTML!==html)b.innerHTML=html;};
+  if(!NET_OK){setBanner(`<div class="banner err"><div class="bi">${icon('warning-outline',15)}</div><div><b>Không kết nối được backend</b> — API tại <code>${API}</code> không phản hồi. Đang dùng dữ liệu tạm trên máy.</div><div class="acts"><button class="btn sm" onclick="A.toggleApi()">Thử lại</button></div></div>`);}
+  else if(!DB.seeded){setBanner(`<div class="banner warn"><div class="bi">${icon('server-outline',15)}</div><div><b>Cơ sở dữ liệu đang trống.</b> Chưa có sản phẩm, đơn hàng hay người dùng. Hãy nhập dữ liệu hiện có hoặc thêm sản phẩm thật để bắt đầu bán hàng.</div><div class="acts"><button class="btn p sm" onclick="A.addProduct()">${icon('add')} Thêm sản phẩm</button><button class="btn sm" onclick="A.importCSV()">${icon('cloud-upload-outline')} Nhập tệp CSV</button></div></div>`);}
+  else setBanner('');
 }
 
 /* ---------- router ---------- */
-const TITLES={dashboard:'Bảng điều khiển',orders:'Quản lý đơn hàng',payments:'Thanh toán trực tuyến',returns:'Trả hàng & hoàn tiền',products:'Quản lý sản phẩm',reviews:'Đánh giá & kiểm duyệt',moderation:'Kiểm duyệt AI — chống lách từ nhạy cảm',users:'Quản lý người dùng',japan:'Khám phá Nhật Bản — đóng góp cộng đồng',notifications:'Thông báo',categories:'Danh mục',vouchers:'Mã giảm giá',flagcards:'Chương trình thẻ địa danh',banners:'Ảnh quảng bá ứng dụng',settings:'Cài đặt hệ thống'};
+const TITLES={dashboard:'Bảng điều khiển',tryon:'Chẩn đoán thử đồ AI',orders:'Quản lý đơn hàng',payments:'Thanh toán trực tuyến',returns:'Trả hàng & hoàn tiền',products:'Quản lý sản phẩm',reviews:'Đánh giá & kiểm duyệt',moderation:'Kiểm duyệt AI — chống lách từ nhạy cảm',users:'Quản lý người dùng',japan:'Khám phá Nhật Bản — đóng góp cộng đồng',notifications:'Thông báo',categories:'Danh mục',vouchers:'Mã giảm giá',flagcards:'Chương trình thẻ địa danh',banners:'Ảnh quảng bá ứng dụng',settings:'Cài đặt hệ thống'};
 function go(route){state.route=route;document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.route===route));
-  $('#pageTitle').textContent=TITLES[route];refreshChrome();
+  $('#pageTitle').textContent=TITLES[route];
+  updateCrumb(route);
+  // Trên màn hình hẹp thanh điều hướng là ngăn kéo đè lên nội dung — chọn xong
+  // một mục thì phải tự đóng, nếu không người dùng nhìn vào tấm che.
+  document.body.classList.remove('nav-open');
+  refreshChrome();
+  // Skeleton là nội dung tạm, không phải kết quả của renderView — xoá dấu vết
+  // để lượt render thật ngay sau đó không bị lớp "HTML giống hệt" bỏ qua.
+  _renderedHTML='';_renderedRoute='';
+  $('#content').classList.add('render-fresh');
   $('#content').innerHTML=skeleton(route);
   // Nhịp đồng bộ nay bỏ qua lượt làm mới analytics khi dữ liệu vận hành không
   // đổi, nên lúc mở lại Bảng điều khiển phải tự nạp một lượt để số liệu và cờ
@@ -499,18 +547,126 @@ async function loadJapan(){JAPAN_STATUS='loading';try{JAPAN=await requestJSON('/
 async function loadModeration(){MOD_STATUS='loading';try{MOD=await requestJSON('/reviews/admin',8000);MOD_STATUS='ready';}catch(e){MOD_STATUS='error';}if(state.route==='moderation')renderView();}
 document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.route)));
 
+/* ---------- khung giao diện: thu gọn menu, ngăn kéo, trình đơn tài khoản ----
+ * Ba thứ này thuần giao diện, không đụng tới dữ liệu hay quyền hạn. Trạng thái
+ * thu gọn được nhớ lại giữa các phiên vì người trực thường có thói quen cố định
+ * — bắt họ thu gọn lại mỗi lần mở trang là phiền. */
+const NAV_COLLAPSE_KEY='japano_admin_nav_collapsed';
+if(localStorage.getItem(NAV_COLLAPSE_KEY)==='1')document.body.classList.add('nav-collapsed');
+$('#navToggle')?.addEventListener('click',()=>{
+  const collapsed=document.body.classList.toggle('nav-collapsed');
+  localStorage.setItem(NAV_COLLAPSE_KEY,collapsed?'1':'0');
+});
+$('#menuBtn')?.addEventListener('click',(e)=>{e.stopPropagation();document.body.classList.toggle('nav-open');});
+document.addEventListener('click',(e)=>{
+  if(document.body.classList.contains('nav-open')&&!e.target.closest('.sidebar')&&!e.target.closest('#menuBtn'))
+    document.body.classList.remove('nav-open');
+});
+
+/* Breadcrumb lấy tên nhóm ngay trên mục đang chọn trong chính thanh điều hướng,
+ * nên thêm/sửa nhóm trong index.html là breadcrumb tự đúng theo. */
+function navGroupOf(route){
+  const link=document.querySelector(`#nav a[data-route="${route}"]`);
+  let node=link?.previousElementSibling;
+  while(node&&!node.classList.contains('grp'))node=node.previousElementSibling;
+  return node?node.textContent.trim():'Quản trị';
+}
+function updateCrumb(route){
+  const leaf=$('#crumbLeaf');
+  if(leaf)leaf.textContent=navGroupOf(route);
+}
+
+/* Trình đơn tài khoản: mở bằng nút, đóng khi bấm ra ngoài hoặc bấm Esc. */
+const userMenu=$('#userMenu'),whoBtn=$('#whoBtn');
+function closeUserMenu(){userMenu?.classList.remove('show');whoBtn?.setAttribute('aria-expanded','false');}
+whoBtn?.addEventListener('click',(e)=>{
+  e.stopPropagation();
+  const open=userMenu.classList.toggle('show');
+  whoBtn.setAttribute('aria-expanded',open?'true':'false');
+});
+document.addEventListener('click',(e)=>{if(!e.target.closest('#userMenu'))closeUserMenu();});
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='Escape')return;
+  closeUserMenu();
+  document.body.classList.remove('nav-open');
+  if($('#overlay')?.classList.contains('show'))closeModal();
+});
+$('#menuSettings')?.addEventListener('click',()=>{closeUserMenu();go('settings');});
+
+/* ---------- render không phá trạng thái người dùng ----------------------
+ * Khung nhìn được dựng lại bằng cách thay nguyên chuỗi HTML của #content. Ở
+ * nhịp đồng bộ 3 giây, việc đó từng ném đi: vị trí cuộn, ô đang gõ dở, con trỏ
+ * trong ô, và cột cuộn ngang của bảng — đúng cảm giác "trang tự tải lại".
+ *
+ * Ba lớp bảo vệ, theo thứ tự rẻ → đắt:
+ *   1. HTML dựng ra giống hệt lần trước → không đụng vào DOM.
+ *   2. Có đổi → giữ lại vị trí cuộn (trang + từng vùng cuộn ngang) và ô đang
+ *      focus kèm vị trí con trỏ, khôi phục ngay sau khi thay nội dung.
+ *   3. Animation "xuất hiện" (riseIn) chỉ chạy khi ĐỔI TRANG, không chạy ở lượt
+ *      làm mới dữ liệu — xem .render-fresh trong styles.css.
+ * Giá trị các ô lọc/tìm kiếm vốn đã sinh từ `state`, nên HTML mới luôn mang
+ * đúng nội dung người dùng vừa gõ; ở đây chỉ cần trả lại focus và con trỏ. */
+let _renderedHTML='',_renderedRoute='';
+function captureFocus(content){
+  const active=document.activeElement;
+  if(!active||!content.contains(active))return null;
+  const tag=active.tagName;
+  if(!['INPUT','TEXTAREA','SELECT'].includes(tag))return null;
+  const fields=[...content.querySelectorAll('input,textarea,select')];
+  const index=fields.indexOf(active);
+  if(index<0)return null;
+  let start=null,end=null;
+  try{start=active.selectionStart;end=active.selectionEnd;}catch(e){}
+  return {index,tag,id:active.id||'',name:active.getAttribute('name')||'',
+    placeholder:active.getAttribute('placeholder')||'',start,end};
+}
+function restoreFocus(content,saved){
+  if(!saved)return;
+  const fields=[...content.querySelectorAll('input,textarea,select')];
+  let target=saved.id?content.querySelector('#'+CSS.escape(saved.id)):null;
+  if(!target){
+    const candidate=fields[saved.index];
+    // Chỉ nhận lại nếu đúng loại ô — cấu trúc trang có thể đã đổi giữa hai lượt.
+    if(candidate&&candidate.tagName===saved.tag
+      &&(candidate.getAttribute('placeholder')||'')===saved.placeholder
+      &&(candidate.getAttribute('name')||'')===saved.name)target=candidate;
+  }
+  if(!target)return;
+  try{
+    target.focus({preventScroll:true});
+    if(saved.start!==null&&typeof target.setSelectionRange==='function')target.setSelectionRange(saved.start,saved.end);
+  }catch(e){}
+}
 function renderView(){
-  const V={dashboard:viewDashboard,orders:viewOrders,payments:viewPayments,returns:viewReturns,products:viewProducts,reviews:viewReviews,moderation:viewModeration,users:viewUsers,japan:viewJapan,notifications:viewNotifications,categories:viewCategories,vouchers:viewVouchers,flagcards:viewFlagcards,banners:viewBanners,settings:viewSettings};
-  $('#content').innerHTML=(V[state.route]||viewDashboard)();
+  const V={dashboard:viewDashboard,tryon:viewTryonDiagnostics,orders:viewOrders,payments:viewPayments,returns:viewReturns,products:viewProducts,reviews:viewReviews,moderation:viewModeration,users:viewUsers,japan:viewJapan,notifications:viewNotifications,categories:viewCategories,vouchers:viewVouchers,flagcards:viewFlagcards,banners:viewBanners,settings:viewSettings};
+  const content=$('#content');
+  if(!content)return;
+  const html=(V[state.route]||viewDashboard)();
+  const routeChanged=state.route!==_renderedRoute;
+  if(!routeChanged&&html===_renderedHTML)return;
+  const saved=captureFocus(content);
+  const pageScroll=window.scrollY;
+  const scrollers=[...content.querySelectorAll('.tablewrap,.scrolly')].map(el=>[el.scrollLeft,el.scrollTop]);
+  content.classList.toggle('render-fresh',routeChanged);
+  content.innerHTML=html;
+  _renderedHTML=html;_renderedRoute=state.route;
+  if(!routeChanged){
+    [...content.querySelectorAll('.tablewrap,.scrolly')].forEach((el,i)=>{
+      const pos=scrollers[i];
+      if(pos){el.scrollLeft=pos[0];el.scrollTop=pos[1];}
+    });
+    restoreFocus(content,saved);
+    if(window.scrollY!==pageScroll)window.scrollTo({top:pageScroll,behavior:'auto'});
+  }
   if(state.route==='dashboard')drawDashCharts&&drawDashCharts();
 }
-function errState(){return `<div class="panel"><div class="empty"><div class="art" style="background:var(--red-weak)">🔌</div><h3>Mất kết nối máy chủ</h3><p>Không gọi được API backend. Kiểm tra server Node/Express &amp; MongoDB đã chạy chưa, rồi thử lại.</p><div class="acts"><button class="btn p" onclick="A.toggleApi()">Thử kết nối lại</button><button class="btn" onclick="A.openSettings()">Mở cài đặt</button></div></div></div>`;}
+function errState(){return `<div class="panel"><div class="empty"><div class="art tint-red">${icon('cloud-offline-outline',28)}</div><h3>Mất kết nối máy chủ</h3><p>Không gọi được API backend. Kiểm tra server Node/Express &amp; MongoDB đã chạy chưa, rồi thử lại.</p><div class="acts"><button class="btn p" onclick="A.toggleApi()">Thử kết nối lại</button><button class="btn" onclick="A.openSettings()">Mở cài đặt</button></div></div></div>`;}
 
 /* ---------- skeletons ---------- */
 function skRows(n){let r='';for(let i=0;i<n;i++)r+=`<div style="display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line2)"><div class="sk" style="width:38px;height:44px"></div><div style="flex:1"><div class="sk" style="height:11px;width:40%;margin-bottom:7px"></div><div class="sk" style="height:9px;width:25%"></div></div><div class="sk" style="width:80px;height:22px;border-radius:99px"></div></div>`;return r;}
 function skeleton(route){
   if(route==='dashboard')return `<div class="grid kpis">${Array(4).fill('<div class="kpi"><div class="sk" style="height:12px;width:50%"></div><div class="sk" style="height:24px;width:70%;margin-top:12px"></div><div class="sk" style="height:10px;width:35%;margin-top:8px"></div></div>').join('')}</div>
-    <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px"><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div></div>`;
+    <div class="grid g-2-1 mt"><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div></div>`;
   return `<div class="filters"><div class="sk" style="height:34px;width:280px;border-radius:8px"></div><div class="sk" style="height:34px;width:120px;border-radius:8px"></div></div><div class="panel">${skRows(7)}</div>`;
 }
 
@@ -525,10 +681,10 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
 function adminFeedDrawer(){
   const rows=ADMIN_FEED.length?ADMIN_FEED.map(item=>`<div class="feedrow" onclick="closeModal();A.openFeedItem('${escJs(item.route||'')}','${escJs(item.refId||'')}')">
     <div class="feedtext">${esc(item.text)}</div><div class="faint" style="font-size:10.5px;margin-top:3px">${ago(item.at)} trước</div></div>`).join('')
-    :'<div class="faint" style="font-size:12px;padding:16px">Chưa có sự kiện nào. Đơn hàng, yêu cầu trả hàng và đánh giá mới sẽ hiện tại đây ngay khi phát sinh.</div>';
-  return `<div class="mh"><div><h3>Hoạt động vừa diễn ra</h3><div class="faint" style="font-size:11.5px">${ADMIN_FEED.length} sự kiện gần nhất · tự cập nhật mỗi 3 giây</div></div><div class="x" onclick="closeModal()">✕</div></div>
+    :'<div class="faint" style="font-size:12.5px;padding:16px">Chưa có sự kiện nào. Đơn hàng, yêu cầu trả hàng và đánh giá mới sẽ hiện tại đây ngay khi phát sinh.</div>';
+  return `<div class="mh"><div><h3>Hoạt động vừa diễn ra</h3><div class="faint" style="font-size:11.5px">${ADMIN_FEED.length} sự kiện gần nhất · tự cập nhật mỗi 3 giây</div></div><div class="x" onclick="closeModal()">${icon('close',17)}</div></div>
   <div class="mb" style="padding:0">${rows}</div>
-  <div class="mf"><button class="btn" onclick="closeModal();A.clearFeed()">Xoá danh sách</button><button class="btn p" onclick="closeModal();go('notifications')">📣 Soạn thông báo cho khách</button></div>`;
+  <div class="mf"><button class="btn" onclick="closeModal();A.clearFeed()">Xoá danh sách</button><button class="btn p" onclick="closeModal();go('notifications')">${icon('megaphone-outline')} Soạn thông báo cho khách</button></div>`;
 }
 $('#bellBtn').addEventListener('click',()=>{markAdminFeedRead();openDrawer(adminFeedDrawer());});
 $('#refreshBtn').addEventListener('click',()=>{
@@ -536,7 +692,7 @@ $('#refreshBtn').addEventListener('click',()=>{
   // người dùng bấm lại liên tục và mỗi lần lại nổ thêm một loạt request.
   const btn=$('#refreshBtn');btn.classList.add('spinning');
   Promise.all([syncLiveSales(true),state.route==='dashboard'?refreshAnalytics(true):Promise.resolve()])
-    .then(()=>toast('Đã làm mới dữ liệu ✓'))
+    .then(()=>toast('Đã làm mới dữ liệu'))
     .catch(()=>toast('Không làm mới được — kiểm tra kết nối','err'))
     .finally(()=>{btn.classList.remove('spinning');});
 });

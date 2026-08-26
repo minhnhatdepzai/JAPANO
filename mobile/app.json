@@ -2,9 +2,12 @@
   "expo": {
     "name": "JAPANO",
     "slug": "japano",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "scheme": "japano",
+    "scheme": [
+      "japano",
+      "com.googleusercontent.apps.818888909731-ef99sfuk4784soea0c7fca922u2gkcfg"
+    ],
     "userInterfaceStyle": "light",
     "splash": {
       "backgroundColor": "#F4EDE1"
@@ -18,6 +21,7 @@
     },
     "android": {
       "package": "vn.japano.app",
+      "versionCode": 2,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -27,6 +31,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      "@react-native-google-signin/google-signin",
       [
         "expo-image-picker",
         {

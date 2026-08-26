@@ -333,15 +333,18 @@ async function main() {
     bump('chats');
   });
 
-  state.tryonHistory ||= [];
+  // Lượt thử đồ chỉ còn nằm trong interactions (type='tryon'); collection
+  // tryon_history đã bị bỏ vì không có nơi nào đọc nó.
+  state.interactions ||= [];
   for (let i = 0; i < 10; i += 1) {
     const { p } = pick(sellable);
-    state.tryonHistory.push(tag({
+    const createdAt = now - between(1, 40) * DAY;
+    state.interactions.push(tag({
       id: `tryon-demo-${now}-${i}`, userId: pick(users).id, productId: p.slug,
-      productIds: [p.slug], accessoryIds: [],
-      engine: 'fashn-vton-1.5+demo-seed', createdAt: now - between(1, 40) * DAY,
+      type: 'tryon', value: 1, createdAt, source: 'demo-seed',
+      metadata: { runId: `tryon-demo-${now}-${i}`, engine: 'fashn-vton-1.5+demo-seed', garments: [p.slug], accessoryIds: [] },
     }));
-    bump('tryon_history');
+    bump('interactions');
   }
 
   // ---- Giỏ hàng và yêu thích ----------------------------------------------

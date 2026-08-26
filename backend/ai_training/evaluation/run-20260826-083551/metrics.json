@@ -1,0 +1,81 @@
+{
+  "evaluatedAt": "2026-08-26T08:39:39+07:00",
+  "checkpoint": "backend/ai_training/models/fit_lora/checkpoint-500/pytorch_lora_weights.safetensors",
+  "checkpointBytes": 16731128,
+  "evaluationSamples": 8,
+  "evaluationIdentities": [
+    "viton_04066_00",
+    "viton_12396_00"
+  ],
+  "split": "validation",
+  "baseline": {
+    "samples": 8,
+    "steps": 6,
+    "passRate": 1.0,
+    "failureRate": 0.0,
+    "artifactRate": 0.0,
+    "bodyDriftMean": 0.1148,
+    "colorShiftMean": 6.6574,
+    "structureChangeMean": 16.7195,
+    "skinGainMean": 0.0057,
+    "latencyP50": 13.43,
+    "latencyP95": 17.9,
+    "peakVramGb": 5.82
+  },
+  "lora": {
+    "samples": 8,
+    "steps": 6,
+    "passRate": 0.857,
+    "failureRate": 0.125,
+    "artifactRate": 0.143,
+    "bodyDriftMean": 0.1351,
+    "colorShiftMean": 8.3933,
+    "structureChangeMean": 21.4799,
+    "skinGainMean": -0.0253,
+    "latencyP50": 14.54,
+    "latencyP95": 19.24,
+    "peakVramGb": 5.82
+  },
+  "acceptance": {
+    "accepted": false,
+    "checks": [
+      {
+        "check": "identity_body_preserved",
+        "passed": true,
+        "detail": "bodyDrift LoRA 0.1351 vs baseline 0.1148"
+      },
+      {
+        "check": "garment_fidelity_preserved",
+        "passed": true,
+        "detail": "colorShift LoRA 8.3933 vs baseline 6.6574"
+      },
+      {
+        "check": "fit_effect_visible",
+        "passed": true,
+        "detail": "structureChange LoRA 21.4799 vs baseline 16.7195"
+      },
+      {
+        "check": "artifact_not_worse",
+        "passed": false,
+        "detail": "artifactRate LoRA 0.143 vs baseline 0.0"
+      },
+      {
+        "check": "failure_not_worse",
+        "passed": false,
+        "detail": "failureRate LoRA 0.125 vs baseline 0.0"
+      },
+      {
+        "check": "latency_or_quality_justified",
+        "passed": false,
+        "detail": "latencyP50 14.54s vs 13.43s; passRate 0.857 vs 1.0"
+      }
+    ]
+  },
+  "metricNature": "proxy tự động từ fit_effect_quality — KHÔNG phải điểm người chấm",
+  "failedSamples": [
+    "viton_04066_00_tight",
+    "viton_04066_00_loose"
+  ],
+  "contactSheet": "/home/nhat/Downloads/japano/backend/ai_training/contact_sheets/run-20260826-083551-baseline-vs-lora.jpg",
+  "perSampleCsv": "/home/nhat/Downloads/japano/backend/ai_training/evaluation/run-20260826-083551/per_sample.csv"
+}

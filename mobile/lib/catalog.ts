@@ -130,6 +130,35 @@ export const CATEGORIES = [
 ];
 export const CAT_LABEL: Record<string,string> = Object.fromEntries(CATEGORIES.map(c=>[c.key,c.label]));
 
+/**
+ * Bộ lọc theo LOẠI TRANG PHỤC — bổ sung cho bộ lọc theo danh mục.
+ *
+ * Danh mục (`cat`) trả lời "sản phẩm thuộc nhóm hàng nào", còn `garmentType`
+ * trả lời "đây là kiểu trang phục gì" — hai câu hỏi khác nhau. Một chiếc crop
+ * top và một chiếc áo sơ mi cùng nằm ở danh mục `trang-phuc`, nhưng khách tìm
+ * crop top thì không muốn thấy sơ mi.
+ *
+ * `adultOnly` để màn hình biết cần hiện nhãn 18+ ngay trên thẻ lọc.
+ */
+export const GARMENT_FILTERS: { key:string; label:string; types:string[]; adultOnly?:boolean }[] = [
+  { key:'kimono-yukata', label:'Kimono / Yukata', types:['kimono','yukata'] },
+  { key:'haori', label:'Haori', types:['haori','noragi','happi'] },
+  { key:'hakama', label:'Hakama', types:['hakama'] },
+  { key:'le-hoi', label:'Lễ hội Nhật', types:['happi','jinbei','yukata'] },
+  { key:'vay-nhat', label:'Váy Nhật', types:['one-pieces','short_skirt'] },
+  { key:'crop-top', label:'Crop top', types:['crop_top'], adultOnly:true },
+  { key:'do-boi', label:'Đồ bơi nữ 18+', types:['bikini_two_piece','bikini_top','bikini_bottom','one_piece_swimsuit'], adultOnly:true },
+];
+
+/** Sản phẩm có khớp bộ lọc loại trang phục không. */
+export function matchesGarmentFilter(product: Product, filterKey: string): boolean {
+  if (!filterKey || filterKey === 'all') return true;
+  const filter = GARMENT_FILTERS.find(item=>item.key===filterKey);
+  if (!filter) return true;
+  const type = String((product as any).garmentType || '');
+  return filter.types.includes(type);
+}
+
 export type Story = { kanji:string; title:string; text:string; ikiTitle:string; ikiText:string; craftText:string; tags:string[]; material:string; nhuom:string; giat:string; };
 export const STORIES: Record<string, Story> = {
   'ao-truyen-thong': { kanji:'着物', title:'Kimono — linh hồn trang phục Nhật',

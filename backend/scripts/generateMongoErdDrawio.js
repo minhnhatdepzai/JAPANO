@@ -18,14 +18,14 @@ const TITLES = {
   review_reactions: 'Phản hồi đánh giá', moderation_samples: 'Mẫu kiểm duyệt', notifications: 'Thông báo',
   flagcards: 'Thẻ địa danh', flagcard_collections: 'Bộ sưu tập thẻ', banners: 'Banner', interactions: 'Hành vi người dùng',
   search_logs: 'Lịch sử tìm kiếm', push_tokens: 'Thiết bị nhận thông báo', profiles: 'Hồ sơ phong cách',
-  chats: 'Hội thoại trợ lý', tryon_history: 'Lịch sử thử đồ', goals: 'Mục tiêu mua sắm', ai_descriptions: 'Mô tả sản phẩm AI',
+  chats: 'Hội thoại trợ lý', goals: 'Mục tiêu mua sắm', ai_descriptions: 'Mô tả sản phẩm AI',
   japan_spot_reviews: 'Đánh giá địa điểm Nhật', japan_spot_suggestions: 'Gợi ý địa điểm Nhật',
 };
 
 const GROUP = {
   settings: 'technical', categories: 'catalog', products: 'catalog', product_details: 'catalog', product_variants: 'catalog', product_media: 'catalog',
   users: 'customer', addresses: 'customer', cart_items: 'commerce', wishlist_items: 'commerce', orders: 'commerce', order_items: 'commerce', payments: 'commerce', return_requests: 'commerce', discount_rules: 'loyalty', vip_memberships: 'loyalty', vouchers: 'commerce', voucher_redemptions: 'commerce', reviews: 'commerce', review_reactions: 'commerce',
-  profiles: 'customer', notifications: 'customer', push_tokens: 'customer', interactions: 'ai', search_logs: 'ai', chats: 'ai', tryon_history: 'ai', goals: 'ai', ai_descriptions: 'ai', moderation_samples: 'ai',
+  profiles: 'customer', notifications: 'customer', push_tokens: 'customer', interactions: 'ai', search_logs: 'ai', chats: 'ai', goals: 'ai', ai_descriptions: 'ai', moderation_samples: 'ai',
   flagcards: 'loyalty', flagcard_collections: 'loyalty', banners: 'content', japan_spot_reviews: 'content', japan_spot_suggestions: 'content',
 };
 
@@ -84,7 +84,7 @@ const RELATIONS = [
   ['voucher_redemptions', 'vouchers', 'voucherId → id'], ['voucher_redemptions', 'orders', 'orderId → id'], ['voucher_redemptions', 'users', 'userId → id'],
   ['reviews', 'products', 'productId → id'], ['reviews', 'orders', 'orderId → id'], ['reviews', 'users', 'userId → id'], ['review_reactions', 'reviews', 'reviewId → id'], ['review_reactions', 'users', 'userId → id'],
   ['profiles', 'users', 'userId → id'], ['notifications', 'users', 'userId → id'], ['push_tokens', 'users', 'userId → id'], ['interactions', 'users', 'userId → id'], ['interactions', 'products', 'productId → id'],
-  ['search_logs', 'users', 'userId → id'], ['chats', 'users', 'userId → id'], ['tryon_history', 'users', 'userId → id'], ['tryon_history', 'products', 'productId → id'], ['goals', 'users', 'userId → id'], ['goals', 'products', 'productId → id'], ['ai_descriptions', 'products', 'productId → id'],
+  ['search_logs', 'users', 'userId → id'], ['chats', 'users', 'userId → id'], ['goals', 'users', 'userId → id'], ['goals', 'products', 'productId → id'], ['ai_descriptions', 'products', 'productId → id'],
   ['flagcard_collections', 'users', 'userId → id'], ['flagcard_collections', 'flagcards', 'cardIds[] → id'], ['flagcards', 'products', 'recommendedProductIds[] → id'],
   ['japan_spot_reviews', 'users', 'userId → id'], ['japan_spot_suggestions', 'users', 'userId → id'], ['moderation_samples', 'reviews', 'reviewId → id'],
 ];

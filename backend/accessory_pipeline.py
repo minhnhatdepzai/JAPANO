@@ -690,13 +690,18 @@ def similarity_score(image_a, image_b, pose=None, cloth_type='upper'):
     return float(np.abs(a - b).mean())
 
 
-def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_straight_pose=False):
+def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_straight_pose=False, fit_effect=None):
     """Reject successful-looking HTTP responses that are unusable try-on images.
 
     This intentionally checks structure, not merely pixel change: the old gate
     accepted a large smooth rectangle because it differed greatly from the
     source.  A usable result must still contain a detected person, textured or
     edged garment structure, and must not repaint secondary people.
+
+    `fit_effect` mô tả hiệu ứng vừa vặn CÓ CHỦ ĐÍCH (vải căng, vải rủ rộng) do
+    bước fit-refine tạo ra. Vải kéo căng làm bề mặt phẳng và mịn đi, nên nếu
+    không biết trước, cổng chất lượng sẽ đánh nhầm một chiếc áo chật thành
+    'flat_or_blurred_garment'. Nó chỉ nới ngưỡng kết cấu, không tắt kiểm tra.
     """
     source = image_a.convert('RGB')
     result = image_b.convert('RGB')
@@ -734,7 +739,10 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
     else:
         edge_ratio = 0.0
         texture_std = 0.0
-    if edge_ratio < .012 and texture_std < 24:
+    tension = float((fit_effect or {}).get('tension') or 0.0)
+    edge_floor = .012 * (1 - .35 * tension)
+    texture_floor = 24 * (1 - .30 * tension)
+    if edge_ratio < edge_floor and texture_std < texture_floor:
         reasons.append('flat_or_blurred_garment')
 
     change_score = similarity_score(source, result, pose, cloth_type)
@@ -767,6 +775,290 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
         'textureStd': round(texture_std, 3),
         'secondaryDiffs': [round(value, 3) for value in secondary_diffs],
         'resultPose': result_pose,
+    }
+
+
+def _skin_ratio(region):
+    """Tỉ lệ pixel màu da trong một vùng ảnh (ngưỡng YCrCb kinh điển)."""
+    arr = np.asarray(region.convert('RGB'), dtype=np.float32)
+    if arr.size == 0:
+        return 0.0
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    y = .299 * r + .587 * g + .114 * b
+    cr = (r - y) * .713 + 128
+    cb = (b - y) * .564 + 128
+    skin = (y > 60) & (cr >= 133) & (cr <= 173) & (cb >= 77) & (cb <= 127)
+    return float(skin.mean())
+
+
+def garment_region_box(pose, size, cloth_type='upper'):
+    """Khung chứa trang phục theo loại — dùng chung cho các phép chấm chất lượng."""
+    width, height = size
+    if pose and pose.get('box'):
+        x1, y1, x2, y2 = [float(value) for value in pose['box']]
+        body_h = max(1.0, y2 - y1)
+        if cloth_type == 'lower':
+            region = (x1, y1 + body_h * .43, x2, y1 + body_h * .98)
+        elif cloth_type == 'overall':
+            region = (x1, y1 + body_h * .15, x2, y1 + body_h * .98)
+        else:
+            region = (x1, y1 + body_h * .15, x2, y1 + body_h * .65)
+    else:
+        region = (width * .2, height * .18, width * .8, height * .82)
+    return tuple(int(max(0, min(value, width if index % 2 == 0 else height)))
+                 for index, value in enumerate(region))
+
+
+def _body_geometry(pose):
+    """Các tỉ lệ hình học của CƠ THỂ (không phải của vải) để phát hiện biến dạng."""
+    box = pose.get('box') or []
+    if len(box) != 4:
+        return None
+    x1, y1, x2, y2 = [float(value) for value in box]
+    body_h = max(1.0, y2 - y1)
+    keypoints = pose.get('keypoints') or {}
+
+    def point(name):
+        value = keypoints.get(name)
+        return (float(value[0]), float(value[1])) if value else None
+
+    left_shoulder, right_shoulder = point('left_shoulder'), point('right_shoulder')
+    left_hip, right_hip = point('left_hip'), point('right_hip')
+    shoulder_y = None
+    if left_shoulder and right_shoulder:
+        shoulder_y = (left_shoulder[1] + right_shoulder[1]) / 2
+    hip_y = None
+    if left_hip and right_hip:
+        hip_y = (left_hip[1] + right_hip[1]) / 2
+    return {
+        'aspect': (x2 - x1) / body_h,
+        'torso': ((hip_y - shoulder_y) / body_h) if (shoulder_y and hip_y) else None,
+        'headTop': (y1) / body_h,
+        'shoulderSpan': (abs(left_shoulder[0] - right_shoulder[0]) / body_h) if (left_shoulder and right_shoulder) else None,
+    }
+
+
+# Khung tương đối của từng vùng cơ thể trong box người chính, theo tỉ lệ
+# (x_from, y_from, x_to, y_to) của bề rộng/chiều cao box. Dùng cho cổng kiểm tra
+# độ che phủ: mỗi vùng được hỏi riêng "ở đây lộ da có đúng thiết kế không".
+BODY_ZONE_BOXES = {
+    'chest':      (0.28, 0.17, 0.72, 0.36),
+    'abdomen':    (0.32, 0.36, 0.68, 0.52),
+    'pelvis':     (0.34, 0.50, 0.66, 0.63),
+    'buttocks':   (0.32, 0.52, 0.68, 0.66),
+    'shoulders':  (0.18, 0.14, 0.82, 0.25),
+    'upperArms':  (0.06, 0.20, 0.94, 0.44),
+    'legs':       (0.28, 0.62, 0.72, 0.99),
+}
+
+
+def zone_box(pose, size, zone):
+    """Khung pixel của một vùng cơ thể."""
+    width, height = size
+    ratios = BODY_ZONE_BOXES.get(zone)
+    if not ratios:
+        return None
+    if pose and pose.get('box'):
+        x1, y1, x2, y2 = [float(v) for v in pose['box']]
+    else:
+        x1, y1, x2, y2 = width * .2, height * .05, width * .8, height * .98
+    box_w, box_h = max(1.0, x2 - x1), max(1.0, y2 - y1)
+    left = x1 + box_w * ratios[0]
+    top = y1 + box_h * ratios[1]
+    right = x1 + box_w * ratios[2]
+    bottom = y1 + box_h * ratios[3]
+    return (
+        int(max(0, min(left, width - 1))), int(max(0, min(top, height - 1))),
+        int(max(1, min(right, width))), int(max(1, min(bottom, height))),
+    )
+
+
+def _mean_skin_color(region):
+    """Màu trung bình của riêng các pixel màu da trong vùng (None nếu quá ít)."""
+    arr = np.asarray(region.convert('RGB'), dtype=np.float32)
+    if arr.size == 0:
+        return None
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    y = .299 * r + .587 * g + .114 * b
+    cr = (r - y) * .713 + 128
+    cb = (b - y) * .564 + 128
+    mask = (y > 60) & (cr >= 133) & (cr <= 173) & (cb >= 77) & (cb <= 127)
+    if mask.sum() < 40:
+        return None
+    return np.array([r[mask].mean(), g[mask].mean(), b[mask].mean()])
+
+
+def coverage_quality(clean_image, result_image, pose=None, coverage=None):
+    """Kiểm tra ĐỘ CHE PHỦ của ảnh thử đồ theo thiết kế sản phẩm.
+
+    Đây là cổng an toàn, tách hẳn khỏi cổng chấm "ảnh có đẹp không". Nó trả lời
+    ba câu hỏi:
+
+      1. Vùng BẮT BUỘC KÍN (ngực, chậu, mông) có bị hở không? -> lỗi nghiêm trọng
+      2. Vùng được phép hở theo thiết kế (bụng của áo crop, vai của áo trễ vai)
+         có bị coi là lỗi không? -> KHÔNG, đó là đúng thiết kế
+      3. Có vùng da mới xuất hiện ngoài thiết kế không? -> lỗi
+
+    Ngoài ra kiểm tra tính nhất quán màu da: bụng/tay/chân được model dựng lại
+    phải cùng tông với khuôn mặt, không được là một mảng màu phẳng khác tông.
+    """
+    coverage = coverage or {}
+    allowed = set(coverage.get('allowedExposedZones') or [])
+    required = set(coverage.get('requiredCoveredZones') or ['chest', 'pelvis', 'buttocks'])
+
+    clean = clean_image.convert('RGB')
+    result = result_image.convert('RGB')
+    if result.size != clean.size:
+        result = result.resize(clean.size, Image.Resampling.LANCZOS)
+    active_pose = pose if (pose and pose.get('box')) else analyze(result, source_coordinates=True)
+
+    reasons = []
+    warnings = []
+    zones = {}
+    for zone in BODY_ZONE_BOXES:
+        box = zone_box(active_pose, clean.size, zone)
+        if not box or box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        before = _skin_ratio(clean.crop(box))
+        after = _skin_ratio(result.crop(box))
+        gain = after - before
+        zones[zone] = {'before': round(before, 4), 'after': round(after, 4), 'gain': round(gain, 4)}
+        if zone in required:
+            # Vùng cấm: xét cả mức tuyệt đối lẫn mức tăng. Ảnh gốc có thể vốn đã
+            # hở (người mặc áo hai dây) nên chỉ mức tuyệt đối là chưa đủ.
+            if after > 0.34 and gain > 0.10:
+                reasons.append(f'required_zone_exposed:{zone}')
+        elif zone in allowed:
+            # Chiều ngược lại cũng là lỗi: sản phẩm thiết kế để HỞ vùng này mà
+            # ảnh lại che kín, tức là model đã tự kéo dài vạt áo. Đây đúng là
+            # lỗi kinh điển của áo crop — VTON dựng thành áo dài bình thường.
+            # Xếp mức cảnh báo, không phải lỗi an toàn: ảnh không nguy hiểm,
+            # chỉ là sai thiết kế sản phẩm.
+            if after < 0.12 and gain < 0.05:
+                warnings.append(f'intended_exposure_missing:{zone}')
+        else:
+            # Vùng không được thiết kế cho hở mà da tăng mạnh = model đã cởi bớt đồ.
+            if gain > 0.22:
+                reasons.append(f'unexpected_skin:{zone}')
+
+    # Nhất quán màu da: so tông da vùng mặt với các vùng hở theo thiết kế.
+    face_box = zone_box(active_pose, clean.size, 'shoulders')
+    if face_box and active_pose.get('box'):
+        x1, y1, x2, y2 = [float(v) for v in active_pose['box']]
+        head_height = max(1.0, (y2 - y1) * 0.13)
+        face_box = (int(x1 + (x2 - x1) * .35), int(y1), int(x1 + (x2 - x1) * .65), int(y1 + head_height))
+    face_tone = _mean_skin_color(result.crop(face_box)) if face_box else None
+    tone_deltas = {}
+    if face_tone is not None:
+        for zone in allowed:
+            box = zone_box(active_pose, clean.size, zone)
+            if not box:
+                continue
+            tone = _mean_skin_color(result.crop(box))
+            if tone is None:
+                continue
+            delta = float(np.abs(tone - face_tone).mean())
+            tone_deltas[zone] = round(delta, 2)
+            if delta > 46:
+                reasons.append(f'skin_tone_mismatch:{zone}')
+
+    return {
+        'ok': not reasons,
+        'reasons': reasons,
+        # Cảnh báo KHÔNG chặn ảnh: sai thiết kế thì sửa bằng một lượt fit-refine,
+        # còn hở vùng nhạy cảm mới là lý do huỷ ảnh.
+        'warnings': warnings,
+        'zones': zones,
+        'skinToneDeltas': tone_deltas,
+        'allowedExposedZones': sorted(allowed),
+        'requiredCoveredZones': sorted(required),
+    }
+
+
+def fit_effect_quality(clean_image, result_image, pose=None, cloth_type='upper', fit=None):
+    """Cổng chất lượng RIÊNG cho bước mô phỏng độ vừa vặn.
+
+    Cổng try-on thường chỉ hỏi "có mặc được đồ lên người không". Bước fit-refine
+    lại được phép làm vải căng/rách/rủ rộng, nên phải có một cổng khác trả lời
+    đúng câu hỏi của tính năng này:
+
+      * Cơ thể người có bị AI sửa để "vừa" với quần áo không?  -> cấm tuyệt đối
+      * Vết rách có làm lộ vùng nhạy cảm không?                 -> cấm tuyệt đối
+      * Màu/hoạ tiết trang phục có bị vẽ lại thành món khác không? -> cấm
+      * Với mức rất chật/rất rộng, hiệu ứng có thật sự hiện ra không? -> cảnh báo
+    """
+    fit = fit or {}
+    clean = clean_image.convert('RGB')
+    result = result_image.convert('RGB')
+    if result.size != clean.size:
+        result = result.resize(clean.size, Image.Resampling.LANCZOS)
+
+    reasons = []
+    result_pose = analyze(result, source_coordinates=True)
+    if result_pose.get('fallback') or float(result_pose.get('confidence') or 0) < .25:
+        reasons.append('main_subject_lost')
+
+    clean_pose = pose if (pose and pose.get('box') and not pose.get('fallback')) else analyze(clean, source_coordinates=True)
+    before, after = _body_geometry(clean_pose), _body_geometry(result_pose)
+    body_drift = {}
+    if before and after:
+        # Tỉ lệ DỌC của cơ thể không được đổi: vải rủ rộng làm bề ngang đổi là
+        # đúng, nhưng thân người dài ra/ngắn lại nghĩa là AI đã sửa chính cơ thể.
+        for key in ('torso', 'headTop'):
+            if before.get(key) is None or after.get(key) is None:
+                continue
+            drift = abs(after[key] - before[key]) / max(.05, abs(before[key]))
+            body_drift[key] = round(drift, 3)
+            if drift > .22:
+                reasons.append('body_changed_not_garment')
+                break
+
+    region = garment_region_box(clean_pose, clean.size, cloth_type)
+    clean_region = clean.crop(region)
+    result_region = result.crop(region)
+
+    skin_before = _skin_ratio(clean_region)
+    skin_after = _skin_ratio(result_region)
+    skin_gain = skin_after - skin_before
+    # Rách vải được phép, hở da thì không. Ngưỡng nới nhẹ khi hiệu ứng rách được
+    # bật, vì một khe nứt nhỏ ở đường may vẫn có thể để lộ vài pixel áo trong.
+    skin_limit = .10 if fit.get('tearAllowed') else .06
+    if skin_gain > skin_limit:
+        reasons.append('excessive_skin_exposure')
+
+    # Màu và hoạ tiết trang phục phải giữ nguyên: fit chỉ đổi CÁCH vải nằm trên
+    # người, không được vẽ lại thành sản phẩm khác.
+    #
+    # Đã thử đo trên "lõi ngực" thay vì cả khung để tránh việc áo rủ rộng che
+    # thêm nền bị tính nhầm là đổi màu. Đo thử trên 5 mẫu thật cho kết quả lẫn
+    # lộn (2/5 ca xấu đi vì vùng lõi hẹp dính cổ áo và da), nên giữ nguyên cách
+    # đo trên cả khung — đơn giản và ổn định hơn.
+    small = (48, 64)
+    clean_small = np.asarray(clean_region.resize(small), dtype=np.float32)
+    result_small = np.asarray(result_region.resize(small), dtype=np.float32)
+    color_shift = float(np.abs(clean_small.reshape(-1, 3).mean(axis=0) - result_small.reshape(-1, 3).mean(axis=0)).mean())
+    if color_shift > 34:
+        reasons.append('garment_color_changed')
+
+    structure_change = float(np.abs(
+        np.asarray(clean_region.convert('L').resize(small), dtype=np.float32)
+        - np.asarray(result_region.convert('L').resize(small), dtype=np.float32)
+    ).mean())
+    verdict = str(fit.get('verdict') or '')
+    effect_visible = structure_change >= 3.5
+    if verdict in {'very_tight', 'very_loose'} and structure_change < 2.0:
+        reasons.append('fit_effect_not_visible')
+
+    return {
+        'ok': not reasons,
+        'reasons': reasons,
+        'skinBefore': round(skin_before, 4),
+        'skinAfter': round(skin_after, 4),
+        'skinGain': round(skin_gain, 4),
+        'colorShift': round(color_shift, 3),
+        'structureChange': round(structure_change, 3),
+        'effectVisible': effect_visible,
+        'bodyDrift': body_drift,
     }
 
 
@@ -1061,8 +1353,33 @@ def main():
                 payload.get('pose'),
                 payload.get('clothType', 'upper'),
                 bool(payload.get('requireStraightPose')),
+                payload.get('fitEffect'),
             )
             print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
+            return
+        if mode == 'fit_quality':
+            other = decode_image(payload.get('compareImageBase64'))
+            quality = fit_effect_quality(
+                image, other, payload.get('pose'),
+                payload.get('clothType', 'upper'), payload.get('fit') or {},
+            )
+            print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
+            return
+        if mode == 'coverage_quality':
+            other = decode_image(payload.get('compareImageBase64'))
+            quality = coverage_quality(image, other, payload.get('pose'), payload.get('coverage') or {})
+            print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
+            return
+        if mode == 'body_analysis':
+            from body_analysis import analyze_body
+            pose = payload.get('pose') or analyze(image.convert('RGB'), source_coordinates=True)
+            result = analyze_body(
+                image.convert('RGB'), pose,
+                user_height_cm=payload.get('userHeightCm') or 0,
+                user_weight_kg=payload.get('userWeightKg') or 0,
+                reference=payload.get('scaleReference'),
+            )
+            print(json.dumps(result, ensure_ascii=False))
             return
         if mode == 'accessory_quality':
             other = decode_image(payload.get('compareImageBase64'))

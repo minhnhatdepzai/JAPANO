@@ -1,0 +1,45 @@
+{
+  "dataset": "VITON-HD (High-Resolution VITON-Zalando Dataset)",
+  "kaggleSlug": "marquis03/high-resolution-viton-zalando-dataset",
+  "kaggleOwner": "marquis03",
+  "license": "CC-BY-NC-SA-4.0",
+  "licenseImplications": [
+    "NonCommercial: chỉ được dùng cho nghiên cứu/đồ án, KHÔNG được dùng cho bản thương mại của JAPANO.",
+    "ShareAlike: sản phẩm phái sinh (bao gồm checkpoint LoRA train từ dữ liệu này) phải chia sẻ dưới cùng license nếu phát hành.",
+    "Attribution: phải ghi nguồn VITON-HD khi công bố."
+  ],
+  "downloadedAt": "2026-08-26T00:02:03+07:00",
+  "localPath": "/home/nhat/jp/datasets/viton-hd",
+  "totalBytes": 5248038325,
+  "fileCounts": {
+    "train/agnostic-v3.2": 11647,
+    "train/cloth": 11647,
+    "train/cloth-mask": 11647,
+    "train/image": 11647,
+    "train/image-densepose": 11647,
+    "train/image-parse-agnostic-v3.2": 11647,
+    "train/image-parse-v3": 11647,
+    "train/openpose_img": 11647,
+    "train/openpose_json": 11647,
+    "test/agnostic-v3.2": 2032,
+    "test/cloth": 2032,
+    "test/cloth-mask": 2032,
+    "test/image": 2032,
+    "test/image-densepose": 2032,
+    "test/image-parse-agnostic-v3.2": 2032,
+    "test/image-parse-v3": 2032,
+    "test/openpose_img": 2032,
+    "test/openpose_json": 2032
+  },
+  "checksums": {
+    "train_pairs.txt": "26e7bcbdba4cf157b864da9322beb012bd66d307e891b23022c18e2695095a56",
+    "test_pairs.txt": "a54173857f2234ed53202e04a126f1ad9679a695f7103b398110e68b5dc052bf"
+  },
+  "domainLimits": [
+    "Chủ yếu upper-body (áo). KHÔNG có bottoms, kimono, one-pieces đầy đủ.",
+    "KHÔNG có nhãn tight/loose — không phải ground truth fit-aware.",
+    "Chỉ dùng làm condition image / garment reference / identity grouping."
+  ],
+  "usageInJapano": "Nguồn condition image cho thí nghiệm LoRA fit-refinement (upper-body).",
+  "containsCredential": false
+}

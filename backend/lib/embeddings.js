@@ -13,9 +13,13 @@ const { logger } = require('./logger');
 function productText(product) {
   const parts = [
     product?.name,
+    product?.kanji,
     product?.cat || product?.category,
+    product?.garmentType,
     ...(Array.isArray(product?.tags) ? product.tags : []),
     ...(Array.isArray(product?.visualTags) ? product.visualTags : []),
+    product?.desc || product?.description,
+    product?.story,
   ].filter(Boolean);
   return parts.join(', ');
 }

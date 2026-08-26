@@ -7,6 +7,7 @@ both models fit on a 16 GB GPU.
 
 import ctypes
 import gc
+import hashlib
 import json
 import os
 import threading
@@ -38,6 +39,15 @@ RUNTIME_DIR = Path(os.getenv("JAPANO_TRYON_RUNTIME_DIR", "/tmp/japano-tryon-runt
 RUNTIME_DIR.mkdir(parents=True, exist_ok=True)
 
 LOCK = threading.Lock()
+# Khoá riêng cho trạng thái LoRA: KHÔNG dùng chung với LOCK (hàng đợi GPU) để
+# hai request đồng thời không khoá chéo nhau.
+LORA_LOCK = threading.Lock()
+LORA_STATE: dict = {"loaded": False, "path": "", "fingerprint": "", "pipe": None}
+# LoRA fit được train trên VITON-HD (upper-body). Không áp cho quần, kimono hay
+# đồ liền thân vì validation không có dữ liệu của các miền đó.
+FIT_LORA_CATEGORIES = [
+    item.strip() for item in os.getenv("JAPANO_FIT_LORA_CATEGORIES", "tops").split(",") if item.strip()
+]
 CANCEL_REQUESTED = threading.Event()
 FASHN_PIPELINE = None
 FLUX_PIPELINE = None
@@ -217,8 +227,12 @@ def load_flux():
             # Remote Desktop và Android emulator cũng cần VRAM. Sequential
             # offload chậm hơn nhưng giữ headroom ổn định trên GPU 16 GB; có thể
             # chủ động đổi sang model offload khi chạy không kèm emulator.
+            # "none" giữ toàn bộ pipeline trên GPU — nhanh nhất, tốn VRAM nhất.
+            # Chỉ dùng khi máy không chạy kèm emulator hay tiến trình GPU khác.
             offload = os.getenv("JAPANO_FLUX_OFFLOAD", "sequential").strip().lower()
-            if offload == "model":
+            if offload in {"none", "off", "0", "full"}:
+                FLUX_PIPELINE.to("cuda")
+            elif offload == "model":
                 FLUX_PIPELINE.enable_model_cpu_offload()
             else:
                 FLUX_PIPELINE.enable_sequential_cpu_offload()
@@ -302,6 +316,375 @@ def refine_garment_fidelity(tryon_image: Image.Image, garment: Image.Image, low_
         num_inference_steps=int(os.getenv("JAPANO_REFINE_STEPS", "4")),
         generator=generator,
     ).images[0].convert("RGB")
+
+
+# --- Mô phỏng độ vừa vặn (fit) ----------------------------------------------
+# FASHN chịu trách nhiệm MẶC ĐÚNG trang phục; bước dưới đây chịu trách nhiệm
+# làm trang phục đó trông đúng độ chật/rộng trên chính cơ thể của khách.
+#
+# Nguyên tắc: không bao giờ đổi cơ thể để quần áo vừa. Người 100kg mặc áo S thì
+# chiếc áo S phải căng trên người 100kg — không phải AI làm người gầy đi.
+FIT_ZONE_FOCUS = {
+    "tops": {
+        "tight": "chest, shoulders, upper arms, belly and the button placket",
+        "loose": "shoulder seams, sleeve width and length, chest volume and hem width",
+    },
+    "bottoms": {
+        "tight": "waistband, hips and thighs, with natural and non-explicit tension",
+        "loose": "waistband, hip room, wide leg openings and stacked folds",
+    },
+    "one-pieces": {
+        "tight": "shoulders, bust, waist, hips and the overall length",
+        "loose": "shoulders, bust volume, waist, hips, hem width and overall length",
+    },
+}
+FIT_OUTERWEAR_NOTE = (
+    "This is a Japanese fashion garment (kimono, yukata, haori or outerwear): keep the collar overlap, "
+    "the wide rectangular sleeve construction, the belt/obi position and the original hem line intact. "
+)
+
+IDENTITY_LOCK = (
+    "Keep the same person: same face, hair, skin tone, body size and shape, pose, hands, feet, "
+    "background and lighting. Do not make the person thinner, fatter, taller or shorter. "
+)
+GARMENT_LOCK = (
+    "Keep the garment's colour, pattern, print, logos, collar, buttons and design unchanged. "
+)
+SAFETY_LOCK = (
+    "Damage affects fabric only: no injury, no blood, no nudity, no exposed private areas; "
+    "keep a neutral inner layer visible behind any split. Photorealistic. "
+)
+
+# Ràng buộc riêng cho trang phục hở da. Đây KHÔNG phải là gợi ý phong cách mà là
+# ràng buộc an toàn: với đồ bơi, "quá chật" mà xử lý như áo thun đồng nghĩa với
+# việc tạo ra ảnh hở vùng nhạy cảm.
+COVERAGE_LOCK = (
+    "Keep the garment's coverage exactly as designed: the chest, pelvis and buttocks stay fully covered "
+    "at all times. Do not shrink, pull aside, remove or make any part of the garment transparent. "
+    "Do not add cleavage, do not enlarge the bust or hips, do not sexualise the pose or the body. "
+)
+SWIMWEAR_LOCK = (
+    "This is ordinary swimwear on an adult. Never tear, split or open it. Excess tightness shows only as "
+    "slightly taut straps and fabric, never as exposure. Keep every strap, tie and panel intact and in place. "
+)
+CROP_LOCK = (
+    "This is a cropped garment: keep its hem exactly where it is. Never lengthen it to cover the midriff, "
+    "and never shorten it further. The exposed midriff is intentional; render it as natural skin that matches "
+    "the face and arms in tone and texture. "
+)
+SHORT_HEM_LOCK = (
+    "Keep the hem length of the shorts or skirt exactly as designed — neither shorter nor longer — and keep "
+    "the pelvis and buttocks fully covered. "
+)
+JAPANESE_LOCK = (
+    "Preserve the traditional Japanese construction: collar overlap direction, wide rectangular sleeve panels, "
+    "the obi/belt position and the original hem line. "
+)
+
+SWIMWEAR_TYPES = {"bikini_top", "bikini_bottom", "bikini_two_piece", "one_piece_swimsuit"}
+CROP_TYPES = {"crop_top"}
+SHORT_HEM_TYPES = {"shorts", "short_skirt"}
+JAPANESE_TYPES = {"kimono", "yukata", "haori", "hakama", "jinbei", "samue", "noragi", "happi"}
+
+
+def build_fit_prompt(
+    category: str,
+    verdict: str,
+    severity: float,
+    tear_allowed: bool,
+    outerwear: bool = False,
+    has_garment_reference: bool = False,
+    garment_type: str = "",
+) -> str:
+    """Prompt cho FLUX.2 — mô tả ĐỘ VỪA VẶN, không mô tả sản phẩm cụ thể.
+
+    Prompt cố ý NGẮN và đặt mệnh lệnh "chỉ sửa độ vừa vặn" lên đầu. Bản dài
+    trước đây (kèm ba đoạn khoá dài dòng) khiến model bỏ qua ảnh gốc và vẽ lại
+    cả khung cảnh — chạy thật cho ra một người khác ngồi trên ghế sofa.
+    """
+    focus = FIT_ZONE_FOCUS.get(category, FIT_ZONE_FOCUS["tops"])
+    header = (
+        "Edit image 1. Change ONLY how the clothing fits the body; everything else stays identical. "
+    )
+    if has_garment_reference:
+        header = (
+            "Edit image 1. Image 2 is the flat-lay reference of the same garment — match its colour and pattern. "
+            "Change ONLY how the clothing fits the body in image 1; everything else stays identical. "
+        )
+    outer_note = FIT_OUTERWEAR_NOTE if outerwear else ""
+    swimwear = garment_type in SWIMWEAR_TYPES
+    # Đồ bơi: cấm tuyệt đối hiệu ứng rách, bất kể tham số truyền vào.
+    if swimwear:
+        tear_allowed = False
+
+    if verdict in {"slightly_tight", "tight", "very_tight"}:
+        body = f"The garment is too small for this body. Make it look too tight around the {focus['tight']}. "
+        if verdict == "slightly_tight":
+            body += "Body-hugging with few folds and mild stretch. No damage, no open seams. "
+        elif verdict == "tight":
+            body += (
+                "Fabric stretched taut with radiating tension wrinkles, seams pulled straight, "
+                "sleeves gripping the arms, straining buttons with small gaps, hem riding up. No tears. "
+            )
+        else:
+            body += (
+                "Fabric pulled drum-tight, strong tension wrinkles, stressed seams partially separating at a "
+                "shoulder or side seam, pulled buttonholes, sleeves and hem too short for this body. "
+            )
+            body += (
+                "Allow ONE small realistic split along a garment seam with frayed threads. "
+                if tear_allowed else "Do not tear the garment; keep strain at stressed seams only. "
+            )
+    elif verdict in {"slightly_loose", "loose", "very_loose"}:
+        body = f"The garment is too large for this body. Make it look oversized at the {focus['loose']}. "
+        if verdict == "slightly_loose":
+            body += "Shoulder seams slightly past the shoulder points, a little extra fabric, a few soft folds. "
+        elif verdict == "loose":
+            body += (
+                "Shoulder seams dropped well past the shoulders, wide sleeves running long over the hands, "
+                "a boxy body with a visible air gap between fabric and torso, many soft hanging folds. "
+            )
+        else:
+            body += (
+                "The garment hangs off the body like a wide robe: shoulders dropped far down the upper arms, "
+                "sleeves swallowing the hands, deep cascading drape folds, a very wide flowing hem. "
+                "The body inside stays small and unchanged; the empty volume belongs to the garment. "
+            )
+    else:
+        body = "Show a clean correct fit with natural folds, no straining and no artificial volume. "
+
+    coverage_note = COVERAGE_LOCK
+    if swimwear:
+        coverage_note += SWIMWEAR_LOCK
+    if garment_type in CROP_TYPES:
+        coverage_note += CROP_LOCK
+    if garment_type in SHORT_HEM_TYPES:
+        coverage_note += SHORT_HEM_LOCK
+    if garment_type in JAPANESE_TYPES:
+        coverage_note += JAPANESE_LOCK
+    return header + body + outer_note + IDENTITY_LOCK + GARMENT_LOCK + coverage_note + SAFETY_LOCK
+
+
+def _lora_checkpoint_file(path: Path) -> Path | None:
+    """File trọng số thật bên trong thư mục checkpoint (nếu có)."""
+    if path.is_file():
+        return path
+    for name in ("pytorch_lora_weights.safetensors", "adapter_model.safetensors"):
+        candidate = path / name
+        if candidate.exists():
+            return candidate
+    weights = sorted(path.glob("*.safetensors"))
+    return weights[0] if weights else None
+
+
+def _lora_fingerprint(path: Path) -> str:
+    """Vân tay checkpoint để health endpoint và log nói đúng bản nào đang chạy."""
+    target = _lora_checkpoint_file(path)
+    if target is None:
+        return ""
+    stat = target.stat()
+    digest = hashlib.sha256()
+    with open(target, "rb") as handle:
+        digest.update(handle.read(1 << 20))
+    return f"{digest.hexdigest()[:16]}-{stat.st_size}"
+
+
+def apply_fit_lora(pipe):
+    """Gắn LoRA fit vào pipeline — nạp ĐÚNG MỘT LẦN cho mỗi checkpoint.
+
+    Trước đây hàm này gọi `load_lora_weights()` trong MỌI request. Với LoRA vài
+    trăm MB, đó là vài giây bị đốt mỗi lượt thử đồ, và các adapter chồng lên
+    nhau qua từng lần gọi. Nay adapter được cache theo (đường dẫn, vân tay
+    checkpoint): đổi checkpoint hoặc ghi đè file thì tự nạp lại, còn không thì
+    dùng lại adapter đang gắn sẵn.
+
+    LORA_LOCK bảo vệ trạng thái này khỏi hai request đồng thời. Nó KHÁC với
+    LOCK (hàng đợi GPU) nên không gây deadlock.
+    """
+    global LORA_STATE
+    lora_path = os.getenv("JAPANO_FIT_LORA_PATH", "").strip()
+    with LORA_LOCK:
+        if not lora_path:
+            if LORA_STATE.get("loaded") and LORA_STATE.get("pipe") is pipe:
+                try:
+                    pipe.unload_lora_weights()
+                except Exception:
+                    pass
+            LORA_STATE = {"loaded": False, "path": "", "fingerprint": "", "pipe": None}
+            return False
+
+        path = Path(lora_path).expanduser()
+        if not path.exists():
+            print(f"=== Fit LoRA not found at {path}; using base FLUX.2 ===", flush=True)
+            LORA_STATE = {"loaded": False, "path": str(path), "fingerprint": "", "pipe": None,
+                          "error": "checkpoint_missing"}
+            return False
+
+        fingerprint = _lora_fingerprint(path)
+        if not fingerprint:
+            print(f"=== Fit LoRA at {path} has no .safetensors; using base FLUX.2 ===", flush=True)
+            LORA_STATE = {"loaded": False, "path": str(path), "fingerprint": "", "pipe": None,
+                          "error": "no_safetensors"}
+            return False
+
+        already = (
+            LORA_STATE.get("loaded")
+            and LORA_STATE.get("path") == str(path)
+            and LORA_STATE.get("fingerprint") == fingerprint
+            and LORA_STATE.get("pipe") is pipe
+        )
+        if already:
+            return True
+
+        try:
+            if LORA_STATE.get("loaded") and LORA_STATE.get("pipe") is pipe:
+                pipe.unload_lora_weights()
+            pipe.load_lora_weights(str(path))
+            LORA_STATE = {"loaded": True, "path": str(path), "fingerprint": fingerprint, "pipe": pipe}
+            print(f"=== Fit LoRA loaded once: {path} [{fingerprint}] ===", flush=True)
+            return True
+        except Exception as exc:
+            print(f"=== Fit LoRA could not be loaded ({exc}); using base FLUX.2 ===", flush=True)
+            LORA_STATE = {"loaded": False, "path": str(path), "fingerprint": fingerprint,
+                          "pipe": None, "error": str(exc)[:200]}
+            return False
+
+
+def _detach_fit_lora(pipe) -> bool:
+    """Gỡ LoRA khi danh mục nằm ngoài miền dữ liệu đã train."""
+    global LORA_STATE
+    with LORA_LOCK:
+        if LORA_STATE.get("loaded") and LORA_STATE.get("pipe") is pipe:
+            try:
+                pipe.unload_lora_weights()
+            except Exception:
+                pass
+            LORA_STATE = {**LORA_STATE, "loaded": False, "pipe": None, "detachedForCategory": True}
+    return False
+
+
+def fit_lora_status() -> dict:
+    """Trạng thái adapter cho /health — không bao giờ lộ nội dung secret."""
+    configured = os.getenv("JAPANO_FIT_LORA_PATH", "").strip()
+    with LORA_LOCK:
+        state = dict(LORA_STATE)
+    return {
+        "configuredPath": configured or None,
+        "adapterLoaded": bool(state.get("loaded")),
+        "checkpointHash": state.get("fingerprint") or None,
+        "error": state.get("error"),
+        # LoRA hiện chỉ được train trên dữ liệu upper-body nên chỉ áp cho `tops`.
+        "appliesToCategories": FIT_LORA_CATEGORIES,
+    }
+
+
+def refine_fit(
+    tryon_image: Image.Image,
+    garment: Image.Image | None,
+    category: str,
+    verdict: str,
+    severity: float,
+    tear_allowed: bool,
+    outerwear: bool,
+    seed: int,
+    low_memory: bool = False,
+    garment_type: str = "",
+) -> tuple[Image.Image, bool]:
+    """Sửa độ vừa vặn trên ảnh đã mặc đồ xong.
+
+    `garment` chỉ được truyền vào khi đó là ảnh flat-lay sạch (nền trắng, không
+    có người). Ảnh sản phẩm chụp trên người mẫu tuyệt đối KHÔNG được dùng làm
+    tham chiếu ở đây: chạy thật cho thấy FLUX lấy luôn khung cảnh của ảnh đó —
+    trả về một người khác ngồi trên ghế sofa thay vì khách hàng.
+    """
+    pipe = load_flux()
+    # LoRA chỉ được áp cho danh mục nằm trong miền dữ liệu đã train. Với các
+    # danh mục khác, hàm dưới đây tự gỡ adapter và chạy FLUX gốc.
+    lora = apply_fit_lora(pipe) if category in FIT_LORA_CATEGORIES else _detach_fit_lora(pipe)
+    width, height = normalized_output_size(tryon_image, low_memory)
+    prompt = build_fit_prompt(
+        category, verdict, severity, tear_allowed, outerwear,
+        has_garment_reference=garment is not None,
+        garment_type=garment_type,
+    )
+    generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(seed)
+    # Fit là hiệu ứng hình học mạnh hơn một lượt làm đẹp thông thường, nên cho
+    # phép nhiều bước hơn khi độ lệch size lớn — vẫn giữ trần thấp vì FLUX là
+    # phần tốn VRAM nhất của cả pipeline.
+    steps = int(os.getenv("JAPANO_FIT_STEPS", "4"))
+    if severity >= 0.72:
+        steps = int(os.getenv("JAPANO_FIT_STEPS_EXTREME", str(max(steps, 6))))
+    references = [tryon_image] if garment is None else [tryon_image, garment]
+    result = pipe(
+        image=references,
+        prompt=prompt,
+        width=width,
+        height=height,
+        guidance_scale=float(os.getenv("JAPANO_FIT_CFG", "1.0")),
+        num_inference_steps=steps,
+        generator=generator,
+    ).images[0].convert("RGB")
+    return result, lora
+
+
+def run_fit_refine_locked(
+    tryon_path: Path,
+    garment_path: Path | None,
+    category: str,
+    verdict: str,
+    severity: float,
+    tear_allowed: bool,
+    outerwear: bool,
+    seed: int,
+    garment_type: str = "",
+):
+    """Chạy fit-refine với đúng kỷ luật VRAM: nhả FASHN trước khi nạp FLUX."""
+    global LAST_ENGINE
+    with LOCK:
+        GPU_ACTIVE_FILE.write_text(str(os.getpid()), encoding="utf-8")
+        try:
+            check_cancelled()
+            release_ollama_vram()
+            unload_fashn()
+            cuda_cleanup()
+            tryon_image = open_rgb(tryon_path)
+            garment = open_rgb(garment_path) if garment_path is not None else None
+            prefer_low_memory = os.getenv("JAPANO_TRYON_LOW_MEMORY", "1").strip().lower() not in {
+                "0", "false", "no", "off"
+            }
+            for attempt in range(2):
+                try:
+                    check_cancelled()
+                    output, lora = refine_fit(
+                        tryon_image, garment, category, verdict, severity, tear_allowed, outerwear, seed,
+                        low_memory=prefer_low_memory or attempt > 0, garment_type=garment_type,
+                    )
+                    break
+                except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
+                    retryable = isinstance(exc, torch.cuda.OutOfMemoryError) or any(
+                        marker in str(exc).lower()
+                        for marker in ("out of memory", "gpu chưa đủ", "cuda error", "cublas")
+                    )
+                    if not retryable or attempt == 1:
+                        raise
+                    unload_flux()
+                    release_ollama_vram()
+                    cuda_cleanup()
+                    print("=== GPU pressure: retrying fit refine at reduced resolution ===", flush=True)
+                    time.sleep(2)
+            output_path = RUNTIME_DIR / f"fit-{time.time_ns()}.png"
+            output.save(output_path)
+            LAST_ENGINE = "flux2-klein-4b-fit-refine" + ("+japano-fit-lora" if lora else "")
+            return output_path
+        finally:
+            GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            # Cùng chính sách với run_tryon_locked: JAPANO_UNLOAD_AFTER_TRYON=0
+            # giữ FLUX lại giữa các lượt liên tiếp. Trước đây bước fit LUÔN nhả
+            # model, nên sinh dataset hay thử nhiều size liền nhau phải nạp lại
+            # ~15GB mỗi lần. GPU arbiter vẫn tự giải phóng khi đổi tính năng.
+            if os.getenv("JAPANO_UNLOAD_AFTER_TRYON", "1").strip().lower() not in {"0", "false", "no", "off"}:
+                unload_flux()
+            cuda_cleanup()
 
 
 def refine_accessory_fit(
@@ -566,6 +949,9 @@ def health():
         "primary": "fashn-vton-1.5",
         "poseEditor": "flux2-klein-4b" if flux_ready else "unavailable",
         "accessoryRefiner": "flux2-klein-4b-multi-reference" if flux_ready else "unavailable",
+        "fitRefiner": "flux2-klein-4b-fit-refine" if flux_ready else "unavailable",
+        "fitRefinerReady": flux_ready,
+        "fitLora": fit_lora_status(),
         "modelReady": model_ready,
         "poseEditorReady": flux_ready,
         "loaded": {"fashn": FASHN_PIPELINE is not None, "flux": FLUX_PIPELINE is not None},
@@ -655,6 +1041,78 @@ async def accessory_refine(
         clean_path.unlink(missing_ok=True)
         for item_path in accessory_paths:
             item_path.unlink(missing_ok=True)
+
+
+@api.post("/fit-refine")
+async def fit_refine(
+    person: UploadFile = File(...),
+    cloth: UploadFile | None = File(None),
+    category: str = Form("tops"),
+    verdict: str = Form("good"),
+    severity: float = Form(0.0),
+    tear_allowed: bool = Form(False),
+    outerwear: bool = Form(False),
+    selected_size: str = Form(""),
+    recommended_size: str = Form(""),
+    seed: int = Form(77),
+    garment_type: str = Form(""),
+):
+    """Mô phỏng độ vừa vặn trên ảnh ĐÃ mặc đồ xong.
+
+    Tách khỏi /tryon có chủ đích: FASHN giữ đúng trang phục, còn bước này chỉ
+    sửa cách vải ôm/rủ. Backend gọi nó một cách có điều kiện (chỉ khi lệch size
+    đủ lớn) để không đốt VRAM cho những lượt thử vốn đã vừa người.
+    """
+    allowed = {
+        "good", "slightly_tight", "tight", "very_tight",
+        "slightly_loose", "loose", "very_loose",
+    }
+    if verdict not in allowed:
+        raise HTTPException(status_code=400, detail="verdict không hợp lệ")
+    if category not in {"tops", "bottoms", "one-pieces"}:
+        raise HTTPException(status_code=400, detail="category không hợp lệ")
+    if verdict == "good":
+        raise HTTPException(status_code=400, detail="Size đã vừa, không cần mô phỏng fit")
+    person_path = RUNTIME_DIR / f"fit-person-{time.time_ns()}.png"
+    person_path.write_bytes(await person.read())
+    # Ảnh vải là TUỲ CHỌN và chỉ nên gửi khi là flat-lay sạch — xem refine_fit().
+    cloth_path = None
+    if cloth is not None:
+        cloth_bytes = await cloth.read()
+        if cloth_bytes:
+            cloth_path = RUNTIME_DIR / f"fit-cloth-{time.time_ns()}.jpg"
+            cloth_path.write_bytes(cloth_bytes)
+    print(
+        f"=== [FIT REFINE] verdict={verdict} severity={severity:.2f} category={category} "
+        f"selected={selected_size or '?'} recommended={recommended_size or '?'} tear={bool(tear_allowed)} "
+        f"garmentRef={cloth_path is not None} ===",
+        flush=True,
+    )
+    try:
+        CANCEL_REQUESTED.clear()
+        output_path = await run_in_threadpool(
+            run_fit_refine_locked,
+            person_path, cloth_path, category, verdict, float(severity),
+            bool(tear_allowed), bool(outerwear), int(seed), garment_type,
+        )
+        return FileResponse(
+            output_path,
+            media_type="image/png",
+            headers={"x-japano-engine": LAST_ENGINE, "x-japano-fit-verdict": verdict},
+        )
+    except torch.cuda.OutOfMemoryError as exc:
+        unload_flux()
+        unload_fashn()
+        raise HTTPException(status_code=507, detail="GPU không đủ VRAM cho bước mô phỏng độ vừa vặn") from exc
+    except GpuJobCancelled as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"Fit refine failed: {exc}", flush=True)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        person_path.unlink(missing_ok=True)
+        if cloth_path is not None:
+            cloth_path.unlink(missing_ok=True)
 
 
 @api.post("/tryon")

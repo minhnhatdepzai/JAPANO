@@ -56,7 +56,7 @@ function preserveCredentials(currentUsers, incomingUsers) {
 
 const SERVER_MANAGED_FIELDS = Object.freeze([
   'orders', 'interactions', 'searchLogs', 'pushTokens', 'profiles', 'chats',
-  'tryonHistory', 'goals', 'aiDescriptions', 'flagcardCollections',
+  'goals', 'aiDescriptions', 'flagcardCollections',
   'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts',
   'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists',
 ]);

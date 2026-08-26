@@ -8,6 +8,11 @@ const { pushNotification } = require('../lib/notify');
 const {
   GOAL_FUND_CONFIG, ensureGoalFund, fundView, addDeposit, removeDeposit, ensureGoalRewardVoucher,
 } = require('../lib/goalFund');
+const {
+  mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled,
+  userProvidedMeasurement, profileForMeasurementMode,
+} = require('../lib/bodyAnalysis');
+const { logger } = require('../lib/logger');
 
 // map 4 lựa chọn phong cách của app sang đúng từ vựng tag đang có trong catalog (backend/seed.js) để content-based match được
 const STYLE_LABELS = {
@@ -22,7 +27,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
   const {
     read, update, tryonGpuBusy, httpError, requireAuth, requireSelfOrStaff, roleAtLeast, sendPushToUser,
     getHomeRecommendations, getRecommendationDiagnostics, runPillow, analyzePortrait, buildGoalPlan, enhanceCoaching,
-    composeOutfit, todaysOutfit, adviseSize, styleRecommendation, chatbot,
+    composeOutfit, todaysOutfit, adviseSize, styleRecommendation, chatbot, runAccessoryPipeline,
   } = ctx;
 
   // Ứng dụng di động báo màn hình đang mở để backend ưu tiên GPU cho đúng tính
@@ -53,6 +58,9 @@ module.exports = function registerStylistRoutes(api, ctx) {
       ok: true,
       engine: fashn.online ? 'fashn-vton-1.5' : catvton.online ? 'catvton-fallback' : gateway.online ? 'ai-gateway' : 'unavailable',
       services: { fashn, motion, catvton, gateway, ollama, embedding, pillow: { configured: true, online: true } },
+      // Trạng thái adapter LoRA lấy thẳng từ service thử đồ: đường dẫn, đã nạp
+      // hay chưa, hash checkpoint và danh mục được áp dụng. Không chứa secret.
+      fitLora: fashn?.detail?.fitLora || { adapterLoaded: false, configuredPath: null },
       pipelines: {
         chatbot: {
           status: 'active',
@@ -324,8 +332,57 @@ module.exports = function registerStylistRoutes(api, ctx) {
   api.post('/stylist/size', (req, res) => {
     const b = req.body || {};
     const measurements = { ...b, ...(b.profile || {}) };
-    const result = adviseSize(measurements);
+    // Dùng cùng luật hợp nhất với /tryon: estimate đã lưu riêng chỉ là nguồn AI,
+    // không được âm thầm trở thành số đo thật ở lần gọi sau.
+    const result = adviseSize(mergeBodySignals(measurements, null).profile);
     res.json({ ok: true, size: result.size, recommendedSize: result.size, advice: result.advice, message: result.advice });
+  });
+
+  // Phân tích vóc dáng từ ảnh: chiều cao/cân nặng ước lượng + tỉ lệ cơ thể.
+  //
+  // Trả về KHOẢNG kèm độ tin cậy, không bao giờ trả một con số tuyệt đối như thể
+  // đã đo thật: một ảnh RGB đơn không có vật chuẩn thì không thể suy ra chiều
+  // cao chính xác. Khi độ tin cậy dưới ngưỡng, valueCm/valueKg là null và client
+  // phải nói thẳng là chưa đủ dữ liệu.
+  //
+  // Ảnh chỉ tồn tại trong bộ nhớ của tiến trình phân tích — không ghi ra đĩa,
+  // không lưu vào state.
+  api.post('/stylist/body-analysis', async (req, res) => {
+    const b = req.body || {};
+    const imageBase64 = String(b.personImageBase64 || b.imageBase64 || '');
+    if (!imageBase64) {
+      return res.status(400).json({ ok: false, message: 'Thiếu ảnh để phân tích vóc dáng.' });
+    }
+    if (!bodyAnalysisEnabled()) {
+      return res.status(503).json({ ok: false, message: 'Tính năng phân tích vóc dáng đang tắt (JAPANO_BODY_ANALYSIS_ENABLED=0).' });
+    }
+    const profile = profileForMeasurementMode(b.profile || {}, b.measurementMode);
+    try {
+      const analysis = await runAccessoryPipeline({
+        mode: 'body_analysis',
+        imageBase64,
+        userHeightCm: userProvidedMeasurement(profile, 'height'),
+        userWeightKg: userProvidedMeasurement(profile, 'weight'),
+        scaleReference: b.scaleReference || null,
+      }, Number(process.env.JAPANO_BODY_ANALYSIS_TIMEOUT_MS || 120000));
+      if (!analysis?.ok) {
+        return res.status(503).json({ ok: false, message: analysis?.message || 'Không phân tích được vóc dáng từ ảnh này.' });
+      }
+      // Số đo thật (nếu khách đã nhập) luôn thắng ước lượng của AI khi tính size.
+      const merged = mergeBodySignals(profile, analysis);
+      const advice = adviseSize(merged.profile);
+      logger.info(bodyAnalysisLogLine(analysis));
+      res.json({
+        ok: true,
+        ...summarizeBodyAnalysis(analysis),
+        recommendedSize: advice.size,
+        sizeAdvice: advice.advice,
+        sources: merged.sources,
+        usedEstimate: merged.usedEstimate,
+      });
+    } catch (error) {
+      res.status(500).json({ ok: false, message: error.message || 'Lỗi phân tích vóc dáng.' });
+    }
   });
 
   // tư vấn phong cách cho "Ống kính JAPANO": hồ sơ + (tuỳ chọn) tông màu chủ đạo trích từ ảnh qua Pillow
@@ -380,6 +437,17 @@ module.exports = function registerStylistRoutes(api, ctx) {
     const generation = await polishWithOllama(b.message, result.message);
     const message = generation.message;
     const engine = generation.used ? 'hybrid-post-transformer+ollama' : 'hybrid-post-transformer';
+    const referenced = new Set((result.productIds || []).map(String));
+    const informationSources = [];
+    const sourceUrls = new Set();
+    for (const product of s.products || []) {
+      if (!referenced.has(String(product.slug || product.id))) continue;
+      for (const source of product.informationSources || []) {
+        if (!source?.url || sourceUrls.has(source.url)) continue;
+        sourceUrls.add(source.url);
+        informationSources.push({ title: source.title, url: source.url });
+      }
+    }
     update((state) => {
       const createdAt = Date.now();
       state.chats.push({ id: `chat-${createdAt}`, userId, role: 'user', message: String(b.message || ''), createdAt });
@@ -405,6 +473,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
       confidence: result.confidence, models: result.modelTrace?.models || [],
       modelTrace: result.modelTrace, generationModel: generation.model,
       latencyMs: generation.latencyMs, fallbackReason: generation.fallbackReason,
+      informationSources: informationSources.slice(0, 8),
     });
   });
 };

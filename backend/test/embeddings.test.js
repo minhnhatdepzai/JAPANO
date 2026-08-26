@@ -16,10 +16,17 @@ test('cosineSimilarity trả 0 cho hai vector trực giao', () => {
 });
 
 test('productText gộp tên, danh mục và tag thành một chuỗi để embed', () => {
-  const text = productText({ name: 'Kimono hồng', cat: 'ao-truyen-thong', tags: ['truyền thống', 'lụa'] });
+  const text = productText({
+    name: 'Kimono hồng', kanji: '着物', cat: 'ao-truyen-thong', garmentType: 'kimono',
+    tags: ['truyền thống', 'lụa'], desc: 'Trang phục dự tiệc mùa xuân', story: 'Lấy cảm hứng từ kosode.',
+  });
   assert.match(text, /Kimono hồng/);
+  assert.match(text, /着物/);
   assert.match(text, /ao-truyen-thong/);
+  assert.match(text, /kimono/);
   assert.match(text, /truyền thống/);
+  assert.match(text, /dự tiệc mùa xuân/);
+  assert.match(text, /kosode/);
 });
 
 test('productText trả rỗng khi sản phẩm thiếu dữ liệu', () => {

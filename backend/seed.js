@@ -127,7 +127,6 @@ function emptyState() {
     pushTokens: [],
     profiles: [],
     chats: [],
-    tryonHistory: [],
     goals: [],
     aiDescriptions: [],
     japanSpotReviews: [],

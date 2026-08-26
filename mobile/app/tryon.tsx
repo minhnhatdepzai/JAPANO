@@ -7,7 +7,7 @@ import { ResizeMode, Video } from 'expo-av';
 import { Screen, Header, Btn } from '../components/ui';
 import { useCatalog } from '../lib/data';
 import { Product } from '../lib/catalog';
-import { generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit } from '../lib/api';
+import { analyzeBodyFromPhoto, BodyAnalysis, FitEffect, generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit, TryOnSafety, TryOnSafetyError } from '../lib/api';
 import { DEFAULT_STYLE_PROFILE, loadStyleProfile, SavedStyleProfile, saveStyleProfile } from '../lib/profile';
 import { saveMediaToLibrary, shareMedia } from '../lib/media';
 import { useStore } from '../lib/store';
@@ -35,6 +35,36 @@ const MOTION_ICONS:Record<string, keyof typeof Ionicons.glyphMap>={
 const one=(value:string|string[]|undefined)=>Array.isArray(value)?value[0]:value;
 const dataUri=(asset:ImagePicker.ImagePickerAsset)=>`data:${asset.mimeType||'image/jpeg'};base64,${asset.base64||''}`;
 const DEFAULT_TRYON_MESSAGE='Chọn ảnh rõ và đủ sáng để hệ thống ghép trang phục tự nhiên hơn.';
+// Bảy mức vừa vặn — cùng từ vựng với backend (lib/fitAnalysis.js) để nhãn trên
+// ảnh, tiêu đề banner và hiệu ứng AI luôn nói cùng một chuyện.
+const FIT_UI:Record<string,{title:string;badge:string;tone:'good'|'tight'|'loose'}>={
+  good:{title:'✓ Size phù hợp',badge:'VỪA',tone:'good'},
+  slightly_tight:{title:'⚠ Hơi chật',badge:'HƠI CHẬT',tone:'tight'},
+  tight:{title:'⚠ Chật',badge:'CHẬT',tone:'tight'},
+  very_tight:{title:'⚠ Quá chật',badge:'RẤT CHẬT',tone:'tight'},
+  slightly_loose:{title:'⚠ Hơi rộng',badge:'HƠI RỘNG',tone:'loose'},
+  loose:{title:'⚠ Rộng',badge:'RỘNG',tone:'loose'},
+  very_loose:{title:'⚠ Quá rộng',badge:'RẤT RỘNG',tone:'loose'},
+};
+// Loại trang phục cần xác nhận 18+ trước khi gửi ảnh sang model. Danh sách này
+// chỉ để hiện hộp xác nhận sớm cho người dùng — backend vẫn là nơi quyết định
+// cuối cùng (lib/adultTryonPolicy.js), client không được tự cho qua.
+const ADULT_ONLY_HINT=/(bikini|đồ bơi|do boi|áo tắm|ao tam|swim|crop\s*top|áo lửng|ao lung)/i;
+const isAdultOnlyGarment=(p:{name?:string;garmentType?:string}|null|undefined)=>{
+  if(!p)return false;
+  if(p.garmentType)return ['bikini_top','bikini_bottom','bikini_two_piece','one_piece_swimsuit','crop_top'].includes(p.garmentType);
+  return ADULT_ONLY_HINT.test(String(p.name||''));
+};
+const SAFETY_TITLES:Record<string,string>={
+  ADULT_CONSENT_REQUIRED:'Cần xác nhận đủ 18 tuổi',
+  MINOR_SUSPECTED:'Ảnh không phù hợp',
+  AGE_UNVERIFIED:'Chưa xác định được độ tuổi',
+  AGE_VERIFICATION_UNAVAILABLE:'Chưa kiểm tra được ảnh',
+  COVERAGE_UNSAFE:'Ảnh chưa đạt yêu cầu an toàn',
+};
+const confidenceLabel=(value:number)=>value>=.62?'Cao':value>=.42?'Trung bình':value>=.25?'Thấp':'Rất thấp';
+const rangeText=(min?:number|null,max?:number|null,unit='')=>
+  (min==null||max==null)?'':Math.round(min)===Math.round(max)?`${Math.round(min)} ${unit}`.trim():`${Math.round(min)}–${Math.round(max)} ${unit}`.trim();
 const localSize=(height:string,weight:string)=>{
   const h=Number(height),w=Number(weight);
   if((h&&h<158)||(w&&w<50))return'S';
@@ -51,7 +81,10 @@ export default function TryOn() {
   // Chỉ giữ GPU cho đúng lúc chạy try-on/motion. Khi chỉ xem ảnh kết quả,
   // trả GPU về browse để mô tả ảnh và semantic product suggestions dùng tiếp.
   // Ref ngăn request hoàn tất muộn giành focus sau khi người dùng đã thoát.
-  const gpuScreenActive=useGpuFocus('browse','home');
+  // Giữ FASHN thường trú trong lúc màn thử đồ còn mở. Dùng `browse` ở đây làm
+  // finally của mỗi lượt vừa tạo xong đã gọi /unload, nên lần đổi size/đổi áo
+  // kế tiếp luôn phải cold-start model và người dùng chờ thêm hàng chục giây.
+  const gpuScreenActive=useGpuFocus('tryon','browse');
   const params=useLocalSearchParams<{productId?:string;slug?:string;color?:string;size?:string}>();
   const router=useRouter();
   const {products}=useCatalog();
@@ -146,6 +179,14 @@ export default function TryOn() {
   const [result,setResult]=useState('');
   const [resultEngine,setResultEngine]=useState('');
   const [sizeFit,setSizeFit]=useState<SizeFit|null>(null);
+  const [fitEffect,setFitEffect]=useState<FitEffect|null>(null);
+  const [bodyAnalysis,setBodyAnalysis]=useState<BodyAnalysis|null>(null);
+  const [bodyLoading,setBodyLoading]=useState(false);
+  const [bodyError,setBodyError]=useState('');
+  const [usingEstimate,setUsingEstimate]=useState(false);
+  const [adultConsent,setAdultConsent]=useState(false);
+  const [safety,setSafety]=useState<TryOnSafety|null>(null);
+  const [safetyError,setSafetyError]=useState<{code:string;message:string}|null>(null);
   const [message,setMessage]=useState(DEFAULT_TRYON_MESSAGE);
   const [error,setError]=useState('');
   const [warning,setWarning]=useState('');
@@ -163,7 +204,10 @@ export default function TryOn() {
   const [savingVideo,setSavingVideo]=useState(false);
   const [sharingVideo,setSharingVideo]=useState(false);
 
-  useEffect(()=>{void loadStyleProfile().then(setProfile);},[]);
+  useEffect(()=>{void loadStyleProfile().then(saved=>{
+    setProfile(saved);
+    setUsingEstimate(saved.measurementSource==='image-estimation');
+  });},[]);
   // Fast Refresh có thể giữ cờ loading nhưng không còn callback của lượt chạy
   // cũ để hạ cờ. Không để người dùng phải đóng app mới bấm tạo lại được.
   useEffect(()=>{
@@ -203,16 +247,104 @@ export default function TryOn() {
     const asset=pick.canceled?null:pick.assets?.[0];
     if(!asset)return;
     if(!asset.base64){setError('Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');return;}
-    setPhoto({uri:asset.uri,base64:dataUri(asset)});setResult('');setResultEngine('');setSizeFit(null);setWarning('');setMotionVideo('');setMotionPanel(false);setMotionError('');
+    const picked={uri:asset.uri,base64:dataUri(asset)};
+    setPhoto(picked);setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);setWarning('');setMotionVideo('');setMotionPanel(false);setMotionError('');
+    // Mỗi ảnh mới có thể là một người khác. Mặc định đọc vóc dáng từ chính ảnh
+    // này; số đo thật đã lưu chỉ dùng khi khách chủ động chuyển sang nhập tay.
+    setBodyAnalysis(null);setBodyError('');setUsingEstimate(true);
+    void runBodyAnalysis(picked.base64);
+  };
+
+  // Phân tích vóc dáng chạy trên CPU (pose + tách nền), không giành GPU với
+  // try-on, nên tự chạy ngay sau khi có ảnh. Kết quả chỉ là ƯỚC LƯỢNG và luôn
+  // được trình bày dưới dạng khoảng kèm độ tin cậy.
+  const runBodyAnalysis=async(imageBase64:string)=>{
+    if(!imageBase64)return;
+    setBodyLoading(true);setBodyError('');
+    try{
+      const analysis=await analyzeBodyFromPhoto({personImageBase64:imageBase64});
+      if(!analysis.ok)throw new Error(analysis.message||'Không phân tích được vóc dáng.');
+      setBodyAnalysis(analysis);
+      const height=analysis.estimatedHeight?.source==='user_provided'?null:analysis.estimatedHeight?.valueCm;
+      const weight=analysis.estimatedWeight?.source==='user_provided'?null:analysis.estimatedWeight?.valueKg;
+      if(height||weight){
+        setUsingEstimate(true);
+        setProfile(current=>{
+          const next={
+            ...current,
+            heightEstimateCm:height??current.heightEstimateCm,
+            weightEstimateKg:weight??current.weightEstimateKg,
+            heightEstimateConfidence:height?analysis.estimatedHeight?.confidence??0:current.heightEstimateConfidence,
+            weightEstimateConfidence:weight?analysis.estimatedWeight?.confidence??0:current.weightEstimateConfidence,
+            estimateConfidence:Math.max(
+              height?analysis.estimatedHeight?.confidence??0:0,
+              weight?analysis.estimatedWeight?.confidence??0:0,
+            ),
+            heightSource:'image-estimation' as const,
+            weightSource:'image-estimation' as const,
+            measurementSource:'image-estimation' as const,
+          };
+          void saveStyleProfile(next);
+          return next;
+        });
+        setMessage(`AI đã tự ước lượng vóc dáng${analysis.recommendedSize?` và suy ra cỡ phù hợp ${analysis.recommendedSize}`:''}. Hãy chọn bất kỳ size nào để xem quần áo chật, vừa hay rộng trên chính cơ thể trong ảnh.`);
+      }
+    }catch(e:any){
+      setBodyAnalysis(null);
+      setBodyError(e?.message||'Không phân tích được vóc dáng từ ảnh này.');
+    }finally{setBodyLoading(false);}
+  };
+
+  // Người dùng chủ động chấp nhận số liệu ước lượng. Không tự điền: số của AI
+  // không được âm thầm đóng vai số đo thật.
+  const useEstimatedBody=async()=>{
+    // Nếu Python trả source=user_provided thì đó là số khách đã nhập được đưa
+    // vào để hiệu chỉnh scale, không phải dự đoán mới của AI.
+    const height=bodyAnalysis?.estimatedHeight?.source==='user_provided'?null:bodyAnalysis?.estimatedHeight?.valueCm;
+    const weight=bodyAnalysis?.estimatedWeight?.source==='user_provided'?null:bodyAnalysis?.estimatedWeight?.valueKg;
+    if(!height&&!weight)return;
+    const patch:Record<string,unknown>={
+      heightEstimateCm:height??undefined,
+      weightEstimateKg:weight??undefined,
+      heightEstimateConfidence:height?bodyAnalysis?.estimatedHeight?.confidence??0:profile.heightEstimateConfidence,
+      weightEstimateConfidence:weight?bodyAnalysis?.estimatedWeight?.confidence??0:profile.weightEstimateConfidence,
+      estimateConfidence:Math.max(
+        height?bodyAnalysis?.estimatedHeight?.confidence??0:0,
+        weight?bodyAnalysis?.estimatedWeight?.confidence??0:0,
+      ),
+      heightSource:profile.height?'user':height?'image-estimation':profile.heightSource,
+      weightSource:profile.weight?'user':weight?'image-estimation':profile.weightSource,
+      measurementSource:'image-estimation',
+    };
+    const next={...profile,...patch} as typeof profile;
+    setProfile(next);
+    setUsingEstimate(true);
+    await saveStyleProfile(next);
+    if(bodyAnalysis?.recommendedSize)setSize(bodyAnalysis.recommendedSize);
+    setMessage(`Đã dùng số liệu AI ước lượng${bodyAnalysis?.recommendedSize?` — gợi ý kích cỡ ${bodyAnalysis.recommendedSize}`:''}. Bạn có thể sửa lại bằng số đo thật bất cứ lúc nào.`);
   };
 
   const updateProfile=(key:keyof SavedStyleProfile,value:string)=>{
-    setProfile(old=>({...old,[key]:value}));
+    setProfile(old=>({
+      ...old,[key]:value,measurementSource:'user',
+      ...(key==='height'?{heightSource:'user' as const}:{}),
+      ...(key==='weight'?{weightSource:'user' as const}:{}),
+    }));
+    if(key==='height'||key==='weight')setUsingEstimate(false);
+  };
+
+  const effectiveMeasurement=(key:'height'|'weight')=>{
+    const source=profile[`${key}Source`];
+    const raw=source==='image-estimation'?'':String(profile[key]||'');
+    if(raw)return raw;
+    if(!usingEstimate)return '';
+    const estimate=key==='height'?profile.heightEstimateCm:profile.weightEstimateKg;
+    return estimate?String(Math.round(estimate)):'';
   };
 
   const adviseSize=async()=>{
     setSizeLoading(true);setError('');
-    const fallback=localSize(String(profile.height||''),String(profile.weight||''));
+    const fallback=localSize(effectiveMeasurement('height'),effectiveMeasurement('weight'));
     try{
       const saved=await saveStyleProfile(profile);
       const advice=await getSizeAdvice({productId:product.slug,profile:saved,selectedSize:size});
@@ -222,7 +354,7 @@ export default function TryOn() {
   };
 
   const clearGeneratedResult=(nextMessage='Đã thay đổi lựa chọn. Bấm Tạo ảnh thử đồ để tạo kết quả mới.')=>{
-    setResult('');setResultEngine('');setWarning('');setSizeFit(null);
+    setResult('');setResultEngine('');setWarning('');setSizeFit(null);setFitEffect(null);setSafety(null);setSafetyError(null);
     setMotionVideo('');setMotionPanel(false);setMotionError('');
     setMessage(nextMessage);
   };
@@ -287,8 +419,19 @@ export default function TryOn() {
     setError('');
   };
 
+  const needsAdultConsent=useMemo(
+    ()=>chosenGarments.some(item=>isAdultOnlyGarment(item as any)),
+    [chosenGarments],
+  );
+
   const run=async()=>{
     if(!photo){Alert.alert('Thiếu ảnh người','Hãy chụp hoặc chọn ảnh của bạn trước.');return;}
+    if(needsAdultConsent&&!adultConsent){
+      // Không gửi ảnh đi khi chưa có xác nhận — ảnh không rời máy vô ích.
+      setSafetyError({code:'ADULT_CONSENT_REQUIRED',
+        message:'Trang phục này chỉ dành cho người từ 18 tuổi. Hãy xác nhận ở ô bên dưới trước khi tạo ảnh.'});
+      return;
+    }
     if(outfitConflict){setShowGarments(true);setError(`${outfitConflict} Hãy bỏ món bị trùng rồi tạo lại ảnh.`);return;}
     const pickedNames=accessories.filter(item=>selectedAccessories.includes(item.slug)).map(item=>item.name);
     setLoading(true);setError('');setWarning('');setMessage(`Hệ thống đang nhận diện nhân vật chính và mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, sau đó hòa ${pickedNames.join(', ')} vào tóc, tay, ánh sáng và dáng người`:''}. Tư thế chỉ được chỉnh khi thật sự cần; hệ thống sẽ tự kiểm tra chất lượng và thử lại…`);
@@ -304,6 +447,9 @@ export default function TryOn() {
         productIds:chosenGarments.map(item=>item.slug),
         productImageKey:product.imageKeys?.[0]||'',
         color,size,accessoryIds:selectedAccessories,profile:saved,
+        // Backend mới là nơi quyết định; đây chỉ là xác nhận của người dùng.
+        adultConsent,
+        measurementMode:usingEstimate?'image':'user',
       });
       if(!output.imageUrl)throw new Error(output.message||'Backend chưa trả ảnh kết quả.');
       setResult(output.imageUrl);setResultEngine(output.engine||'ai-gateway');setMessage(output.message);
@@ -311,17 +457,31 @@ export default function TryOn() {
         || (output.skippedAccessories.length?`Chưa ghép tự nhiên được phụ kiện: ${output.skippedAccessories.join(', ')}. Ảnh quần áo sạch đã được giữ lại.`:'')
         || (output.skippedGarments.length?`Chưa ghép được: ${output.skippedGarments.join(', ')}.`:''));
       setSizeFit(output.sizeFit&&output.sizeFit.verdict!=='unknown'?output.sizeFit:null);
+      setFitEffect(output.fitEffect||null);
+      setSafety(output.safety||null);
+      setSafetyError(null);
+      if(output.bodyAnalysis)setBodyAnalysis(current=>({...(current||{} as BodyAnalysis),...output.bodyAnalysis!}));
       setMotionVideo('');setMotionError('');
       Alert.alert(
         '✦ Làm ảnh thử đồ sống động?',
         'Bạn có muốn dùng AI local để nhân vật đi, xoay, nhảy hoặc khoe dáng với bộ đồ vừa thử không?',
         [{text:'Để sau',style:'cancel'},{text:'Chọn chuyển động',onPress:()=>setMotionPanel(true)}],
       );
-    }catch(e:any){setResult('');setResultEngine('');setSizeFit(null);setError(e?.message||'Không tạo được ảnh thử đồ.');setMessage('');}
+    }catch(e:any){
+      setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);
+      if(e instanceof TryOnSafetyError){
+        // Lỗi an toàn hiển thị riêng, không lẫn vào lỗi kỹ thuật.
+        setSafetyError({code:e.code,message:e.message});
+        setError('');setMessage('');
+      }else{
+        setSafetyError(null);
+        setError(e?.message||'Không tạo được ảnh thử đồ.');setMessage('');
+      }
+    }
     finally{
       endGpuJob();
       setLoading(false);
-      if(gpuScreenActive.current)void reportGpuFocus('browse');
+      if(gpuScreenActive.current)void reportGpuFocus('tryon');
     }
   };
 
@@ -338,7 +498,7 @@ export default function TryOn() {
     finally{
       endGpuJob();
       setMotionLoading(false);
-      if(gpuScreenActive.current)void reportGpuFocus('browse');
+      if(gpuScreenActive.current)void reportGpuFocus('tryon');
     }
   };
 
@@ -390,8 +550,45 @@ export default function TryOn() {
             recyclingKey={result?'tryon-result':photo?.uri||`${product.slug}-tryon`}
           />
           <View style={st.tag}><Text style={st.tagT}>{result?'✦ ẢNH THỬ ĐỒ ĐÃ HOÀN TẤT':photo?'✦ ẢNH CỦA BẠN':'✦ ẢNH MẪU SẢN PHẨM'}</Text></View>
+          {!!result&&!!sizeFit&&!!FIT_UI[sizeFit.verdict]&&(
+            <View style={[st.fitBadge,FIT_UI[sizeFit.verdict].tone==='good'?st.fitBadgeGood:FIT_UI[sizeFit.verdict].tone==='tight'?st.fitBadgeTight:st.fitBadgeLoose]}>
+              <Text style={st.fitBadgeT}>FIT: {FIT_UI[sizeFit.verdict].badge}</Text>
+            </View>
+          )}
           {loading&&<View style={st.loading}><ActivityIndicator color="#fff" size="large" /><Text style={st.loadingT}>Đang tạo ảnh…</Text></View>}
         </View>
+        {needsAdultConsent&&(
+          <View style={st.consentCard}>
+            <Text style={st.consentTitle}>Trang phục dành cho người từ 18 tuổi</Text>
+            <Text style={st.consentBody}>
+              Ảnh của bạn chỉ được dùng để ghép trang phục lên đúng vóc dáng bạn đang có. Hệ thống
+              không tạo ảnh khỏa thân, không cởi bỏ trang phục và luôn giữ kín vùng ngực, vùng chậu
+              và mông. Ảnh không được lưu lại sau khi tạo xong.
+            </Text>
+            <Pressable style={st.consentRow} onPress={()=>{setAdultConsent(v=>!v);setSafetyError(null);}}>
+              <View style={[st.checkbox,adultConsent&&st.checkboxOn]}>
+                {adultConsent&&<Ionicons name="checkmark" size={14} color="#fff"/>}
+              </View>
+              <Text style={st.consentCheck}>Tôi đủ 18 tuổi và có quyền sử dụng ảnh này.</Text>
+            </Pressable>
+          </View>
+        )}
+        {!!safetyError&&(
+          <View style={st.safetyBanner}>
+            <Text style={st.safetyTitle}>{SAFETY_TITLES[safetyError.code]||'Không thể tạo ảnh'}</Text>
+            <Text style={st.safetyMsg}>{safetyError.message}</Text>
+          </View>
+        )}
+        {!!safety&&safety.intentionalSkinExposure&&!!result&&(
+          <View style={st.coverageNote}>
+            <Text style={st.coverageT}>
+              Trang phục này để lộ {safety.allowedExposedZones.map(zone=>({
+                abdomen:'bụng',shoulders:'vai',upperArms:'bắp tay',legs:'chân',back:'lưng',
+              } as Record<string,string>)[zone]||zone).join(', ')} theo đúng thiết kế.
+              Hệ thống đã kiểm tra và giữ kín vùng ngực, vùng chậu và mông.
+            </Text>
+          </View>
+        )}
         {!!error&&(
           <View style={st.errBanner}>
             <Text style={st.errTitle}>Chưa tạo được ảnh thử đồ thật</Text>
@@ -402,19 +599,22 @@ export default function TryOn() {
         {!!warning&&!!result&&(
           <View style={st.warnBanner}><Text style={st.warnTitle}>Ảnh đã được tạo</Text><Text style={st.warnMsg}>{warning}</Text></View>
         )}
-        {!!sizeFit&&sizeFit.verdict!=='good'&&(
-          <View style={[st.fitBanner,sizeFit.verdict==='tight'?st.fitTight:st.fitLoose]}>
-            <Text style={st.fitTitle}>{sizeFit.verdict==='tight'?'⚠️ Có thể hơi chật':'⚠️ Có thể hơi rộng'}</Text>
+        {!!sizeFit&&!!FIT_UI[sizeFit.verdict]&&(
+          <View style={[st.fitBanner,FIT_UI[sizeFit.verdict].tone==='good'?st.fitGood:FIT_UI[sizeFit.verdict].tone==='tight'?st.fitTight:st.fitLoose]}>
+            <Text style={st.fitTitle}>{FIT_UI[sizeFit.verdict].title}</Text>
             <Text style={st.fitMsg}>{sizeFit.message}</Text>
-            {!!sizeFit.recommended&&(
-              <Pressable style={st.fitBtn} onPress={()=>setSize(sizeFit.recommended!)}>
+            {fitEffect?.applied&&(
+              <Text style={st.fitNote}>Ảnh đã được AI mô phỏng lại độ căng/độ rủ của vải trên đúng vóc dáng của bạn — cơ thể trong ảnh giữ nguyên, chỉ có quần áo thay đổi.</Text>
+            )}
+            {!!fitEffect&&fitEffect.requested&&!fitEffect.applied&&(
+              <Text style={st.fitNote}>Chưa dựng được hiệu ứng vừa vặn cho lượt này; ảnh đang là bản thử đồ gốc.</Text>
+            )}
+            {!!sizeFit.recommended&&sizeFit.verdict!=='good'&&(
+              <Pressable style={st.fitBtn} onPress={()=>{setSize(sizeFit.recommended!);clearGeneratedResult(`Đã đổi sang cỡ ${sizeFit.recommended}. Bấm Tạo ảnh thử đồ để xem lại độ vừa vặn.`);}}>
                 <Text style={st.fitBtnT}>Dùng cỡ {sizeFit.recommended}</Text>
               </Pressable>
             )}
           </View>
-        )}
-        {!!sizeFit&&sizeFit.verdict==='good'&&(
-          <View style={[st.fitBanner,st.fitGood]}><Text style={st.fitTitle}>✓ Vừa vặn</Text><Text style={st.fitMsg}>{sizeFit.message}</Text></View>
         )}
         <View style={st.pickRow}>
           <Pressable style={st.pick} onPress={()=>void choose(true)}><Text style={st.pickT}>📷 Chụp ảnh</Text></Pressable>
@@ -422,10 +622,72 @@ export default function TryOn() {
         </View>
         <Text style={st.tip}>Ảnh có dáng phù hợp sẽ được ghép trang phục ngay để nhanh và nhẹ hơn. Hệ thống chỉ chỉnh tư thế khi tay, đồ vật hoặc góc chụp che vùng cần mặc; người khác trong ảnh được giữ nguyên.</Text>
 
+        {!!photo&&(
+          <View style={st.bodyCard}>
+            <View style={st.bodyHead}>
+              <Text style={st.bodyTitle}>PHÂN TÍCH VÓC DÁNG</Text>
+              {bodyLoading
+                ? <ActivityIndicator size="small" color={C.ink} />
+                : <Pressable onPress={()=>void runBodyAnalysis(photo.base64)}><Text style={st.bodyRetry}>Phân tích lại</Text></Pressable>}
+            </View>
+            {bodyLoading&&<Text style={st.bodyHint}>Đang đo tỉ lệ cơ thể từ ảnh…</Text>}
+            {!!bodyError&&!bodyLoading&&<Text style={st.bodyWarn}>{bodyError}</Text>}
+            {!!bodyAnalysis&&!bodyLoading&&(
+              <>
+                <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>{bodyAnalysis.estimatedHeight?.source==='user_provided'?'Chiều cao bạn đã nhập':'Chiều cao AI ước lượng'}</Text>
+                  <Text style={st.bodyValue}>
+                    {rangeText(bodyAnalysis.estimatedHeight?.minCm,bodyAnalysis.estimatedHeight?.maxCm,'cm')||'Không đủ dữ liệu'}
+                  </Text>
+                </View>
+                <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>{bodyAnalysis.estimatedWeight?.source==='user_provided'?'Cân nặng bạn đã nhập':'Cân nặng AI ước lượng'}</Text>
+                  <Text style={st.bodyValue}>
+                    {rangeText(bodyAnalysis.estimatedWeight?.minKg,bodyAnalysis.estimatedWeight?.maxKg,'kg')||'Không đủ dữ liệu'}
+                  </Text>
+                </View>
+                <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>Độ tin cậy</Text>
+                  <Text style={st.bodyValue}>{confidenceLabel(bodyAnalysis.quality?.analysisConfidence||0)}</Text>
+                </View>
+                {!!bodyAnalysis.recommendedSize&&(
+                  <View style={st.bodyRow}>
+                    <Text style={st.bodyLabel}>Kích cỡ gợi ý</Text>
+                    <Text style={st.bodyValue}>{bodyAnalysis.recommendedSize}</Text>
+                  </View>
+                )}
+                <Text style={st.bodyNote}>
+                  {(bodyAnalysis.warnings&&bodyAnalysis.warnings[0])||'Ước lượng từ một ảnh 2D có sai số, không phải phép đo nhân trắc chính xác.'}
+                </Text>
+                <View style={st.bodyActions}>
+                  <Pressable
+                    style={[st.bodyBtn,st.bodyBtnMain,usingEstimate&&st.bodyBtnOn]}
+                    onPress={()=>void useEstimatedBody()}
+                    disabled={
+                      (bodyAnalysis.estimatedHeight?.source==='user_provided'||!bodyAnalysis.estimatedHeight?.valueCm)
+                      &&(bodyAnalysis.estimatedWeight?.source==='user_provided'||!bodyAnalysis.estimatedWeight?.valueKg)
+                    }
+                  >
+                    <Text style={st.bodyBtnMainT}>{usingEstimate?'AI đang tự dùng số liệu':'Dùng lại số liệu AI'}</Text>
+                  </Pressable>
+                  <Pressable style={st.bodyBtn} onPress={()=>{
+                    setUsingEstimate(false);
+                    setProfile(current=>({...current,measurementSource:'user'}));
+                    setMessage('Hãy nhập chiều cao, cân nặng (và vòng ngực/eo/hông nếu có) để hệ thống dùng số đo thật của bạn.');
+                  }}>
+                    <Text style={st.bodyBtnT}>Nhập số đo thật</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </View>
+        )}
+
         <Text style={st.section}>Số đo và gợi ý kích cỡ</Text>
+        {usingEstimate&&<Text style={st.estimateTag}>Số liệu bên dưới là ƯỚC LƯỢNG của AI từ ảnh, không phải số đo thật — sửa lại nếu bạn biết số chính xác.</Text>}
         <View style={st.measureRow}>
-          <Measure label="Chiều cao" value={String(profile.height||'')} onChange={v=>updateProfile('height',v)} unit="cm" />
-          <Measure label="Cân nặng" value={String(profile.weight||'')} onChange={v=>updateProfile('weight',v)} unit="kg" />
+          <Measure label="Chiều cao" value={effectiveMeasurement('height')} onChange={v=>updateProfile('height',v)} unit="cm" />
+          <Measure label="Cân nặng" value={effectiveMeasurement('weight')} onChange={v=>updateProfile('weight',v)} unit="kg" />
         </View>
         <View style={st.sizeRow}>{tryonSizes.map(v=><Pressable key={v} style={[st.size,size===v&&st.sizeOn]} onPress={()=>setSize(v)}><Text style={[st.sizeT,size===v&&{color:'#fff'}]}>{v}</Text></Pressable>)}</View>
         <Btn label={sizeLoading?'Đang tính kích cỡ…':'Gợi ý kích cỡ cho tôi'} variant="ghost" onPress={()=>{if(!sizeLoading)void adviseSize();}} />
@@ -577,6 +839,41 @@ const st=StyleSheet.create({
   fitTight:{backgroundColor:'#FCE8E8',borderColor:'#EBC4C4'},fitLoose:{backgroundColor:C.warningSoft,borderColor:C.line},fitGood:{backgroundColor:'#E4F5E9',borderColor:'#BEE3CB'},
   fitTitle:{fontFamily:F.bodyX,fontSize:12.5,color:C.ink},fitMsg:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.ink,marginTop:4},
   fitBtn:{alignSelf:'flex-start',backgroundColor:C.sumi,borderRadius:9,paddingVertical:7,paddingHorizontal:12,marginTop:8},fitBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11.5},
+  fitNote:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:6},
+  fitBadge:{position:'absolute',right:10,top:10,borderRadius:8,paddingHorizontal:9,paddingVertical:5,borderWidth:1},
+  fitBadgeT:{fontFamily:F.bodyB,fontSize:10.5,color:'#fff',letterSpacing:.6},
+  fitBadgeTight:{backgroundColor:'rgba(178,52,52,0.92)',borderColor:'rgba(255,255,255,0.5)'},
+  fitBadgeLoose:{backgroundColor:'rgba(176,120,32,0.92)',borderColor:'rgba(255,255,255,0.5)'},
+  fitBadgeGood:{backgroundColor:'rgba(44,120,72,0.92)',borderColor:'rgba(255,255,255,0.5)'},
+  bodyCard:{marginTop:14,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:13},
+  bodyHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
+  bodyTitle:{fontFamily:F.bodyB,fontSize:11,color:C.muted,letterSpacing:.7},
+  bodyRetry:{fontFamily:F.bodyB,fontSize:11,color:C.ai},
+  bodyHint:{fontFamily:F.body,fontSize:11.5,color:C.muted,marginTop:8},
+  bodyWarn:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:'#A44',marginTop:8},
+  bodyRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:9},
+  bodyLabel:{fontFamily:F.body,fontSize:11.5,color:C.muted,flex:1},
+  bodyValue:{fontFamily:F.bodyB,fontSize:13,color:C.ink},
+  bodyNote:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:10},
+  bodyActions:{flexDirection:'row',gap:8,marginTop:11},
+  bodyBtn:{flex:1,height:40,borderRadius:10,borderWidth:1,borderColor:C.line,alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},
+  bodyBtnT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
+  bodyBtnMain:{backgroundColor:C.sumi,borderColor:C.sumi},
+  bodyBtnMainT:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff'},
+  bodyBtnOn:{backgroundColor:C.primary,borderColor:C.primary},
+  estimateTag:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.ai,marginBottom:8},
+  consentCard:{marginTop:12,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#FFF9F0',padding:13},
+  consentTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},
+  consentBody:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:6},
+  consentRow:{flexDirection:'row',alignItems:'center',gap:9,marginTop:11},
+  checkbox:{width:22,height:22,borderRadius:6,borderWidth:1.5,borderColor:C.line,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},
+  checkboxOn:{backgroundColor:C.primary,borderColor:C.primary},
+  consentCheck:{flex:1,fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:C.ink},
+  safetyBanner:{marginTop:11,borderRadius:13,borderWidth:1,borderColor:'#E7C0C0',backgroundColor:'#FCEDED',padding:12},
+  safetyTitle:{fontFamily:F.bodyB,fontSize:12.5,color:'#8E2B2B'},
+  safetyMsg:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:'#7A3A3A',marginTop:5},
+  coverageNote:{marginTop:10,borderRadius:12,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:11},
+  coverageT:{fontFamily:F.body,fontSize:11,lineHeight:16.5,color:C.muted},
   section:{fontFamily:F.bodyB,fontSize:13,color:C.ink,marginTop:15,marginBottom:8},measureRow:{flexDirection:'row',gap:10},measureLabel:{fontFamily:F.bodyM,fontSize:10.5,color:C.muted,marginBottom:4},measure:{height:44,flexDirection:'row',alignItems:'center',backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:11,paddingHorizontal:10},measureInput:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},unit:{fontFamily:F.body,fontSize:11,color:C.muted},
   sizeRow:{flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:10},size:{width:'22%',minWidth:62,height:38,borderRadius:9,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},sizeOn:{backgroundColor:C.sumi,borderColor:C.sumi},sizeT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:'#fff'},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},

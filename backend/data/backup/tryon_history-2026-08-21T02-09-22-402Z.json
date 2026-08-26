@@ -1,0 +1,1012 @@
+[
+  {
+    "_id": "tryon-1783934432155",
+    "id": "tryon-1783934432155",
+    "userId": "demo-minh",
+    "productId": "p7",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783934432155
+  },
+  {
+    "_id": "tryon-1783935103669",
+    "id": "tryon-1783935103669",
+    "productId": "p6",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783935103669
+  },
+  {
+    "_id": "tryon-1784162536119",
+    "id": "tryon-1784162536119",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+secondary-person-lock",
+    "createdAt": 1784162536119
+  },
+  {
+    "_id": "tryon-1784545278299",
+    "id": "tryon-1784545278299",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784545278299
+  },
+  {
+    "_id": "tryon-1784626798861",
+    "id": "tryon-1784626798861",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784626798861
+  },
+  {
+    "_id": "tryon-1784629626209",
+    "id": "tryon-1784629626209",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784629626209
+  },
+  {
+    "_id": "tryon-1784954721018",
+    "id": "tryon-1784954721018",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1784954721018
+  },
+  {
+    "_id": "tryon-1784974491012",
+    "id": "tryon-1784974491012",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1784974491012
+  },
+  {
+    "_id": "tryon-1785033641392",
+    "id": "tryon-1785033641392",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1785033641392
+  },
+  {
+    "_id": "tryon-1785639215200",
+    "id": "tryon-1785639215200",
+    "userId": "demo-minh",
+    "productId": "p8",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785639215200
+  },
+  {
+    "_id": "tryon-1786061877676",
+    "id": "tryon-1786061877676",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786061877676
+  },
+  {
+    "_id": "tryon-1783922576844",
+    "id": "tryon-1783922576844",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783922576844
+  },
+  {
+    "_id": "tryon-1783929417836",
+    "id": "tryon-1783929417836",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783929417836
+  },
+  {
+    "_id": "tryon-1783930151009",
+    "id": "tryon-1783930151009",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783930151009
+  },
+  {
+    "_id": "tryon-1783930590799",
+    "id": "tryon-1783930590799",
+    "userId": "demo-minh",
+    "productId": "p21",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783930590799
+  },
+  {
+    "_id": "tryon-1783938237451",
+    "id": "tryon-1783938237451",
+    "productId": "p1",
+    "accessoryIds": [
+      "p13",
+      "p14"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+accessory-pose",
+    "createdAt": 1783938237451
+  },
+  {
+    "_id": "tryon-1783939475987",
+    "id": "tryon-1783939475987",
+    "productId": "p1",
+    "accessoryIds": [
+      "p13",
+      "p14"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+flux2-klein-4b-accessory-refine",
+    "createdAt": 1783939475987
+  },
+  {
+    "_id": "tryon-1784137382405",
+    "id": "tryon-1784137382405",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "local-preview-last-resort",
+    "createdAt": 1784137382405
+  },
+  {
+    "_id": "tryon-1784138417748",
+    "id": "tryon-1784138417748",
+    "productId": "p6",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5",
+    "createdAt": 1784138417748
+  },
+  {
+    "_id": "tryon-1784543038770",
+    "id": "tryon-1784543038770",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784543038770
+  },
+  {
+    "_id": "tryon-1784951050781",
+    "id": "tryon-1784951050781",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1784951050781
+  },
+  {
+    "_id": "tryon-1785638830344",
+    "id": "tryon-1785638830344",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1785638830344
+  },
+  {
+    "_id": "tryon-1785639029923",
+    "id": "tryon-1785639029923",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785639029923
+  },
+  {
+    "_id": "tryon-1785849669669",
+    "id": "tryon-1785849669669",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785849669669
+  },
+  {
+    "_id": "tryon-1785895618614",
+    "id": "tryon-1785895618614",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785895618614
+  },
+  {
+    "_id": "tryon-1783923811011",
+    "id": "tryon-1783923811011",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783923811011
+  },
+  {
+    "_id": "tryon-1783924782408",
+    "id": "tryon-1783924782408",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783924782408
+  },
+  {
+    "_id": "tryon-1783930451540",
+    "id": "tryon-1783930451540",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783930451540
+  },
+  {
+    "_id": "tryon-1783937381105",
+    "id": "tryon-1783937381105",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783937381105
+  },
+  {
+    "_id": "tryon-1784139163142",
+    "id": "tryon-1784139163142",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity+secondary-person-lock",
+    "createdAt": 1784139163142
+  },
+  {
+    "_id": "tryon-1784161955667",
+    "id": "tryon-1784161955667",
+    "productId": "p6",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784161955667
+  },
+  {
+    "_id": "tryon-1784712474221",
+    "id": "tryon-1784712474221",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784712474221
+  },
+  {
+    "_id": "tryon-1785849608536",
+    "id": "tryon-1785849608536",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785849608536
+  },
+  {
+    "_id": "tryon-1786062057500",
+    "id": "tryon-1786062057500",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786062057500
+  },
+  {
+    "_id": "tryon-1783926237100",
+    "id": "tryon-1783926237100",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+flux2-klein-4b-fidelity",
+    "createdAt": 1783926237100
+  },
+  {
+    "_id": "tryon-1783930750343",
+    "id": "tryon-1783930750343",
+    "userId": "demo-minh",
+    "productId": "p21",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783930750343
+  },
+  {
+    "_id": "tryon-1783934125356",
+    "id": "tryon-1783934125356",
+    "userId": "demo-minh",
+    "productId": "p6",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783934125356
+  },
+  {
+    "_id": "tryon-1783936115370",
+    "id": "tryon-1783936115370",
+    "userId": "demo-minh",
+    "productId": "p9",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5",
+    "createdAt": 1783936115370
+  },
+  {
+    "_id": "tryon-1784543345384",
+    "id": "tryon-1784543345384",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784543345384
+  },
+  {
+    "_id": "tryon-1784544252320",
+    "id": "tryon-1784544252320",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784544252320
+  },
+  {
+    "_id": "tryon-1784550081133",
+    "id": "tryon-1784550081133",
+    "userId": "demo-minh",
+    "productId": "p4",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1784550081133
+  },
+  {
+    "_id": "tryon-1784992529548",
+    "id": "tryon-1784992529548",
+    "productId": "p3",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1784992529548
+  },
+  {
+    "_id": "tryon-1785300664442",
+    "id": "tryon-1785300664442",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1785300664442
+  },
+  {
+    "_id": "tryon-1785301618522",
+    "id": "tryon-1785301618522",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1785301618522
+  },
+  {
+    "_id": "tryon-1785314068628",
+    "id": "tryon-1785314068628",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory+quality-warning",
+    "createdAt": 1785314068628
+  },
+  {
+    "_id": "tryon-1785639325018",
+    "id": "tryon-1785639325018",
+    "userId": "demo-minh",
+    "productId": "p8",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1785639325018
+  },
+  {
+    "_id": "tryon-1786359302616",
+    "id": "tryon-1786359302616",
+    "userId": "demo-minh",
+    "productId": "p1",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786359302616
+  },
+  {
+    "_id": "tryon-1786360036694",
+    "id": "tryon-1786360036694",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786360036694
+  },
+  {
+    "_id": "tryon-1786360864353",
+    "id": "tryon-1786360864353",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786360864353
+  },
+  {
+    "_id": "tryon-1786361137416",
+    "id": "tryon-1786361137416",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786361137416
+  },
+  {
+    "_id": "tryon-1786537170862",
+    "id": "tryon-1786537170862",
+    "userId": "demo-minh",
+    "productId": "p5",
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786537170862
+  },
+  {
+    "_id": "tryon-1786538188740",
+    "id": "tryon-1786538188740",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786538188740
+  },
+  {
+    "_id": "tryon-1786538293526",
+    "id": "tryon-1786538293526",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786538293526
+  },
+  {
+    "_id": "tryon-1786601525915",
+    "id": "tryon-1786601525915",
+    "productId": "p4",
+    "productIds": [
+      "p4"
+    ],
+    "accessoryIds": [
+      "p12",
+      "p17",
+      "p18"
+    ],
+    "engine": "fashn-vton-1.5+adaptive-low-memory+flux2-klein-4b-accessory-refine",
+    "createdAt": 1786601525915,
+    "appliedAccessories": [
+      {
+        "id": "giay-dep",
+        "name": "Dép quai Nhật",
+        "kind": "shoe",
+        "action": "mang đôi dép/giày vào hai bàn chân"
+      },
+      {
+        "id": "chup-tai",
+        "name": "Chụp tai nữ",
+        "kind": "earmuffs",
+        "action": "đeo hai bên tai và vòng qua đỉnh đầu"
+      },
+      {
+        "id": "kep-no",
+        "name": "Kẹp nơ tóc",
+        "kind": "hair_clip",
+        "action": "kẹp vào tóc cạnh thái dương"
+      }
+    ],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1786603596683",
+    "id": "tryon-1786603596683",
+    "productId": "p-jp-hakama-nu",
+    "productIds": [
+      "p-jp-hakama-nu",
+      "p-jp-happi-le-hoi"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory+upper:fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786603596683,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1786606108399",
+    "id": "tryon-1786606108399",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [
+      "p12",
+      "p18",
+      "p11"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786606108399,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Dép quai Nhật",
+      "Balo vải Nhật",
+      "Chụp tai nữ"
+    ]
+  },
+  {
+    "_id": "tryon-1786606901629",
+    "id": "tryon-1786606901629",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [
+      "p13",
+      "p18",
+      "p11"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786606901629,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Mũ bo Nhật",
+      "Chụp tai nữ"
+    ]
+  },
+  {
+    "_id": "tryon-1786607088201",
+    "id": "tryon-1786607088201",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [
+      "p13",
+      "p18",
+      "p11"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786607088201,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Mũ bo Nhật",
+      "Chụp tai nữ"
+    ]
+  },
+  {
+    "_id": "tryon-1786607282457",
+    "id": "tryon-1786607282457",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [
+      "p13",
+      "p11",
+      "p18"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786607282457,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Mũ bo Nhật",
+      "Chụp tai nữ"
+    ]
+  },
+  {
+    "_id": "tryon-1786607372434",
+    "id": "tryon-1786607372434",
+    "productId": "p-jp-happi-le-hoi",
+    "productIds": [
+      "p-jp-happi-le-hoi"
+    ],
+    "accessoryIds": [
+      "p11",
+      "p18",
+      "p13"
+    ],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786607372434,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Chụp tai nữ",
+      "Mũ bo Nhật"
+    ]
+  },
+  {
+    "_id": "tryon-1786607522479",
+    "id": "tryon-1786607522479",
+    "productId": "p-jp-happi-le-hoi",
+    "productIds": [
+      "p-jp-happi-le-hoi"
+    ],
+    "accessoryIds": [
+      "p11",
+      "p18",
+      "p13"
+    ],
+    "engine": "fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786607522479,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Chụp tai nữ",
+      "Mũ bo Nhật"
+    ]
+  },
+  {
+    "_id": "tryon-1786607653805",
+    "id": "tryon-1786607653805",
+    "productId": "p-jp-happi-le-hoi",
+    "productIds": [
+      "p-jp-happi-le-hoi"
+    ],
+    "accessoryIds": [
+      "p11",
+      "p18",
+      "p13"
+    ],
+    "engine": "fashn-vton-1.5+adaptive-low-memory+flux2-klein-4b-accessory-refine",
+    "createdAt": 1786607653805,
+    "appliedAccessories": [
+      {
+        "id": "balo-vai",
+        "name": "Balo vải Nhật",
+        "kind": "backpack",
+        "action": "đeo ba lô sau lưng, quai vắt qua hai vai"
+      },
+      {
+        "id": "chup-tai",
+        "name": "Chụp tai nữ",
+        "kind": "earmuffs",
+        "action": "đeo hai bên tai và vòng qua đỉnh đầu"
+      },
+      {
+        "id": "mu-nhat",
+        "name": "Mũ bo Nhật",
+        "kind": "hat",
+        "action": "đội nón đúng vị trí đầu"
+      }
+    ],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1786607846308",
+    "id": "tryon-1786607846308",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [
+      "p13",
+      "p17",
+      "p11"
+    ],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786607846308,
+    "appliedAccessories": [],
+    "skippedAccessories": [
+      "Balo vải Nhật",
+      "Mũ bo Nhật",
+      "Kẹp nơ tóc"
+    ]
+  },
+  {
+    "_id": "tryon-demo-1786639187664-0",
+    "id": "tryon-demo-1786639187664-0",
+    "userId": "u-demo-1786639187664-6",
+    "productId": "p15",
+    "productIds": [
+      "p15"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1784565587664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-1",
+    "id": "tryon-demo-1786639187664-1",
+    "userId": "u-demo-1786639187664-0",
+    "productId": "p22",
+    "productIds": [
+      "p22"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1784133587664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-2",
+    "id": "tryon-demo-1786639187664-2",
+    "userId": "u-demo-1786639187664-5",
+    "productId": "p15",
+    "productIds": [
+      "p15"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1783701587664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-3",
+    "id": "tryon-demo-1786639187664-3",
+    "userId": "u-demo-1786639187664-2",
+    "productId": "p-jp-obi-lua",
+    "productIds": [
+      "p-jp-obi-lua"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1783615187664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-4",
+    "id": "tryon-demo-1786639187664-4",
+    "userId": "u-demo-1786639187664-8",
+    "productId": "p4",
+    "productIds": [
+      "p4"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1784565587664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-5",
+    "id": "tryon-demo-1786639187664-5",
+    "userId": "u-demo-1786639187664-6",
+    "productId": "p-jp-sensu-quat-gap",
+    "productIds": [
+      "p-jp-sensu-quat-gap"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1785083987664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-6",
+    "id": "tryon-demo-1786639187664-6",
+    "userId": "u-demo-1786639187664-0",
+    "productId": "p-jp-happi-le-hoi",
+    "productIds": [
+      "p-jp-happi-le-hoi"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1785256787664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-7",
+    "id": "tryon-demo-1786639187664-7",
+    "userId": "u-demo-1786639187664-9",
+    "productId": "p14",
+    "productIds": [
+      "p14"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1783442387664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-8",
+    "id": "tryon-demo-1786639187664-8",
+    "userId": "u-demo-1786639187664-2",
+    "productId": "p6",
+    "productIds": [
+      "p6"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1785775187664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-demo-1786639187664-9",
+    "id": "tryon-demo-1786639187664-9",
+    "userId": "u-demo-1786639187664-9",
+    "productId": "p-jp-furoshiki-vai",
+    "productIds": [
+      "p-jp-furoshiki-vai"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+demo-seed",
+    "createdAt": 1785602387664,
+    "demoBatch": "demo-2026-08"
+  },
+  {
+    "_id": "tryon-1786898492519",
+    "id": "tryon-1786898492519",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786898492519,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1786946259521",
+    "id": "tryon-1786946259521",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1786946259521,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787207140392",
+    "id": "tryon-1787207140392",
+    "userId": "verify-user",
+    "productId": "p3",
+    "productIds": [
+      "p3"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+flux2-klein-4b-fidelity+adaptive-low-memory",
+    "createdAt": 1787207140392,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787249851016",
+    "id": "tryon-1787249851016",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787249851016,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787249888069",
+    "id": "tryon-1787249888069",
+    "userId": "guest",
+    "productId": "p4",
+    "productIds": [
+      "p4"
+    ],
+    "accessoryIds": [],
+    "engine": "fashn-vton-1.5+adaptive-low-memory+secondary-person-lock",
+    "createdAt": 1787249888069,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787250081478",
+    "id": "tryon-1787250081478",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787250081478,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787251036729",
+    "id": "tryon-1787251036729",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787251036729,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787252027414",
+    "id": "tryon-1787252027414",
+    "userId": "demo-minh",
+    "productId": "p9",
+    "productIds": [
+      "p9"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787252027414,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787267097592",
+    "id": "tryon-1787267097592",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787267097592,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787267203329",
+    "id": "tryon-1787267203329",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787267203329,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787272909667",
+    "id": "tryon-1787272909667",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787272909667,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  },
+  {
+    "_id": "tryon-1787273078644",
+    "id": "tryon-1787273078644",
+    "userId": "demo-minh",
+    "productId": "p2",
+    "productIds": [
+      "p2"
+    ],
+    "accessoryIds": [],
+    "engine": "flux2-klein-4b-pose+fashn-vton-1.5+adaptive-low-memory",
+    "createdAt": 1787273078644,
+    "appliedAccessories": [],
+    "skippedAccessories": []
+  }
+]

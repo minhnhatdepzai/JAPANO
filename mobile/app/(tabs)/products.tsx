@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F } from '../../theme/tokens';
 import { ProductCard } from '../../components/ProductCard';
-import { PRODUCTS, CATEGORIES, CAT_LABEL, Product } from '../../lib/catalog';
+import { PRODUCTS, CATEGORIES, CAT_LABEL, GARMENT_FILTERS, matchesGarmentFilter, Product } from '../../lib/catalog';
 import { logSearch, trackInteraction } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 
@@ -53,11 +53,13 @@ export default function Products() {
   const { user, isAuthenticated } = useAuth();
   const { width:screenWidth } = useWindowDimensions();
   const [cat, setCat] = useState('all');
+  const [garment, setGarment] = useState('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<SortKey>('new');
   const [sortOpen, setSortOpen] = useState(false);
   const list = useMemo(()=>{
     let l = cat==='all'? PRODUCTS : PRODUCTS.filter(p=>p.cat===cat);
+    if(garment!=='all') l = l.filter(p=>matchesGarmentFilter(p, garment));
     const query = q.trim();
     if (query) {
       const nq = norm(query);
@@ -72,7 +74,7 @@ export default function Products() {
     else if (sort==='price-desc') l.sort((a,b)=>b.price-a.price);
     else if (sort==='bestseller') l.sort((a,b)=>b.sold-a.sold);
     return l;
-  },[cat,q,sort]);
+  },[cat,garment,q,sort]);
   const sortLabel = SORTS.find(s=>s.key===sort)?.label || 'M\u1edbi nh\u1ea5t';
   const cardGap = 12;
   const cardWidth = Math.floor((screenWidth - 36 - cardGap) / 2);
@@ -112,6 +114,18 @@ export default function Products() {
           {CATEGORIES.map(c=>(
             <Pressable key={c.key} style={[st.chip, cat===c.key&&st.chipOn]} onPress={()=>setCat(c.key)}>
               <Text style={{ color:cat===c.key?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12.5 }}>{c.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }} contentContainerStyle={{ gap:8 }}>
+          <Pressable style={[st.chip, garment==='all'&&st.chipOn]} onPress={()=>setGarment('all')}>
+            <Text style={{ color:garment==='all'?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>Mọi kiểu</Text>
+          </Pressable>
+          {GARMENT_FILTERS.map(f=>(
+            <Pressable key={f.key} style={[st.chip, garment===f.key&&st.chipOn]} onPress={()=>setGarment(garment===f.key?'all':f.key)}>
+              <Text style={{ color:garment===f.key?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>
+                {f.label}{f.adultOnly?' 18+':''}
+              </Text>
             </Pressable>
           ))}
         </ScrollView>

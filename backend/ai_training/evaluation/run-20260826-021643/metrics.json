@@ -1,0 +1,77 @@
+{
+  "evaluatedAt": "2026-08-26T02:17:50+07:00",
+  "checkpoint": "backend/ai_training/models/fit_lora_pilot/pytorch_lora_weights.safetensors",
+  "checkpointBytes": 16731128,
+  "evaluationSamples": 2,
+  "evaluationIdentities": [
+    "viton_10749_00"
+  ],
+  "split": "validation",
+  "baseline": {
+    "samples": 2,
+    "steps": 4,
+    "passRate": 1.0,
+    "failureRate": 0.0,
+    "artifactRate": 0.0,
+    "bodyDriftMean": 0.134,
+    "colorShiftMean": 3.444,
+    "structureChangeMean": 11.548,
+    "skinGainMean": -0.0011,
+    "latencyP50": 17.08,
+    "latencyP95": 10.3,
+    "peakVramGb": 5.63
+  },
+  "lora": {
+    "samples": 2,
+    "steps": 4,
+    "passRate": 1.0,
+    "failureRate": 0.0,
+    "artifactRate": 0.0,
+    "bodyDriftMean": 0.11,
+    "colorShiftMean": 2.15,
+    "structureChangeMean": 10.6025,
+    "skinGainMean": -0.0009,
+    "latencyP50": 12.94,
+    "latencyP95": 10.04,
+    "peakVramGb": 5.63
+  },
+  "acceptance": {
+    "accepted": false,
+    "checks": [
+      {
+        "check": "identity_body_preserved",
+        "passed": true,
+        "detail": "bodyDrift LoRA 0.11 vs baseline 0.134"
+      },
+      {
+        "check": "garment_fidelity_preserved",
+        "passed": true,
+        "detail": "colorShift LoRA 2.15 vs baseline 3.444"
+      },
+      {
+        "check": "fit_effect_visible",
+        "passed": false,
+        "detail": "structureChange LoRA 10.6025 vs baseline 11.548"
+      },
+      {
+        "check": "artifact_not_worse",
+        "passed": true,
+        "detail": "artifactRate LoRA 0.0 vs baseline 0.0"
+      },
+      {
+        "check": "failure_not_worse",
+        "passed": true,
+        "detail": "failureRate LoRA 0.0 vs baseline 0.0"
+      },
+      {
+        "check": "latency_or_quality_justified",
+        "passed": true,
+        "detail": "latencyP50 12.94s vs 17.08s; passRate 1.0 vs 1.0"
+      }
+    ]
+  },
+  "metricNature": "proxy tự động từ fit_effect_quality — KHÔNG phải điểm người chấm",
+  "failedSamples": [],
+  "contactSheet": "/home/nhat/Downloads/japano/backend/ai_training/contact_sheets/run-20260826-021643-baseline-vs-lora.jpg",
+  "perSampleCsv": "/home/nhat/Downloads/japano/backend/ai_training/evaluation/run-20260826-021643/per_sample.csv"
+}

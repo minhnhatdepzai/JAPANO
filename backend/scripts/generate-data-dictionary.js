@@ -22,7 +22,7 @@ const STATE_TO_COLLECTION = {
   flagcards: 'flagcards', flagcardCollections: 'flagcard_collections',
   vipMemberships: 'vip_memberships', banners: 'banners', interactions: 'interactions',
   searchLogs: 'search_logs', pushTokens: 'push_tokens', profiles: 'profiles', chats: 'chats',
-  tryonHistory: 'tryon_history', goals: 'goals', aiDescriptions: 'ai_descriptions',
+  goals: 'goals', aiDescriptions: 'ai_descriptions',
   japanSpotReviews: 'japan_spot_reviews', japanSpotSuggestions: 'japan_spot_suggestions',
 };
 

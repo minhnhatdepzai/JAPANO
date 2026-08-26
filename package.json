@@ -11,7 +11,7 @@
     "backend": "npm --workspace backend start",
     "backend:dev": "npm --workspace backend run dev",
     "mobile": "npm --workspace mobile start",
-    "check": "npm --workspace backend test && npm --workspace mobile run typecheck",
+    "check": "npm --workspace backend test && npm --workspace mobile run typecheck && npm run test:python",
     "dev:android": "./start-all.sh",
     "media:cloudinary:sync": "node backend/scripts/syncProductsToCloud.js",
     "db:mongo:migrate": "node backend/scripts/migrateToMongoCollections.js",
@@ -21,7 +21,13 @@
     "verify:ai": "node scripts/verify.mjs --ai",
     "mail:test": "npm --workspace backend run mail:test --",
     "setup:auth": "node scripts/setup-google-email.mjs",
-    "db:verify": "npm --workspace backend run db:verify"
+    "db:verify": "npm --workspace backend run db:verify",
+    "test:python": "python3 -m unittest discover -s backend/test/python -v",
+    "fit:eval": "node backend/ai_training/evaluate_fit_classifier.js",
+    "fit:dataset": "python3 backend/ai_training/prepare_fit_dataset.py",
+    "fit:lora": "python3 backend/ai_training/train_fit_lora.py",
+    "body:train": "python3 backend/ai_training/train_body_estimator.py",
+    "tryon:manual-eval": "python3 backend/ai_training/evaluate_tryon_manual.py"
   },
   "engines": {
     "node": ">=20"

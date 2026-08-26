@@ -18,6 +18,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [Chức năng](#chức-năng)
 - [Model và thuật toán](#model-và-thuật-toán)
+- [Báo cáo fine-tune thử đồ](#báo-cáo-fine-tune-thử-đồ)
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
 - [Cấu hình môi trường](#cấu-hình-môi-trường)
@@ -191,6 +192,67 @@ ollama pull qwen3-vl:8b
 | YOLOv10m ONNX + ViTPose ONNX | Pose/control và kiểm tra action cho motion | Đi cùng external One-to-All installation |
 
 [`backend/pose_reposer.py`](backend/pose_reposer.py) còn có capability Stable Diffusion 1.5 + ControlNet OpenPose cho direct CatVTON service, nhưng app route chính hiện không kích hoạt nhánh repose này.
+
+## Báo cáo fine-tune thử đồ
+
+Kết quả thực nghiệm ngày **26/08/2026**: dự án không fine-tune trọng số FASHN
+VTON 1.5 (repository cục bộ chỉ cung cấp inference). Phần được fine-tune là
+**LoRA rank 8 cho FLUX.2 Klein 4B img2img**, dùng sau FASHN để mô phỏng áo chật,
+vừa hoặc rộng theo size khách chọn. Adapter chỉ áp dụng cho `tops`, đúng miền dữ
+liệu upper-body; các nhóm khác tiếp tục dùng pipeline gốc và quality gate.
+
+### Dữ liệu
+
+| Mục | Kết quả đã xác minh |
+|---|---|
+| Nguồn | Kaggle `marquis03/high-resolution-viton-zalando-dataset` (VITON-HD), 5,25 GB |
+| Dataset fit của JAPANO | 116 mẫu, 21 danh tính, đủ 7 lớp `good` → `very_loose` |
+| Provenance nhãn | 96 target tự sinh bởi fit-refiner hiện tại + 20 identity-copy cho lớp `good` |
+| Chia theo danh tính | train 81 mẫu/15 người; validation 18/3; test 17/3 |
+| Giới hạn miền | Upper-body; không dùng kết quả này để tuyên bố đã học tốt bottoms, kimono hoặc one-pieces |
+
+VITON-HD dùng license **CC-BY-NC-SA-4.0**: dữ liệu và checkpoint phái sinh chỉ
+phù hợp nghiên cứu/đồ án, không được coi là asset sẵn sàng cho sản phẩm thương
+mại. Chi tiết provenance nằm ở
+[`backend/ai_training/provenance/viton_hd.manifest.json`](backend/ai_training/provenance/viton_hd.manifest.json).
+
+### Cấu hình và kết quả train
+
+| Tham số | Giá trị |
+|---|---|
+| Base model | FLUX.2 Klein 4B |
+| LoRA | rank 8, alpha 8 |
+| Ảnh train | 512 px, BF16, batch 1, gradient accumulation 4 |
+| Optimizer | 8-bit Adam, learning rate `1e-4`, constant schedule |
+| Train | 600 bước, seed 17, checkpoint mỗi 100 bước |
+| Tài nguyên thực đo | 80,3 phút; peak VRAM 15,2 GB |
+| Artifact cuối | `backend/ai_training/models/fit_lora/` |
+
+Checkpoint 600 train xong nhưng không được bật chỉ vì là mốc cuối. Benchmark
+validation đã loại checkpoint 600 và 500 do artifact/failure; checkpoint 400
+qua đủ acceptance gate và hiện là bản production:
+`backend/ai_training/models/fit_lora/checkpoint-400`.
+
+| Proxy tự động, 8 mẫu/2 danh tính | Baseline | LoRA checkpoint 400 |
+|---|---:|---:|
+| Pass rate | 100% | 100% |
+| Failure / artifact | 0% / 0% | 0% / 0% |
+| Body drift, thấp hơn tốt hơn | 0,1148 | 0,1145 |
+| Color shift, thấp hơn tốt hơn | 6,6574 | 8,4305 |
+| Fit structure change, cao hơn tốt hơn | 16,7195 | 19,0849 |
+| Latency P50 | 13,43 giây | 14,54 giây |
+
+Các số trên là proxy từ quality gate, **không phải điểm người chấm**. Khi LoRA
+không qua quality gate ở một ảnh thực tế, backend giữ ảnh FASHN sạch thay vì trả
+ảnh làm sai cơ thể. Trạng thái hiện hành luôn đọc từ
+[`fit_lora.status.json`](backend/ai_training/models/fit_lora.status.json); quy
+trình tái tạo dataset, train và benchmark nằm trong
+[`backend/ai_training/README.md`](backend/ai_training/README.md).
+
+Smoke test API thật sau khi sửa lỗi chờ vô hạn: ca thường trả ảnh trong 37,5
+giây ở lượt đầu và 25,6 giây ở lượt model đã nóng; ca lệch size cực lớn gồm cả
+FASHN + LoRA hoàn tất trong 82,5 giây. Thời gian phụ thuộc GPU, pose và số lớp
+trang phục, nhưng request không còn treo nhiều phút vì lỗi async.
 
 ### Recommendation và Botchat chạy CPU
 

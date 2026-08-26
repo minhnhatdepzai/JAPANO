@@ -1,0 +1,3037 @@
+[
+  {
+    "id": "jp1",
+    "slug": "yukata-hoa-anh-dao",
+    "name": "Yukata hoa anh đào",
+    "kanji": "浴衣",
+    "sku": "JP001",
+    "brand": "JAPANO",
+    "price": 1290000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "yukata",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#1F3A6E",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội",
+      "mùa hè"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Yukata hoa anh đào (浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Yukata hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Yukata: Traditional Garment for Summer — Web Japan",
+        "url": "https://web-japan.org/trends/11_fashion/fas120820.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/yukata-hoa-anh-dao_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/yukata-hoa-anh-dao_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp2",
+    "slug": "yukata-xanh-indigo",
+    "name": "Yukata xanh chàm",
+    "kanji": "藍染浴衣",
+    "sku": "JP002",
+    "brand": "JAPANO",
+    "price": 1190000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "yukata",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#22417A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "tối giản"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Yukata xanh chàm (藍染浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Yukata xanh chàm lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Yukata: Traditional Garment for Summer — Web Japan",
+        "url": "https://web-japan.org/trends/11_fashion/fas120820.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/yukata-xanh-indigo_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/yukata-xanh-indigo_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp3",
+    "slug": "kimono-furisode-do",
+    "name": "Kimono Furisode tay dài",
+    "kanji": "振袖",
+    "sku": "JP003",
+    "brand": "JAPANO",
+    "price": 4890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#9B1B30",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội",
+      "cao cấp"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Kimono Furisode tay dài (振袖) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Kimono Furisode tay dài lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/kimono-furisode-do_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/kimono-furisode-do_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp4",
+    "slug": "kimono-tomesode-den",
+    "name": "Kimono Tomesode đen",
+    "kanji": "留袖",
+    "sku": "JP004",
+    "brand": "JAPANO",
+    "price": 5290000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#1A1A1A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "thanh lịch",
+      "cao cấp"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Kimono Tomesode đen (留袖) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Kimono Tomesode đen lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/kimono-tomesode-den_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/kimono-tomesode-den_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp5",
+    "slug": "haori-seigaiha",
+    "name": "Haori họa tiết Seigaiha",
+    "kanji": "羽織",
+    "sku": "JP005",
+    "brand": "JAPANO",
+    "price": 1490000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "haori",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#2E5C8A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "khoác ngoài"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Haori họa tiết Seigaiha (羽織) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Haori họa tiết Seigaiha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/haori-seigaiha_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/haori-seigaiha_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp6",
+    "slug": "haori-song-nami",
+    "name": "Haori họa tiết sóng Nami",
+    "kanji": "波羽織",
+    "sku": "JP006",
+    "brand": "JAPANO",
+    "price": 1590000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "haori",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#3A3F44",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "khoác ngoài"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Haori họa tiết sóng Nami (波羽織) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Haori họa tiết sóng Nami lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/haori-song-nami_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/haori-song-nami_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp7",
+    "slug": "hakama-nu-tim",
+    "name": "Hakama nữ màu tím",
+    "kanji": "袴",
+    "sku": "JP007",
+    "brand": "JAPANO",
+    "price": 1690000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "hakama",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#5B4B8A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "học đường"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Hakama nữ màu tím (袴) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Hakama nữ màu tím lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/hakama-nu-tim_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/hakama-nu-tim_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp8",
+    "slug": "jinbei-mua-he",
+    "name": "Jinbei mùa hè",
+    "kanji": "甚平",
+    "sku": "JP008",
+    "brand": "JAPANO",
+    "price": 890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "jinbei",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#2C4A6B",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "mùa hè",
+      "thoải mái"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Jinbei mùa hè (甚平) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Jinbei mùa hè lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/jinbei-mua-he_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/jinbei-mua-he_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp9",
+    "slug": "samue-vai-bong",
+    "name": "Samue vải bông",
+    "kanji": "作務衣",
+    "sku": "JP009",
+    "brand": "JAPANO",
+    "price": 1090000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "samue",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#4A4A4A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "tối giản"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Samue vải bông (作務衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Samue vải bông lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/samue-vai-bong_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/samue-vai-bong_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp10",
+    "slug": "noragi-denim",
+    "name": "Noragi denim",
+    "kanji": "野良着",
+    "sku": "JP010",
+    "brand": "JAPANO",
+    "price": 1390000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "noragi",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#2B4162",
+    "tags": [
+      "nhật",
+      "streetwear",
+      "khoác ngoài"
+    ],
+    "visualTags": [
+      "nhật",
+      "streetwear"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Noragi denim (野良着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Noragi denim lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/noragi-denim_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/noragi-denim_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp11",
+    "slug": "happi-matsuri",
+    "name": "Happi lễ hội Matsuri",
+    "kanji": "法被",
+    "sku": "JP011",
+    "brand": "JAPANO",
+    "price": 790000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "happi",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#C0392B",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Happi lễ hội Matsuri (法被) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Happi lễ hội Matsuri lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/happi-matsuri_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/happi-matsuri_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp12",
+    "slug": "obi-vang-kim",
+    "name": "Đai Obi vàng kim",
+    "kanji": "帯",
+    "sku": "JP012",
+    "brand": "JAPANO",
+    "price": 690000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "phu-kien",
+    "category": "phu-kien",
+    "garmentType": "tops",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#C9A227",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "phụ kiện"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Đai Obi vàng kim (帯) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Đai Obi vàng kim lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/obi-vang-kim_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/obi-vang-kim_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp13",
+    "slug": "vay-lien-sakura",
+    "name": "Váy liền thân hoa anh đào",
+    "kanji": "桜ワンピース",
+    "sku": "JP013",
+    "brand": "JAPANO",
+    "price": 1190000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "one-pieces",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#F2B8C6",
+    "tags": [
+      "nhật",
+      "thanh lịch",
+      "nữ tính"
+    ],
+    "visualTags": [
+      "nhật",
+      "thanh lịch"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Váy liền thân hoa anh đào (桜ワンピース) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Váy liền thân hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/vay-lien-sakura_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/vay-lien-sakura_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp14",
+    "slug": "vay-xep-ly-nhat",
+    "name": "Chân váy ngắn xếp ly",
+    "kanji": "プリーツスカート",
+    "sku": "JP014",
+    "brand": "JAPANO",
+    "price": 690000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "short_skirt",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#22315B",
+    "tags": [
+      "nhật",
+      "học đường",
+      "streetwear"
+    ],
+    "visualTags": [
+      "nhật",
+      "học đường"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Chân váy ngắn xếp ly (プリーツスカート) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Chân váy ngắn xếp ly lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/vay-xep-ly-nhat_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/vay-xep-ly-nhat_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp15",
+    "slug": "crop-top-seigaiha",
+    "name": "Crop top họa tiết Seigaiha",
+    "kanji": "クロップトップ",
+    "sku": "JP015",
+    "brand": "JAPANO",
+    "price": 590000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "crop_top",
+    "adultOnlyTryOn": true,
+    "tearAllowed": false,
+    "colorHex": "#F5F7FA",
+    "tags": [
+      "nhật",
+      "streetwear",
+      "mùa hè"
+    ],
+    "visualTags": [
+      "nhật",
+      "streetwear"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Crop top họa tiết Seigaiha (クロップトップ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Crop top họa tiết Seigaiha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/crop-top-seigaiha_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/crop-top-seigaiha_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp16",
+    "slug": "ao-sat-nach-song",
+    "name": "Áo sát nách họa tiết sóng",
+    "kanji": "ノースリーブ",
+    "sku": "JP016",
+    "brand": "JAPANO",
+    "price": 490000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "sleeveless_top",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#EFE6D5",
+    "tags": [
+      "nhật",
+      "mùa hè",
+      "thoải mái"
+    ],
+    "visualTags": [
+      "nhật",
+      "mùa hè"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Áo sát nách họa tiết sóng (ノースリーブ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Áo sát nách họa tiết sóng lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/ao-sat-nach-song_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/ao-sat-nach-song_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp17",
+    "slug": "quan-short-hoa-van",
+    "name": "Quần short hoa văn Nhật",
+    "kanji": "ショートパンツ",
+    "sku": "JP017",
+    "brand": "JAPANO",
+    "price": 590000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "shorts",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#D8C9A8",
+    "tags": [
+      "nhật",
+      "mùa hè",
+      "thoải mái"
+    ],
+    "visualTags": [
+      "nhật",
+      "mùa hè"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Quần short hoa văn Nhật (ショートパンツ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Quần short hoa văn Nhật lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/quan-short-hoa-van_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/quan-short-hoa-van_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp18",
+    "slug": "do-boi-mot-manh-song",
+    "name": "Áo tắm một mảnh họa tiết sóng",
+    "kanji": "ワンピース水着",
+    "sku": "JP018",
+    "brand": "JAPANO",
+    "price": 890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "one_piece_swimsuit",
+    "adultOnlyTryOn": true,
+    "tearAllowed": false,
+    "colorHex": "#1E3A5F",
+    "tags": [
+      "nhật",
+      "mùa hè",
+      "đồ bơi"
+    ],
+    "visualTags": [
+      "nhật",
+      "mùa hè"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Áo tắm một mảnh họa tiết sóng (ワンピース水着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Áo tắm một mảnh họa tiết sóng lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/do-boi-mot-manh-song_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/do-boi-mot-manh-song_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp19",
+    "slug": "bikini-hoa-anh-dao",
+    "name": "Bikini hai mảnh hoa anh đào",
+    "kanji": "ビキニ",
+    "sku": "JP019",
+    "brand": "JAPANO",
+    "price": 790000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "bikini_two_piece",
+    "adultOnlyTryOn": true,
+    "tearAllowed": false,
+    "colorHex": "#F7D9E3",
+    "tags": [
+      "nhật",
+      "mùa hè",
+      "đồ bơi"
+    ],
+    "visualTags": [
+      "nhật",
+      "mùa hè"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Bikini hai mảnh hoa anh đào (ビキニ) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Bikini hai mảnh hoa anh đào lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/bikini-hoa-anh-dao_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/bikini-hoa-anh-dao_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp20",
+    "slug": "kimono-homongi-tra",
+    "name": "Kimono Hōmongi xanh trà",
+    "kanji": "訪問着",
+    "sku": "JP020",
+    "brand": "JAPANO",
+    "price": 3890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#71806A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "thanh lịch",
+      "trà đạo",
+      "dự tiệc"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Kimono Hōmongi xanh trà (訪問着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Kimono Hōmongi xanh trà lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/kimono-homongi-tra_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/kimono-homongi-tra_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp21",
+    "slug": "kimono-iromuji-matcha",
+    "name": "Kimono Iromuji màu matcha",
+    "kanji": "色無地",
+    "sku": "JP021",
+    "brand": "JAPANO",
+    "price": 3290000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#7A8B58",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "tối giản",
+      "trà đạo"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Kimono Iromuji màu matcha (色無地) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Kimono Iromuji màu matcha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/kimono-iromuji-matcha_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/kimono-iromuji-matcha_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp22",
+    "slug": "kimono-komon-asanoha",
+    "name": "Kimono Komon họa tiết Asanoha",
+    "kanji": "小紋",
+    "sku": "JP022",
+    "brand": "JAPANO",
+    "price": 2790000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#E9E0CF",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "đời thường",
+      "asanoha"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Kimono Komon họa tiết Asanoha (小紋) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Kimono Komon họa tiết Asanoha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/kimono-komon-asanoha_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/kimono-komon-asanoha_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp23",
+    "slug": "uchikake-hac-trang",
+    "name": "Uchikake hạc trắng cát tường",
+    "kanji": "打掛",
+    "sku": "JP023",
+    "brand": "JAPANO",
+    "price": 6890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "kimono",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#A51C30",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "cưới hỏi",
+      "hạc",
+      "cao cấp"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Uchikake hạc trắng cát tường (打掛) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Uchikake hạc trắng cát tường lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Traditional Kimono Designs Featuring Cranes — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202312/202312_03_jp.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/uchikake-hac-trang_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/uchikake-hac-trang_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp24",
+    "slug": "yukata-phao-hoa",
+    "name": "Yukata họa tiết pháo hoa",
+    "kanji": "花火浴衣",
+    "sku": "JP024",
+    "brand": "JAPANO",
+    "price": 1250000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "yukata",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#192F5D",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội",
+      "mùa hè",
+      "pháo hoa"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Yukata họa tiết pháo hoa (花火浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Yukata họa tiết pháo hoa lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Yukata: Traditional Garment for Summer — Web Japan",
+        "url": "https://web-japan.org/trends/11_fashion/fas120820.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/yukata-phao-hoa_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/yukata-phao-hoa_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp25",
+    "slug": "yukata-hoa-asagao",
+    "name": "Yukata hoa Asagao",
+    "kanji": "朝顔浴衣",
+    "sku": "JP025",
+    "brand": "JAPANO",
+    "price": 1190000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "yukata",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#DDECF2",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội",
+      "mùa hè",
+      "hoa"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Yukata hoa Asagao (朝顔浴衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Yukata hoa Asagao lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Yukata: Traditional Garment for Summer — Web Japan",
+        "url": "https://web-japan.org/trends/11_fashion/fas120820.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/yukata-hoa-asagao_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/yukata-hoa-asagao_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp26",
+    "slug": "haori-sashiko-cham",
+    "name": "Haori Sashiko xanh chàm",
+    "kanji": "刺し子羽織",
+    "sku": "JP026",
+    "brand": "JAPANO",
+    "price": 1790000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "haori",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#27496D",
+    "tags": [
+      "nhật",
+      "sashiko",
+      "xanh chàm",
+      "khoác ngoài",
+      "thủ công"
+    ],
+    "visualTags": [
+      "nhật",
+      "sashiko"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Haori Sashiko xanh chàm (刺し子羽織) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Haori Sashiko xanh chàm lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/haori-sashiko-cham_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/haori-sashiko-cham_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp27",
+    "slug": "hanten-mua-dong",
+    "name": "Áo Hanten chần bông mùa đông",
+    "kanji": "半纏",
+    "sku": "JP027",
+    "brand": "JAPANO",
+    "price": 1390000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "haori",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#A64B3C",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "mùa đông",
+      "khoác ngoài",
+      "ấm áp"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Áo Hanten chần bông mùa đông (半纏) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Áo Hanten chần bông mùa đông lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/hanten-mua-dong_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/hanten-mua-dong_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp28",
+    "slug": "noragi-boro-chap-va",
+    "name": "Noragi Boro chắp vá",
+    "kanji": "襤褸野良着",
+    "sku": "JP028",
+    "brand": "JAPANO",
+    "price": 1890000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "noragi",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#263E55",
+    "tags": [
+      "nhật",
+      "boro",
+      "sashiko",
+      "xanh chàm",
+      "streetwear"
+    ],
+    "visualTags": [
+      "nhật",
+      "boro"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Noragi Boro chắp vá (襤褸野良着) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Noragi Boro chắp vá lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/noragi-boro-chap-va_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/noragi-boro-chap-va_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp29",
+    "slug": "hakama-nam-xanh-cham",
+    "name": "Hakama nam xanh chàm",
+    "kanji": "男袴",
+    "sku": "JP029",
+    "brand": "JAPANO",
+    "price": 1750000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "hakama",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#20344B",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "nam",
+      "trang trọng"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Hakama nam xanh chàm (男袴) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Hakama nam xanh chàm lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/hakama-nam-xanh-cham_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/hakama-nam-xanh-cham_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp30",
+    "slug": "jinbei-asanoha",
+    "name": "Jinbei họa tiết Asanoha",
+    "kanji": "麻の葉甚平",
+    "sku": "JP030",
+    "brand": "JAPANO",
+    "price": 950000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "jinbei",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#416B8A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "mùa hè",
+      "asanoha",
+      "thoải mái"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Jinbei họa tiết Asanoha (麻の葉甚平) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Jinbei họa tiết Asanoha lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/jinbei-asanoha_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/jinbei-asanoha_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp31",
+    "slug": "samue-xanh-cham",
+    "name": "Samue xanh chàm tối giản",
+    "kanji": "藍作務衣",
+    "sku": "JP031",
+    "brand": "JAPANO",
+    "price": 1190000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "samue",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#304C63",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "xanh chàm",
+      "tối giản",
+      "thoải mái"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Samue xanh chàm tối giản (藍作務衣) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Samue xanh chàm tối giản lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/samue-xanh-cham_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/samue-xanh-cham_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp32",
+    "slug": "happi-awa-odori",
+    "name": "Happi lễ hội Awa Odori",
+    "kanji": "阿波踊り法被",
+    "sku": "JP032",
+    "brand": "JAPANO",
+    "price": 850000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "ao-truyen-thong",
+    "category": "ao-truyen-thong",
+    "garmentType": "happi",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#27577A",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "lễ hội",
+      "awa odori",
+      "xanh chàm"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Happi lễ hội Awa Odori (阿波踊り法被) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Happi lễ hội Awa Odori lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/happi-awa-odori_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/happi-awa-odori_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp33",
+    "slug": "vay-quan-kimono",
+    "name": "Váy quấn tay Kimono",
+    "kanji": "着物スリーブワンピース",
+    "sku": "JP033",
+    "brand": "JAPANO",
+    "price": 1290000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "one-pieces",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#23395B",
+    "tags": [
+      "nhật",
+      "hiện đại",
+      "thanh lịch",
+      "công sở",
+      "dự tiệc"
+    ],
+    "visualTags": [
+      "nhật",
+      "hiện đại"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Váy quấn tay Kimono (着物スリーブワンピース) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Váy quấn tay Kimono lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/vay-quan-kimono_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/vay-quan-kimono_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp34",
+    "slug": "ao-blouse-tay-kimono",
+    "name": "Áo blouse tay Kimono",
+    "kanji": "着物袖ブラウス",
+    "sku": "JP034",
+    "brand": "JAPANO",
+    "price": 690000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "tops",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#EEE9DE",
+    "tags": [
+      "nhật",
+      "hiện đại",
+      "thanh lịch",
+      "công sở",
+      "tối giản"
+    ],
+    "visualTags": [
+      "nhật",
+      "hiện đại"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Áo blouse tay Kimono (着物袖ブラウス) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Áo blouse tay Kimono lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/ao-blouse-tay-kimono_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/ao-blouse-tay-kimono_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp35",
+    "slug": "quan-culottes-sashiko",
+    "name": "Quần culottes Sashiko",
+    "kanji": "刺し子キュロット",
+    "sku": "JP035",
+    "brand": "JAPANO",
+    "price": 790000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "trang-phuc",
+    "category": "trang-phuc",
+    "garmentType": "bottoms",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#294763",
+    "tags": [
+      "nhật",
+      "hiện đại",
+      "sashiko",
+      "xanh chàm",
+      "streetwear"
+    ],
+    "visualTags": [
+      "nhật",
+      "hiện đại"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Quần culottes Sashiko (刺し子キュロット) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Quần culottes Sashiko lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Japanese Indigo Dyeing and Sashiko — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202010/202010_11_en.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/quan-culottes-sashiko_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/quan-culottes-sashiko_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  },
+  {
+    "id": "jp36",
+    "slug": "michiyuki-do-man",
+    "name": "Áo khoác Michiyuki đỏ mận",
+    "kanji": "道行コート",
+    "sku": "JP036",
+    "brand": "JAPANO",
+    "price": 1690000,
+    "old": null,
+    "sale": null,
+    "status": "published",
+    "cat": "haori",
+    "category": "haori",
+    "garmentType": "haori",
+    "adultOnlyTryOn": false,
+    "tearAllowed": false,
+    "colorHex": "#713846",
+    "tags": [
+      "truyền thống",
+      "nhật",
+      "michiyuki",
+      "khoác ngoài",
+      "thanh lịch"
+    ],
+    "visualTags": [
+      "truyền thống",
+      "nhật"
+    ],
+    "rating": 4.6,
+    "sold": 0,
+    "desc": "Áo khoác Michiyuki đỏ mận (道行コート) — thiết kế theo tinh thần thời trang Nhật Bản, chất liệu thoáng và dễ phối.",
+    "story": "Áo khoác Michiyuki đỏ mận lấy cảm hứng từ hoạ tiết và phom dáng truyền thống Nhật Bản.",
+    "informationSources": [
+      {
+        "title": "Japanese Fabrics and the Evolution of the Kimono — Government of Japan",
+        "url": "https://www.gov-online.go.jp/eng/publicity/book/hlj/html/202009/202009_01_en.html"
+      },
+      {
+        "title": "Kimono and Fashion: The Beauty of Kosode — Kyoto National Museum",
+        "url": "https://www.kyohaku.go.jp/old/eng/theme/floor1_4/past/1F-4_20220209.html"
+      },
+      {
+        "title": "Occasions for Wearing Kimono — Web Japan",
+        "url": "https://web-japan.org/kidsweb/virtual/kimono/kimono03.html"
+      }
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "variants": [
+      {
+        "size": "S",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "M",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "L",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XL",
+        "color": "Mặc định",
+        "stock": 12
+      },
+      {
+        "size": "XXL",
+        "color": "Mặc định",
+        "stock": 12
+      }
+    ],
+    "images": [
+      "/assets/products/michiyuki-do-man_1.jpg"
+    ],
+    "tryonFlat": "/assets/products/michiyuki-do-man_tryon-flat.png",
+    "videos": [],
+    "imageSource": "generated-locally-flux2-klein"
+  }
+]

@@ -144,7 +144,7 @@ function productLabel(id){const key=String(id||'');const p=DB.products.find(x=>[
 function analyticsSegments(){const s=ANALYTICS?.segments;return Array.isArray(s)?s:(Array.isArray(s?.clusters)?s.clusters:[]);}
 function renderPredictions(){
   const rows=(ANALYTICS?.predictions||[]).slice(0,6);if(!rows.length)return emptyMini('Chưa đủ dữ liệu dự đoán nhu cầu');
-  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Sản phẩm</th><th>Nhu cầu dự đoán</th><th>Điểm</th><th>Tín hiệu</th></tr></thead><tbody>${rows.map(p=>{const f=p.features||{};return `<tr><td class="bold">${esc(predictionName(p))}</td><td>${esc(p.predictedDemand||p.demand||'Đang tính')}</td><td><span class="bdg ${predictionScore(p)>=70?'b-green':predictionScore(p)>=45?'b-amber':'b-gray'}">${predictionScore(p)} điểm</span></td><td class="faint" style="font-size:11px">Bán ${Number(f.sold||0)} · Yêu thích ${Number(f.wishlist||f.wishlists||0)} · Giỏ ${Number(f.cart||f.carts||0)}</td></tr>`;}).join('')}</tbody></table></div>`;
+  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Sản phẩm</th><th>Nhu cầu dự đoán</th><th>Điểm</th><th>Tín hiệu</th></tr></thead><tbody>${rows.map(p=>{const f=p.features||{};return `<tr><td class="bold">${esc(predictionName(p))}</td><td>${esc(p.predictedDemand||p.demand||'Đang tính')}</td><td><span class="bdg ${predictionScore(p)>=70?'b-green':predictionScore(p)>=45?'b-amber':'b-gray'}">${predictionScore(p)} điểm</span></td><td class="faint" style="font-size:11.5px">Bán ${Number(f.sold||0)} · Yêu thích ${Number(f.wishlist||f.wishlists||0)} · Giỏ ${Number(f.cart||f.carts||0)}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 function renderCategoryTrends(){
   const rows=(ANALYTICS?.categoryTrends||[]).slice(0,7);if(!rows.length)return emptyMini('Chưa đủ tín hiệu xu hướng danh mục');
@@ -157,11 +157,11 @@ function renderSegments(){
 }
 function renderInventoryRisks(){
   const rows=(ANALYTICS?.inventoryRisks||[]).slice(0,7);if(!rows.length)return emptyMini('Chưa phát hiện rủi ro tồn kho');
-  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Sản phẩm</th><th>Tồn</th><th>Dự báo 30 ngày</th><th>Cạn kho</th><th>Mức rủi ro</th></tr></thead><tbody>${rows.map(r=>{const danger=r.inventoryRisk==='Hết hàng'||r.inventoryRisk==='Rủi ro cao';const watch=r.inventoryRisk==='Cần theo dõi';return `<tr><td class="bold">${esc(r.name||productLabel(r.productId||r.id))}</td><td>${Number(r.stock||0)}</td><td>${Number(r.forecastUnits30||0)} SP<div class="faint" style="font-size:10px">${money(Number(r.forecastRevenue30||0))}</div></td><td>${r.daysToStockout!=null&&Number.isFinite(Number(r.daysToStockout))?Number(r.daysToStockout).toFixed(1)+' ngày':Number(r.stock||0)===0?'Đã hết':'—'}</td><td><span class="bdg ${danger?'b-red':watch?'b-amber':'b-green'}">${esc(r.inventoryRisk||'Cần theo dõi')}</span></td></tr>`;}).join('')}</tbody></table></div>`;
+  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Sản phẩm</th><th>Tồn</th><th>Dự báo 30 ngày</th><th>Cạn kho</th><th>Mức rủi ro</th></tr></thead><tbody>${rows.map(r=>{const danger=r.inventoryRisk==='Hết hàng'||r.inventoryRisk==='Rủi ro cao';const watch=r.inventoryRisk==='Cần theo dõi';return `<tr><td class="bold">${esc(r.name||productLabel(r.productId||r.id))}</td><td>${Number(r.stock||0)}</td><td>${Number(r.forecastUnits30||0)} SP<div class="faint" style="font-size:10.5px">${money(Number(r.forecastRevenue30||0))}</div></td><td>${r.daysToStockout!=null&&Number.isFinite(Number(r.daysToStockout))?Number(r.daysToStockout).toFixed(1)+' ngày':Number(r.stock||0)===0?'Đã hết':'—'}</td><td><span class="bdg ${danger?'b-red':watch?'b-amber':'b-green'}">${esc(r.inventoryRisk||'Cần theo dõi')}</span></td></tr>`;}).join('')}</tbody></table></div>`;
 }
 function renderChurnRisks(){
   const rows=(ANALYTICS?.churnRisks||[]).slice(0,7);if(!rows.length)return emptyMini('Chưa đủ dữ liệu để ước tính churn');
-  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Khách hàng</th><th>RFM</th><th>Nguy cơ</th><th>Gợi ý chăm sóc</th></tr></thead><tbody>${rows.map(r=>{const pct=Math.max(0,Math.min(100,Number(r.churnProbability||0)));const tone=r.risk==='Cao'?'b-red':r.risk==='Trung bình'?'b-amber':'b-green';return `<tr><td class="bold">${esc(r.name||r.userId||'Khách JAPANO')}<div class="faint" style="font-size:10px">${Number(r.recencyDays||0)} ngày chưa mua</div></td><td>${Number(r.frequency||0)} đơn<div class="faint" style="font-size:10px">${money(Number(r.monetary||0))}</div></td><td><span class="bdg ${tone}">${Math.round(pct)}% · ${esc(r.risk||'—')}</span></td><td class="faint" style="font-size:11px">${esc(r.action||'Theo dõi thêm hành vi mua sắm.')}</td></tr>`;}).join('')}</tbody></table></div>`;
+  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Khách hàng</th><th>RFM</th><th>Nguy cơ</th><th>Gợi ý chăm sóc</th></tr></thead><tbody>${rows.map(r=>{const pct=Math.max(0,Math.min(100,Number(r.churnProbability||0)));const tone=r.risk==='Cao'?'b-red':r.risk==='Trung bình'?'b-amber':'b-green';return `<tr><td class="bold">${esc(r.name||r.userId||'Khách JAPANO')}<div class="faint" style="font-size:10.5px">${Number(r.recencyDays||0)} ngày chưa mua</div></td><td>${Number(r.frequency||0)} đơn<div class="faint" style="font-size:10.5px">${money(Number(r.monetary||0))}</div></td><td><span class="bdg ${tone}">${Math.round(pct)}% · ${esc(r.risk||'—')}</span></td><td class="faint" style="font-size:11.5px">${esc(r.action||'Theo dõi thêm hành vi mua sắm.')}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 function renderMarketBasket(){
   const rows=(ANALYTICS?.marketBasketRules||[]).slice(0,7);if(!rows.length)return emptyMini('Chưa đủ đơn có nhiều sản phẩm để tìm luật mua kèm');
@@ -176,7 +176,7 @@ function renderSearchIntelligence(){
 function renderZeroResultSearches(){
   const rows=(ANALYTICS?.searchIntelligence?.zeroResultQueries||[]).slice(0,8);
   if(!rows.length)return emptyMini('Chưa có từ khoá nào tìm mà không ra kết quả — tốt!');
-  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Từ khoá</th><th>Số lần không ra kết quả</th><th>Tỉ lệ</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="bold">${esc(r.query)}</td><td><span class="bdg b-red">${Number(r.zeroResults||0)}</span></td><td>${Math.round(Number(r.zeroResultRate||0)*100)}%</td></tr>`).join('')}</tbody></table></div><div class="faint" style="font-size:11px;line-height:1.55;margin-top:9px">Đây là nhu cầu thật của khách chưa có sản phẩm đáp ứng — cân nhắc nhập thêm hàng hoặc đổi tên/tag sản phẩm hiện có cho khớp từ khoá này.</div>`;
+  return `<div class="tablewrap"><table class="tbl"><thead><tr><th>Từ khoá</th><th>Số lần không ra kết quả</th><th>Tỉ lệ</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="bold">${esc(r.query)}</td><td><span class="bdg b-red">${Number(r.zeroResults||0)}</span></td><td>${Math.round(Number(r.zeroResultRate||0)*100)}%</td></tr>`).join('')}</tbody></table></div><div class="faint" style="font-size:11.5px;line-height:1.55;margin-top:9px">Đây là nhu cầu thật của khách chưa có sản phẩm đáp ứng — cân nhắc nhập thêm hàng hoặc đổi tên/tag sản phẩm hiện có cho khớp từ khoá này.</div>`;
 }
 function renderAnalyticsModels(){
   const rows=ANALYTICS?.models||[];if(!rows.length)return emptyMini('Backend chưa trả danh sách model');
@@ -194,7 +194,7 @@ function renderRecommendationHealth(){
   return `<div class="pb"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px"><span class="bdg ${active?'b-green':'b-amber'}"><span class="d"></span>${active?'Pipeline đang hoạt động':'Chờ tín hiệu hành vi'}</span>${stages.map(([name,on])=>`<span class="bdg ${on?'b-blue':'b-gray'}"><span class="d"></span>${esc(name)} · ${on?'active':'chờ dữ liệu'}</span>`).join('')}</div>
   <div class="metriccards"><div class="metriccard"><div class="ml">Hành vi đã học</div><div class="mv">${Number(h.interactions||0).toLocaleString('vi-VN')}</div></div><div class="metriccard"><div class="ml">Cạnh user–item</div><div class="mv">${Number(h.graphEdges||0)}</div></div><div class="metriccard"><div class="ml">Chuyển tiếp session</div><div class="mv">${Number(h.transitionCount||0)}</div></div><div class="metriccard"><div class="ml">Training pairs</div><div class="mv">${Number(h.trainingPairs||0)}</div></div><div class="metriccard"><div class="ml">Phủ sản phẩm</div><div class="mv">${Math.round(Number(h.itemCoverage||0)*100)}%</div></div><div class="metriccard"><div class="ml">Feedback âm</div><div class="mv">${Number(h.negativeFeedbackEvents||0)}</div></div></div>
   <div class="modelmeta" style="margin-top:12px"><span>Xem ${Number(c.view||0)} · Tìm kiếm ${Number(c.search||0)} · Yêu thích ${Number(c.wishlist||0)} · Giỏ ${Number(c.cart||0)} · Thử đồ ${Number(c.tryon||0)} · Mua ${Number(c.purchase||0)}</span></div>
-  <div class="faint" style="font-size:11px;line-height:1.55;margin-top:9px">${esc(h.algorithm||'Tổ hợp lọc cộng tác, nội dung và xu hướng theo thời gian.')}</div></div>`;
+  <div class="faint" style="font-size:11.5px;line-height:1.55;margin-top:9px">${esc(h.algorithm||'Tổ hợp lọc cộng tác, nội dung và xu hướng theo thời gian.')}</div></div>`;
 }
 function renderBotIntelligence(){
   const h=ANALYTICS?.botIntelligence||{},intents=h.intentCounts||{};
@@ -204,20 +204,20 @@ function renderBotIntelligence(){
   return `<div class="pb"><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px"><span class="bdg ${h.status==='active'?'b-green':'b-amber'}"><span class="d"></span>${h.status==='active'?'Có telemetry thật':'Chờ lượt chat mới'}</span><span class="bdg ${h.grounded?'b-blue':'b-red'}">${h.grounded?'Catalog-grounded':'Chưa grounded'}</span></div>
   <div class="metriccards"><div class="metriccard"><div class="ml">Lượt đã định tuyến</div><div class="mv">${Number(h.requests||0)}</div></div><div class="metriccard"><div class="ml">Confidence TB</div><div class="mv">${confidence}</div></div><div class="metriccard"><div class="ml">Độ trễ TB</div><div class="mv">${h.averageLatencyMs==null?'—':Math.round(Number(h.averageLatencyMs))+' ms'}</div></div><div class="metriccard"><div class="ml">Ollama rewrite</div><div class="mv">${Number(h.llmResponses||0)}</div></div><div class="metriccard"><div class="ml">Intent fallback</div><div class="mv">${fallback}%</div></div></div>
   <div class="modelmeta" style="margin-top:12px"><span>mLSTM-style memory · semantic hashing · sparse MoE${topIntent?` · intent nhiều nhất: ${esc(topIntent[0])} (${Number(topIntent[1])})`:''}</span></div>
-  <div class="faint" style="font-size:11px;line-height:1.55;margin-top:9px">Ori định tuyến bằng memory/retrieval cục bộ; Ollama chỉ viết lại câu đã grounded và luôn có fallback không GPU.</div></div>`;
+  <div class="faint" style="font-size:11.5px;line-height:1.55;margin-top:9px">Ori định tuyến bằng memory/retrieval cục bộ; Ollama chỉ viết lại câu đã grounded và luôn có fallback không GPU.</div></div>`;
 }
-function insight(icon,tint,title,body,action='',actionText=''){
-  return `<div class="ins"><span class="bi ${tint}">${icon}</span><p><b>${esc(title)}</b> ${esc(body)}</p>${action?`<span class="go" onclick="${action}">${esc(actionText)}</span>`:''}</div>`;
+function insight(ic,tint,title,body,action='',actionText=''){
+  return `<div class="ins"><span class="bi ${tint}">${ic}</span><p><b>${esc(title)}</b> ${esc(body)}</p>${action?`<span class="go" onclick="${action}">${esc(actionText)}</span>`:''}</div>`;
 }
 function managementInsights({lowStock,outCnt,pending}){
   const items=[],forecast=forecastData(),preds=ANALYTICS?.predictions||[],trends=ANALYTICS?.categoryTrends||[];
-  if(ANALYTICS&&forecast.forecast?.length){const next=forecast.forecast[0],up=String(forecast.trend||'').toLowerCase()==='tăng'||Number(forecast.slope)>=0;items.push(insight(up?'↑':'↓',up?'tint-green':'tint-amber',`Ensemble dự báo tháng tới ${money(next.value)}`,`Xu hướng ${up?'tăng':'giảm'}; OLS R² ${Number(forecast.r2||0).toFixed(2)}${forecast.demo?' · kết quả đang dùng dữ liệu demo.':'.'}`));}
-  if(preds.length){const p=[...preds].sort((a,b)=>predictionScore(b)-predictionScore(a))[0];items.push(insight('✦','tint-violet',`${predictionName(p)} đạt ${predictionScore(p)} điểm nhu cầu`,p.suggestion||'Ưu tiên hiển thị, tồn kho và chiến dịch phù hợp theo DemandScore.','A.go(\'products\')','Xem SP'));}
-  if(trends.length){const t=[...trends].sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0))[0];items.push(insight('↗','tint-blue',`${catName(t.category||t.cat||'general')} đang dẫn xu hướng`,`Tín hiệu: ${Number(t.sold||0)} đã bán, ${Number(t.wishlists||0)} yêu thích, ${Number(t.carts||0)} trong giỏ.`));}
-  if(lowStock+outCnt>0)items.push(insight('⚠','tint-amber',`${lowStock+outCnt} sản phẩm sắp/đã hết hàng`,`Có ${outCnt} sản phẩm hết hàng; nên kiểm tra và nhập bổ sung.`,`A.go('products')`,'Nhập kho'));
-  if(pending>0){const old=dashboardOrders().filter(o=>o.status==='pending'&&Date.now()-orderTime(o)>86400000).length;items.push(insight('◷','tint-blue',`${pending} đơn chờ xử lý`,old?`${old} đơn đã chờ quá 24 giờ.`:'Chưa có đơn nào chờ quá 24 giờ.',`A.go('orders')`,'Xử lý'));}
-  if(items.length<4){const missing=DB.products.filter(p=>!p.story).length;if(missing)items.push(insight('✎','tint-violet',`${missing} sản phẩm chưa có câu chuyện`,'Có thể bổ sung mô tả văn hoá để hỗ trợ chuyển đổi.','A.autoStories()','Tạo tự động'));}
-  return items.slice(0,4).join('')||insight('✓','tint-green','Chưa có cảnh báo quản lý','Dữ liệu vận hành hiện chưa phát hiện tín hiệu cần ưu tiên.');
+  if(ANALYTICS&&forecast.forecast?.length){const next=forecast.forecast[0],up=String(forecast.trend||'').toLowerCase()==='tăng'||Number(forecast.slope)>=0;items.push(insight(up?icon('trending-up-outline'):icon('trending-down-outline'),up?'tint-green':'tint-amber',`Ensemble dự báo tháng tới ${money(next.value)}`,`Xu hướng ${up?'tăng':'giảm'}; OLS R² ${Number(forecast.r2||0).toFixed(2)}${forecast.demo?' · kết quả đang dùng dữ liệu demo.':'.'}`));}
+  if(preds.length){const p=[...preds].sort((a,b)=>predictionScore(b)-predictionScore(a))[0];items.push(insight(icon('sparkles-outline'),'tint-violet',`${predictionName(p)} đạt ${predictionScore(p)} điểm nhu cầu`,p.suggestion||'Ưu tiên hiển thị, tồn kho và chiến dịch phù hợp theo DemandScore.','A.go(\'products\')','Xem SP'));}
+  if(trends.length){const t=[...trends].sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0))[0];items.push(insight(icon('trending-up-outline'),'tint-blue',`${catName(t.category||t.cat||'general')} đang dẫn xu hướng`,`Tín hiệu: ${Number(t.sold||0)} đã bán, ${Number(t.wishlists||0)} yêu thích, ${Number(t.carts||0)} trong giỏ.`));}
+  if(lowStock+outCnt>0)items.push(insight(icon('warning-outline'),'tint-amber',`${lowStock+outCnt} sản phẩm sắp/đã hết hàng`,`Có ${outCnt} sản phẩm hết hàng; nên kiểm tra và nhập bổ sung.`,`A.go('products')`,'Nhập kho'));
+  if(pending>0){const old=dashboardOrders().filter(o=>o.status==='pending'&&Date.now()-orderTime(o)>86400000).length;items.push(insight(icon('time-outline'),'tint-blue',`${pending} đơn chờ xử lý`,old?`${old} đơn đã chờ quá 24 giờ.`:'Chưa có đơn nào chờ quá 24 giờ.',`A.go('orders')`,'Xử lý'));}
+  if(items.length<4){const missing=DB.products.filter(p=>!p.story).length;if(missing)items.push(insight(icon('create-outline'),'tint-violet',`${missing} sản phẩm chưa có câu chuyện`,'Có thể bổ sung mô tả văn hoá để hỗ trợ chuyển đổi.','A.autoStories()','Tạo tự động'));}
+  return items.slice(0,4).join('')||insight(icon('checkmark'),'tint-green','Chưa có cảnh báo quản lý','Dữ liệu vận hành hiện chưa phát hiện tín hiệu cần ưu tiên.');
 }
 function countStatus(s,orders=DB.orders){return orders.filter(o=>o.status===s).length;}
 function renderLiveCommerce(){
@@ -226,7 +226,7 @@ function renderLiveCommerce(){
   const events=[...(DB.interactions||[])].filter(row=>row.source!=='demo').sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,8);
   const cartRows=carts.length?carts.slice(0,8).map(item=>`<tr><td class="bold">${esc(item.userId)}</td><td>${esc(productLabel(item.productId))}</td><td>${esc(item.color)} · ${esc(item.size)}</td><td class="center bold">${Number(item.quantity||0)}</td><td>${fmtDate(item.updatedAt)}</td></tr>`).join(''):emptyTR(5,'Hiện không có sản phẩm nào trong giỏ đã đồng bộ.');
   const eventRows=events.length?events.map(item=>`<tr><td>${fmtDate(item.createdAt)}</td><td class="bold">${esc(item.userId)}</td><td><span class="bdg b-blue">${esc(typeLabel[item.type]||item.type)}</span></td><td>${esc(productLabel(item.productId))}</td><td class="right mono">${Number(item.value||0)}</td></tr>`).join(''):emptyTR(5,'Chưa có hành vi thực tế.');
-  return `<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px"><div class="panel"><div class="ph"><h3>Giỏ hàng đang hoạt động</h3><span class="dataflag">${carts.length} dòng thực</span></div><div class="tablewrap"><table class="tbl"><thead><tr><th>Khách</th><th>Sản phẩm</th><th>Phân loại</th><th class="center">SL</th><th>Cập nhật</th></tr></thead><tbody>${cartRows}</tbody></table></div></div><div class="panel"><div class="ph"><h3>Hoạt động mới nhất</h3><span class="sub">tự làm mới mỗi 3 giây</span></div><div class="tablewrap"><table class="tbl"><thead><tr><th>Thời gian</th><th>Khách</th><th>Hành vi</th><th>Sản phẩm</th><th class="right">SL</th></tr></thead><tbody>${eventRows}</tbody></table></div></div></div>`;
+  return `<div class="grid g-2 mt"><div class="panel"><div class="ph"><h3>Giỏ hàng đang hoạt động</h3><span class="dataflag">${carts.length} dòng thực</span></div><div class="tablewrap"><table class="tbl"><thead><tr><th>Khách</th><th>Sản phẩm</th><th>Phân loại</th><th class="center">SL</th><th>Cập nhật</th></tr></thead><tbody>${cartRows}</tbody></table></div></div><div class="panel"><div class="ph"><h3>Hoạt động mới nhất</h3><span class="sub">tự làm mới mỗi 3 giây</span></div><div class="tablewrap"><table class="tbl"><thead><tr><th>Thời gian</th><th>Khách</th><th>Hành vi</th><th>Sản phẩm</th><th class="right">SL</th></tr></thead><tbody>${eventRows}</tbody></table></div></div></div>`;
 }
 function viewDashboard(){
   if(!DB.seeded)return dashEmpty();
@@ -241,7 +241,7 @@ function viewDashboard(){
   const newUsers=DB.users.filter(u=>Number(u.joinedAt||new Date(u.createdAt||0).getTime())>=Date.now()-30*86400000).length;
   const activeVip=DB.users.filter(u=>userVip(u).isVip).length;
   const notBuyable=DB.products.filter(p=>!buyable(p)).length;
-  const kpi=(lb,val,ic,tint,detail,action='')=>`<div class="kpi" ${action?`onclick="${action}" style="cursor:pointer"`:''}><div class="top"><span class="lb">${lb}</span><span class="ic ${tint}">${ic}</span></div><div class="v">${val}</div>${detail?`<div class="dl ${detail.tone==='up'?'up':detail.tone==='down'?'dn':''}" style="${detail.tone?'':'color:var(--faint)'}">${detail.tone==='up'?'▲ ':detail.tone==='down'?'▼ ':''}${detail.text}</div>`:''}</div>`;
+  const kpi=(lb,val,ic,tint,detail,action='')=>`<div class="kpi" ${action?`onclick="${action}" style="cursor:pointer"`:''}><div class="top"><span class="lb">${lb}</span><span class="ic ${tint}">${ic}</span></div><div class="v">${val}</div>${detail?`<div class="dl ${detail.tone==='up'?'up':detail.tone==='down'?'dn':''}" style="${detail.tone?'':'color:var(--faint)'}">${detail.tone==='up'?icon('arrow-up',11)+' ':detail.tone==='down'?icon('arrow-down',11)+' ':''}${detail.text}</div>`:''}</div>`;
   const ms=(ic,tint,v,lb)=>`<div class="ministat"><span class="ic ${tint}">${ic}</span><div><div class="v">${v}</div><div class="lb">${lb}</div></div></div>`;
   // segments
   const segs=[{label:'Chờ xử lý',status:'pending',value:statusCount('pending'),color:'#B45309'},{label:'Đang giao',status:'shipping',value:statusCount('shipping')+statusCount('confirmed'),color:'#1D4ED8'},{label:'Hoàn tất',status:'completed',value:completed,color:'#15803D'},{label:'Đã huỷ',status:'cancelled',value:statusCount('cancelled'),color:'#B91C1C'}];
@@ -253,15 +253,15 @@ function viewDashboard(){
   const topC=Object.entries(catMap).map(([c,v])=>({label:catName(c),value:v,color:catColors[c]||'#999'})).sort((a,b)=>b.value-a.value);
   const recent=[...dOrders].sort((a,b)=>orderTime(b)-orderTime(a)).slice(0,6),forecast=forecastData(),todayCmp=compareRevenue(today,yesterday),monthCmp=compareRevenue(month,prevMonth);
   return `
-  <div class="filters" style="margin-bottom:14px"><div class="tabs"><button class="${state.dataScope==='live'?'on':''}" onclick="A.dataScope('live')">Dữ liệu thực <span class="c">${Number(ANALYTICS?.sourceCounts?.liveOrders??dOrders.length)}</span></button><button class="${state.dataScope==='all'?'on':''}" onclick="A.dataScope('all')">Tất cả, gồm dữ liệu mẫu <span class="c">${DB.orders.length}</span></button></div><span class="faint" style="font-size:11px">${state.dataScope==='live'?'Đã loại đơn mẫu và đơn kiểm thử khỏi báo cáo.':'Đang hiển thị cả dữ liệu mẫu để kiểm thử mô hình.'}</span></div>
+  <div class="filters" style="margin-bottom:14px"><div class="tabs"><button class="${state.dataScope==='live'?'on':''}" onclick="A.dataScope('live')">Dữ liệu thực <span class="c">${Number(ANALYTICS?.sourceCounts?.liveOrders??dOrders.length)}</span></button><button class="${state.dataScope==='all'?'on':''}" onclick="A.dataScope('all')">Tất cả, gồm dữ liệu mẫu <span class="c">${DB.orders.length}</span></button></div><span class="faint" style="font-size:11.5px">${state.dataScope==='live'?'Đã loại đơn mẫu và đơn kiểm thử khỏi báo cáo.':'Đang hiển thị cả dữ liệu mẫu để kiểm thử mô hình.'}</span></div>
   <div class="grid kpis">
-    ${kpi('Doanh thu hôm nay',money(today),'💰','tint-brand',todayCmp,"A.rev('day')")}
-    ${kpi('Doanh thu tháng',money(month),'📈','tint-green',monthCmp,"A.rev('month')")}
-    ${kpi('Tổng đơn hàng',totalOrders,'🧾','tint-blue',{text:statusCount('pending')+' chờ xử lý',tone:null},"A.orderDrill('all')")}
-    ${kpi('Tỷ lệ hoàn tất',conv+'%','🎯','tint-violet',{text:completed+' đơn hoàn tất',tone:null},"A.orderDrill('completed')")}
+    ${kpi('Doanh thu hôm nay',money(today),icon('cash-outline'),'tint-brand',todayCmp,"A.rev('day')")}
+    ${kpi('Doanh thu tháng',money(month),icon('trending-up-outline'),'tint-green',monthCmp,"A.rev('month')")}
+    ${kpi('Tổng đơn hàng',totalOrders,icon('receipt-outline'),'tint-blue',{text:statusCount('pending')+' chờ xử lý',tone:null},"A.orderDrill('all')")}
+    ${kpi('Tỷ lệ hoàn tất',conv+'%',icon('checkmark-done-outline'),'tint-violet',{text:completed+' đơn hoàn tất',tone:null},"A.orderDrill('completed')")}
   </div>
 
-  <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
+  <div class="grid g-2-1 mt">
     <div class="panel">
       <div class="ph"><h3>Doanh thu</h3>
         <div class="seg" id="revSeg">
@@ -274,31 +274,31 @@ function viewDashboard(){
       <div class="pb"><div id="revChart">${bars(revBy(state.revSpan),state.revSpan)}</div><div id="revSummary">${revenueSummaryHTML(state.revSpan)}</div></div>
     </div>
     <div class="ai panel">
-      <div class="ph"><h3>✦ Gợi ý quản lý thông minh</h3><span class="sub" style="color:#8b9099">${ANALYTICS?'dựa trên dữ liệu phân tích':'dựa trên vận hành'}</span></div>
+      <div class="ph"><h3>${icon('sparkles-outline',15)} Gợi ý quản lý thông minh</h3><span class="sub" style="color:#8b9099">${ANALYTICS?'dựa trên dữ liệu phân tích':'dựa trên vận hành'}</span></div>
       <div>${managementInsights({lowStock,outCnt,pending:statusCount('pending')})}</div>
     </div>
   </div>
 
-  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:14px">
-    ${ms('◷','tint-amber',statusCount('pending'),'Đơn chờ xử lý')}
-    ${ms('🚚','tint-blue',statusCount('shipping')+statusCount('confirmed'),'Đơn đang giao')}
-    ${ms('✓','tint-green',completed,'Đơn hoàn tất')}
-    ${ms('✕','tint-red',statusCount('cancelled'),'Đơn đã huỷ')}
-    ${ms('👘','tint-brand',DB.products.length,'Tổng sản phẩm')}
-    ${ms('📉','tint-amber',lowStock+outCnt,'Sắp/hết hàng')}
-    ${ms('🧍','tint-blue',newUsers,'Người dùng mới (30d)')}
-    ${ms('💎','tint-violet',activeVip,'VIP đang hiệu lực')}
-    ${ms('🛑','tint-violet',notBuyable,'SP không thể mua')}
+  <div class="grid g-4 mt">
+    ${ms(icon('time-outline'),'tint-amber',statusCount('pending'),'Đơn chờ xử lý')}
+    ${ms(icon('car-outline'),'tint-blue',statusCount('shipping')+statusCount('confirmed'),'Đơn đang giao')}
+    ${ms(icon('checkmark'),'tint-green',completed,'Đơn hoàn tất')}
+    ${ms(icon('close'),'tint-red',statusCount('cancelled'),'Đơn đã huỷ')}
+    ${ms(icon('shirt-outline'),'tint-brand',DB.products.length,'Tổng sản phẩm')}
+    ${ms(icon('trending-down-outline'),'tint-amber',lowStock+outCnt,'Sắp/hết hàng')}
+    ${ms(icon('person-outline'),'tint-blue',newUsers,'Người dùng mới (30d)')}
+    ${ms(icon('diamond-outline'),'tint-violet',activeVip,'VIP đang hiệu lực')}
+    ${ms(icon('ban-outline'),'tint-violet',notBuyable,'SP không thể mua')}
   </div>
 
   ${renderLiveCommerce()}
 
-  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+  <div class="grid g-2 mt">
     <div class="panel"><div class="ph"><h3>Đơn theo trạng thái</h3><span class="sub">nhấn để xem chi tiết</span></div><div class="pb">${donut(segs,true)}</div></div>
     <div class="panel"><div class="ph"><h3>Sản phẩm bán chạy nhất</h3><span class="sub">theo số lượng</span></div><div class="pb">${topP.length?hbars(topP):emptyMini('Chưa có dữ liệu bán')}</div></div>
   </div>
 
-  <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
+  <div class="grid g-2-1 mt">
     <div class="panel"><div class="ph"><h3>Dự báo doanh thu · Mô hình tổ hợp</h3><div class="modelmeta">${sourceFlag(Boolean(forecast.demo),Boolean(forecast.local))}<span>12 tháng thực tế + 3 tháng dự báo</span></div></div><div class="pb">
       ${bars([...forecast.history,...forecast.forecast])}
       <div class="modelmeta" style="margin-top:10px"><span style="width:10px;height:10px;border-radius:3px;background:var(--brand)"></span>Thực tế <span style="width:10px;height:10px;border-radius:3px;background:var(--blue);margin-left:8px"></span>Dự báo <span style="margin-left:auto">OLS R² ${Number(forecast.r2||0).toFixed(2)} · MAPE ${Number(forecast.mape||0).toFixed(1)}% · xu hướng ${esc(forecast.trend||'—')}</span></div>
@@ -307,38 +307,38 @@ function viewDashboard(){
     <div class="panel"><div class="ph"><h3>Phân khúc K-Means</h3>${sourceFlag(Boolean(ANALYTICS?.segments?.demo||modelDemo(['k-means','phan khuc'])))}</div><div class="pb">${renderSegments()}<div class="modelmeta" style="margin-top:10px"><span>${esc(ANALYTICS?.segments?.algorithm||'K-Means k=3 trên chi tiêu, số đơn và recency')}</span></div></div></div>
   </div>
 
-  <div class="grid" style="grid-template-columns:3fr 2fr;margin-top:14px">
+  <div class="grid g-3-2 mt">
     <div class="panel"><div class="ph"><h3>Dự đoán nhu cầu sản phẩm</h3><div class="modelmeta">${sourceFlag(modelDemo(['nhu cau','demand']))}<span>Điểm nhu cầu</span></div></div>${renderPredictions()}</div>
     <div class="panel"><div class="ph"><h3>Xu hướng danh mục</h3>${sourceFlag(modelDemo(['xu huong','trend']))}</div><div class="pb">${renderCategoryTrends()}<div class="modelmeta" style="margin-top:12px"><span>Điểm = bán ×3 + yêu thích ×2 + giỏ hàng</span></div></div></div>
   </div>
 
-  <div class="grid" style="grid-template-columns:3fr 2fr;margin-top:14px">
+  <div class="grid g-3-2 mt">
     <div class="panel"><div class="ph"><h3>Recommendation · Post-Transformer MoE</h3><div class="modelmeta">${sourceFlag(false,false)}<span>diagnostics trực tiếp từ pipeline</span></div></div>${renderRecommendationHealth()}</div>
     <div class="panel"><div class="ph"><h3>Botchat Ori · Memory & Routing</h3><div class="modelmeta">${sourceFlag(false,false)}<span>telemetry từ hội thoại thật</span></div></div>${renderBotIntelligence()}</div>
   </div>
 
-  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+  <div class="grid g-2 mt">
     <div class="panel"><div class="ph"><h3>Rủi ro tồn kho · 30 ngày</h3><div class="modelmeta">${sourceFlag(modelDemo(['demand','nhu cau']))}<span>Đà tăng trưởng + tốc độ bán</span></div></div>${renderInventoryRisks()}</div>
     <div class="panel"><div class="ph"><h3>Khách có nguy cơ rời bỏ</h3><div class="modelmeta">${sourceFlag(modelDemo(['rfm','churn']))}<span>Nguy cơ rời bỏ theo RFM</span></div></div>${renderChurnRisks()}</div>
   </div>
 
-  <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+  <div class="grid g-2 mt">
     <div class="panel"><div class="ph"><h3>Luật mua kèm / phối đồ</h3><div class="modelmeta">${sourceFlag(modelDemo(['market basket','association']))}<span>Hỗ trợ · độ tin cậy · độ nâng</span></div></div>${renderMarketBasket()}</div>
     <div class="panel"><div class="ph"><h3>Mô hình đang hoạt động</h3><div class="modelmeta">${sourceFlag(Boolean(ANALYTICS?.demo))}<span>${(ANALYTICS?.models||[]).length} mô hình</span></div></div>${renderAnalyticsModels()}</div>
   </div>
 
-  <div class="grid" style="grid-template-columns:3fr 2fr;margin-top:14px">
+  <div class="grid g-3-2 mt">
     <div class="panel"><div class="ph"><h3>Search Intelligence · Từ khoá khách tìm</h3><div class="modelmeta">${sourceFlag(false,false)}<span>ghi nhận từ mọi lượt tìm trên app</span></div></div><div class="pb">${renderSearchIntelligence()}</div></div>
     <div class="panel"><div class="ph"><h3>Từ khoá không ra kết quả</h3><div class="modelmeta">${sourceFlag(false,false)}<span>nhu cầu chưa được đáp ứng</span></div></div><div class="pb">${renderZeroResultSearches()}</div></div>
   </div>
 
-  <div class="grid" style="grid-template-columns:1fr 2fr;margin-top:14px">
+  <div class="grid g-1-2 mt">
     <div class="panel"><div class="ph"><h3>Danh mục dẫn đầu</h3><span class="sub">theo doanh thu</span></div><div class="pb">${topC.length?donut(topC):emptyMini('Chưa có dữ liệu')}</div></div>
-    <div class="panel"><div class="ph"><h3>Đơn hàng gần đây</h3><span class="sub"><a onclick="A.go('orders')" style="color:var(--brand);font-weight:700;cursor:pointer">Xem tất cả →</a></span></div>
-      <div class="tablewrap"><table class="tbl"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng</th><th>Thanh toán</th><th>Trạng thái</th><th></th></tr></thead><tbody>
+    <div class="panel"><div class="ph"><h3>Đơn hàng gần đây</h3><span class="sub"><a onclick="A.go('orders')" style="color:var(--brand);font-weight:700;cursor:pointer">Xem tất cả ${icon('chevron-forward',13)}</a></span></div>
+      <div class="tablewrap"><table class="tbl acts"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng</th><th>Thanh toán</th><th>Trạng thái</th><th></th></tr></thead><tbody>
       ${recent.map(o=>`<tr>
         <td class="bold mono">#${o.code}</td>
-        <td>${esc(o.customer.name)}<div class="faint" style="font-size:11px">${fmtDate(o.createdAt)}</div></td>
+        <td>${esc(o.customer.name)}<div class="faint" style="font-size:11.5px">${fmtDate(o.createdAt)}</div></td>
         <td class="bold">${money(o.total)}</td>
         <td>${o.payment.method} ${badge(PAY,o.payment.status)}</td>
         <td>${badge(ORD,o.status)}</td>
@@ -348,19 +348,19 @@ function viewDashboard(){
     </div>
   </div>`;
 }
-function emptyMini(t){return `<div style="text-align:center;color:var(--faint);padding:30px 10px"><div style="font-size:26px">📊</div><div style="margin-top:8px;font-size:12px">${t}</div></div>`;}
+function emptyMini(t){return `<div style="text-align:center;color:var(--faint);padding:30px 10px">${icon('bar-chart-outline',26)}<div style="margin-top:8px;font-size:12.5px">${t}</div></div>`;}
 function dashEmpty(){
   const kz=(lb,ic,tint)=>`<div class="kpi" style="opacity:.75"><div class="top"><span class="lb">${lb}</span><span class="ic ${tint}">${ic}</span></div><div class="v">0</div><div class="dl" style="color:var(--faint)">— chưa có dữ liệu</div></div>`;
-  return `<div class="grid kpis">${kz('Doanh thu hôm nay','💰','tint-brand')}${kz('Tổng đơn hàng','🧾','tint-blue')}${kz('Tổng sản phẩm','👘','tint-green')}${kz('Người dùng','👥','tint-violet')}</div>
+  return `<div class="grid kpis">${kz('Doanh thu hôm nay',icon('cash-outline'),'tint-brand')}${kz('Tổng đơn hàng',icon('receipt-outline'),'tint-blue')}${kz('Tổng sản phẩm',icon('shirt-outline'),'tint-green')}${kz('Người dùng',icon('people-outline'),'tint-violet')}</div>
   <div class="panel" style="margin-top:16px"><div class="empty">
-    <div class="art">🌸</div>
+    <div class="art">${icon('sparkles-outline',28)}</div>
     <h3>Bắt đầu với JAPANO Admin</h3>
     <p>Cơ sở dữ liệu đang trống. Hãy thêm sản phẩm thật hoặc nhập dữ liệu hiện có; đơn hàng và doanh thu sẽ chỉ xuất hiện khi ứng dụng phát sinh giao dịch thực tế.</p>
     <div class="acts">
-      <button class="btn p" onclick="A.addProduct()">＋ Thêm sản phẩm</button>
-      <button class="btn" onclick="A.importCSV()">⇪ Nhập tệp CSV/Excel</button>
+      <button class="btn p" onclick="A.addProduct()">${icon('add')} Thêm sản phẩm</button>
+      <button class="btn" onclick="A.importCSV()">${icon('cloud-upload-outline')} Nhập tệp CSV/Excel</button>
     </div>
-    <div style="margin-top:22px;display:flex;gap:26px;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:12px">
+    <div style="margin-top:22px;display:flex;gap:26px;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:12.5px">
       <div>1 · Thêm/nhập sản phẩm</div><div>2 · Nhận đơn hàng</div><div>3 · Theo dõi doanh thu &amp; AI gợi ý</div>
     </div>
   </div></div>`;

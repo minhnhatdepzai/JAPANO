@@ -1,0 +1,15 @@
+flowchart LR
+  %% ERD-01 — Danh mục, sản phẩm và biến thể
+  E01["<b>Danh Mục Sản Phẩm</b><br/><small>categories</small><br/>PK Mã danh mục<br/>Tên danh mục<br/>Tên tiếng Nhật"]
+  E02["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E03["<b>Chi Tiết Sản Phẩm</b><br/><small>product_details</small><br/>PK Mã chi tiết sản phẩm<br/>FK1 Mã sản phẩm<br/>Mô tả sản phẩm<br/>Câu chuyện sản phẩm"]
+  E04["<b>Biến Thể Sản Phẩm</b><br/><small>product_variants</small><br/>PK Mã biến thể<br/>FK1 Mã sản phẩm<br/>FK2 Mã màu sắc<br/>FK3 Mã kích thước"]
+  E05["<b>Màu Sắc</b><br/><small>logic/nhúng</small><br/>PK Mã màu sắc<br/>Tên màu sắc<br/>Mã màu"]
+  E06["<b>Kích Thước</b><br/><small>logic/nhúng</small><br/>PK Mã kích thước<br/>Tên kích thước<br/>Thứ tự sắp xếp"]
+  E02 -->|"products.categoryId<br/>category 1 → N products"| E01
+  E03 -->|"product_details.productId<br/>product 1 → 0..1 detail"| E02
+  E04 -->|"product_variants.productId<br/>product 1 → N variants"| E02
+  E04 -->|"product_variants.colorName/colorHex<br/>color 1 → N variants (logic)"| E05
+  E04 -->|"product_variants.size<br/>size 1 → N variants (logic)"| E06
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

@@ -29,7 +29,6 @@ const DIRECT_COLLECTIONS = Object.freeze({
   pushTokens: 'push_tokens',
   profiles: 'profiles',
   chats: 'chats',
-  tryonHistory: 'tryon_history',
   goals: 'goals',
   aiDescriptions: 'ai_descriptions',
   japanSpotReviews: 'japan_spot_reviews',
@@ -67,7 +66,6 @@ const NORMALIZED_COLLECTIONS = Object.freeze([
   'push_tokens',
   'profiles',
   'chats',
-  'tryon_history',
   'goals',
   'ai_descriptions',
   'japan_spot_reviews',
@@ -273,20 +271,11 @@ function serializeDirectRow(key, raw, index, maps, vouchersByCode) {
     row.productId = canonicalProductId(row.productId || row.productSlug, maps);
     delete row.productSlug;
   }
-  if (['reviews', 'interactions', 'tryonHistory', 'goals', 'aiDescriptions'].includes(key) && row.productId) {
+  if (['reviews', 'interactions', 'goals', 'aiDescriptions'].includes(key) && row.productId) {
     row.productId = canonicalProductId(row.productId, maps);
   }
   if (key === 'chats' && Array.isArray(row.productIds)) {
     row.productIds = row.productIds.map((value) => canonicalProductId(value, maps));
-  }
-  // tryon_history.productId đã được chuẩn hoá sang products.id ở khối trên, nhưng
-  // hai mảng bên cạnh thì chưa — nên cùng một document có productId='p7' (id) mà
-  // productIds=['cardigan-dai'] (slug). Cùng một bảng mà hai kiểu tham chiếu thì
-  // mọi phép nối bảng đều phải đoán, và ERD không vẽ đúng được.
-  if (key === 'tryonHistory') {
-    for (const field of ['productIds', 'accessoryIds']) {
-      if (Array.isArray(row[field])) row[field] = row[field].map((value) => canonicalProductId(value, maps));
-    }
   }
   if (key === 'flagcards' && Array.isArray(row.recommendedProductIds)) {
     row.recommendedProductIds = row.recommendedProductIds.map((value) => canonicalProductId(value, maps));
@@ -482,16 +471,11 @@ function hydrateDirectRow(key, raw, maps, vouchersById) {
     row.productSlug = runtimeProductSlug(row.productId, maps);
     delete row.productId;
   }
-  if (['reviews', 'interactions', 'tryonHistory', 'goals', 'aiDescriptions'].includes(key) && row.productId) {
+  if (['reviews', 'interactions', 'goals', 'aiDescriptions'].includes(key) && row.productId) {
     row.productId = runtimeProductSlug(row.productId, maps);
   }
   if (key === 'chats' && Array.isArray(row.productIds)) {
     row.productIds = row.productIds.map((value) => runtimeProductSlug(value, maps));
-  }
-  if (key === 'tryonHistory') {
-    for (const field of ['productIds', 'accessoryIds']) {
-      if (Array.isArray(row[field])) row[field] = row[field].map((value) => runtimeProductSlug(value, maps));
-    }
   }
   if (key === 'flagcards' && Array.isArray(row.recommendedProductIds)) {
     row.recommendedProductIds = row.recommendedProductIds.map((value) => runtimeProductSlug(value, maps));
@@ -614,7 +598,7 @@ function repairLegacyReferences(stateInput) {
   state.notifications = state.notifications.filter((row) => !row.userId || validUsers.has(String(row.userId)));
   if (removeTargetedNotifications !== state.notifications.length) report.push(`notifications: bỏ ${removeTargetedNotifications - state.notifications.length} record mồ côi`);
 
-  for (const key of ['interactions', 'searchLogs', 'chats', 'tryonHistory', 'japanSpotReviews', 'japanSpotSuggestions']) {
+  for (const key of ['interactions', 'searchLogs', 'chats', 'japanSpotReviews', 'japanSpotSuggestions']) {
     let cleared = 0;
     state[key] = state[key].map((row) => {
       if (!row.userId || validUsers.has(String(row.userId))) return row;

@@ -1,0 +1,26 @@
+%%{init: {"flowchart": {"defaultRenderer": "elk", "nodeSpacing": 60, "rankSpacing": 90}} }%%
+flowchart LR
+  %% ERD-07 — Hành vi, AI và vận hành nội dung
+  E01["<b>Người Dùng</b><br/><small>users</small><br/>PK Mã người dùng<br/>Họ và tên<br/>Email<br/>Mật khẩu mã hóa"]
+  E02["<b>Sản Phẩm</b><br/><small>products</small><br/>PK Mã sản phẩm<br/>FK1 Mã danh mục<br/>Đường dẫn định danh<br/>Tên sản phẩm"]
+  E03["<b>Lịch Sử Tìm Kiếm</b><br/><small>search_logs</small><br/>PK Mã lịch sử tìm kiếm<br/>FK1 Mã người dùng<br/>Từ khóa tìm kiếm<br/>Số lượng kết quả"]
+  E04["<b>Tin Nhắn</b><br/><small>chats</small><br/>PK Mã tin nhắn<br/>FK1 Mã người dùng<br/>FK2 Mã sản phẩm<br/>Vai trò người gửi"]
+  E05["<b>Tương Tác Người Dùng</b><br/><small>interactions</small><br/>PK Mã tương tác<br/>FK1 Mã người dùng<br/>FK2 Mã sản phẩm<br/>Nguồn tương tác"]
+  E06["<b>Lịch Sử Thử Đồ</b><br/><small>tryon_history</small><br/>PK Mã lịch sử thử đồ<br/>FK1 Mã sản phẩm<br/>FK2 Mã người dùng<br/>Công nghệ AI"]
+  E07["<b>Đánh Giá Địa Điểm Nhật Bản</b><br/><small>japan_spot_reviews</small><br/>PK Mã đánh giá địa điểm<br/>FK1 Mã người dùng<br/>Tên địa điểm<br/>Tỉnh / Thành phố"]
+  E08["<b>Cấu Hình Cửa Hàng</b><br/><small>settings</small><br/>PK Mã cấu hình<br/>Tên cửa hàng<br/>Hotline hỗ trợ<br/>Email liên hệ"]
+  E09["<b>Quảng Cáo</b><br/><small>banners</small><br/>PK Mã banner<br/>Tiêu đề banner<br/>Đường dẫn hình ảnh<br/>Đường dẫn điều hướng"]
+  E03 -->|"search_logs.userId<br/>user 1 → N search events"| E01
+  E04 -->|"chats.userId<br/>user 1 → N messages"| E01
+  E04 -->|"chats.productIds[]<br/>message N ↔ N product (mảng nhúng)"| E02
+  E05 -->|"interactions.userId<br/>user 1 → N events"| E01
+  E05 -->|"interactions.productId<br/>product 1 → N events"| E02
+  E06 -->|"tryon_history.productId<br/>product 1 → N try-ons"| E02
+  E06 -->|"tryon_history.userId<br/>user 1 → N try-ons"| E01
+  E07 -->|"japan_spot_reviews.userId<br/>user 1 → N spot reviews"| E01
+  class E01 shared
+  class E02 shared
+  class E07 shared
+  class E09 shared
+  classDef shared fill:#fff2cc,stroke:#bf9000,stroke-width:2px;
+  classDef default fill:#eaf3f8,stroke:#1f4e79,color:#172b4d;

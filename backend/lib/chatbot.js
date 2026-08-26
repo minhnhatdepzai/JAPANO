@@ -27,7 +27,10 @@ function matchProducts(message, products, limit = 4) {
     let hits = 0;
     shortPhrases.forEach((phrase) => { const w = words(phrase); if (w.length && w.every((word) => messageWords.has(word))) hits += 1; });
     words(p.name).forEach((word) => { if (messageWords.has(word)) hits += 1; });
-    const semanticText = [p.name, p.cat, p.category, ...(p.tags || []), ...(p.visualTags || [])].filter(Boolean).join(' ');
+    const semanticText = [
+      p.name, p.kanji, p.cat, p.category, p.garmentType,
+      ...(p.tags || []), ...(p.visualTags || []), p.desc, p.description, p.story,
+    ].filter(Boolean).join(' ');
     const semantic = semanticSimilarity(message, semanticText);
     return { p, hits, semantic, score: hits * 2 + semantic };
   }).filter((x) => x.hits > 0 || x.semantic >= 0.34).sort((a, b) => b.score - a.score);

@@ -1,0 +1,27 @@
+// Ca kiểm thử cho bộ phân loại độ vừa vặn. Nhãn `expected` do người viết theo
+// đặc tả nghiệp vụ của JAPANO (bảng ánh xạ bậc size và quy tắc ease theo số đo
+// vòng thật). Mỗi dòng là một JSON độc lập; dòng bắt đầu bằng // bị bỏ qua.
+{"id":"delta_0","chosenSize":"M","recommendedSize":"M","expected":"good"}
+{"id":"delta_0_xl","chosenSize":"XL","recommendedSize":"XL","expected":"good"}
+{"id":"delta_-1","chosenSize":"L","recommendedSize":"XL","expected":"slightly_tight"}
+{"id":"delta_-1_s","chosenSize":"S","recommendedSize":"M","expected":"slightly_tight"}
+{"id":"delta_-2","chosenSize":"M","recommendedSize":"XL","expected":"tight"}
+{"id":"delta_-2_l","chosenSize":"L","recommendedSize":"XXL","expected":"tight"}
+{"id":"delta_-3","chosenSize":"S","recommendedSize":"XL","expected":"very_tight"}
+{"id":"delta_-4","chosenSize":"S","recommendedSize":"XXL","expected":"very_tight"}
+{"id":"delta_+1","chosenSize":"XL","recommendedSize":"L","expected":"slightly_loose"}
+{"id":"delta_+1_m","chosenSize":"M","recommendedSize":"S","expected":"slightly_loose"}
+{"id":"delta_+2","chosenSize":"XXL","recommendedSize":"L","expected":"loose"}
+{"id":"delta_+2_xl","chosenSize":"XL","recommendedSize":"M","expected":"loose"}
+{"id":"delta_+3","chosenSize":"XL","recommendedSize":"S","expected":"very_loose"}
+{"id":"delta_+4","chosenSize":"XXL","recommendedSize":"S","expected":"very_loose"}
+// --- Ca có số đo vòng thật: ease theo cm thắng bậc size ---------------------
+{"id":"ease_tight_bust","chosenSize":"S","recommendedSize":"M","zone":"upper","profile":{"bust":112,"waist":98,"hip":118},"expected":"very_tight"}
+{"id":"ease_tight_mid","chosenSize":"M","recommendedSize":"M","zone":"upper","profile":{"bust":100},"expected":"tight"}
+{"id":"ease_good_bust","chosenSize":"M","recommendedSize":"M","zone":"upper","profile":{"bust":86},"expected":"good"}
+{"id":"ease_loose_bust","chosenSize":"XXL","recommendedSize":"XL","zone":"upper","profile":{"bust":84},"expected":"very_loose"}
+{"id":"ease_hip_bottom","chosenSize":"S","recommendedSize":"M","zone":"lower","category":"bottoms","profile":{"hip":112},"expected":"very_tight"}
+{"id":"ease_hip_good","chosenSize":"L","recommendedSize":"L","zone":"lower","category":"bottoms","profile":{"hip":98},"expected":"good"}
+// --- Ca không đủ dữ liệu ----------------------------------------------------
+{"id":"unknown_no_recommendation","chosenSize":"M","recommendedSize":null,"expected":"unknown"}
+{"id":"unknown_bad_size","chosenSize":"KHONG_CO","recommendedSize":"M","expected":"unknown"}

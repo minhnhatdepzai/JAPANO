@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "JAPANO",
+    "slug": "japano",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "japano",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F4EDE1"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "vn.japano.app"
+    },
+    "android": {
+      "package": "vn.japano.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép JAPANO chọn ảnh để phân tích phong cách và thử đồ.",
+          "cameraPermission": "Cho phép JAPANO chụp ảnh để thử đồ trực tiếp.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Cho phép JAPANO lưu ảnh và video kết quả vào thư viện của bạn.",
+          "savePhotosPermission": "Cho phép JAPANO lưu ảnh và video kết quả vào thư viện của bạn.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#C8452F",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "notification": {
+      "iosDisplayInForeground": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      },
+      "google": {
+        "androidClientId": "818888909731-ef99sfuk4784soea0c7fca922u2gkcfg.apps.googleusercontent.com",
+        "iosClientId": "",
+        "webClientId": ""
+      }
+    }
+  }
+}
