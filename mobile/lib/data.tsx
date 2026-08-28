@@ -28,6 +28,9 @@ function normalizedRemote(remote:any[]):Product[]{
       slug:base.slug,
       name:String(r.name||r.productName||base.name),
       cat:r.cat||r.category||base.cat,
+      // Loại trang phục do backend suy ra (kimono, yukata, bikini...). Thiếu
+      // trường này thì hàng lọc kiểu dáng ở màn hình Sản phẩm luôn ra 0 kết quả.
+      garmentType:r.garmentType||(base as any).garmentType||'',
       kanji:r.kanji||base.kanji,
       rating:Number(r.rating??r.avgRating??0),
       sold:Number(r.sold??r.unitsSold??0),
@@ -48,6 +51,7 @@ function normalizedRemote(remote:any[]):Product[]{
       name:String(p.name||p.productName||p.slug),
       kanji:String(p.kanji||''),
       cat:String(p.cat||p.category||'trang-phuc'),
+      garmentType:String(p.garmentType||''),
       price:Number(p.price||0),
       old:p.old??p.originalPrice??null,
       rating:Number(p.rating??p.avgRating??0),

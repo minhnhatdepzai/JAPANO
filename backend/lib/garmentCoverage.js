@@ -86,6 +86,12 @@ const GARMENT_PROFILES = {
     coverage: { chest: COVERED, abdomen: COVERED, shoulders: COVERED, upperArms: COVERED,
                 legs: COVERED, pelvis: COVERED, buttocks: COVERED, back: COVERED },
   },
+  cardigan: {
+    zone: 'upper', layer: 'upper-outer', fashnCategory: 'tops',
+    adultOnlyTryOn: false, tearAllowed: true, outerwear: true,
+    coverage: { chest: COVERED, abdomen: COVERED, shoulders: COVERED, upperArms: COVERED,
+                legs: COVERED, pelvis: COVERED, buttocks: COVERED, back: COVERED },
+  },
   bottoms: {
     zone: 'lower', layer: 'lower', fashnCategory: 'bottoms',
     adultOnlyTryOn: false, tearAllowed: false,
@@ -169,6 +175,9 @@ const TYPE_PATTERNS = [
   ['sleeveless_top', new RegExp(`(${W}s[áa]t\\s*n[áa]ch|${W}kh[oô]ng\\s*tay|sleeveless|tank\\s*top|${W}ba\\s*l[ỗo])`, 'i')],
   ['short_skirt', /(ch[âa]n\s*v[áa]y\s*ng[ắa]n|v[áa]y\s*ng[ắa]n|mini\s*skirt|short\s*skirt)/i],
   ['shorts', /(qu[ầa]n\s*(short|đùi|[đd]ui|ng[ắa]n)|shorts\b)/i],
+  // Tên/slug hiện đại phải thắng category nhóm hàng cũ. Ví dụ cardigan p6
+  // từng nằm trong cat="haori" và bị cấm hiệu ứng bục đường may như Haori.
+  ['cardigan', /(cardigan|[áa]o\s*len\s*kho[áa]c)/i],
   ['hakama', /\bhakama\b/i],
   ['jinbei', /\bjinbei\b/i],
   ['samue', /\bsamue\b/i],
@@ -252,6 +261,22 @@ function safetyPolicyFor(products = []) {
     // Sàn an toàn tuyệt đối, không phụ thuộc sản phẩm.
     requiredCoveredZones: [...ALWAYS_COVERED_ZONES],
     tearAllowed: profiles.every((profile) => profile.tearAllowed),
+    // VÌ SAO bị cấm bục — hai lý do rất khác nhau, và chỉ một trong hai là tuyệt đối.
+    //
+    //   'safety'       — bục là làm hở thêm cơ thể: đồ bơi, bikini, crop top,
+    //                    short, chân váy ngắn. KHÔNG bao giờ được nới, kể cả khi
+    //                    catalog không còn size nào đủ lớn.
+    //   'construction' — bục làm sai kết cấu trang phục: kimono, yukata, haori,
+    //                    áo khoác. Đây là yêu cầu về độ trung thực, không phải an
+    //                    toàn; khi cơ thể đã vượt mọi size đang bán thì cho thấy
+    //                    đường may bục vẫn trung thực hơn là một tấm ảnh phẳng lì.
+    //   null           — không bị cấm.
+    tearBlockReason: profiles.every((profile) => profile.tearAllowed)
+      ? null
+      : (profiles.some((profile) => !profile.tearAllowed
+          && (profile.swimwear || profile.adultOnlyTryOn || profile.preserveHemLength))
+        ? 'safety'
+        : 'construction'),
     preserveHemLength: profiles.some((profile) => profile.preserveHemLength),
     preserveConstruction: profiles.some((profile) => profile.preserveConstruction),
   };

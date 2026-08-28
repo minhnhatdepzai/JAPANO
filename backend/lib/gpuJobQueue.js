@@ -59,13 +59,30 @@ class GpuJobQueue extends EventEmitter {
     });
   }
 
-  cancel(types, reason = 'Người dùng đã chuyển khỏi màn hình sử dụng GPU.') {
+  /**
+   * Huỷ job theo loại, và nếu có `owner` thì chỉ huỷ job CỦA CHÍNH máy đó.
+   *
+   * Trước đây mọi lượt đổi màn hình đều huỷ sạch job cùng loại. Khi chỉ có một
+   * máy dùng app thì không sao, nhưng lúc điện thoại USB và máy demo ở xa cùng
+   * kết nối, người này rời màn hình thử đồ là lượt thử đồ của người kia chết
+   * theo — đúng lỗi đã bắt được khi test thật (`GPU_JOB_CANCELLED`).
+   *
+   * Job không ghi chủ sở hữu vẫn bị huỷ như cũ, để client đời trước không đổi
+   * hành vi.
+   */
+  cancel(types, reason = 'Người dùng đã chuyển khỏi màn hình sử dụng GPU.', owner = '') {
     const selected = new Set((Array.isArray(types) ? types : [types]).map(String));
+    const scope = String(owner || '').trim();
+    const mine = (item) => {
+      if (!scope) return true;
+      const jobOwner = String(item.metadata?.owner || '').trim();
+      return !jobOwner || jobOwner === scope;
+    };
     const error = new GpuJobCancelledError(reason);
     const cancelled = [];
     const kept = [];
     for (const item of this.pending) {
-      if (selected.has(item.type)) {
+      if (selected.has(item.type) && mine(item)) {
         item.controller.abort(error);
         item.reject(error);
         cancelled.push(this.publicItem(item));
@@ -75,7 +92,8 @@ class GpuJobQueue extends EventEmitter {
     }
     this.pending = kept;
 
-    if (this.active && selected.has(this.active.type) && !this.active.controller.signal.aborted) {
+    if (this.active && selected.has(this.active.type) && mine(this.active)
+        && !this.active.controller.signal.aborted) {
       this.active.controller.abort(error);
       cancelled.push(this.publicItem(this.active));
     }

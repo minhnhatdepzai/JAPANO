@@ -8,7 +8,7 @@ import { Screen, Header, Btn } from '../components/ui';
 import { useCatalog } from '../lib/data';
 import { Product } from '../lib/catalog';
 import { analyzeBodyFromPhoto, BodyAnalysis, FitEffect, generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit, TryOnSafety, TryOnSafetyError } from '../lib/api';
-import { DEFAULT_STYLE_PROFILE, loadStyleProfile, SavedStyleProfile, saveStyleProfile } from '../lib/profile';
+import { BODY_ESTIMATOR_GENERATION, DEFAULT_STYLE_PROFILE, loadStyleProfile, SavedStyleProfile, saveStyleProfile } from '../lib/profile';
 import { saveMediaToLibrary, shareMedia } from '../lib/media';
 import { useStore } from '../lib/store';
 import { C, F } from '../theme/tokens';
@@ -67,13 +67,14 @@ const rangeText=(min?:number|null,max?:number|null,unit='')=>
   (min==null||max==null)?'':Math.round(min)===Math.round(max)?`${Math.round(min)} ${unit}`.trim():`${Math.round(min)}–${Math.round(max)} ${unit}`.trim();
 const localSize=(height:string,weight:string)=>{
   const h=Number(height),w=Number(weight);
-  if((h&&h<158)||(w&&w<50))return'S';
+  const bmi=h&&w?w/((h/100)**2):21;
+  if((w&&w<48)||bmi<17.5)return'S';
   if(w>125)return'5XL';
-  if(w>112)return'4XL';
-  if(w>100)return'XXXL';
-  if(w>88)return'XXL';
-  if((h&&h>177)||(w&&w>76))return'XL';
-  if((h&&h>168)||(w&&w>63))return'L';
+  if(w>112||bmi>36)return'4XL';
+  if(w>100||bmi>33)return'XXXL';
+  if(w>88||bmi>29)return'XXL';
+  if(w>78||bmi>26)return'XL';
+  if(w>64||bmi>22.5)return'L';
   return'M';
 };
 
@@ -91,7 +92,9 @@ export default function TryOn() {
   const {addToCart,showToast}=useStore();
   const productId=one(params.productId)||one(params.slug)||'haori-dang-dai';
   const product=products.find(p=>p.slug===productId||p.id===productId)||products[0];
-  const tryonSizes=product.sizes?.length?product.sizes:['S','M','L','XL','XXL','XXXL','4XL','5XL'];
+  // Không tự bịa S–5XL cho sản phẩm thiếu size. Trường hợp đó vẫn được thử ảnh,
+  // nhưng backend trả fit=unknown thay vì giả định size M.
+  const tryonSizes=product.sizes?.filter(Boolean)||[];
   const accessories=useMemo(()=>products.filter(p=>p.cat==='phu-kien'),[products]);
   // Phải khớp accessoryKind() ở backend/lib/accessory.js — nhãn hiện ở đây
   // chính là điểm neo mà pipeline sẽ dùng, nên hai bên lệch nhau là nói dối
@@ -172,7 +175,7 @@ export default function TryOn() {
   },[chosenGarments]);
   const [photo,setPhoto]=useState<PickedImage|null>(null);
   const [profile,setProfile]=useState<SavedStyleProfile>(DEFAULT_STYLE_PROFILE);
-  const [size,setSize]=useState(one(params.size)||'M');
+  const [size,setSize]=useState(one(params.size)||tryonSizes[0]||'');
   const [color,setColor]=useState(one(params.color)||'Mực');
   const [selectedAccessories,setSelectedAccessories]=useState<string[]>([]);
   const [showAccessories,setShowAccessories]=useState(false);
@@ -203,6 +206,11 @@ export default function TryOn() {
   const [sharingPhoto,setSharingPhoto]=useState(false);
   const [savingVideo,setSavingVideo]=useState(false);
   const [sharingVideo,setSharingVideo]=useState(false);
+
+  useEffect(()=>{
+    if(tryonSizes.length&&!tryonSizes.includes(size))setSize(tryonSizes[0]);
+    if(!tryonSizes.length&&size)setSize('');
+  },[product.slug,tryonSizes.join('|')]);
 
   useEffect(()=>{void loadStyleProfile().then(saved=>{
     setProfile(saved);
@@ -252,6 +260,15 @@ export default function TryOn() {
     // Mỗi ảnh mới có thể là một người khác. Mặc định đọc vóc dáng từ chính ảnh
     // này; số đo thật đã lưu chỉ dùng khi khách chủ động chuyển sang nhập tay.
     setBodyAnalysis(null);setBodyError('');setUsingEstimate(true);
+    // Ảnh mới có thể là người hoàn toàn khác. Xoá estimate của ảnh trước ngay
+    // khi chọn ảnh; nếu lượt phân tích mới thiếu trường nào thì trường đó phải
+    // để trống, tuyệt đối không hiện/lấy lại cân nặng cũ cho bước fit.
+    setProfile(current=>({
+      ...current,
+      heightEstimateCm:undefined,weightEstimateKg:undefined,
+      heightEstimateConfidence:0,weightEstimateConfidence:0,estimateConfidence:0,
+      heightSource:'image-estimation',weightSource:'image-estimation',measurementSource:'image-estimation',
+    }));
     void runBodyAnalysis(picked.base64);
   };
 
@@ -262,7 +279,7 @@ export default function TryOn() {
     if(!imageBase64)return;
     setBodyLoading(true);setBodyError('');
     try{
-      const analysis=await analyzeBodyFromPhoto({personImageBase64:imageBase64});
+      const analysis=await analyzeBodyFromPhoto({personImageBase64:imageBase64,productId:product.slug});
       if(!analysis.ok)throw new Error(analysis.message||'Không phân tích được vóc dáng.');
       setBodyAnalysis(analysis);
       const height=analysis.estimatedHeight?.source==='user_provided'?null:analysis.estimatedHeight?.valueCm;
@@ -272,10 +289,10 @@ export default function TryOn() {
         setProfile(current=>{
           const next={
             ...current,
-            heightEstimateCm:height??current.heightEstimateCm,
-            weightEstimateKg:weight??current.weightEstimateKg,
-            heightEstimateConfidence:height?analysis.estimatedHeight?.confidence??0:current.heightEstimateConfidence,
-            weightEstimateConfidence:weight?analysis.estimatedWeight?.confidence??0:current.weightEstimateConfidence,
+            heightEstimateCm:height??undefined,
+            weightEstimateKg:weight??undefined,
+            heightEstimateConfidence:height?analysis.estimatedHeight?.confidence??0:0,
+            weightEstimateConfidence:weight?analysis.estimatedWeight?.confidence??0:0,
             estimateConfidence:Math.max(
               height?analysis.estimatedHeight?.confidence??0:0,
               weight?analysis.estimatedWeight?.confidence??0:0,
@@ -283,6 +300,9 @@ export default function TryOn() {
             heightSource:'image-estimation' as const,
             weightSource:'image-estimation' as const,
             measurementSource:'image-estimation' as const,
+            // Đóng dấu thế hệ model: lần nâng cấp sau sẽ tự loại số này thay vì
+            // để nó nằm lại trong máy như 202cm/117kg của thế hệ trước.
+            estimatorGeneration:BODY_ESTIMATOR_GENERATION,
           };
           void saveStyleProfile(next);
           return next;
@@ -315,6 +335,7 @@ export default function TryOn() {
       heightSource:profile.height?'user':height?'image-estimation':profile.heightSource,
       weightSource:profile.weight?'user':weight?'image-estimation':profile.weightSource,
       measurementSource:'image-estimation',
+      estimatorGeneration:BODY_ESTIMATOR_GENERATION,
     };
     const next={...profile,...patch} as typeof profile;
     setProfile(next);
@@ -344,7 +365,11 @@ export default function TryOn() {
 
   const adviseSize=async()=>{
     setSizeLoading(true);setError('');
-    const fallback=localSize(effectiveMeasurement('height'),effectiveMeasurement('weight'));
+    const ideal=localSize(effectiveMeasurement('height'),effectiveMeasurement('weight'));
+    const order=['S','M','L','XL','XXL','XXXL','4XL','5XL'];
+    const fallback=tryonSizes.length
+      ? [...tryonSizes].sort((a,b)=>Math.abs(order.indexOf(a)-order.indexOf(ideal))-Math.abs(order.indexOf(b)-order.indexOf(ideal)))[0]
+      : '';
     try{
       const saved=await saveStyleProfile(profile);
       const advice=await getSizeAdvice({productId:product.slug,profile:saved,selectedSize:size});
@@ -434,7 +459,7 @@ export default function TryOn() {
     }
     if(outfitConflict){setShowGarments(true);setError(`${outfitConflict} Hãy bỏ món bị trùng rồi tạo lại ảnh.`);return;}
     const pickedNames=accessories.filter(item=>selectedAccessories.includes(item.slug)).map(item=>item.name);
-    setLoading(true);setError('');setWarning('');setMessage(`Hệ thống đang nhận diện nhân vật chính và mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, sau đó hòa ${pickedNames.join(', ')} vào tóc, tay, ánh sáng và dáng người`:''}. Tư thế chỉ được chỉnh khi thật sự cần; hệ thống sẽ tự kiểm tra chất lượng và thử lại…`);
+    setLoading(true);setError('');setWarning('');setMessage(`Đang tạo ảnh chất lượng cao bằng GPU (thường 40–60 giây): nhận diện đúng người, mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, rồi ghép ${pickedNames.join(', ')}`:''} và kiểm tra lại mặt, cơ thể, độ nét…`);
     await reportGpuFocus('tryon');
     // Đánh dấu "đang chạy" để tín hiệu focus nền không huỷ mất tác vụ này khi
     // màn hình tự tắt hoặc người dùng kéo thanh thông báo (xem lib/useGpuFocus).
@@ -450,6 +475,9 @@ export default function TryOn() {
         // Backend mới là nơi quyết định; đây chỉ là xác nhận của người dùng.
         adultConsent,
         measurementMode:usingEstimate?'image':'user',
+        qualityMode:'high',
+        bodyAnalysisCache:bodyAnalysis||undefined,
+        skipBodyAnalysis:Boolean(bodyAnalysis),
       });
       if(!output.imageUrl)throw new Error(output.message||'Backend chưa trả ảnh kết quả.');
       setResult(output.imageUrl);setResultEngine(output.engine||'ai-gateway');setMessage(output.message);
@@ -647,8 +675,56 @@ export default function TryOn() {
                   </Text>
                 </View>
                 <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>Vòng ngực AI ước lượng</Text>
+                  <Text style={st.bodyValue}>
+                    {rangeText(bodyAnalysis.estimatedGirthRanges?.bust?.minCm,bodyAnalysis.estimatedGirthRanges?.bust?.maxCm,'cm')||'Không đủ dữ liệu'}
+                  </Text>
+                </View>
+                <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>Vòng eo AI ước lượng</Text>
+                  <Text style={st.bodyValue}>
+                    {rangeText(bodyAnalysis.estimatedGirthRanges?.waist?.minCm,bodyAnalysis.estimatedGirthRanges?.waist?.maxCm,'cm')||'Không đủ dữ liệu'}
+                  </Text>
+                </View>
+                <View style={st.bodyRow}>
+                  <Text style={st.bodyLabel}>Vòng hông AI ước lượng</Text>
+                  <Text style={st.bodyValue}>
+                    {rangeText(bodyAnalysis.estimatedGirthRanges?.hip?.minCm,bodyAnalysis.estimatedGirthRanges?.hip?.maxCm,'cm')||'Không đủ dữ liệu'}
+                  </Text>
+                </View>
+                {(() => {
+                  // Ba lý do khiến số đo kém tin cậy mà người dùng CÓ THỂ tự sửa
+                  // được bằng cách chụp lại. Nói thẳng ra còn hơn để họ tin vào
+                  // một con số mà hệ thống đã tự biết là yếu.
+                  const q:any = bodyAnalysis.quality || {};
+                  const canh:string[] = [];
+                  if (q.fullBodyVisible === false) canh.push('ảnh chưa thấy đủ toàn thân');
+                  if (Number(q.clothingSlack || 1) > 1.15) canh.push('trang phục khá rộng');
+                  if (q.armsMergedIntoTorso) canh.push('hai tay sát thân');
+                  if (!canh.length) return null;
+                  return (
+                    <Text style={st.bodyHint}>
+                      Độ chính xác giảm vì {canh.join(', ')}. Chụp toàn thân, đứng thẳng, hai tay hơi tách khỏi người sẽ chính xác hơn — hoặc nhập số đo thật của bạn.
+                    </Text>
+                  );
+                })()}
+                <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>Độ tin cậy</Text>
-                  <Text style={st.bodyValue}>{confidenceLabel(bodyAnalysis.quality?.analysisConfidence||0)}</Text>
+                  {/*
+                    Trước đây ô này lấy `analysisConfidence` — độ tin cậy của việc
+                    ĐỌC ẢNH, không phải của con số ước lượng. Khi hệ thống từ chối
+                    ước lượng (ảnh cắt cụt, tư thế lạ), màn hình hiện "Không đủ dữ
+                    liệu" ngay bên trên mà vẫn báo "Cao" ở đây — đọc vào thì mâu
+                    thuẫn và làm người dùng tin nhầm vào một con số không tồn tại.
+                    Nay bám theo chính hai ước lượng đang hiển thị.
+                  */}
+                  <Text style={st.bodyValue}>{(() => {
+                    const moc = [bodyAnalysis.estimatedHeight, bodyAnalysis.estimatedWeight]
+                      .filter((item:any) => Number(item?.valueCm ?? item?.valueKg ?? 0) > 0)
+                      .map((item:any) => Number(item?.confidence) || 0);
+                    if (!moc.length) return 'Chưa ước lượng được';
+                    return confidenceLabel(Math.min(...moc));
+                  })()}</Text>
                 </View>
                 {!!bodyAnalysis.recommendedSize&&(
                   <View style={st.bodyRow}>
@@ -658,6 +734,7 @@ export default function TryOn() {
                 )}
                 <Text style={st.bodyNote}>
                   {(bodyAnalysis.warnings&&bodyAnalysis.warnings[0])||'Ước lượng từ một ảnh 2D có sai số, không phải phép đo nhân trắc chính xác.'}
+                  {'\n'}Mỗi khoảng hiển thị rộng đúng 10 đơn vị. Vòng ngực và vòng eo được suy theo đường viền người cùng quần áo trong ảnh, không phải số đo bằng thước.
                 </Text>
                 <View style={st.bodyActions}>
                   <Pressable
@@ -689,7 +766,9 @@ export default function TryOn() {
           <Measure label="Chiều cao" value={effectiveMeasurement('height')} onChange={v=>updateProfile('height',v)} unit="cm" />
           <Measure label="Cân nặng" value={effectiveMeasurement('weight')} onChange={v=>updateProfile('weight',v)} unit="kg" />
         </View>
-        <View style={st.sizeRow}>{tryonSizes.map(v=><Pressable key={v} style={[st.size,size===v&&st.sizeOn]} onPress={()=>setSize(v)}><Text style={[st.sizeT,size===v&&{color:'#fff'}]}>{v}</Text></Pressable>)}</View>
+        {tryonSizes.length
+          ? <View style={st.sizeRow}>{tryonSizes.map(v=><Pressable key={v} style={[st.size,size===v&&st.sizeOn]} onPress={()=>setSize(v)}><Text style={[st.sizeT,size===v&&{color:'#fff'}]}>{v}</Text></Pressable>)}</View>
+          : <Text style={st.estimateTag}>Sản phẩm không khai báo size: chỉ thử hình ảnh, không kết luận chật/rộng và không tự chọn size M.</Text>}
         <Btn label={sizeLoading?'Đang tính kích cỡ…':'Gợi ý kích cỡ cho tôi'} variant="ghost" onPress={()=>{if(!sizeLoading)void adviseSize();}} />
 
         <Text style={st.section}>Màu trang phục</Text>

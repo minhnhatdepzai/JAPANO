@@ -1,0 +1,40 @@
+{
+  "question": "Có nên đưa clothing_slack vào làm đặc trưng thứ sáu của model không?",
+  "selectionSet": "BodyM testA (87 người, tách danh tính khỏi testB dùng để báo cáo)",
+  "why": "Bản robust đầu tiên trộn độ rộng quần áo vào nhiễu; chấm trên BodyM (người mặc đồ bó sát) cho thấy nó trừ luôn phần quần áo không tồn tại — lệch −10cm ở cả ba vòng. Giả thuyết: phải NÓI cho model biết ảnh này rộng bao nhiêu thay vì để nó đoán.",
+  "variants": {
+    "with_clothing_slack": {
+      "height": 12.01,
+      "weight": 12.27,
+      "chest": 9.22,
+      "waist": 8.87,
+      "hip": 11.44
+    },
+    "without_clothing_slack": {
+      "height": 12.01,
+      "weight": 10.25,
+      "chest": 14.53,
+      "waist": 8.2,
+      "hip": 16.51
+    }
+  },
+  "displayBinCoverage": {
+    "with": {
+      "height": 0.1842,
+      "weight": 0.2432,
+      "chest": 0.3467,
+      "waist": 0.3421,
+      "hip": 0.2368
+    },
+    "without": {
+      "height": 0.1842,
+      "weight": 0.3378,
+      "chest": 0.1467,
+      "waist": 0.3026,
+      "hip": 0.0132
+    }
+  },
+  "decision": "GIỮ clothing_slack",
+  "rationale": "Tổng MAE bốn mục tiêu cơ thể: 41.80 (có) so với 49.49 (không). Có slack thắng đậm ở vòng ngực (9.22 vs 14.53) và vòng hông (11.44 vs 16.51); thua nhẹ ở cân nặng (12.27 vs 10.25) và vòng eo (8.87 vs 8.20). Độ phủ bin 10 đơn vị cũng tốt hơn ở ngực và hông.",
+  "caveat": "Một ảnh chính diện KHÔNG tách được \"áo rộng\" khỏi \"bụng to\". clothing_slack thực chất đo \"rộng hơn khung xương bao nhiêu\", nên nó là tín hiệu, không phải phép đo quần áo."
+}

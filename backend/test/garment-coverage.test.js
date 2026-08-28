@@ -100,6 +100,16 @@ test('sản phẩm được phép siết chặt tearAllowed nhưng không đư�
   assert.equal(coverageProfileFor({ name: 'Bikini hai mảnh', tearAllowed: true }).tearAllowed, false);
 });
 
+test('cardigan hiện đại không bị category haori cũ làm cấm mô phỏng bục đường may', () => {
+  const profile = coverageProfileFor({
+    name: 'Áo len khoác dệt kim', slug: 'ao-len-cardigan', category: 'haori',
+  });
+  assert.equal(profile.garmentType, 'cardigan');
+  assert.equal(profile.layer, 'upper-outer');
+  assert.equal(profile.tearAllowed, true);
+  assert.equal(profile.preserveConstruction, false);
+});
+
 test('đồ bơi và đồ hở nhiều yêu cầu xác nhận 18+', () => {
   for (const name of ['Bikini hai mảnh', 'Áo tắm một mảnh', 'Crop top']) {
     assert.equal(coverageProfileFor({ name }).adultOnlyTryOn, true, `${name} phải yêu cầu 18+`);

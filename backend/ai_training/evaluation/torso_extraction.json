@@ -1,0 +1,103 @@
+{
+  "split": "test",
+  "samplesUsed": 1203,
+  "levels": {
+    "chest": {
+      "baseline": {
+        "algorithm": "baseline",
+        "n": 399,
+        "maePx": 45.02,
+        "medianAbsPx": 43.9,
+        "p90AbsPx": 70.54,
+        "biasPx": 35.6,
+        "mapePct": 16.64,
+        "within10pct": 0.2657,
+        "within20pct": 0.7043,
+        "over30pctRate": 0.0476
+      },
+      "new": {
+        "algorithm": "arm-carve+skeleton-gate",
+        "n": 399,
+        "maePx": 23.0,
+        "medianAbsPx": 14.49,
+        "p90AbsPx": 48.59,
+        "biasPx": -5.28,
+        "mapePct": 7.95,
+        "within10pct": 0.7744,
+        "within20pct": 0.9373,
+        "over30pctRate": 0.0201
+      }
+    },
+    "waist": {
+      "baseline": {
+        "algorithm": "baseline",
+        "n": 1026,
+        "maePx": 79.34,
+        "medianAbsPx": 82.0,
+        "p90AbsPx": 136.5,
+        "biasPx": 75.93,
+        "mapePct": 34.77,
+        "within10pct": 0.2232,
+        "within20pct": 0.3899,
+        "over30pctRate": 0.4912
+      },
+      "new": {
+        "algorithm": "arm-carve+skeleton-gate",
+        "n": 1026,
+        "maePx": 17.44,
+        "medianAbsPx": 10.19,
+        "p90AbsPx": 34.15,
+        "biasPx": -3.36,
+        "mapePct": 10.32,
+        "within10pct": 0.847,
+        "within20pct": 0.9552,
+        "over30pctRate": 0.0312
+      }
+    },
+    "hip": {
+      "baseline": {
+        "algorithm": "baseline",
+        "n": 857,
+        "maePx": 79.23,
+        "medianAbsPx": 82.0,
+        "p90AbsPx": 128.0,
+        "biasPx": 77.69,
+        "mapePct": 31.22,
+        "within10pct": 0.1389,
+        "within20pct": 0.3337,
+        "over30pctRate": 0.3337
+      },
+      "new": {
+        "algorithm": "arm-carve+skeleton-gate",
+        "n": 857,
+        "maePx": 20.5,
+        "medianAbsPx": 12.21,
+        "p90AbsPx": 48.26,
+        "biasPx": -2.72,
+        "mapePct": 9.96,
+        "within10pct": 0.8086,
+        "within20pct": 0.9265,
+        "over30pctRate": 0.0432
+      }
+    }
+  },
+  "armsMergedSubset": {
+    "chest": {
+      "n": 362,
+      "baselineMaePx": 46.89,
+      "newMaePx": 21.87
+    },
+    "waist": {
+      "n": 620,
+      "baselineMaePx": 109.18,
+      "newMaePx": 20.39
+    },
+    "hip": {
+      "n": 610,
+      "baselineMaePx": 97.02,
+      "newMaePx": 22.05
+    }
+  },
+  "groundTruth": "VITON-HD image-parse-v3, thân = silhouette − nhãn 14/15, chỉ hàng có nhãn cả hai tay",
+  "calibrationSource": "VITON-HD image-parse-v3 (CC-BY-NC-SA-4.0) — fit trên split train gốc"
+}

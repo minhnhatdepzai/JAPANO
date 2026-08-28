@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -266,16 +267,45 @@ def analyze(image, include_normalized=False, source_coordinates=False):
     point_conf = result.keypoints.conf.cpu().numpy() if result.keypoints is not None and result.keypoints.conf is not None else np.ones((len(boxes), 17))
     center = np.array([width / 2, height / 2])
     diagonal = max(1.0, math.hypot(width, height))
+    # Ảnh nhiều người: CHỈ MỘT người được thay đồ, và đó phải là người TO NHẤT,
+    # GẦN ỐNG KÍNH NHẤT. Những người còn lại được giữ nguyên (xem otherBoxes,
+    # restore_secondary_people và cổng secondary_person_changed).
+    #
+    # Không có chiều sâu thật từ một ảnh đơn, nên "gần ống kính" được đo bằng KÍCH
+    # THƯỚC BIỂU KIẾN. Dùng riêng diện tích thì hụt: người đứng sát máy thường bị
+    # cắt mất chân, nên diện tích box của họ có thể nhỏ hơn người đứng xa mà thấy
+    # trọn người. Chiều CAO box bắt được điều đó tốt hơn, nên nó có trọng số riêng.
+    #
+    # Vị trí trong khung chỉ còn là tiêu chí phụ để phân xử khi hai người xấp xỉ
+    # bằng nhau — trước đây centrality + contains_center cộng lại tới 4.5 điểm,
+    # đủ để một người nhỏ hơn đứng giữa khung thắng người to đứng lệch.
     scored = []
     for index, box in enumerate(boxes):
         x1, y1, x2, y2 = box
         area = max(1.0, (x2 - x1) * (y2 - y1)) / max(1.0, width * height)
+        box_height = max(1.0, y2 - y1) / max(1.0, height)
         box_center = np.array([(x1 + x2) / 2, (y1 + y2) / 2])
         centrality = max(0.0, 1.0 - np.linalg.norm(box_center - center) / diagonal)
         contains_center = 1.0 if x1 <= center[0] <= x2 and y1 <= center[1] <= y2 else 0.0
-        score = area * 5.0 + centrality * 2.0 + contains_center * 2.5 + float(confidences[index])
+        score = (area * 6.0 + box_height * 4.0
+                 + centrality * 0.8 + contains_center * 0.7
+                 + float(confidences[index]) * 0.5)
         scored.append((score, index))
     _, selected = max(scored)
+    subject_scores = [
+        {
+            'index': index,
+            'score': round(float(score), 4),
+            'areaRatio': round(float(max(1.0, (boxes[index][2] - boxes[index][0])
+                                         * (boxes[index][3] - boxes[index][1]))
+                                     / max(1.0, width * height)), 4),
+            'heightRatio': round(float(max(1.0, boxes[index][3] - boxes[index][1])
+                                       / max(1.0, height)), 4),
+            'confidence': round(float(confidences[index]), 4),
+            'selected': index == selected,
+        }
+        for score, index in sorted(scored, reverse=True)
+    ]
 
     names = ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder',
              'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist',
@@ -344,6 +374,13 @@ def analyze(image, include_normalized=False, source_coordinates=False):
         'otherBoxes': other_boxes,
         'otherConfidences': other_confidences,
         'personCount': 1 + len(other_boxes),
+        # Vì sao đúng người này được chọn — để log/UI giải thích được khi ảnh có
+        # nhiều người và khách thấy hệ thống thay đồ cho "người kia".
+        'subjectSelection': {
+            'rule': 'to nhất + gần ống kính nhất (diện tích x6 + chiều cao box x4), vị trí chỉ để phân xử',
+            'dressedPersonCount': 1,
+            'candidates': subject_scores,
+        },
         'confidence': round(float(confidences[selected]), 3),
         'fallback': False,
         'inferredKeypoints': inferred,
@@ -690,7 +727,44 @@ def similarity_score(image_a, image_b, pose=None, cloth_type='upper'):
     return float(np.abs(a - b).mean())
 
 
-def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_straight_pose=False, fit_effect=None):
+def _face_box(pose, size):
+    """Khung mặt theo keypoint, dùng được cả khi hai ảnh khác vị trí người."""
+    width, height = size
+    box = (pose or {}).get('box') or []
+    if len(box) != 4:
+        return None
+    x1, y1, x2, y2 = [float(value) for value in box]
+    box_w, box_h = max(1.0, x2 - x1), max(1.0, y2 - y1)
+    keypoints = (pose or {}).get('keypoints') or {}
+    left_eye, right_eye = keypoints.get('left_eye'), keypoints.get('right_eye')
+    left_ear, right_ear = keypoints.get('left_ear'), keypoints.get('right_ear')
+    if left_eye and right_eye:
+        eye_y = (float(left_eye[1]) + float(right_eye[1])) / 2
+        center_x = (float(left_eye[0]) + float(right_eye[0])) / 2
+        face_w = max(
+            abs(float(right_eye[0]) - float(left_eye[0])) * 2.2,
+            abs(float(right_ear[0]) - float(left_ear[0])) if left_ear and right_ear else 0,
+            box_w * .20,
+        )
+        raw = (center_x - face_w * .62, eye_y - face_w * .34,
+               center_x + face_w * .62, eye_y + face_w * .82)
+    else:
+        raw = (x1 + box_w * .25, y1, x2 - box_w * .25, y1 + box_h * .24)
+    clipped = tuple(int(max(0, min(value, width if index % 2 == 0 else height)))
+                    for index, value in enumerate(raw))
+    return clipped if clipped[2] > clipped[0] and clipped[3] > clipped[1] else None
+
+
+def _region_pair_diff(left_image, left_box, right_image, right_box, size=(96, 96)):
+    if not left_box or not right_box:
+        return None
+    left = np.asarray(left_image.crop(left_box).resize(size, Image.Resampling.LANCZOS), dtype=np.float32)
+    right = np.asarray(right_image.crop(right_box).resize(size, Image.Resampling.LANCZOS), dtype=np.float32)
+    return float(np.abs(left - right).mean())
+
+
+def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_straight_pose=False,
+                  fit_effect=None, strict_identity=False):
     """Reject successful-looking HTTP responses that are unusable try-on images.
 
     This intentionally checks structure, not merely pixel change: the old gate
@@ -709,6 +783,7 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
         result = result.resize(source.size, Image.Resampling.LANCZOS)
 
     result_pose = analyze(result, source_coordinates=True)
+    source_pose = pose if (pose and pose.get('box') and not pose.get('fallback')) else analyze(source, source_coordinates=True)
     reasons = []
     if result_pose.get('fallback') or float(result_pose.get('confidence') or 0) < .25:
         reasons.append('main_subject_lost')
@@ -767,6 +842,32 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
     if require_straight_pose and output_suitability.get('requiresRepose'):
         reasons.append('pose_not_corrected')
 
+    # Không đánh đổi danh tính để lấy một ảnh nhìn có vẻ đẹp. So mặt theo khung
+    # riêng của từng ảnh nên vẫn dùng được khi output đã resize/crop.
+    face_diff = _region_pair_diff(
+        source, _face_box(source_pose, source.size),
+        result, _face_box(result_pose, result.size),
+    )
+    body_drift = {}
+    if strict_identity:
+        if face_diff is None or face_diff > float(os.getenv('JAPANO_TRYON_FACE_DIFF_MAX', '45')):
+            reasons.append('face_changed_or_covered')
+        before = _body_geometry(source_pose, source.size)
+        after = _body_geometry(result_pose, result.size)
+        violations = []
+        if before and after:
+            for key, tolerance in (('eyeSpan', .22), ('eyeToNose', .22), ('noseY', .18), ('torso', .45)):
+                if before.get(key) is None or after.get(key) is None:
+                    continue
+                drift = abs(after[key] - before[key]) / max(.02, abs(before[key]))
+                body_drift[key] = round(drift, 3)
+                if drift > tolerance:
+                    violations.append(key)
+            if len(violations) >= 2:
+                reasons.append('body_changed_not_garment')
+
+    reasons = list(dict.fromkeys(reasons))
+
     return {
         'ok': not reasons,
         'reasons': reasons,
@@ -774,21 +875,250 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
         'edgeRatio': round(edge_ratio, 4),
         'textureStd': round(texture_std, 3),
         'secondaryDiffs': [round(value, 3) for value in secondary_diffs],
+        'faceDiff': round(face_diff, 3) if face_diff is not None else None,
+        'bodyDrift': body_drift,
         'resultPose': result_pose,
     }
 
 
-def _skin_ratio(region):
-    """Tỉ lệ pixel màu da trong một vùng ảnh (ngưỡng YCrCb kinh điển)."""
+def add_safe_seam_split(image):
+    """Vẽ một vết bục nhỏ đúng đường may mà không sinh lại người dùng."""
+    result = image.convert('RGB').copy()
+    pose = analyze(result, source_coordinates=True)
+    keypoints = pose.get('keypoints') or {}
+    candidates = []
+    for side in ('left', 'right'):
+        shoulder = keypoints.get(f'{side}_shoulder')
+        elbow = keypoints.get(f'{side}_elbow')
+        if not shoulder or not elbow:
+            continue
+        confidence = min(float(shoulder[2] if len(shoulder) > 2 else 1),
+                         float(elbow[2] if len(elbow) > 2 else 1))
+        candidates.append((confidence, shoulder, elbow, side))
+    if not candidates:
+        return result, {'applied': False, 'reason': 'shoulder_seam_not_found'}
+
+    _, shoulder, elbow, side = max(candidates, key=lambda item: item[0])
+    sx, sy = float(shoulder[0]), float(shoulder[1])
+    ex, ey = float(elbow[0]), float(elbow[1])
+    dx, dy = ex - sx, ey - sy
+    norm = max(1.0, math.hypot(dx, dy))
+    ux, uy = dx / norm, dy / norm
+    px, py = -uy, ux
+    short_edge = min(result.size)
+    length = max(22.0, short_edge * .075)
+    start_x, start_y = sx + ux * norm * .12, sy + uy * norm * .12
+    points = []
+    for index in range(8):
+        t = index / 7
+        jag = (2.6 if index % 2 else -2.6) * (1 - abs(.5 - t) * .7)
+        points.append((start_x + ux * length * t + px * jag,
+                       start_y + uy * length * t + py * jag))
+
+    sample_box = (
+        max(0, int(start_x - 12)), max(0, int(start_y - 12)),
+        min(result.width, int(start_x + 12)), min(result.height, int(start_y + 12)),
+    )
+    local = np.asarray(result.crop(sample_box).convert('RGB'), dtype=np.float32)
+    local_rgb = np.median(local.reshape(-1, 3), axis=0) if local.size else np.array([96, 96, 96])
+    luminance = float(local_rgb.mean())
+    inner = tuple(int(max(18, min(78, value * .32))) for value in local_rgb)
+    shadow = (6, 7, 10) if luminance < 130 else (17, 17, 20)
+    thread = tuple(int(max(45, min(190, value * 1.35 + 12))) for value in local_rgb)
+    width = max(5, round(short_edge * .011))
+    draw = ImageDraw.Draw(result)
+    left_edge, right_edge = [], []
+    for index, (x, y) in enumerate(points):
+        t = index / max(1, len(points) - 1)
+        opening = width * (.35 + .85 * math.sin(math.pi * t))
+        left_edge.append((x - px * opening, y - py * opening))
+        right_edge.append((x + px * opening, y + py * opening))
+    draw.polygon(left_edge + list(reversed(right_edge)), fill=shadow)
+    draw.line(points, fill=inner, width=max(3, round(width * .95)), joint='curve')
+    draw.line(left_edge, fill=thread, width=max(1, width // 4), joint='curve')
+    draw.line(right_edge, fill=thread, width=max(1, width // 4), joint='curve')
+    for index in (1, 3, 5, 7):
+        for direction, edge in ((-1, left_edge[index]), (1, right_edge[index])):
+            x, y = edge
+            span = width * (1.0 if index % 3 else 1.35)
+            draw.line((x, y, x + px * span * direction, y + py * span * direction),
+                      fill=thread, width=max(1, width // 4))
+    return result, {
+        'applied': True,
+        'side': side,
+        'center': [round(start_x, 1), round(start_y, 1)],
+        'lengthPx': round(length, 1),
+    }
+
+
+def add_safe_tight_fit(image, severity=1.0):
+    """Làm vải trông bị kéo căng mà không sinh lại mặt, người hay hậu cảnh.
+
+    FLUX có thể tạo nếp căng đẹp nhưng vừa chậm vừa có nguy cơ đổi vóc dáng.
+    Với trường hợp cơ thể lớn hơn toàn bộ size đang bán, ta chỉ biến dạng nhẹ
+    texture *bên trong* tứ giác vai-hông và thêm nếp kéo từ hai đường sườn.
+    Biên mask được feather nên đường nét cơ thể và pixel ngoài áo giữ nguyên.
+    """
+    result = image.convert('RGB').copy()
+    pose = analyze(result, source_coordinates=True)
+    keypoints = pose.get('keypoints') or {}
+
+    def point(name):
+        value = keypoints.get(name)
+        if not value or len(value) < 2:
+            return None
+        if len(value) > 2 and float(value[2]) < .12:
+            return None
+        return float(value[0]), float(value[1])
+
+    left_shoulder, right_shoulder = point('left_shoulder'), point('right_shoulder')
+    left_hip, right_hip = point('left_hip'), point('right_hip')
+    if not all((left_shoulder, right_shoulder, left_hip, right_hip)):
+        return result, {'applied': False, 'reason': 'torso_keypoints_not_found'}
+
+    shoulder_y = (left_shoulder[1] + right_shoulder[1]) / 2
+    hip_y = (left_hip[1] + right_hip[1]) / 2
+    torso_h = hip_y - shoulder_y
+    if torso_h < min(result.size) * .08:
+        return result, {'applied': False, 'reason': 'torso_too_small'}
+
+    severity = max(.0, min(1.0, float(severity or 0)))
+    shoulder_left = min(left_shoulder[0], right_shoulder[0])
+    shoulder_right = max(left_shoulder[0], right_shoulder[0])
+    hip_left = min(left_hip[0], right_hip[0])
+    hip_right = max(left_hip[0], right_hip[0])
+    shoulder_span = max(8.0, shoulder_right - shoulder_left)
+    hip_span = max(8.0, hip_right - hip_left)
+
+    # Tránh cổ/mặt và tránh phần thân dưới: chỉ tác động lõi trang phục.
+    top_y = shoulder_y + torso_h * .04
+    bottom_y = hip_y - torso_h * .03
+    polygon = [
+        (shoulder_left - shoulder_span * .10, top_y),
+        (shoulder_right + shoulder_span * .10, top_y),
+        (hip_right + hip_span * .10, bottom_y),
+        (hip_left - hip_span * .10, bottom_y),
+    ]
+    mask = Image.new('L', result.size, 0)
+    ImageDraw.Draw(mask).polygon(polygon, fill=235)
+    feather = max(4, round(min(result.size) * .012))
+    mask = mask.filter(ImageFilter.GaussianBlur(feather))
+
+    # Nếp căng hội tụ từ sườn vào thân và có cặp tối/sáng như nếp vải thật.
+    overlay = Image.new('RGBA', result.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    line_width = max(3, round(min(result.size) * .0042))
+    center_top = (shoulder_left + shoulder_right) / 2
+    center_bottom = (hip_left + hip_right) / 2
+    fold_count = 6 if severity >= .85 else 4
+    for index in range(fold_count):
+        frac = .09 + index * (.68 / max(1, fold_count - 1))
+        y = top_y + (bottom_y - top_y) * frac
+        t = (y - shoulder_y) / max(1.0, torso_h)
+        left = shoulder_left * (1 - t) + hip_left * t
+        right = shoulder_right * (1 - t) + hip_right * t
+        center = center_top * (1 - t) + center_bottom * t
+        reach = (right - left) * (.32 + .035 * (index % 2))
+        sag = torso_h * (.022 + .007 * (index % 2))
+        for side in (-1, 1):
+            edge = left if side < 0 else right
+            end_x = center - reach * .12 if side < 0 else center + reach * .12
+            points = []
+            for step in range(13):
+                u = step / 12
+                x = edge * (1 - u) + end_x * u
+                curve_y = y + math.sin(math.pi * u) * sag * (1 if index % 2 else -1)
+                points.append((x, curve_y))
+            # Mạnh ở đường sườn rồi nhạt dần vào giữa, giống nếp vải bị kéo hơn
+            # một đường kẻ nhân tạo chạy ngang toàn thân.
+            for segment in range(len(points) - 1):
+                u = segment / max(1, len(points) - 2)
+                alpha = round(108 - 58 * u)
+                draw.line((points[segment], points[segment + 1]),
+                          fill=(5, 7, 12, alpha), width=line_width * 2)
+                hi_a = round(55 - 28 * u)
+                a = (points[segment][0], points[segment][1] - line_width * 1.1)
+                b = (points[segment + 1][0], points[segment + 1][1] - line_width * 1.1)
+                draw.line((a, b), fill=(255, 255, 255, hi_a), width=line_width + 1)
+
+    overlay.putalpha(ImageChops.multiply(overlay.getchannel('A'), mask))
+    overlay = overlay.filter(ImageFilter.GaussianBlur(max(1.1, line_width * .48)))
+    result = Image.alpha_composite(result.convert('RGBA'), overlay).convert('RGB')
+    return result, {
+        'applied': True,
+        'severity': round(severity, 3),
+        'tensionIntensity': round(.65 + .35 * severity, 3),
+        'foldCount': fold_count,
+        'region': [round(value, 1) for point_value in polygon for value in point_value],
+    }
+
+
+def _ycrcb(region):
     arr = np.asarray(region.convert('RGB'), dtype=np.float32)
     if arr.size == 0:
-        return 0.0
+        return None
     r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
     y = .299 * r + .587 * g + .114 * b
-    cr = (r - y) * .713 + 128
-    cb = (b - y) * .564 + 128
+    return y, (r - y) * .713 + 128, (b - y) * .564 + 128
+
+
+def face_skin_reference(image, pose):
+    """Tông da THẬT của chính người trong ảnh, lấy ở vùng giữa hai mắt và mũi.
+
+    Ngưỡng YCrCb kinh điển gom mọi thứ ấm màu vào "da", nên vải màu nude — kem,
+    be, hồng phấn, rất phổ biến trong tủ đồ Nhật — bị chấm là da trần. Đã gặp
+    thật: một chiếc cardigan hồng phấn làm vùng ngực nhảy từ 13% lên 50% "da" và
+    cổng an toàn huỷ ảnh của một người mặc kín từ đầu đến chân.
+
+    Khuôn mặt là mẫu da đáng tin nhất: cùng người, cùng ánh sáng, cùng máy ảnh.
+    """
+    keypoints = (pose or {}).get('keypoints') or {}
+    points = [keypoints.get(name) for name in ('left_eye', 'right_eye', 'nose')]
+    points = [p for p in points if p]
+    if len(points) < 2:
+        return None
+    xs = [float(p[0]) for p in points]
+    ys = [float(p[1]) for p in points]
+    span = max(12.0, max(xs) - min(xs))
+    cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+    width, height = image.size
+    box = (max(0, int(cx - span)), max(0, int(cy - span * .4)),
+           min(width, int(cx + span)), min(height, int(cy + span * 1.2)))
+    if box[2] <= box[0] or box[3] <= box[1]:
+        return None
+    parts = _ycrcb(image.crop(box))
+    if parts is None:
+        return None
+    y, cr, cb = parts
+    inside = (y > 60) & (cr >= 133) & (cr <= 173) & (cb >= 77) & (cb <= 127)
+    if inside.mean() < .25:
+        return None
+    return float(np.median(cr[inside])), float(np.median(cb[inside]))
+
+
+def _skin_ratio(region, reference=None):
+    """Tỉ lệ pixel là DA trong một vùng ảnh.
+
+    Không có mẫu da khuôn mặt thì dùng ngưỡng YCrCb kinh điển (rộng, an toàn ở
+    phía chặn nhầm hơn là bỏ sót). Có mẫu thì siết thêm: pixel phải nằm gần tông
+    da của chính người đó, nhờ vậy vải màu nude không còn bị tính là da trần.
+    """
+    parts = _ycrcb(region)
+    if parts is None:
+        return 0.0
+    y, cr, cb = parts
     skin = (y > 60) & (cr >= 133) & (cr <= 173) & (cb >= 77) & (cb <= 127)
+    if reference:
+        ref_cr, ref_cb = reference
+        gan_tong = ((cr - ref_cr) ** 2 + (cb - ref_cb) ** 2) <= SKIN_TONE_RADIUS ** 2
+        skin = skin & gan_tong
     return float(skin.mean())
+
+
+# Bán kính chấp nhận quanh tông da khuôn mặt, đo trong mặt phẳng Cr-Cb. Đủ rộng
+# để bao vùng da bị bóng đổ hay ánh sáng khác trên cùng cơ thể, đủ hẹp để loại
+# vải kem/be/hồng phấn vốn lệch tông rõ so với da mặt.
+SKIN_TONE_RADIUS = 9.0
 
 
 def garment_region_box(pose, size, cloth_type='upper'):
@@ -809,13 +1139,22 @@ def garment_region_box(pose, size, cloth_type='upper'):
                  for index, value in enumerate(region))
 
 
-def _body_geometry(pose):
-    """Các tỉ lệ hình học của CƠ THỂ (không phải của vải) để phát hiện biến dạng."""
+def _body_geometry(pose, image_size=None):
+    """Các tỉ lệ hình học của CƠ THỂ (không phải của vải) để phát hiện biến dạng.
+
+    Mọi số đo được chuẩn hoá theo CHIỀU CAO ẢNH, không theo chiều cao box người.
+    Lý do: một chiếc áo rất rộng làm box phình ra, `body_h` đổi, và khi đó cả
+    khoảng cách hai mắt cũng "đổi" dù khuôn mặt không hề dịch chuyển một pixel —
+    đúng thứ nhiễu mà cổng này cần tránh. Hai ảnh so sánh luôn cùng kích thước
+    nên chuẩn hoá theo ảnh là mốc bất biến với quần áo.
+    """
     box = pose.get('box') or []
     if len(box) != 4:
         return None
     x1, y1, x2, y2 = [float(value) for value in box]
     body_h = max(1.0, y2 - y1)
+    frame_h = float(image_size[1]) if image_size else body_h
+    frame_h = max(1.0, frame_h)
     keypoints = pose.get('keypoints') or {}
 
     def point(name):
@@ -824,17 +1163,34 @@ def _body_geometry(pose):
 
     left_shoulder, right_shoulder = point('left_shoulder'), point('right_shoulder')
     left_hip, right_hip = point('left_hip'), point('right_hip')
+    left_eye, right_eye = point('left_eye'), point('right_eye')
+    nose = point('nose')
     shoulder_y = None
     if left_shoulder and right_shoulder:
         shoulder_y = (left_shoulder[1] + right_shoulder[1]) / 2
     hip_y = None
     if left_hip and right_hip:
         hip_y = (left_hip[1] + right_hip[1]) / 2
+    # Khoảng cách hai mắt và mắt→mũi là hai đại lượng QUẦN ÁO KHÔNG THỂ CHE.
+    # Nếu AI thu nhỏ hay phóng to cơ thể, khuôn mặt đổi theo; còn một chiếc áo
+    # rủ rộng thì không đụng gì tới mặt. Đây là mốc đáng tin hơn hẳn tỉ lệ thân
+    # người — vốn lệch mạnh khi vải che mất eo và hông.
+    eye_span = None
+    if left_eye and right_eye:
+        eye_span = abs(left_eye[0] - right_eye[0]) / frame_h
+    eye_to_nose = None
+    if nose and left_eye and right_eye:
+        eye_to_nose = abs(nose[1] - (left_eye[1] + right_eye[1]) / 2) / frame_h
+    # Vị trí tuyệt đối của mũi trong khung ảnh: nếu AI kéo giãn hay dịch chuyển
+    # cơ thể thì mốc này đổi, còn thêm vải thì không.
+    nose_y = (nose[1] / frame_h) if nose else None
     return {
         'aspect': (x2 - x1) / body_h,
-        'torso': ((hip_y - shoulder_y) / body_h) if (shoulder_y and hip_y) else None,
-        'headTop': (y1) / body_h,
-        'shoulderSpan': (abs(left_shoulder[0] - right_shoulder[0]) / body_h) if (left_shoulder and right_shoulder) else None,
+        'torso': ((hip_y - shoulder_y) / frame_h) if (shoulder_y and hip_y) else None,
+        'noseY': nose_y,
+        'eyeSpan': eye_span,
+        'eyeToNose': eye_to_nose,
+        'shoulderSpan': (abs(left_shoulder[0] - right_shoulder[0]) / frame_h) if (left_shoulder and right_shoulder) else None,
     }
 
 
@@ -852,8 +1208,27 @@ BODY_ZONE_BOXES = {
 }
 
 
+# Các vùng neo được theo mốc giải phẫu, tính từ đường vai tới đường hông.
+# `t` là vị trí tương đối trong đoạn vai→hông (0 = vai, 1 = hông); có thể vượt 1
+# cho vùng nằm dưới hông. `x` là bề ngang tính theo khoảng cách hai vai.
+ZONE_ANCHORS = {
+    # Ngực bắt đầu DƯỚI đường vai, không tính cổ. Áo cổ V hay cổ tim để lộ cổ và
+    # xương quai xanh là chuyện bình thường; gộp cổ vào "vùng bắt buộc kín" thì
+    # mọi lần đổi từ áo cổ lọ sang cổ V đều bị coi là cởi đồ.
+    'chest':    (0.16, 0.62, 0.62),
+    'abdomen':  (0.62, 1.00, 0.55),
+    'pelvis':   (1.00, 1.28, 0.55),
+    'buttocks': (1.00, 1.34, 0.62),
+}
+
+
 def zone_box(pose, size, zone):
-    """Khung pixel của một vùng cơ thể."""
+    """Khung pixel của một vùng cơ thể.
+
+    Ưu tiên neo theo keypoint vai/hông vì đó là mốc giải phẫu thật; chỉ khi
+    thiếu keypoint mới rơi về tỉ lệ trên khung người, vốn trượt theo cách cắt
+    ảnh (ảnh bán thân, người đứng lệch, ảnh vuông...).
+    """
     width, height = size
     ratios = BODY_ZONE_BOXES.get(zone)
     if not ratios:
@@ -863,6 +1238,28 @@ def zone_box(pose, size, zone):
     else:
         x1, y1, x2, y2 = width * .2, height * .05, width * .8, height * .98
     box_w, box_h = max(1.0, x2 - x1), max(1.0, y2 - y1)
+
+    anchor = ZONE_ANCHORS.get(zone)
+    keypoints = (pose or {}).get('keypoints') or {}
+    if anchor:
+        shoulders = [keypoints.get('left_shoulder'), keypoints.get('right_shoulder')]
+        hips = [keypoints.get('left_hip'), keypoints.get('right_hip')]
+        if all(shoulders) and all(hips):
+            sx = (float(shoulders[0][0]) + float(shoulders[1][0])) / 2
+            sy = (float(shoulders[0][1]) + float(shoulders[1][1])) / 2
+            hy = (float(hips[0][1]) + float(hips[1][1])) / 2
+            span = abs(float(shoulders[0][0]) - float(shoulders[1][0]))
+            torso = hy - sy
+            if span > 4 and torso > 8:
+                t_top, t_bottom, x_half = anchor
+                half = span * x_half
+                left, right = sx - half, sx + half
+                top, bottom = sy + torso * t_top, sy + torso * t_bottom
+                return (
+                    int(max(0, min(left, width - 1))), int(max(0, min(top, height - 1))),
+                    int(max(1, min(right, width))), int(max(1, min(bottom, height))),
+                )
+
     left = x1 + box_w * ratios[0]
     top = y1 + box_h * ratios[1]
     right = x1 + box_w * ratios[2]
@@ -910,7 +1307,24 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
     result = result_image.convert('RGB')
     if result.size != clean.size:
         result = result.resize(clean.size, Image.Resampling.LANCZOS)
-    active_pose = pose if (pose and pose.get('box')) else analyze(result, source_coordinates=True)
+    # Khung từng vùng cơ thể phải đo trên CHÍNH ảnh đang so sánh.
+    #
+    # `pose` do Node truyền xuống được tính trên ảnh GỐC của người dùng, còn
+    # `clean` là ảnh đã chuẩn hoá/chỉnh tư thế — khác kích thước, khác vị trí
+    # người trong khung. Dùng lẫn hai hệ quy chiếu thì ô "ngực" có thể rơi vào
+    # mặt hoặc nền, và cổng an toàn báo hở cả ba vùng bắt buộc trên một tấm ảnh
+    # hoàn toàn kín đáo — đúng lỗi đã bắt được khi test trên máy thật.
+    do_pose = analyze(clean, source_coordinates=True)
+    if do_pose.get('box') and not do_pose.get('fallback'):
+        active_pose = do_pose
+    elif pose and pose.get('box'):
+        active_pose = pose
+    else:
+        active_pose = analyze(result, source_coordinates=True)
+
+    # Một mẫu da duy nhất, lấy từ ảnh SẠCH, dùng cho cả trước lẫn sau — có vậy
+    # hai con số mới so sánh được với nhau.
+    skin_reference = face_skin_reference(clean, active_pose)
 
     reasons = []
     warnings = []
@@ -919,8 +1333,8 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
         box = zone_box(active_pose, clean.size, zone)
         if not box or box[2] <= box[0] or box[3] <= box[1]:
             continue
-        before = _skin_ratio(clean.crop(box))
-        after = _skin_ratio(result.crop(box))
+        before = _skin_ratio(clean.crop(box), skin_reference)
+        after = _skin_ratio(result.crop(box), skin_reference)
         gain = after - before
         zones[zone] = {'before': round(before, 4), 'after': round(after, 4), 'gain': round(gain, 4)}
         if zone in required:
@@ -998,27 +1412,72 @@ def fit_effect_quality(clean_image, result_image, pose=None, cloth_type='upper',
     if result_pose.get('fallback') or float(result_pose.get('confidence') or 0) < .25:
         reasons.append('main_subject_lost')
 
-    clean_pose = pose if (pose and pose.get('box') and not pose.get('fallback')) else analyze(clean, source_coordinates=True)
-    before, after = _body_geometry(clean_pose), _body_geometry(result_pose)
+    # Cùng lý do như phần đo lệch bên dưới: khung vùng trang phục cũng phải đặt
+    # theo người trong CHÍNH ảnh `clean`, không theo pose của ảnh gốc. Đặt lệch
+    # khung thì phép đo "hở da" chấm nhầm vào nền hoặc khuôn mặt.
+    clean_pose = analyze(clean, source_coordinates=True)
+    if clean_pose.get('fallback') or not clean_pose.get('box'):
+        clean_pose = pose if (pose and pose.get('box')) else clean_pose
+    # Mốc "trước" của phép đo lệch PHẢI đo trên chính ảnh đang so sánh.
+    # `pose` do Node truyền xuống được tính trên ẢNH GỐC của người dùng, còn
+    # `clean` là ảnh sau VTON — khác kích thước, khác khung. Dùng lẫn hai hệ quy
+    # chiếu thì mọi toạ độ lệch sẵn vài chục phần trăm trước khi FLUX kịp vẽ gì.
+    before, after = _body_geometry(clean_pose, clean.size), _body_geometry(result_pose, clean.size)
     body_drift = {}
     if before and after:
-        # Tỉ lệ DỌC của cơ thể không được đổi: vải rủ rộng làm bề ngang đổi là
-        # đúng, nhưng thân người dài ra/ngắn lại nghĩa là AI đã sửa chính cơ thể.
-        for key in ('torso', 'headTop'):
+        # Phát hiện "AI sửa cơ thể thay vì sửa quần áo".
+        #
+        # Bản đầu chỉ so tỉ lệ thân người (vai→hông). Chạy thật cho thấy nó
+        # đánh trượt gần hết nhóm áo RỘNG: một chiếc áo rủ thùng thình che mất
+        # eo và hông, YOLO đặt lại keypoint, tỉ lệ thân đổi >22% — nhưng cơ thể
+        # thì không hề đổi. Hậu quả là mọi hiệu ứng `very_loose` đều bị huỷ.
+        #
+        # Nay ưu tiên các mốc QUẦN ÁO KHÔNG CHE ĐƯỢC (khoảng cách hai mắt,
+        # mắt→mũi, đỉnh đầu) với ngưỡng chặt; tỉ lệ thân vẫn được theo dõi nhưng
+        # với ngưỡng rộng hơn nhiều, vì nó vốn nhiễu khi vải phủ kín thân.
+        FACE_TOLERANCE = .18
+        tight_fit = str(fit.get('verdict') or '') in {'slightly_tight', 'tight', 'very_tight'}
+        # Áo rộng có thể làm detector dời vai/hông ra ngoài lớp vải, nên giữ
+        # ngưỡng torso rộng cho loose. Với áo CHẬT thì vai/thân không được nở
+        # theo trang phục: đó là dấu hiệu FLUX đã làm người béo/gầy đi.
+        TORSO_TOLERANCE = .12 if tight_fit else .45
+        checks = [
+            ('eyeSpan', FACE_TOLERANCE), ('eyeToNose', FACE_TOLERANCE),
+            ('noseY', FACE_TOLERANCE), ('torso', TORSO_TOLERANCE),
+        ]
+        if tight_fit:
+            checks.extend((('shoulderSpan', .12), ('aspect', .12)))
+        # Đo HẾT rồi mới kết luận, không dừng ở tín hiệu lỗi đầu tiên.
+        #
+        # Khi AI thật sự sửa cơ thể, mọi mốc dịch chuyển CÙNG NHAU. Còn một mốc
+        # đơn lẻ vượt ngưỡng thường chỉ là YOLO đặt lại keypoint — đủ để huỷ oan
+        # mọi hiệu ứng áo rộng. Nên chỉ từ chối khi có đồng thuận (≥2 mốc lệch)
+        # hoặc khi một mốc lệch quá xa (gấp đôi ngưỡng) tới mức không thể là nhiễu.
+        face_signals = 0
+        violations = []
+        worst_ratio = 0.0
+        for key, tolerance in checks:
             if before.get(key) is None or after.get(key) is None:
                 continue
-            drift = abs(after[key] - before[key]) / max(.05, abs(before[key]))
+            drift = abs(after[key] - before[key]) / max(.02, abs(before[key]))
             body_drift[key] = round(drift, 3)
-            if drift > .22:
-                reasons.append('body_changed_not_garment')
-                break
+            if key != 'torso':
+                face_signals += 1
+            if drift > tolerance:
+                violations.append(key)
+                worst_ratio = max(worst_ratio, drift / tolerance)
+        body_drift['faceSignalsUsed'] = face_signals
+        body_drift['violations'] = len(violations)
+        if len(violations) >= 2 or worst_ratio >= 2.0:
+            reasons.append('body_changed_not_garment')
 
     region = garment_region_box(clean_pose, clean.size, cloth_type)
     clean_region = clean.crop(region)
     result_region = result.crop(region)
 
-    skin_before = _skin_ratio(clean_region)
-    skin_after = _skin_ratio(result_region)
+    skin_reference = face_skin_reference(clean, clean_pose)
+    skin_before = _skin_ratio(clean_region, skin_reference)
+    skin_after = _skin_ratio(result_region, skin_reference)
     skin_gain = skin_after - skin_before
     # Rách vải được phép, hở da thì không. Ngưỡng nới nhẹ khi hiệu ứng rách được
     # bật, vì một khe nứt nhỏ ở đường may vẫn có thể để lộ vài pixel áo trong.
@@ -1340,6 +1799,14 @@ def main():
             adjusted = adjust_garment_fit(image.convert('RGB'), payload.get('fitDelta'))
             print(json.dumps({'ok': True, 'imageBase64': encode_png(adjusted)}, ensure_ascii=False))
             return
+        if mode == 'seam_split':
+            split, seam = add_safe_seam_split(image.convert('RGB'))
+            print(json.dumps({'ok': True, 'imageBase64': encode_png(split), 'seamSplit': seam}, ensure_ascii=False))
+            return
+        if mode == 'tight_fit':
+            fitted, effect = add_safe_tight_fit(image.convert('RGB'), payload.get('severity', 1.0))
+            print(json.dumps({'ok': True, 'imageBase64': encode_png(fitted), 'tightFit': effect}, ensure_ascii=False))
+            return
         if mode == 'similarity':
             other = decode_image(payload.get('compareImageBase64'))
             score = similarity_score(image, other, payload.get('pose'), payload.get('clothType', 'upper'))
@@ -1354,6 +1821,7 @@ def main():
                 payload.get('clothType', 'upper'),
                 bool(payload.get('requireStraightPose')),
                 payload.get('fitEffect'),
+                bool(payload.get('strictIdentity')),
             )
             print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
             return
@@ -1379,6 +1847,7 @@ def main():
                 user_weight_kg=payload.get('userWeightKg') or 0,
                 reference=payload.get('scaleReference'),
             )
+            result['poseCache'] = pose
             print(json.dumps(result, ensure_ascii=False))
             return
         if mode == 'accessory_quality':

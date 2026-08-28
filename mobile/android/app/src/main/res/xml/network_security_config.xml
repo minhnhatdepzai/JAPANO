@@ -9,6 +9,24 @@
   domain sandbox này để không phải nới lỏng SSL cho toàn bộ ứng dụng.
 -->
 <network-security-config>
+  <!--
+    Backend JAPANO chạy trên PC và app gọi tới bằng HTTP thường qua ba đường:
+    127.0.0.1 (cắm USB, `adb reverse`), IP LAN của PC (cùng Wi-Fi) và 10.0.2.2
+    (máy ảo). Từ targetSdk 28 trở lên, nếu file này tồn tại mà KHÔNG khai
+    `base-config` thì Android mặc định chặn sạch HTTP — app không gửi nổi một
+    request nào, trong khi trình duyệt trên cùng máy vẫn vào được, nên rất dễ
+    tưởng lỗi mạng hay lỗi backend.
+
+    Địa chỉ LAN của PC đổi theo router nên không thể liệt kê cứng từng domain;
+    vì vậy cho phép HTTP ở mức nền. Các đường ra Internet thật (VNPay, Google)
+    đều là HTTPS và không bị nới lỏng bởi khai báo này.
+  -->
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system"/>
+    </trust-anchors>
+  </base-config>
+
   <domain-config>
     <domain includeSubdomains="true">vnpayment.vn</domain>
     <trust-anchors>

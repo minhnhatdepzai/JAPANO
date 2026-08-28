@@ -1,6 +1,6 @@
 # JAPANO
 
-Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng dụng mobile, Web Admin, backend API, recommendation engine, trợ lý mua sắm và pipeline thử đồ AI chủ yếu chạy cục bộ. Một script Gemini Omni Flash tùy chọn chỉ dùng để thử nghiệm tạo video thủ công, không nằm trên luồng chạy mặc định của ứng dụng.
+Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng dụng mobile, Web Admin, backend API, recommendation engine, trợ lý mua sắm, **đo cơ thể từ ảnh** và pipeline thử đồ AI chủ yếu chạy cục bộ. Một script Gemini Omni Flash tùy chọn chỉ dùng để thử nghiệm tạo video thủ công, không nằm trên luồng chạy mặc định của ứng dụng.
 
 ![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
@@ -18,6 +18,7 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [Chức năng](#chức-năng)
 - [Model và thuật toán](#model-và-thuật-toán)
+- [Đo cơ thể từ ảnh](#đo-cơ-thể-từ-ảnh)
 - [Báo cáo fine-tune thử đồ](#báo-cáo-fine-tune-thử-đồ)
 - [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
 - [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
@@ -51,7 +52,9 @@ Khi có `MONGODB_URI`, MongoDB là nguồn dữ liệu chính; lần chạy đ�
 
 - Recommendation hybrid theo hành vi thật: Selective SSM, graph propagation, next-item transition, pairwise ranker và các retrieval expert.
 - Botchat Ori có memory nhiều lượt, semantic routing, catalog-grounded response và Ollama rewrite tùy chọn.
+- Đo cơ thể từ MỘT ảnh: chiều cao, cân nặng, vòng 1/2/3, body shape và size — có sai số đo trên tập test tách theo danh tính, không phải con số tự khai.
 - Virtual try-on bằng FASHN VTON 1.5, adaptive FLUX.2 pose transfer, accessory refinement và quality gate.
+- Hiệu ứng vừa vặn thật: vải căng, đường may bục khi quá chật, form rủ khi quá rộng — có chốt an toàn theo từng loại trang phục.
 - Tạo “Ảnh sống” bằng One-to-All Animation 1.3B-v2 trên nền Wan2.1, chỉ nạp CUDA khi người dùng yêu cầu.
 - Dashboard quản trị có dự báo doanh thu, nhu cầu/tồn kho, phân khúc, churn heuristic, market basket và model telemetry.
 - Thanh toán COD, Stripe Test Mode và VNPay Sandbox; có reconcile, return và refund workflow.
@@ -73,8 +76,26 @@ flowchart LR
 
     API --> Media["Cloudinary<br/>media files"]
     API -. optional .-> Ollama["Ollama<br/>Qwen2.5 / Qwen3-VL"]
-    API -. optional .-> TryOn["FASHN + FLUX.2 + YOLO"]
+    API --> Body["Body analysis worker :7863<br/>YOLOv8n-pose + U2Net + hồi quy ANSUR"]
+    API -. optional .-> TryOn["FASHN VTON 1.5 + FLUX.2 :7862"]
     API -. optional .-> Motion["One-to-All / Wan2.1"]
+```
+
+Các service chạy nền, mỗi cái một tiến trình riêng:
+
+| Service | Cổng | Tài nguyên | Bắt buộc |
+|---|---|---|---|
+| `japano-backend` | 4100 | CPU | Có |
+| `japano-body-analysis` | 7863 | CPU (cố ý không chiếm VRAM) | Không — có đường lùi |
+| `japano-fashn` | 7862 | GPU ~15 GB | Chỉ khi thử đồ |
+| `japano-motion` | — | GPU ~13,5 GB | Chỉ khi tạo video |
+
+Bật/tắt cả cụm bằng một lệnh:
+
+```bash
+./scripts/japano-services.sh on      # bật + chờ sẵn sàng + tự chạy kiểm tra
+./scripts/japano-services.sh off     # tắt tạm, nhường CPU/GPU cho việc khác
+./scripts/japano-services.sh status  # service nào đang chạy, ai đang giữ GPU
 ```
 
 Luồng recommendation:
@@ -107,7 +128,8 @@ view · search · wishlist · cart · try-on · chat · purchase
 | Hậu mãi | Theo dõi timeline đơn, yêu cầu trả hàng và trạng thái hoàn tiền |
 | Trợ lý Ori | Botchat nổi và màn chat đầy đủ; hỏi giá, voucher, đơn hàng, size, phối đồ và xu hướng |
 | Stylist AI | Phân tích màu chủ đạo, hồ sơ phong cách, tư vấn size và gợi ý outfit |
-| Thử đồ AI | Virtual try-on, phụ kiện theo pose, quality gate và video “Ảnh sống” tùy chọn |
+| Đo cơ thể | Từ một ảnh ra chiều cao, cân nặng, vòng 1/2/3 dạng khoảng 10 đơn vị, kèm độ tin cậy và cảnh báo khi ảnh cắt cụt hoặc đồ rộng; số đo tự nhập luôn được ưu tiên |
+| Thử đồ AI | Virtual try-on, phụ kiện theo pose, hiệu ứng chật/vừa/rộng theo size, quality gate và video “Ảnh sống” tùy chọn |
 | Mục tiêu | Kế hoạch tiết kiệm mua sản phẩm, SMART goals và wellness guardrails |
 | Nhật Bản | Địa danh, review cộng đồng, gợi ý trải nghiệm, văn hóa và nội dung hằng ngày |
 | Loyalty | JAPANO VIP, Flagcard, voucher cá nhân và thông báo trong ứng dụng |
@@ -182,18 +204,252 @@ ollama pull qwen3-vl:8b
 
 ### Computer Vision và Generative AI
 
-| Model/Pipeline | Vai trò | Trạng thái mặc định |
+Bốn nhóm model, mỗi nhóm giải một bài toán khác hẳn nhau. Không model nào kiêm việc của model khác.
+
+**Nhóm 1 — Nhìn ảnh, hiểu người trong ảnh** (luôn chạy, CPU)
+
+| Model | Vai trò | Nguồn |
 |---|---|---|
-| FASHN VTON 1.5 | Engine virtual try-on chính | Cần external repository, Python environment và weights |
-| FLUX.2 Klein 4B | Pose transfer khi detector thấy ảnh khó; accessory multi-reference refinement | Repose thích ứng; có thể ép bằng `JAPANO_FORCE_REPOSE=1` |
-| YOLOv8n-pose | Chọn main subject, keypoints, pose/accessory placement và quality checks | Weight nhỏ nằm trong repo; cần Python/OpenCV/Ultralytics |
-| CatVTON | Try-on fallback | Tắt mặc định; cần bật cả service và route fallback |
-| Wan2.1-T2V-1.3B + One-to-All `1.3b_2` | Tạo video chuyển động từ ảnh try-on | Tùy chọn, CUDA-only, không có CPU/legacy fallback |
-| YOLOv10m ONNX + ViTPose ONNX | Pose/control và kiểm tra action cho motion | Đi cùng external One-to-All installation |
+| YOLOv8n-pose | 17 khớp cơ thể + chọn chủ thể chính khi ảnh nhiều người | Weight nằm trong repo |
+| U2Net (rembg) | Tách nền, lấy silhouette người | Cài sẵn trong môi trường |
+
+**Nhóm 2 — Từ hình học ra số đo** (luôn chạy, CPU, train trong repo này)
+
+| Artifact | Vai trò | Train trên |
+|---|---|---|
+| `body_geometry.calibration.json` | Cắt hai cánh tay khỏi thân, trần/sàn giải phẫu, chiều dài đầu | VITON-HD parsing + cực trị ANSUR II |
+| `body_bmi_estimator.joblib` | Tỉ lệ bề ngang → BMI (không cần thang cm) | ANSUR II |
+| `body_weight_estimator.joblib` | Chiều cao + 4 bề ngang + độ rộng quần áo → cân nặng | ANSUR II |
+| `body_girth_estimators.joblib` | Bề ngang → vòng ngực/eo/hông | ANSUR II |
+| `bodym_population_calibration.json` | Kéo đầu ra ANSUR về dân số chung | BodyM train split |
+
+**Nhóm 3 — Sinh ảnh thử đồ** (GPU, chỉ khi người dùng bấm thử)
+
+| Model | Vai trò | Trạng thái |
+|---|---|---|
+| FASHN VTON 1.5 | Engine virtual try-on chính | Cần external repo + weights |
+| FLUX.2 Klein 4B | Pose transfer khi ảnh khó; accessory refinement | Repose thích ứng; ép bằng `JAPANO_FORCE_REPOSE=1` |
+| LoRA rank 8 trên FLUX.2 | Mô phỏng chật/vừa/rộng theo size — **fine-tune trong dự án này** | Chỉ áp cho `tops`; xem [báo cáo](#báo-cáo-fine-tune-thử-đồ) |
+| CatVTON | Try-on fallback | Tắt mặc định |
+
+**Nhóm 4 — Sinh video chuyển động** (GPU, tùy chọn)
+
+| Model | Vai trò | Trạng thái |
+|---|---|---|
+| Wan2.1-T2V-1.3B + One-to-All `1.3b_2` | Tạo video từ ảnh đã thử đồ | CUDA-only, không có CPU fallback |
+| YOLOv10m ONNX + ViTPose ONNX | Pose/control và kiểm tra action cho motion | Đi cùng One-to-All installation |
 
 [`backend/pose_reposer.py`](backend/pose_reposer.py) còn có capability Stable Diffusion 1.5 + ControlNet OpenPose cho direct CatVTON service, nhưng app route chính hiện không kích hoạt nhánh repose này.
 
+## Đo cơ thể từ ảnh
+
+Người dùng chọn một ảnh, hệ thống trả về chiều cao, cân nặng, vòng 1/2/3 và size
+gợi ý. Phần này được **làm lại toàn bộ ngày 28/08/2026**; mục dưới ghi cả lỗi cũ,
+cách sửa và sai số đo được, để ai đọc cũng kiểm chứng lại được.
+
+### Lỗi gốc
+
+Ảnh một người mẫu nữ gầy, áo đỏ dài tay, ảnh cắt ngang đùi cho ra:
+**200–210 cm, 110–120 kg, vòng eo 150–160 cm**. Bốn nguyên nhân độc lập, tất cả
+đều đo được chứ không phải suy đoán:
+
+| # | Nguyên nhân | Bằng chứng |
+|---|---|---|
+| 1 | Segmentation gộp hai cánh tay vào thân | Từ y=460 đến y=1100 silhouette chỉ có **một** đoạn liên tục rộng 460–503 px, trong khi hai khớp hông chỉ cách nhau **214 px** |
+| 2 | Khớp đầu gối giả được dùng làm mốc đo | Ảnh cao 1320 px; YOLO đặt đầu gối ở y=1303 và y=1319 với độ tin cậy 0,25/0,32 |
+| 3 | Chiều dài đầu suy từ một hệ số cố định | `(mắt − đỉnh đầu)/0,55` cho 208 px; hệ số đúng đo trên 6.479 khuôn mặt có nhãn là **0,511 ± 0,048** |
+| 4 | Kẹp về biên rồi nhân hằng số | 8,61 đầu/thân bị kẹp còn 8,6, nhân 24,0 cm ⇒ **206,4 cm** |
+
+Chiều cao sai 40 cm kéo mọi bề ngang quy ra cm sai theo, đặc trưng lệch miền
+huấn luyện tới 8 độ lệch chuẩn, cổng out-of-distribution veto model học máy, và
+nhánh dự phòng BMI tuyến tính trả 119,8 kg.
+
+### Pipeline sau khi sửa
+
+```mermaid
+flowchart TD
+    IMG["Ảnh người dùng"] --> POSE["YOLOv8n-pose<br/>17 khớp + chọn chủ thể"]
+    IMG --> SEG["U2Net<br/>silhouette"]
+    POSE --> GATE{"Khớp có đáng tin?<br/>conf ≥ 0.5, không sát mép ảnh"}
+    GATE -->|loại| COV["Hạ mức độ phủ:<br/>full → knee → hip → shoulder"]
+    GATE -->|giữ| COV
+    SEG --> CARVE["Cắt hai cánh tay bằng khung xương<br/>body_geometry.torso_profile"]
+    POSE --> CARVE
+    CARVE --> WIDTH["Bề ngang vai/ngực/eo/hông<br/>+ chốt giải phẫu ANSUR"]
+    COV --> HEIGHT["Chiều cao = prior dân số<br/>cập nhật bằng cue từ ảnh"]
+    WIDTH --> REG["Hồi quy: BMI ← tỉ lệ<br/>cân nặng/vòng ← bề ngang"]
+    HEIGHT --> REG
+    REG --> CAL["Hiệu chuẩn dân số<br/>BodyM"]
+    CAL --> PLAUS{"Chốt giải phẫu<br/>trên ĐẦU RA"}
+    PLAUS -->|hợp lý| OUT["5 khoảng rộng đúng 10 đơn vị<br/>+ độ tin cậy + cảnh báo"]
+    PLAUS -->|bất khả thi| DROP["Bỏ số đó, nói rõ lý do"]
+```
+
+Nguyên tắc bất di bất dịch: **số đo do người dùng tự nhập luôn thắng ước lượng
+của AI**, kể cả khi AI "tự tin" hơn. Người dùng biết chiều cao của chính họ.
+
+### Dataset
+
+Khảo sát 8 ứng viên, bảng đầy đủ ở
+[`DATASET_SURVEY.md`](backend/ai_training/body_dataset/provenance/DATASET_SURVEY.md).
+Ba bộ được dùng, ba vai trò **không được lẫn lộn**:
+
+| Bộ | Có ảnh? | Có số đo thật? | Vai trò trong JAPANO | License | Thương mại |
+|---|---|---|---|---|---|
+| ANSUR II — 6.068 người | ❌ chỉ CSV | ✅ 93 số đo | Prior nhân trắc + hồi quy số-đo→cân-nặng/vòng | CC0-1.0 | ✅ |
+| VITON-HD — 8.052 ảnh có nhãn tay/thân | ✅ | ❌ | Hiệu chuẩn hình học, tách tay khỏi thân | CC-BY-NC-SA-4.0 | ❌ |
+| BodyM — 2.505 người | ✅ silhouette | ✅ 14 số đo + cao/nặng | **Đo sai số end-to-end ảnh→số đo** | CC-BY-NC-4.0 | ❌ |
+
+> [!WARNING]
+> VITON-HD và BodyM đều **phi thương mại**. Mọi hằng số hiệu chuẩn và checkpoint
+> fit trên hai bộ này thừa hưởng ràng buộc đó. Riêng phần suy từ ANSUR II (CC0)
+> thì không bị ràng buộc. Tắt lớp hiệu chuẩn BodyM bằng
+> `JAPANO_BODY_POPULATION_CALIBRATION=0`.
+
+Hai bộ HuggingFace `body-measurements-*` đã bị **loại**: license CC-BY-NC-**ND**
+cấm tạo tác phẩm phái sinh (kể cả checkpoint), và thực chất chúng không có số đo.
+
+Script tải lại được, không cần credential:
+
+```bash
+python3 backend/ai_training/fetch_bodym_dataset.py --splits testB testA train
+python3 backend/ai_training/build_torso_calibration.py
+```
+
+### Kết quả — ba mức, tập test tách theo danh tính
+
+**Mức 1 — Bề ngang thân, VITON-HD test (1.203 ảnh).** Ground truth là nhãn
+parsing, chỉ tính hàng có nhãn cả hai cánh tay.
+
+| Mốc | Baseline MAE | Sau khi sửa | MAPE |
+|---|---:|---:|---|
+| Ngực | 45,02 px | **23,00 px** | 16,6% → 8,0% |
+| Eo | 79,34 px | **17,44 px** | 34,8% → **10,3%** |
+| Hông | 79,23 px | **20,50 px** | 31,2% → 10,0% |
+
+Riêng tập con "tay dính vào thân": eo **109,18 → 20,38 px**.
+
+**Mức 2 — Hồi quy, ANSUR II test (1.214 người).**
+
+| Mục tiêu | Điều kiện | Baseline | Sau khi train lại |
+|---|---|---:|---:|
+| Cân nặng | số đo bằng thước | 3,13 kg | 6,93 kg |
+| Cân nặng | **đặc trưng giống ảnh** | **24,96 kg** | **6,37 kg** |
+| Vòng eo | giống ảnh | 19,02 cm | **5,51 cm** |
+| Vòng hông | giống ảnh | 19,99 cm | **4,13 cm** |
+
+Model mới **kém hơn** ở điều kiện phòng thí nghiệm và **tốt hơn 4 lần** ở điều
+kiện chạy thật. Đây là đánh đổi có chủ đích, và nó giải thích vì sao bản cũ buộc
+phải veto chính model của mình bằng cổng out-of-distribution.
+
+**Mức 3 — Ảnh → số đo end-to-end, BodyM testB (400 người).** Con số dự án chưa
+từng có: sai số thật từ ảnh, không phải sai số của riêng bước hồi quy.
+
+| Đại lượng | Baseline MAE | Sau khi sửa | Bias trước | Bias sau |
+|---|---:|---:|---:|---:|
+| Chiều cao | 20,01 cm | **6,44 cm** | **+16,57** | **−1,94** |
+| Cân nặng | 15,99 kg | **9,00 kg** | +0,74 | −2,1 |
+| Vòng ngực | 12,91 cm | **6,11 cm** | −2,17 | −1,0 |
+| Vòng eo | 9,96 cm | **6,50 cm** | +5,26 | −1,5 |
+| Vòng hông | 12,24 cm | **5,57 cm** | +6,19 | −1,3 |
+
+Bias chiều cao **+16,57 cm** chính là lỗi 206 cm ở quy mô dân số.
+
+**Ảnh regression áo đỏ** — cổng tỉnh táo, **không phải** ground truth vì không có
+số đo thật của người trong ảnh:
+
+| Đại lượng | Trước | Sau | Dải hợp lý bằng mắt |
+|---|---|---|---|
+| Chiều cao | 200–210 cm | **160–170 cm** | 160–180 ✓ |
+| Cân nặng | 110–120 kg | **60–70 kg** | 50–70 ✓ |
+| Vòng ngực | 130–140 cm | **90–100 cm** | 70–100 ✓ |
+| Vòng eo | 150–160 cm | **80–90 cm** | 60–90 ✓ |
+
+### Tốc độ
+
+| Giai đoạn | Trước | Sau |
+|---|---:|---:|
+| Nạp YOLO + U2Net mỗi request | ~3,2 s | **0 s** |
+| **API `/api/stylist/body-analysis`** | **4,12 s** | **0,35 s** (P50, n=8; P90 0,37 s) |
+
+Nguyên nhân: mỗi request sinh một tiến trình Python mới và nạp lại hai model
+không hề đổi. Worker [`body_analysis_service.py`](backend/body_analysis_service.py)
+giữ chúng thường trú; Node luôn có đường lùi về `runAccessoryPipeline` nếu worker
+không chạy, nên bật/tắt worker không làm hỏng tính năng.
+
+### Hiệu ứng vừa vặn và chính sách vết bục
+
+Độ chật/rộng không chỉ là một dòng cảnh báo — nó điều khiển bước fit-refine, tức
+là quyết định bức ảnh cuối cùng trông thế nào.
+
+| Verdict | Hiệu ứng được phép |
+|---|---|
+| `slightly_tight` | vải căng nhẹ |
+| `tight` | vải căng, đường may bị kéo, nút áo căng |
+| `very_tight` | thêm tách đường may, và **bục một đoạn** nếu trang phục cho phép |
+| `slightly_loose` → `very_loose` | nếp gấp, vai xệ, tay áo rộng, form rủ thùng thình |
+
+Vết bục kích hoạt theo **độ chật thật**, không theo "catalog hết size". Một người
+95 kg tự chọn size S vẫn phải thấy vết bục kể cả khi shop bán tới 5XL. Đo trên
+đường cong severity: người 55 kg chọn S chỉ đạt 0,34 và người 70 kg chọn S đạt
+0,66 — cả hai đều dưới ngưỡng 0,85, nên không có chuyện rách nhầm người thường.
+
+Lệnh cấm bục có **hai loại khác hẳn nhau**, và chỉ một loại được nới:
+
+| Trang phục | Lý do cấm | Hết size thì sao |
+|---|---|---|
+| Đồ bơi, bikini, crop top, short, váy ngắn | `safety` — bục là làm hở thêm cơ thể | **Tuyệt đối không bục** |
+| Kimono, yukata, haori, áo khoác | `construction` — phải giữ đúng kết cấu | Được bục, vì trung thực hơn ảnh phẳng lì |
+| Quần, chân váy (mọi loại) | vùng thân dưới | Không bao giờ bục |
+
+### Ảnh có nhiều người
+
+**Chỉ MỘT người được thay đồ** — người **to nhất và gần ống kính nhất**. Không có
+chiều sâu thật từ ảnh đơn, nên "gần ống kính" đo bằng kích thước biểu kiến:
+
+```
+điểm = diện_tích×6 + chiều_cao_box×4 + vị_trí_trong_khung×1.5 + confidence×0.5
+```
+
+Chiều cao box có trọng số riêng vì người đứng sát máy thường bị cắt chân, nên
+diện tích của họ có thể nhỏ hơn người đứng xa mà thấy trọn người. Vị trí trong
+khung chỉ để phân xử khi hai người xấp xỉ bằng nhau — công thức cũ cho vị trí tới
+4,5 điểm và từng chọn nhầm một người chiếm 1,9% khung thay vì người chiếm 25,6%.
+
+Những người còn lại được `restore_secondary_people()` dán nguyên trạng trở lại
+sau khi model chỉnh tư thế, và cổng `secondary_person_changed` chặn ảnh nếu pixel
+của họ bị đổi quá ngưỡng.
+
+### Giới hạn phải nói rõ
+
+- **Chiều cao chủ yếu là prior khi ảnh không có vật chuẩn.** Với ảnh áo đỏ, trọng
+  số của cue từ ảnh chỉ 0,168; phần còn lại là prior dân số. Kết quả được gắn
+  `basis: population_prior` và `usableForSizing: false`, và **không** được dùng để
+  chốt size. Đây là giới hạn vật lý của ảnh đơn, không phải lỗi sửa được bằng model.
+- **Bin 10 đơn vị chỉ chứa giá trị thật 38–52% số lần.** Hiển thị khoảng rộng đúng
+  10 là yêu cầu sản phẩm; độ phủ thật của nó là con số đó, và nó thấp. Khoảng bất
+  định thật vẫn được giữ trong `uncertainty*` cho chẩn đoán.
+- **Chế độ áo phom rộng chưa đo được.** Không tìm được bộ ảnh nào có người mặc đồ
+  rộng kèm số đo thật. BodyM chụp đồ bó sát, VITON-HD không có số đo.
+- **Sai số tách nền chưa được chấm** — BodyM chỉ có silhouette nhị phân.
+- **Nam kém hơn nữ** trên BodyM testB (cân nặng 16,78 so với 14,08 kg trước hiệu
+  chuẩn). Chưa điều tra.
+- Một ảnh chính diện **không** tách được "áo rộng" khỏi "bụng to". `clothingSlack`
+  thực chất đo "rộng hơn khung xương bao nhiêu", nên nó là tín hiệu, không phải
+  phép đo quần áo.
+
+Toàn bộ bảng số, cách tái tạo và nhật ký quyết định nằm ở
+[`BODY_MEASUREMENT.md`](backend/ai_training/BODY_MEASUREMENT.md).
+
 ## Báo cáo fine-tune thử đồ
+
+> [!NOTE]
+> Dự án có **hai nỗ lực huấn luyện tách biệt**, đừng nhầm số liệu của chúng với nhau:
+>
+> | | Huấn luyện cái gì | Trên dữ liệu nào | Báo cáo ở đâu |
+> |---|---|---|---|
+> | **Fine-tune** | LoRA rank 8 cho FLUX.2 Klein 4B, để mô phỏng chật/vừa/rộng | VITON-HD | mục này |
+> | **Train lại** | Bộ hồi quy ảnh→số đo (cân nặng, vòng, BMI) | ANSUR II + BodyM | [Đo cơ thể từ ảnh](#đo-cơ-thể-từ-ảnh) |
 
 Kết quả thực nghiệm ngày **26/08/2026**: dự án không fine-tune trọng số FASHN
 VTON 1.5 (repository cục bộ chỉ cung cấp inference). Phần được fine-tune là
@@ -290,7 +546,7 @@ Offline ranking evaluation chưa được triển khai; `NDCG@10` và `Recall@10
 | Churn prioritization | RFM heuristic: Recency 62% + Frequency 23% + Monetary 15% |
 | Mua kèm | Pairwise association rules |
 | Outfit | HSL color harmony + tag cosine + trending |
-| Tư vấn size | Expert thresholds từ số đo hoặc chiều cao/cân nặng |
+| Tư vấn size | Ưu tiên số đo khách nhập → vòng đo AI đã hiệu chuẩn → chiều cao/cân nặng/BMI → size chart sản phẩm. Phân biệt rõ `recommendedSize`, `selectedSize`, `no_size` (sản phẩm thiếu size chart) và `outsideAvailableRange` (cơ thể vượt mọi size đang bán) |
 
 DemandScore, inventory risk và churn là heuristic minh bạch, không phải supervised classifier hay xác suất đã calibration.
 
@@ -498,6 +754,17 @@ Xem toàn bộ biến tham khảo trong [`.env.example`](.env.example).
 | `JAPANO_FORCE_REPOSE` | Ép mọi ảnh đi qua pose transfer; mặc định `0` |
 | `JAPANO_ACCESSORY_REFINE` | Bật accessory refinement; mặc định `1` |
 | `JAPANO_ONE_TO_ALL_HOME`, `JAPANO_ONE_TO_ALL_PYTHON` | Motion installation |
+| `JAPANO_BODY_WORKER_URL` | Worker đo cơ thể; đặt rỗng để tắt hẳn và quay về đường spawn |
+| `JAPANO_BODY_WORKER_PORT` | Cổng worker, mặc định `7863` |
+| `JAPANO_BODY_ANALYSIS_ENABLED` | Bật/tắt toàn bộ tính năng đo cơ thể |
+| `JAPANO_BODY_ESTIMATE_MIN_CONFIDENCE` | Ngưỡng tin cậy để ước lượng được dùng CHỌN SIZE, mặc định `0.35` |
+| `JAPANO_BODY_DISPLAY_MIN_CONFIDENCE` | Ngưỡng thấp hơn, chỉ để HIỂN THỊ, mặc định `0.20` |
+| `JAPANO_BODY_POPULATION_CALIBRATION` | `0` để tắt lớp hiệu chuẩn BodyM (phi thương mại) |
+| `JAPANO_BODY_OOD_SIGMA` | Độ rộng cổng lệch miền, mặc định `4.0` |
+| `JAPANO_LANDMARK_MIN_CONFIDENCE` | Ngưỡng tin cậy tối thiểu của một khớp để được làm mốc đo, mặc định `0.5` |
+| `JAPANO_REMBG_MODEL` | Model tách nền, mặc định `u2net` |
+| `JAPANO_FIT_TEAR_ENABLED` | Bật hiệu ứng bục đường may, mặc định bật |
+| `JAPANO_FIT_TEAR_MIN_SEVERITY` | Ngưỡng severity để được bục, mặc định `0.85` |
 | `JAPANO_SKIP_FASHN`, `JAPANO_SKIP_MOTION` | Bỏ qua service trong `start-all.sh` |
 | `JAPANO_SKIP_CATVTON`, `JAPANO_CATVTON_FALLBACK` | Điều khiển CatVTON service và route fallback |
 | `GEMINI_API_KEY` | Key cho script test video Gemini tùy chọn; không đặt tiền tố `EXPO_PUBLIC_` |
@@ -526,6 +793,22 @@ node scripts/test-gemini-video.mjs <duong-dan-anh> [duong-dan-output.mp4]
 | `npm --workspace mobile run typecheck` | Chỉ kiểm tra TypeScript mobile |
 | `npm run verify` | Smoke test core API đang chạy |
 | `npm run verify:ai` | Smoke test thêm try-on, vision và goals |
+| `./scripts/japano-services.sh on\|off\|status` | Bật/tắt cả cụm service nền, chờ sẵn sàng và tự kiểm tra |
+| `npm run body:train -- --ansur --robust` | Train lại bộ hồi quy cơ thể trên ANSUR II |
+| `npm run test:python` | Chạy riêng test Python của pipeline cơ thể/thử đồ |
+
+Huấn luyện và đánh giá phần đo cơ thể — chạy theo đúng thứ tự này:
+
+| Bước | Lệnh |
+|---|---|
+| 1. Tải dataset | `python3 backend/ai_training/fetch_bodym_dataset.py --splits testB testA train` |
+| 2. Trích nhãn tay/thân | `python3 backend/ai_training/build_torso_calibration.py` |
+| 3. Fit hằng số hình học | `python3 backend/ai_training/fit_body_geometry_calibration.py` |
+| 4. Train hồi quy | `python3 backend/ai_training/train_body_estimator.py --ansur --robust` |
+| 5. Hiệu chuẩn dân số | `python3 backend/ai_training/fit_bodym_population_calibration.py` |
+| 6a. Chấm bề ngang | `python3 backend/ai_training/evaluate_torso_extraction.py --split test` |
+| 6b. Chấm end-to-end | `python3 backend/ai_training/evaluate_body_pipeline.py --split testB` |
+| 6c. So baseline/mới | `python3 backend/ai_training/compare_body_estimators.py --baseline-weight <cũ> --baseline-girth <cũ>` |
 
 `verify` có ghi interaction/profile test cho user `verify-user`; nên chạy trên dữ liệu demo hoặc file DB riêng.
 
@@ -581,6 +864,15 @@ japano/
 │   ├── lib/                    # Commerce, AI, analytics, recommendation
 │   ├── test/                   # node:test suites
 │   ├── data/db.json            # Seed/fallback khi không cấu hình MongoDB
+│   ├── body_analysis.py        # Ảnh → chiều cao/cân nặng/vòng 1-2-3
+│   ├── body_geometry.py        # Cắt tay khỏi thân, chốt giải phẫu, đo đầu
+│   ├── body_analysis_service.py# Worker thường trú cổng 7863
+│   ├── accessory_pipeline.py   # Pose, chọn chủ thể, phụ kiện, quality gate
+│   ├── ai_training/            # Dataset, script train/eval, checkpoint
+│   │   ├── BODY_MEASUREMENT.md # Toàn bộ số liệu phần đo cơ thể
+│   │   ├── body_dataset/provenance/  # Manifest + license 3 dataset
+│   │   ├── models/             # Checkpoint (gitignored)
+│   │   └── evaluation/         # Kết quả benchmark dạng JSON
 │   ├── fashn_service.py        # FASHN + FLUX.2 service
 │   ├── motion_service.py       # One-to-All service
 │   └── catvton_service.py      # Optional CatVTON service
@@ -591,6 +883,8 @@ japano/
 │   └── assets/
 ├── scripts/
 │   ├── verify.mjs              # API smoke test
+│   ├── japano-services.sh      # Bật/tắt cụm service nền
+│   ├── adb-ui.py               # Điều khiển app Android bằng nhãn trên màn hình
 │   └── test-gemini-video.mjs   # Gemini Omni Flash test thủ công (tùy chọn)
 ├── .env.example
 ├── package.json
@@ -600,10 +894,18 @@ japano/
 
 ERD và schema tham khảo:
 
-- [`japano_erd.dbml`](japano_erd.dbml)
-- [`japano_erd.sql`](japano_erd.sql)
-- [`japano_schema_v2.sql`](japano_schema_v2.sql)
-- [`japano_schema_v2_sqlite.sql`](japano_schema_v2_sqlite.sql)
+| File | Nội dung |
+|---|---|
+| [`JAPANO_ERD_MongoDB.drawio`](JAPANO_ERD_MongoDB.drawio) | ERD MongoDB hiện hành, 7 trang, 34 collection |
+| [`ERD_JAPANO_MONGODB_PNG/`](ERD_JAPANO_MONGODB_PNG/) | Bản PNG từng cụm, xem nhanh không cần draw.io |
+| [`scripts/erd_schema.json`](scripts/erd_schema.json) | Schema nguồn để sinh lại ERD |
+
+Sinh lại ERD từ dữ liệu thật thay vì sửa tay file `.drawio`:
+
+```bash
+python3 scripts/build_erd_mongo.py     # dựng lại ERD MongoDB
+npm run db:erd:drawio                  # bản sinh từ backend
+```
 
 ## Kiểm thử
 
@@ -625,7 +927,17 @@ Kiểm tra cả AI stack:
 npm run verify:ai
 ```
 
-Test suite hiện bao phủ recommendation provenance, cache isolation, next-item transition, causal ranker diagnostics, feedback âm, bot model trace, analytics, payment/VIP, Flagcard, moderation và dữ liệu hành chính.
+`npm run check` chạy ba thứ: **263 test backend** (`node:test`), **89 test Python**
+(`unittest`) và TypeScript typecheck của mobile.
+
+| Nhóm | Bao phủ |
+|---|---|
+| Thương mại | recommendation provenance, cache isolation, next-item transition, causal ranker, feedback âm, bot model trace, analytics, payment/VIP, Flagcard, moderation, dữ liệu hành chính |
+| Đo cơ thể | tay buông sát thân không bị tính vào eo, tay chống hông, ảnh cắt ngang gối, áo oversized, người rất mập không bị kẹp thành người gầy, ảnh mới không kế thừa số đo ảnh cũ, mọi khoảng hiển thị rộng đúng 10, số đo người dùng nhập luôn thắng |
+| Chốt giải phẫu | vòng đo bất khả thi bị loại, vòng lớn hơn chiều cao bị loại, BMI ngoài dải bị loại, hằng số hiệu chuẩn đủ rộng cho người béo |
+| Chính sách vết bục | 95 kg mặc S/M phải bục (cả khi shop còn size lớn), người 55/70 kg không bục nhầm, đồ bơi và crop top không bao giờ bục, kimono hết size thì được bục, quần/váy không bao giờ bục |
+| Chọn chủ thể | người to thắng người nhỏ đứng giữa khung, người gần máy bị cắt chân vẫn thắng, chỉ một người được thay đồ |
+| Worker | worker lỗi/timeout/JSON hỏng đều phải rơi về đường spawn, không làm sập request |
 
 ## Giới hạn hiện tại
 
@@ -638,6 +950,9 @@ Test suite hiện bao phủ recommendation provenance, cache isolation, next-ite
 - AI checkpoints và Python environments không nằm trong repo và không được cài bởi npm.
 - Recommendation SSM/GNN/mLSTM là lightweight inspired implementations; chưa có offline NDCG/Recall benchmark.
 - Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
+- Đo cơ thể: chiều cao chủ yếu là prior dân số khi ảnh không có vật chuẩn, bin 10 đơn vị chỉ chứa giá trị thật 38–52% số lần, và chế độ áo phom rộng chưa có dataset để đo. Chi tiết ở [Đo cơ thể từ ảnh](#đo-cơ-thể-từ-ảnh).
+- Hằng số hiệu chuẩn hình học và lớp hiệu chuẩn dân số fit trên VITON-HD/BodyM nên **phi thương mại**; bản thương mại phải thay bằng dữ liệu có license phù hợp.
+- Chưa mở rộng dataset fine-tune LoRA thử đồ: acceptance gate hiện chỉ dựa trên 8 mẫu/2 danh tính, quá nhỏ để kết luận chắc chắn.
 - Trước production cần hoàn tất audit authorization cho từng route, request validation, secret management, MongoDB transaction/migration, audit log, observability và CI/CD.
 
 ## Trước khi push lên GitHub

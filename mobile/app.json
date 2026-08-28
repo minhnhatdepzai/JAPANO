@@ -68,6 +68,10 @@
         "androidClientId": "818888909731-ef99sfuk4784soea0c7fca922u2gkcfg.apps.googleusercontent.com",
         "iosClientId": "",
         "webClientId": ""
+      },
+      "api": {
+        "lanUrl": "http://192.168.1.51:4100",
+        "tailscaleUrl": "https://rd-system.tail6502ce.ts.net:4101"
       }
     }
   }

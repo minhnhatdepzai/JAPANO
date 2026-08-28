@@ -13,10 +13,63 @@
 // Ước lượng của AI KHÔNG BAO GIỜ được ghi đè dữ liệu thật của khách — kể cả khi
 // nó "tự tin" hơn. Người dùng biết chiều cao của chính họ.
 
+const crypto = require('crypto');
+
+// Worker thường trú cho bước phân tích cơ thể.
+//
+// Đường mặc định (`runAccessoryPipeline`) sinh một tiến trình Python MỚI cho mỗi
+// request, nên mỗi lượt phải nạp lại YOLOv8n-pose và U2Net — đo được 4.12 giây
+// một lượt, hơn một nửa là nạp model. Worker giữ hai model đó thường trú.
+//
+// Đây là TỐI ƯU, không phải phụ thuộc: mọi lỗi (chưa bật service, timeout, trả
+// dữ liệu hỏng) đều rơi về đường cũ. Tắt hẳn bằng JAPANO_BODY_WORKER_URL=''.
+const bodyWorkerUrl = () => {
+  const raw = process.env.JAPANO_BODY_WORKER_URL;
+  if (raw !== undefined) return String(raw).trim();
+  return 'http://127.0.0.1:7863';
+};
+
+async function analyzeViaWorker(payload, timeoutMs) {
+  const base = bodyWorkerUrl();
+  if (!base) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
+  try {
+    const response = await fetch(`${base}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data && data.ok ? data : null;
+  } catch {
+    // Worker chưa chạy hoặc quá hạn — im lặng rơi về đường spawn.
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const num = (value) => {
   const parsed = Number(String(value ?? '').trim());
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
+
+// Khoá cache theo đúng bytes ảnh. Mobile phân tích vóc dáng ngay sau khi chọn
+// ảnh; /tryon dùng lại pose đó thay vì nạp YOLO thêm một lần. Hash ngăn việc
+// vô tình áp pose của ảnh trước lên ảnh vừa chọn sau Fast Refresh.
+function imageFingerprint(value) {
+  const text = String(value || '').trim();
+  const raw = text.startsWith('data:') && text.includes(',') ? text.slice(text.indexOf(',') + 1) : text;
+  if (!raw) return '';
+  try {
+    return crypto.createHash('sha256').update(Buffer.from(raw, 'base64')).digest('hex').slice(0, 24);
+  } catch {
+    return '';
+  }
+}
 
 const minConfidence = () => {
   const parsed = Number(process.env.JAPANO_BODY_ESTIMATE_MIN_CONFIDENCE);
@@ -83,10 +136,19 @@ function profileForMeasurementMode(profile = {}, mode = '') {
   };
 }
 
+/**
+ * Một ước lượng chỉ được dùng để CHỌN SIZE khi nó đủ tin cậy.
+ *
+ * Ngưỡng hiển thị của Python thấp hơn ngưỡng này: ảnh không có vật chuẩn vẫn cho
+ * ra một khoảng 10cm đáng hiển thị kèm nhãn "độ tin cậy thấp", nhưng con số chủ
+ * yếu đến từ prior dân số nên không được âm thầm quyết định size. `usableForSizing`
+ * do Python đặt là tiếng nói cuối cùng khi có; nếu không có thì so confidence.
+ */
 function usableEstimate(estimate, key) {
   if (!estimate) return 0;
   const value = num(estimate[key]);
   if (!value) return 0;
+  if (estimate.usableForSizing === false) return 0;
   return Number(estimate.confidence || 0) >= minConfidence() ? value : 0;
 }
 
@@ -156,12 +218,20 @@ function summarizeBodyAnalysis(bodyAnalysis) {
     estimatedHeight: bodyAnalysis.estimatedHeight,
     estimatedWeight: bodyAnalysis.estimatedWeight,
     estimatedGirths: bodyAnalysis.estimatedGirths || {},
+    estimatedGirthRanges: bodyAnalysis.estimatedGirthRanges || {},
+    // Vòng nào bị chốt chặn giải phẫu loại bỏ, kèm lý do. UI phải nói "chưa đo
+    // được" cho đúng vòng đó thay vì im lặng bỏ trống.
+    rejectedGirths: bodyAnalysis.rejectedGirths || null,
     // Cờ này phải đi kèm số đo vòng ở MỌI nơi hiển thị: đó là vòng ngoài quần
     // áo, không phải vòng cơ thể, nên không dùng để chốt size.
     girthsMeasureClothing: bodyAnalysis.girthsMeasureClothing !== false,
     bodyShape: bodyAnalysis.bodyShape,
     quality: bodyAnalysis.quality,
     warnings: bodyAnalysis.warnings || [],
+    // Chỉ là keypoint/bounding box, không chứa ảnh. Client gửi lại cùng
+    // imageFingerprint để try-on tránh phân tích pose trùng lặp.
+    poseCache: bodyAnalysis.poseCache,
+    imageFingerprint: bodyAnalysis.imageFingerprint,
   };
 }
 
@@ -169,6 +239,8 @@ function summarizeBodyAnalysis(bodyAnalysis) {
 function bodyAnalysisLogLine(bodyAnalysis) {
   const height = bodyAnalysis?.estimatedHeight;
   const weight = bodyAnalysis?.estimatedWeight;
+  const bust = bodyAnalysis?.estimatedGirthRanges?.bust;
+  const waist = bodyAnalysis?.estimatedGirthRanges?.waist;
   const range = (value, unit) => (value?.minCm ?? value?.minKg) != null
     ? `${value.minCm ?? value.minKg}-${value.maxCm ?? value.maxKg} ${unit}`
     : 'không đủ dữ liệu';
@@ -176,11 +248,19 @@ function bodyAnalysisLogLine(bodyAnalysis) {
     '[TRYON BODY]',
     `height estimate = ${range(height, 'cm')}`,
     `weight estimate = ${range(weight, 'kg')}`,
+    `bust estimate = ${range(bust, 'cm')}`,
+    `waist estimate = ${range(waist, 'cm')}`,
     `confidence = ${bodyAnalysis?.quality?.analysisConfidence ?? 0}`,
+    // Hai cờ chẩn đoán quan trọng nhất khi số đo trông sai: tay có bị gộp vào
+    // thân không, và chiều cao đến từ ảnh hay chủ yếu từ prior dân số.
+    `armsMerged = ${bodyAnalysis?.quality?.armsMergedIntoTorso === true}`,
+    `heightBasis = ${height?.basis || height?.source || 'n/a'}`,
   ].join(' | ');
 }
 
 module.exports = {
+  analyzeViaWorker,
+  bodyWorkerUrl,
   mergeBodySignals,
   summarizeBodyAnalysis,
   bodyAnalysisLogLine,
@@ -188,4 +268,5 @@ module.exports = {
   minConfidence,
   userProvidedMeasurement,
   profileForMeasurementMode,
+  imageFingerprint,
 };

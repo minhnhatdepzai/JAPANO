@@ -3,6 +3,24 @@ import type { StyleProfile } from './api';
 
 const PROFILE_KEY = '@japano/style-profile/v1';
 
+/**
+ * Thế hệ của bộ ước lượng vóc dáng đang chạy.
+ *
+ * Ước lượng đã lưu trên máy là số do MỘT PHIÊN BẢN CỤ THỂ của model sinh ra. Khi
+ * model được sửa, những con số cũ không tự biến mất — máy Redmi test vẫn hiện
+ * "202 cm / 117 kg" trong ô chiều cao/cân nặng nhiều ngày sau khi bộ ước lượng
+ * sinh ra chúng đã bị thay, vì chúng nằm trong AsyncStorage chứ không phải trong
+ * response.
+ *
+ * Tăng số này mỗi khi bộ ước lượng thay đổi tới mức số cũ không còn dùng được.
+ * Số đo do CHÍNH NGƯỜI DÙNG nhập không bao giờ bị xoá — chỉ ước lượng của AI.
+ *
+ *   2 — 2026-08-28: tách tay khỏi thân, chiều cao chuyển sang prior dân số,
+ *       hồi quy train lại và hiệu chuẩn theo BodyM. Ước lượng của thế hệ 1
+ *       (đầu ra kiểu 202cm/117kg) bị loại bỏ.
+ */
+export const BODY_ESTIMATOR_GENERATION = 2;
+
 export type SavedStyleProfile = StyleProfile & {
   style: string;
   lastQuizDate?: string;
@@ -20,6 +38,8 @@ export type SavedStyleProfile = StyleProfile & {
   heightSource?: 'user' | 'image-estimation';
   weightSource?: 'user' | 'image-estimation';
   measurementSource?: 'user' | 'image-estimation';
+  /** Thế hệ bộ ước lượng đã sinh ra heightEstimateCm/weightEstimateKg. */
+  estimatorGeneration?: number;
 };
 
 export const DEFAULT_STYLE_PROFILE: SavedStyleProfile = {
@@ -35,10 +55,41 @@ export const DEFAULT_STYLE_PROFILE: SavedStyleProfile = {
   streak: 0,
 };
 
+/**
+ * Bỏ ước lượng do thế hệ model cũ sinh ra, giữ nguyên mọi thứ người dùng tự nhập.
+ */
+export function dropStaleEstimates(profile: SavedStyleProfile): SavedStyleProfile {
+  const hasEstimate = profile.heightEstimateCm != null || profile.weightEstimateKg != null;
+  if (!hasEstimate || profile.estimatorGeneration === BODY_ESTIMATOR_GENERATION) return profile;
+  const cleaned: SavedStyleProfile = {
+    ...profile,
+    heightEstimateCm: undefined,
+    weightEstimateKg: undefined,
+    estimateConfidence: undefined,
+    heightEstimateConfidence: undefined,
+    weightEstimateConfidence: undefined,
+    estimatorGeneration: undefined,
+  };
+  // `measurementSource: 'image-estimation'` là thứ khiến màn hình thử đồ điền
+  // sẵn con số ước lượng. Bỏ ước lượng mà giữ cờ này thì ô nhập vẫn trống nhưng
+  // app vẫn tin là đang dùng ước lượng.
+  if (cleaned.heightSource === 'image-estimation') cleaned.heightSource = undefined;
+  if (cleaned.weightSource === 'image-estimation') cleaned.weightSource = undefined;
+  if (cleaned.measurementSource === 'image-estimation') cleaned.measurementSource = undefined;
+  return cleaned;
+}
+
 export async function loadStyleProfile(): Promise<SavedStyleProfile> {
   try {
     const raw = await AsyncStorage.getItem(PROFILE_KEY);
-    return raw ? { ...DEFAULT_STYLE_PROFILE, ...JSON.parse(raw) } : DEFAULT_STYLE_PROFILE;
+    const stored = raw ? { ...DEFAULT_STYLE_PROFILE, ...JSON.parse(raw) } : DEFAULT_STYLE_PROFILE;
+    const cleaned = dropStaleEstimates(stored);
+    if (cleaned !== stored) {
+      // Ghi lại ngay để lần mở sau không phải dọn lại, và để mọi màn hình khác
+      // đọc profile cũng thấy bản đã dọn.
+      await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(cleaned)).catch(() => {});
+    }
+    return cleaned;
   } catch {
     return DEFAULT_STYLE_PROFILE;
   }

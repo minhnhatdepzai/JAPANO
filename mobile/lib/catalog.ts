@@ -5,6 +5,8 @@ export type Product = {
   price: number; old?: number|null; rating: number; sold: number; reviewCount?:number;
   images: any[]; imageKeys: string[];
   id?: string; status?: string; reason?: string;
+  /** Loại trang phục backend suy ra: kimono, yukata, bikini_two_piece... */
+  garmentType?: string;
   sizes?: string[]; colors?: Array<string | { name?: string; hex?: string }>;
   videos?: Array<string | { url:string; name?:string; type?:string }>;
   variants?: Array<{ colorName?: string; colorHex?: string; size?: string; sku?: string; stock?: number }>;

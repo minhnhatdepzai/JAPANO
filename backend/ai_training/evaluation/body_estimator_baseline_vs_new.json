@@ -1,0 +1,227 @@
+{
+  "dataset": "ANSUR II Public (CC0-1.0), 6068 người",
+  "split": "train_test_split(test_size=0.2, random_state=17) — mỗi hàng là một người, không trùng danh tính",
+  "corruption": "train_body_estimator.CORRUPTIONS — mô phỏng áo rộng, tay còn sót, sai số chiều cao",
+  "targets": {
+    "weight_kg": {
+      "unit": "kg",
+      "testSamples": 1214,
+      "clean": {
+        "baseline": {
+          "mae": 3.132,
+          "median": 2.59,
+          "p75": 4.42,
+          "p90": 6.554,
+          "rmse": 4.017,
+          "within5": 0.8064,
+          "within10": 0.9852
+        },
+        "candidate": {
+          "mae": 6.93,
+          "median": 5.212,
+          "p75": 9.458,
+          "p90": 15.154,
+          "rmse": 9.428,
+          "within5": 0.4876,
+          "within10": 0.7718
+        }
+      },
+      "photoLike": {
+        "baseline": {
+          "mae": 24.955,
+          "median": 24.525,
+          "p75": 32.357,
+          "p90": 40.51,
+          "rmse": 27.459,
+          "within5": 0.0321,
+          "within10": 0.0947
+        },
+        "candidate": {
+          "mae": 6.369,
+          "median": 5.213,
+          "p75": 9.003,
+          "p90": 13.246,
+          "rmse": 7.997,
+          "within5": 0.4811,
+          "within10": 0.7949
+        }
+      },
+      "photoLikePerSex": {
+        "F": {
+          "baseline": 24.039,
+          "candidate": 5.805
+        },
+        "M": {
+          "baseline": 25.407,
+          "candidate": 6.647
+        }
+      },
+      "decision": "promote"
+    },
+    "chest_circ_cm": {
+      "unit": "cm",
+      "testSamples": 1214,
+      "clean": {
+        "baseline": {
+          "mae": 2.764,
+          "median": 2.33,
+          "p75": 3.897,
+          "p90": 5.599,
+          "rmse": 3.557,
+          "within5": 0.8542,
+          "within10": 0.9885
+        },
+        "candidate": {
+          "mae": 4.892,
+          "median": 3.821,
+          "p75": 6.989,
+          "p90": 10.435,
+          "rmse": 6.36,
+          "within5": 0.6054,
+          "within10": 0.8847
+        }
+      },
+      "photoLike": {
+        "baseline": {
+          "mae": 18.179,
+          "median": 17.467,
+          "p75": 23.085,
+          "p90": 27.857,
+          "rmse": 19.874,
+          "within5": 0.0387,
+          "within10": 0.1351
+        },
+        "candidate": {
+          "mae": 4.411,
+          "median": 3.655,
+          "p75": 6.478,
+          "p90": 9.205,
+          "rmse": 5.591,
+          "within5": 0.6326,
+          "within10": 0.9226
+        }
+      },
+      "photoLikePerSex": {
+        "F": {
+          "baseline": 19.591,
+          "candidate": 4.654
+        },
+        "M": {
+          "baseline": 17.482,
+          "candidate": 4.292
+        }
+      },
+      "decision": "promote"
+    },
+    "waist_circ_cm": {
+      "unit": "cm",
+      "testSamples": 1214,
+      "clean": {
+        "baseline": {
+          "mae": 2.402,
+          "median": 1.899,
+          "p75": 3.382,
+          "p90": 4.962,
+          "rmse": 3.116,
+          "within5": 0.9028,
+          "within10": 0.9942
+        },
+        "candidate": {
+          "mae": 5.77,
+          "median": 3.972,
+          "p75": 8.451,
+          "p90": 13.346,
+          "rmse": 7.936,
+          "within5": 0.5766,
+          "within10": 0.8122
+        }
+      },
+      "photoLike": {
+        "baseline": {
+          "mae": 19.019,
+          "median": 19.062,
+          "p75": 25.491,
+          "p90": 30.736,
+          "rmse": 21.022,
+          "within5": 0.0626,
+          "within10": 0.1845
+        },
+        "candidate": {
+          "mae": 5.51,
+          "median": 4.681,
+          "p75": 7.842,
+          "p90": 10.775,
+          "rmse": 6.829,
+          "within5": 0.5255,
+          "within10": 0.8633
+        }
+      },
+      "photoLikePerSex": {
+        "F": {
+          "baseline": 17.964,
+          "candidate": 5.068
+        },
+        "M": {
+          "baseline": 19.54,
+          "candidate": 5.728
+        }
+      },
+      "decision": "promote"
+    },
+    "hip_circ_cm": {
+      "unit": "cm",
+      "testSamples": 1214,
+      "clean": {
+        "baseline": {
+          "mae": 1.754,
+          "median": 1.438,
+          "p75": 2.508,
+          "p90": 3.485,
+          "rmse": 2.234,
+          "within5": 0.9679,
+          "within10": 1.0
+        },
+        "candidate": {
+          "mae": 4.458,
+          "median": 3.107,
+          "p75": 6.304,
+          "p90": 10.314,
+          "rmse": 6.136,
+          "within5": 0.673,
+          "within10": 0.8888
+        }
+      },
+      "photoLike": {
+        "baseline": {
+          "mae": 19.987,
+          "median": 19.066,
+          "p75": 25.059,
+          "p90": 32.68,
+          "rmse": 22.056,
+          "within5": 0.0272,
+          "within10": 0.1376
+        },
+        "candidate": {
+          "mae": 4.129,
+          "median": 3.588,
+          "p75": 5.957,
+          "p90": 8.642,
+          "rmse": 5.188,
+          "within5": 0.6705,
+          "within10": 0.953
+        }
+      },
+      "photoLikePerSex": {
+        "F": {
+          "baseline": 20.286,
+          "candidate": 4.073
+        },
+        "M": {
+          "baseline": 19.84,
+          "candidate": 4.156
+        }
+      },
+      "decision": "promote"
+    }
+  }
+}

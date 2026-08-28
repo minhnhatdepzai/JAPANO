@@ -169,7 +169,15 @@ def run_pass(label: str, samples, steps: int, out_root: Path, seed_base: int):
             'id': sample['id'], 'verdict': verdict, 'pass': label,
             'ok': bool(quality.get('ok')),
             'reasons': ','.join(quality.get('reasons', [])),
-            'bodyDrift': max(quality.get('bodyDrift', {}).values(), default=0.0),
+            # bodyDrift còn chứa các bộ đếm faceSignalsUsed/violations để debug;
+            # chỉ lấy đúng metric hình học, nếu không số đếm 3 sẽ nuốt mọi drift
+            # thực 0.x và làm báo cáo checkpoint sai hoàn toàn.
+            'bodyDrift': max(
+                (float(value) for key, value in quality.get('bodyDrift', {}).items()
+                 if key in {'eyeSpan', 'eyeToNose', 'noseY', 'torso', 'shoulderSpan', 'aspect'}
+                 and isinstance(value, (int, float))),
+                default=0.0,
+            ),
             'colorShift': quality.get('colorShift', 0.0),
             'structureChange': quality.get('structureChange', 0.0),
             'skinGain': quality.get('skinGain', 0.0),
@@ -242,10 +250,13 @@ def acceptance(baseline: dict, lora: dict, tolerance: float):
           (lora['bodyDriftMean'] or 0) <= (baseline['bodyDriftMean'] or 0) + tolerance,
           f"bodyDrift LoRA {lora['bodyDriftMean']} vs baseline {baseline['bodyDriftMean']}")
     check('garment_fidelity_preserved',
-          (lora['colorShiftMean'] or 0) <= (baseline['colorShiftMean'] or 0) * (1 + tolerance) + 2,
+          (lora['colorShiftMean'] or 0) <= (baseline['colorShiftMean'] or 0) * (1 + tolerance),
           f"colorShift LoRA {lora['colorShiftMean']} vs baseline {baseline['colorShiftMean']}")
     check('fit_effect_visible',
-          (lora['structureChangeMean'] or 0) >= (baseline['structureChangeMean'] or 0) * (1 - tolerance),
+          (lora['structureChangeMean'] or 0) >= max(
+              (baseline['structureChangeMean'] or 0) * (1 + tolerance),
+              (baseline['structureChangeMean'] or 0) + .5,
+          ),
           f"structureChange LoRA {lora['structureChangeMean']} vs baseline {baseline['structureChangeMean']}")
     check('artifact_not_worse',
           lora['artifactRate'] <= baseline['artifactRate'] + tolerance,
@@ -254,7 +265,8 @@ def acceptance(baseline: dict, lora: dict, tolerance: float):
           lora['failureRate'] <= baseline['failureRate'] + tolerance,
           f"failureRate LoRA {lora['failureRate']} vs baseline {baseline['failureRate']}")
     check('latency_or_quality_justified',
-          lora['latencyP50'] <= baseline['latencyP50'] or lora['passRate'] >= baseline['passRate'],
+          lora['latencyP50'] <= baseline['latencyP50'] * 1.15
+          and lora['passRate'] >= baseline['passRate'],
           f"latencyP50 {lora['latencyP50']}s vs {baseline['latencyP50']}s; "
           f"passRate {lora['passRate']} vs {baseline['passRate']}")
     return all(c['passed'] for c in checks), checks

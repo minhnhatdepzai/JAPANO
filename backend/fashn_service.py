@@ -17,7 +17,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 from starlette.concurrency import run_in_threadpool
 
 import torch
@@ -245,6 +245,28 @@ def open_rgb(path: Path) -> Image.Image:
         return ImageOps.exif_transpose(source).convert("RGB")
 
 
+def polish_output(image: Image.Image) -> Image.Image:
+    """Xuất ảnh nét đồng nhất mà không gọi thêm model sinh ảnh.
+
+    FASHN gốc sinh ở lưới suy luận của model. Upscale Lanczos + unsharp nhẹ giữ nguyên
+    danh tính/pattern, khác với đưa qua một generative upscaler có thể vẽ lại
+    mặt và logo. Các phép tính inference vẫn chạy trên CUDA; FLUX có thể chuyển
+    tuần tự phần weights không hoạt động về RAM để vừa GPU 16 GB.
+    """
+    result = image.convert("RGB")
+    target_long_edge = max(0, int(os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")))
+    current_long_edge = max(result.size)
+    if target_long_edge and current_long_edge < target_long_edge:
+        scale = target_long_edge / current_long_edge
+        result = result.resize(
+            (max(1, round(result.width * scale)), max(1, round(result.height * scale))),
+            Image.Resampling.LANCZOS,
+        )
+    if os.getenv("JAPANO_TRYON_OUTPUT_SHARPEN", "1").strip().lower() not in {"0", "false", "no", "off"}:
+        result = result.filter(ImageFilter.UnsharpMask(radius=1.1, percent=105, threshold=3))
+    return result
+
+
 def normalized_output_size(image: Image.Image, low_memory: bool = False):
     # FLUX works in multiples of 32.  Use a portrait catalog canvas without
     # stretching the source; FASHN will preserve the resulting aspect ratio.
@@ -395,6 +417,7 @@ def build_fit_prompt(
     outerwear: bool = False,
     has_garment_reference: bool = False,
     garment_type: str = "",
+    force_tear: bool = False,
 ) -> str:
     """Prompt cho FLUX.2 — mô tả ĐỘ VỪA VẶN, không mô tả sản phẩm cụ thể.
 
@@ -431,10 +454,16 @@ def build_fit_prompt(
                 "Fabric pulled drum-tight, strong tension wrinkles, stressed seams partially separating at a "
                 "shoulder or side seam, pulled buttonholes, sleeves and hem too short for this body. "
             )
-            body += (
-                "Allow ONE small realistic split along a garment seam with frayed threads. "
-                if tear_allowed else "Do not tear the garment; keep strain at stressed seams only. "
-            )
+            if tear_allowed and force_tear:
+                body += (
+                    "MUST show exactly ONE clearly visible 5-10 cm split at an outer shoulder or side garment seam, "
+                    "with stretched stitches and a few frayed threads. Put an opaque neutral inner layer behind the "
+                    "split: no bare skin, no injury. The seam split is required because no sold size fits. "
+                )
+            elif tear_allowed:
+                body += "Allow ONE small realistic split along a garment seam with frayed threads. "
+            else:
+                body += "Do not tear the garment; keep strain at stressed seams only. "
     elif verdict in {"slightly_loose", "loose", "very_loose"}:
         body = f"The garment is too large for this body. Make it look oversized at the {focus['loose']}. "
         if verdict == "slightly_loose":
@@ -589,6 +618,7 @@ def refine_fit(
     seed: int,
     low_memory: bool = False,
     garment_type: str = "",
+    force_tear: bool = False,
 ) -> tuple[Image.Image, bool]:
     """Sửa độ vừa vặn trên ảnh đã mặc đồ xong.
 
@@ -606,6 +636,7 @@ def refine_fit(
         category, verdict, severity, tear_allowed, outerwear,
         has_garment_reference=garment is not None,
         garment_type=garment_type,
+        force_tear=force_tear,
     )
     generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(seed)
     # Fit là hiệu ứng hình học mạnh hơn một lượt làm đẹp thông thường, nên cho
@@ -614,6 +645,8 @@ def refine_fit(
     steps = int(os.getenv("JAPANO_FIT_STEPS", "4"))
     if severity >= 0.72:
         steps = int(os.getenv("JAPANO_FIT_STEPS_EXTREME", str(max(steps, 6))))
+    if force_tear and tear_allowed:
+        steps = max(steps, int(os.getenv("JAPANO_FIT_STEPS_FORCE_TEAR", "5")))
     references = [tryon_image] if garment is None else [tryon_image, garment]
     result = pipe(
         image=references,
@@ -637,6 +670,7 @@ def run_fit_refine_locked(
     outerwear: bool,
     seed: int,
     garment_type: str = "",
+    force_tear: bool = False,
 ):
     """Chạy fit-refine với đúng kỷ luật VRAM: nhả FASHN trước khi nạp FLUX."""
     global LAST_ENGINE
@@ -649,7 +683,10 @@ def run_fit_refine_locked(
             cuda_cleanup()
             tryon_image = open_rgb(tryon_path)
             garment = open_rgb(garment_path) if garment_path is not None else None
-            prefer_low_memory = os.getenv("JAPANO_TRYON_LOW_MEMORY", "1").strip().lower() not in {
+            # FASHN vẫn suy luận 768x1024 để khóa chi tiết áo. Fit-refine chỉ
+            # sửa hình học ôm/rủ nên dùng canvas 576x768, sau đó polish về 1536;
+            # tiết kiệm ~44% pixel cho FLUX mà không hạ ảnh VTON gốc.
+            prefer_low_memory = os.getenv("JAPANO_FIT_LOW_MEMORY", "1").strip().lower() not in {
                 "0", "false", "no", "off"
             }
             for attempt in range(2):
@@ -658,6 +695,7 @@ def run_fit_refine_locked(
                     output, lora = refine_fit(
                         tryon_image, garment, category, verdict, severity, tear_allowed, outerwear, seed,
                         low_memory=prefer_low_memory or attempt > 0, garment_type=garment_type,
+                        force_tear=force_tear,
                     )
                     break
                 except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
@@ -673,7 +711,8 @@ def run_fit_refine_locked(
                     print("=== GPU pressure: retrying fit refine at reduced resolution ===", flush=True)
                     time.sleep(2)
             output_path = RUNTIME_DIR / f"fit-{time.time_ns()}.png"
-            output.save(output_path)
+            output = polish_output(output)
+            output.save(output_path, optimize=True)
             LAST_ENGINE = "flux2-klein-4b-fit-refine" + ("+japano-fit-lora" if lora else "")
             return output_path
         finally:
@@ -793,7 +832,8 @@ def run_accessory_refine_locked(
                     )
                     check_cancelled()
                     output_path = RUNTIME_DIR / f"accessory-refined-{time.time_ns()}.png"
-                    result.save(output_path)
+                    result = polish_output(result)
+                    result.save(output_path, optimize=True)
                     LAST_ENGINE = "flux2-klein-4b-accessory-refine" + ("+adaptive-low-memory" if attempt else "")
                     return output_path
                 except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
@@ -864,7 +904,8 @@ def run_tryon(
         finally:
             unload_flux()
     output_path = RUNTIME_DIR / f"tryon-{time.time_ns()}.png"
-    output.save(output_path)
+    output = polish_output(output)
+    output.save(output_path, optimize=True)
     stages = []
     if repose:
         stages.append("flux2-klein-4b-pose")
@@ -939,6 +980,19 @@ def run_tryon_locked(
                 unload_flux()
 
 
+def warm_fashn_locked():
+    """Nạp FASHN khi người dùng vừa mở màn thử đồ, trước lúc bấm Tạo ảnh."""
+    with LOCK:
+        GPU_ACTIVE_FILE.write_text(str(os.getpid()), encoding="utf-8")
+        try:
+            CANCEL_REQUESTED.clear()
+            pipeline = load_fashn()
+            free_bytes = torch.cuda.mem_get_info()[0] if torch.cuda.is_available() else 0
+            return {"ok": pipeline is not None, "engine": "fashn-vton-1.5", "freeVramGb": round(free_bytes / (1024 ** 3), 2)}
+        finally:
+            GPU_ACTIVE_FILE.unlink(missing_ok=True)
+
+
 @api.get("/health")
 def health():
     model_ready = (FASHN_WEIGHTS / "model.safetensors").exists()
@@ -959,7 +1013,24 @@ def health():
         "singleSubject": True,
         "ollamaVramHandoff": os.getenv("JAPANO_RELEASE_OLLAMA_VRAM", "1") != "0",
         "gpuJobActive": gpu_job_active(),
+        "quality": {
+            "fashnSteps": int(os.getenv("JAPANO_FASHN_STEPS", "30")),
+            "fluxOffload": os.getenv("JAPANO_FLUX_OFFLOAD", "sequential"),
+            "lowMemory": os.getenv("JAPANO_TRYON_LOW_MEMORY", "1") not in {"0", "false", "no", "off"},
+            "fitLowMemory": os.getenv("JAPANO_FIT_LOW_MEMORY", "1") not in {"0", "false", "no", "off"},
+            "outputLongEdge": int(os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")),
+        },
     }
+
+
+@api.post("/warmup")
+async def warmup():
+    """Pre-warm không sinh ảnh; GPU arbiter gọi khi màn try-on được focus."""
+    try:
+        return await run_in_threadpool(warm_fashn_locked)
+    except Exception as exc:
+        print(f"FASHN warmup failed: {exc}", flush=True)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @api.post("/unload")
@@ -1051,6 +1122,7 @@ async def fit_refine(
     verdict: str = Form("good"),
     severity: float = Form(0.0),
     tear_allowed: bool = Form(False),
+    force_tear: bool = Form(False),
     outerwear: bool = Form(False),
     selected_size: str = Form(""),
     recommended_size: str = Form(""),
@@ -1085,6 +1157,7 @@ async def fit_refine(
     print(
         f"=== [FIT REFINE] verdict={verdict} severity={severity:.2f} category={category} "
         f"selected={selected_size or '?'} recommended={recommended_size or '?'} tear={bool(tear_allowed)} "
+        f"forceTear={bool(force_tear)} "
         f"garmentRef={cloth_path is not None} ===",
         flush=True,
     )
@@ -1093,7 +1166,7 @@ async def fit_refine(
         output_path = await run_in_threadpool(
             run_fit_refine_locked,
             person_path, cloth_path, category, verdict, float(severity),
-            bool(tear_allowed), bool(outerwear), int(seed), garment_type,
+            bool(tear_allowed), bool(outerwear), int(seed), garment_type, bool(force_tear),
         )
         return FileResponse(
             output_path,

@@ -117,9 +117,11 @@ class BodyAnalysisTest(unittest.TestCase):
         self.assertEqual(height['mode'], 'A')
         # 7.5 đầu * chiều dài đầu chuẩn, cho phép sai số của phép đo pixel.
         self.assertAlmostEqual(height['valueCm'], EXPECTED_HEIGHT_CM, delta=4.0)
-        # Luôn trả về KHOẢNG, và khoảng phải thật sự bao quanh giá trị.
-        self.assertLess(height['minCm'], height['valueCm'])
-        self.assertGreater(height['maxCm'], height['valueCm'])
+        # Bin hiển thị rộng đúng 10 cm và chứa giá trị (giá trị tròn chục có
+        # thể nằm đúng ở đầu bin, ví dụ 180 -> 180–190).
+        self.assertLessEqual(height['minCm'], height['valueCm'])
+        self.assertGreaterEqual(height['maxCm'], height['valueCm'])
+        self.assertEqual(height['maxCm'] - height['minCm'], 10)
         self.assertGreater(height['confidence'], 0.35)
 
     def test_mode_b_uu_tien_chieu_cao_nguoi_dung_nhap(self):
@@ -157,8 +159,15 @@ class BodyAnalysisTest(unittest.TestCase):
         self.assertIn(weight['model'], {'insufficient_data', 'partial_body_not_measurable'})
         self.assertLessEqual(weight['confidence'], 0.35)
 
-    def test_anh_khong_thay_ban_chan_thi_khong_uoc_luong_can_nang(self):
-        # Không thể cân một cơ thể chỉ nhìn thấy một nửa — dù tư thế rất rõ nét.
+    def test_anh_khong_thay_ban_chan_van_uoc_luong_tu_than_tren(self):
+        # Không có bàn chân thì không dùng thể tích mask, nhưng vai/ngực/eo rõ
+        # vẫn phải cho một khoảng 10 kg để try-on không lấy estimate ảnh cũ.
+        #
+        # Ảnh cắt chân KHÔNG còn bị đẩy sang công thức BMI tuyến tính nữa: bốn bề
+        # ngang giờ đo bằng khung xương + silhouette đã cắt tay nên chúng vẫn
+        # đúng khi thiếu bàn chân, và regressor đã được train lại trên đặc trưng
+        # làm nhiễu giống ảnh. Nhánh cũ `ratio-bmi-partial-body` chính là nhánh
+        # đã trả 119.8 kg cho người mẫu gầy trong ảnh regression áo đỏ.
         cropped = synthetic_pose(with_ankles=True)
         cropped['keypoints'].pop('left_ankle')
         cropped['keypoints'].pop('right_ankle')
@@ -167,8 +176,15 @@ class BodyAnalysisTest(unittest.TestCase):
         quality = pose_quality(cropped, measure)
         height = estimate_height(measure, quality, user_height_cm=170)
         weight = estimate_weight(measure, body_shape_ratios(measure), height, quality)
-        self.assertIsNone(weight['valueKg'])
-        self.assertEqual(weight['model'], 'partial_body_not_measurable')
+        self.assertIsNotNone(weight['valueKg'])
+        self.assertEqual(weight['maxKg'] - weight['minKg'], 10)
+        # KHÔNG khẳng định nhánh nào được dùng. Người tổng hợp ở đây có bề ngang
+        # vai chỉ 0.168 lần chiều cao, trong khi người thật là 0.286 ± 0.019 —
+        # lệch hơn 6 độ lệch chuẩn, nên hệ thống từ chối nhánh học máy là ĐÚNG.
+        # Điều bài test cần bảo đảm là ảnh cắt chân vẫn cho một khoảng 10kg dùng
+        # được, chứ không phải rơi về null như trước.
+        self.assertGreaterEqual(weight['confidence'], 0.35)
+        self.assertNotEqual(weight['model'], 'insufficient_data')
 
     def test_can_nang_tra_ve_khoang_hop_ly(self):
         measure = measure_body(self.image, self.pose)
@@ -179,9 +195,24 @@ class BodyAnalysisTest(unittest.TestCase):
         self.assertIsNotNone(weight['valueKg'])
         self.assertLess(weight['minKg'], weight['valueKg'])
         self.assertGreater(weight['maxKg'], weight['valueKg'])
+        self.assertEqual(weight['maxKg'] - weight['minKg'], 10)
+        self.assertEqual(weight['displayBinKg'], [weight['minKg'], weight['maxKg']])
+        # Khoảng bất định rộng vẫn được giữ riêng cho calibration, không đẩy lên UI.
+        self.assertIn('uncertaintyMinKg', weight)
+        self.assertIn('uncertaintyMaxKg', weight)
         bmi = weight['valueKg'] / (height['valueCm'] / 100) ** 2
         self.assertGreater(bmi, 14)
         self.assertLess(bmi, 45)
+
+    def test_chieu_cao_uoc_luong_tra_ve_bin_dung_10_cm(self):
+        measure = measure_body(self.image, self.pose)
+        quality = pose_quality(self.pose, measure)
+        height = estimate_height(measure, quality)
+        self.assertIsNotNone(height['valueCm'])
+        self.assertEqual(height['maxCm'] - height['minCm'], 10)
+        self.assertEqual(height['displayBinCm'], [height['minCm'], height['maxCm']])
+        self.assertIn('uncertaintyMinCm', height)
+        self.assertIn('uncertaintyMaxCm', height)
 
     def test_nguoi_ro_hon_thi_can_nang_uoc_luong_cao_hon(self):
         thin = synthetic_mask(torso_width=120, head_width=100, leg_width=55)
@@ -210,6 +241,12 @@ class BodyAnalysisTest(unittest.TestCase):
         # phải nói rõ điều đó để không ai đem số này đi chốt size.
         result = analyze_body(self.image, self.pose)
         self.assertTrue(result['girthsMeasureClothing'])
+        for key in ('bust', 'waist'):
+            estimate = result['estimatedGirthRanges'][key]
+            self.assertEqual(estimate['maxCm'] - estimate['minCm'], 10)
+            self.assertEqual(estimate['displayBinCm'], [estimate['minCm'], estimate['maxCm']])
+            self.assertIn('uncertaintyMinCm', estimate)
+            self.assertIn('uncertaintyMaxCm', estimate)
 
     def test_analyze_body_tra_du_cau_truc_cho_api(self):
         result = analyze_body(self.image, self.pose)
@@ -219,8 +256,10 @@ class BodyAnalysisTest(unittest.TestCase):
         self.assertIn('bodyWidthRatio', result['bodyShape'])
         self.assertIn('poseConfidence', result['quality'])
         self.assertTrue(any('sai số' in warning for warning in result['warnings']))
-        # Vòng đo suy từ silhouette là đầu vào cho bảng size.
+        # Vòng đo suy từ silhouette chỉ để tham khảo; bảng size không coi nó là
+        # số đo thật do người dùng nhập.
         self.assertIn('bust', result['estimatedGirths'])
+        self.assertIn('bust', result['estimatedGirthRanges'])
 
 
 if __name__ == '__main__':

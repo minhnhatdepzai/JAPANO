@@ -190,7 +190,8 @@ function analyzeFit(options = {}) {
     chosenSize, recommendedSize, profile = {}, bodyAnalysis = null,
     zone = 'upper', category = 'tops',
   } = options;
-  const chosen = String(chosenSize || 'M').toUpperCase();
+  // Thiếu size phải là unknown; không được biến sản phẩm không-size thành M.
+  const chosen = String(chosenSize || '').toUpperCase();
   const chosenIndex = sizeIndex(chosen);
   const recommended = recommendedSize ? String(recommendedSize).toUpperCase() : null;
   const recommendedIndex = recommended ? sizeIndex(recommended) : -1;

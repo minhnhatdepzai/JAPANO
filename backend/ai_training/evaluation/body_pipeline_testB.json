@@ -1,0 +1,166 @@
+{
+  "dataset": "BodyM (Amazon), CC-BY-NC-4.0",
+  "split": "testB",
+  "identityDisjoint": true,
+  "subjects": 400,
+  "photosScored": 400,
+  "note": "Silhouette của BodyM dùng trực tiếp làm mặt nạ (không chạy rembg), nên đây là sai số của bước SUY LUẬN hình học + hồi quy, chưa gồm sai số tách nền.",
+  "targets": {
+    "height": {
+      "unit": "cm",
+      "baseline": {
+        "n": 326,
+        "mae": 20.01,
+        "median": 17.46,
+        "p75": 31.83,
+        "p90": 39.35,
+        "bias": 16.57,
+        "mape": 11.89,
+        "within5": 0.181,
+        "within10": 0.2945
+      },
+      "new": {
+        "n": 381,
+        "mae": 6.44,
+        "median": 5.47,
+        "p75": 9.57,
+        "p90": 13.53,
+        "bias": -1.94,
+        "mape": 3.81,
+        "within5": 0.4672,
+        "within10": 0.769
+      }
+    },
+    "weight": {
+      "unit": "kg",
+      "baseline": {
+        "n": 326,
+        "mae": 15.99,
+        "median": 13.14,
+        "p75": 23.57,
+        "p90": 32.09,
+        "bias": 0.74,
+        "mape": 24.13,
+        "within5": 0.1933,
+        "within10": 0.3957
+      },
+      "new": {
+        "n": 372,
+        "mae": 9.0,
+        "median": 6.6,
+        "p75": 11.0,
+        "p90": 19.19,
+        "bias": -0.35,
+        "mape": 12.57,
+        "within5": 0.3548,
+        "within10": 0.7016
+      }
+    },
+    "chest": {
+      "unit": "cm",
+      "baseline": {
+        "n": 326,
+        "mae": 12.91,
+        "median": 9.75,
+        "p75": 15.76,
+        "p90": 25.0,
+        "bias": -2.17,
+        "mape": 13.36,
+        "within5": 0.2699,
+        "within10": 0.5031
+      },
+      "new": {
+        "n": 381,
+        "mae": 6.11,
+        "median": 4.63,
+        "p75": 8.02,
+        "p90": 13.42,
+        "bias": -0.89,
+        "mape": 5.98,
+        "within5": 0.5249,
+        "within10": 0.8241
+      }
+    },
+    "waist": {
+      "unit": "cm",
+      "baseline": {
+        "n": 326,
+        "mae": 9.96,
+        "median": 8.44,
+        "p75": 13.99,
+        "p90": 20.6,
+        "bias": 5.26,
+        "mape": 11.64,
+        "within5": 0.319,
+        "within10": 0.5859
+      },
+      "new": {
+        "n": 381,
+        "mae": 6.5,
+        "median": 4.8,
+        "p75": 9.28,
+        "p90": 14.31,
+        "bias": -0.77,
+        "mape": 7.25,
+        "within5": 0.5249,
+        "within10": 0.7822
+      }
+    },
+    "hip": {
+      "unit": "cm",
+      "baseline": {
+        "n": 326,
+        "mae": 12.24,
+        "median": 9.99,
+        "p75": 17.11,
+        "p90": 24.22,
+        "bias": 6.19,
+        "mape": 12.11,
+        "within5": 0.2638,
+        "within10": 0.5031
+      },
+      "new": {
+        "n": 381,
+        "mae": 5.57,
+        "median": 4.0,
+        "p75": 7.38,
+        "p90": 11.94,
+        "bias": -0.36,
+        "mape": 5.32,
+        "within5": 0.5801,
+        "within10": 0.8478
+      }
+    }
+  },
+  "displayBinCoverage": {
+    "height": 0.4462,
+    "weight": 0.3844,
+    "chest": 0.4803,
+    "waist": 0.4803,
+    "hip": 0.5249
+  },
+  "perGenderNewMae": {
+    "male": {
+      "height": 6.9,
+      "weight": 9.55,
+      "chest": 6.25,
+      "waist": 7.68,
+      "hip": 5.13
+    },
+    "female": {
+      "height": 6.15,
+      "weight": 8.66,
+      "chest": 6.02,
+      "waist": 5.76,
+      "hip": 5.84
+    }
+  },
+  "implausibleCount": {
+    "baseline": 104,
+    "new": 20
+  },
+  "latencySeconds": {
+    "p50": 0.041,
+    "p90": 0.045
+  }
+}

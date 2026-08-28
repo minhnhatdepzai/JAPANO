@@ -58,3 +58,59 @@ test('try-on và motion độc quyền GPU; vision và suggestion chỉ dùng GP
   assert.deepEqual(FOCUS_PROFILES.browse.keep, ['embedding']);
   assert.equal(FOCUS_PROFILES.browse.embeddingDevice, 'cuda');
 });
+
+// --- Huỷ theo chủ sở hữu -----------------------------------------------------
+// GPU chỉ có một, nên rời màn hình thử đồ thì hàng chờ dọn tác vụ đang chạy.
+// Nhưng khi nhiều máy cùng kết nối (điện thoại cắm USB để test, máy khác demo
+// qua Tailscale), việc dọn đó phải giới hạn trong tác vụ CỦA CHÍNH máy vừa đổi
+// màn hình — nếu không, người này thoát màn hình là lượt thử đồ của người kia
+// chết theo. Lỗi này đã bắt được khi test thật, nên khoá lại bằng test.
+
+test('huỷ theo owner: chỉ cắt job của đúng máy vừa đổi màn hình', async () => {
+  const queue = new GpuJobQueue();
+  const dangChay = [];
+
+  const job = (owner) => queue.run('tryon', async ({ signal }) => {
+    dangChay.push(owner);
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(resolve, 50);
+      signal.addEventListener('abort', () => { clearTimeout(timer); reject(signal.reason); });
+    });
+    return owner;
+  }, { owner });
+
+  const dienThoai = job('may-usb');
+  const mayDemo = job('may-demo');
+  await new Promise((resolve) => setImmediate(resolve));
+
+  queue.cancel(['tryon'], 'người dùng rời màn hình', 'may-demo');
+
+  await assert.rejects(mayDemo, (error) => error instanceof GpuJobCancelledError);
+  assert.equal(await dienThoai, 'may-usb', 'máy không đổi màn hình phải chạy xong');
+});
+
+test('huỷ không kèm owner vẫn dọn sạch như trước', async () => {
+  const queue = new GpuJobQueue();
+  const treo = (owner) => queue.run('tryon', ({ signal }) => new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason));
+  }), { owner });
+
+  const a = treo('may-a');
+  const b = treo('may-b');
+  await new Promise((resolve) => setImmediate(resolve));
+
+  queue.cancel(['tryon'], 'đổi màn hình');
+  await assert.rejects(a, (error) => error instanceof GpuJobCancelledError);
+  await assert.rejects(b, (error) => error instanceof GpuJobCancelledError);
+});
+
+test('job không khai owner vẫn bị huỷ dù lệnh huỷ có owner', async () => {
+  const queue = new GpuJobQueue();
+  const anDanh = queue.run('tryon', ({ signal }) => new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason));
+  }));
+  await new Promise((resolve) => setImmediate(resolve));
+
+  queue.cancel(['tryon'], 'đổi màn hình', 'may-nao-do');
+  await assert.rejects(anDanh, (error) => error instanceof GpuJobCancelledError);
+});

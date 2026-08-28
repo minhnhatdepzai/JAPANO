@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F } from '../../theme/tokens';
 import { ProductCard } from '../../components/ProductCard';
-import { PRODUCTS, CATEGORIES, CAT_LABEL, GARMENT_FILTERS, matchesGarmentFilter, Product } from '../../lib/catalog';
+import { CATEGORIES, CAT_LABEL, GARMENT_FILTERS, matchesGarmentFilter, Product } from '../../lib/catalog';
+import { useCatalog } from '../../lib/data';
 import { logSearch, trackInteraction } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 
@@ -57,8 +58,13 @@ export default function Products() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<SortKey>('new');
   const [sortOpen, setSortOpen] = useState(false);
+  // Lấy từ context chứ không đọc hằng `PRODUCTS` của module: `setCatalog()` thay
+  // giá trị đó SAU khi API trả về, nhưng useMemo đã đóng gói giá trị cũ và không
+  // có cớ gì để chạy lại — nên màn hình đứng yên ở danh sách đóng gói sẵn và
+  // không thấy sản phẩm nào mới thêm trên backend.
+  const { products: catalogProducts } = useCatalog();
   const list = useMemo(()=>{
-    let l = cat==='all'? PRODUCTS : PRODUCTS.filter(p=>p.cat===cat);
+    let l = cat==='all'? catalogProducts : catalogProducts.filter(p=>p.cat===cat);
     if(garment!=='all') l = l.filter(p=>matchesGarmentFilter(p, garment));
     const query = q.trim();
     if (query) {
@@ -74,7 +80,7 @@ export default function Products() {
     else if (sort==='price-desc') l.sort((a,b)=>b.price-a.price);
     else if (sort==='bestseller') l.sort((a,b)=>b.sold-a.sold);
     return l;
-  },[cat,garment,q,sort]);
+  },[catalogProducts,cat,garment,q,sort]);
   const sortLabel = SORTS.find(s=>s.key===sort)?.label || 'M\u1edbi nh\u1ea5t';
   const cardGap = 12;
   const cardWidth = Math.floor((screenWidth - 36 - cardGap) / 2);

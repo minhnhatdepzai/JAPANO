@@ -73,11 +73,17 @@ export type BodyEstimate = {
   source?: string;
   method?: string;
   model?: string;
+  uncertaintyMinCm?: number|null; uncertaintyMaxCm?: number|null;
+  displayBinCm?: [number,number];
+  uncertaintyMinKg?: number|null; uncertaintyMaxKg?: number|null;
+  displayBinKg?: [number,number];
 };
 export type BodyAnalysis = {
   estimatedHeight: BodyEstimate;
   estimatedWeight: BodyEstimate;
   estimatedGirths?: { bust?:number; waist?:number; hip?:number };
+  estimatedGirthRanges?: { bust?:BodyEstimate; waist?:BodyEstimate; hip?:BodyEstimate };
+  girthsMeasureClothing?: boolean;
   bodyShape?: Record<string, number>;
   quality?: {
     fullBodyVisible:boolean; feetVisible:boolean; headVisible:boolean;
@@ -87,6 +93,8 @@ export type BodyAnalysis = {
   sources?: Record<string,string>;
   recommendedSize?: string;
   sizeAdvice?: string;
+  poseCache?: Record<string,unknown>;
+  imageFingerprint?: string;
 };
 /** Loại trang phục — khớp lib/garmentCoverage.js ở backend. */
 export type GarmentType =
@@ -233,6 +241,11 @@ export function getVipStatus(userId:string):Promise<VipStatusResponse>{
 }
 
 const trim = (value?: string | null) => String(value || '').trim().replace(/\/+$/, '');
+// Endpoint triển khai hiện tại của JAPANO. Đây không phải secret; giữ fallback
+// ngay trong bundle để release APK vẫn gọi được server khi Expo Constants
+// không mang `extra` sang bare Android và không có adb reverse.
+const DEPLOYED_API_LAN_URL = 'http://192.168.1.51:4100';
+const DEPLOYED_API_TAILSCALE_URL = 'https://rd-system.tail6502ce.ts.net:4101';
 
 class ApiHttpError extends Error {
   status: number;
@@ -255,15 +268,34 @@ function expoDevHost() {
 }
 
 export function apiBaseCandidates() {
-  const env = trim(process.env.EXPO_PUBLIC_API_URL);
+  const apiExtra = (((Constants.expoConfig as any)?.extra?.api || {}) as Record<string,string>);
+  const env = trim(process.env.EXPO_PUBLIC_API_URL || apiExtra.url);
   const port = trim(process.env.EXPO_PUBLIC_API_PORT) || '4100';
+  // Release APK không có Metro để tự suy IP máy phát triển. Giữ endpoint
+  // không nhạy cảm trong app.json để bản cài thật vẫn gọi được backend khi
+  // không có `adb reverse`; biến môi trường build vẫn được ưu tiên khi có.
+  const lan = trim(process.env.EXPO_PUBLIC_API_LAN_URL || apiExtra.lanUrl || DEPLOYED_API_LAN_URL);
+  const tailnet = trim(process.env.EXPO_PUBLIC_API_TAILSCALE_URL || apiExtra.tailscaleUrl || DEPLOYED_API_TAILSCALE_URL);
   const dev = expoDevHost();
+  // Thứ tự dò ưu tiên địa chỉ có thể dùng NGAY trên bản release:
+  //
+  //   1. Dev build     -> host Metro phát hiện được.
+  //   2. Release thật  -> IP LAN đã triển khai.
+  //   3. Cắm dây USB   -> 127.0.0.1 chỉ hoạt động nếu đã chạy `adb reverse`.
+  //   4. Máy ảo        -> 10.0.2.2.
+  //   5. Ở xa          -> Tailscale.
+  //
+  // Không được đặt 127.0.0.1 trước LAN ở APK release: request body-analysis có
+  // timeout dài để model xử lý ảnh, nên một localhost không có `adb reverse`
+  // sẽ giữ màn hình quay tới vài phút trước khi client thử địa chỉ kế tiếp.
   const list = [
     env,
     dev && `http://${dev}:${port}`,
+    lan,
+    `http://127.0.0.1:${port}`,
     // Máy ảo Android ánh xạ máy chủ qua 10.0.2.2; máy thật dùng IP LAN ở `dev`.
     Platform.OS === 'android' ? `http://10.0.2.2:${port}` : `http://localhost:${port}`,
-    `http://127.0.0.1:${port}`,
+    tailnet,
   ].filter(Boolean) as string[];
   return [...new Set(list.map(trim))];
 }
@@ -372,8 +404,22 @@ const refKey = (ref: ApiProductRef) => typeof ref === 'string'
 // đúng tính năng đó và nhả VRAM của các tính năng còn lại. Gọi "bắn rồi quên":
 // lỗi mạng ở đây không được phép ảnh hưởng tới màn hình đang mở.
 export type GpuFocus = 'tryon' | 'motion' | 'chat' | 'home' | 'browse';
+
+/**
+ * Danh tính của MÁY này, không phải của người dùng.
+ *
+ * Backend chỉ có một GPU nên khi ai đó rời màn hình thử đồ, nó huỷ các tác vụ
+ * GPU đang chạy. Lúc nhiều máy cùng kết nối (điện thoại cắm USB để test, máy
+ * khác dùng qua Tailscale để demo), thiếu định danh này thì người rời màn hình
+ * sẽ giết luôn lượt thử đồ của người kia — lỗi đã bắt được khi test thật.
+ * Backend dùng nó để chỉ huỷ tác vụ của đúng máy vừa đổi màn hình.
+ *
+ * Sinh mới mỗi lần mở app là đủ: phạm vi cần phân biệt chỉ là "phiên đang chạy".
+ */
+export const CLIENT_ID = `app-${Platform.OS}-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+
 export function reportGpuFocus(focus: GpuFocus) {
-  return jsonPost('/api/gpu/focus', { focus }, 8000).catch(() => undefined);
+  return jsonPost('/api/gpu/focus', { focus, clientId: CLIENT_ID }, 8000).catch(() => undefined);
 }
 
 export const getHealth = () => requestJson('/api/health', { timeoutMs: 4500 });
@@ -499,12 +545,13 @@ export async function getSizeAdvice(payload: {
 /**
  * Phân tích vóc dáng từ ảnh vừa chụp/chọn.
  *
- * Kết quả là ƯỚC LƯỢNG: màn hình phải hiển thị dạng khoảng ("163–174 cm") kèm
+ * Kết quả là ƯỚC LƯỢNG: màn hình phải hiển thị bin đúng 10 ("160–170 cm") kèm
  * độ tin cậy, và khi backend trả null thì nói thẳng là chưa đủ dữ liệu.
  */
 export async function analyzeBodyFromPhoto(payload: {
   personImageBase64: string;
   profile?: StyleProfile;
+  productId?: string;
 }): Promise<BodyAnalysis & { ok:boolean; message?:string }> {
   const data: any = await jsonPost('/api/stylist/body-analysis', { userId: USER_ID, ...payload }, 180000);
   return {
@@ -513,12 +560,16 @@ export async function analyzeBodyFromPhoto(payload: {
     estimatedHeight: data?.estimatedHeight || { valueCm:null, minCm:null, maxCm:null, confidence:0 },
     estimatedWeight: data?.estimatedWeight || { valueKg:null, minKg:null, maxKg:null, confidence:0 },
     estimatedGirths: data?.estimatedGirths || {},
+    estimatedGirthRanges: data?.estimatedGirthRanges || {},
+    girthsMeasureClothing: data?.girthsMeasureClothing !== false,
     bodyShape: data?.bodyShape || {},
     quality: data?.quality,
     warnings: Array.isArray(data?.warnings) ? data.warnings.map(String) : [],
     sources: data?.sources || {},
     recommendedSize: data?.recommendedSize ? String(data.recommendedSize) : undefined,
     sizeAdvice: data?.sizeAdvice ? String(data.sizeAdvice) : undefined,
+    poseCache: data?.poseCache,
+    imageFingerprint: data?.imageFingerprint ? String(data.imageFingerprint) : undefined,
   };
 }
 
@@ -551,7 +602,7 @@ export async function generateTryOn(payload: Record<string, unknown>): Promise<T
   const timeout=Number.isFinite(configured)&&configured>=30000?configured:720000;
   let data: any;
   try {
-    data = await jsonPost('/api/tryon', { userId: USER_ID, ...payload }, timeout);
+    data = await jsonPost('/api/tryon', { userId: USER_ID, clientId: CLIENT_ID, ...payload }, timeout);
   } catch (error: any) {
     const code = String(error?.code || error?.data?.code || '');
     if ((TRYON_SAFETY_CODES as readonly string[]).includes(code)) {

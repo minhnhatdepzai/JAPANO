@@ -76,6 +76,18 @@ async function releaseFashn() {
   return { service: 'fashn', released: Boolean(body?.ok), freeVramGb: body?.freeVramGb };
 }
 
+async function warmFashn() {
+  // Nếu model đã nằm trên GPU hoặc một lượt đang chạy thì không chen thêm vào
+  // LOCK của FastAPI. Warmup chỉ có ý nghĩa lúc người dùng vừa mở màn thử đồ.
+  const healthResponse = await fetchWithTimeout(`${FASHN_URL}/health`, {}, 5000);
+  const health = await healthResponse.json().catch(() => ({}));
+  if (health?.loaded?.fashn || health?.gpuJobActive) {
+    return { service: 'fashn', warmed: Boolean(health?.loaded?.fashn), skipped: health?.gpuJobActive ? 'gpu-job-active' : undefined };
+  }
+  const body = await postService(`${FASHN_URL}/warmup`, 60000);
+  return { service: 'fashn', warmed: Boolean(body?.ok), engine: body?.engine, freeVramGb: body?.freeVramGb };
+}
+
 async function releaseMotion() {
   const body = await postService(`${MOTION_URL}/cancel`, 10000);
   return {
@@ -161,6 +173,13 @@ async function applyFocus(next, changed, force) {
       reason: error?.message || 'không gọi được',
     });
   }
+  if (next === 'tryon') {
+    try {
+      actions.push(await warmFashn());
+    } catch (error) {
+      actions.push({ service: 'fashn', warmed: false, reason: error?.message || 'không pre-warm được' });
+    }
+  }
 
   lastActions = actions;
   if (changed || force) logger.info({ focus: next, actions }, 'GPU arbiter: đổi màn hình ưu tiên');
@@ -190,6 +209,7 @@ function setFocus(focus, options = {}) {
     cancelled = gpuQueue.cancel(
       cancellationTargets(next),
       `Đã dừng tác vụ GPU vì người dùng chuyển sang ${focusProfile(next).label}.`,
+      options.owner,
     );
   }
 
@@ -216,8 +236,8 @@ function runGpuJob(type, task, metadata = {}) {
   }, metadata);
 }
 
-function cancelGpuJobs(types, reason) {
-  return gpuQueue.cancel(types, reason);
+function cancelGpuJobs(types, reason, owner) {
+  return gpuQueue.cancel(types, reason, owner);
 }
 
 function getFocus() {

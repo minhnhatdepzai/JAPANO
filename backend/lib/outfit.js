@@ -164,30 +164,84 @@ function sizeFromMeasurements({ bust, waist, hip }) {
 function sizeFromHeightWeight(height, weight) {
   const h = finiteNumber(height, 0);
   const w = finiteNumber(weight, 0);
-  if (!h && !w) return 'M';
+  if (!h && !w) return null;
   const bmi = h && w ? w / ((h / 100) ** 2) : 21;
-  if ((h && h < 158) || (w && w < 48) || bmi < 17.5) return 'S';
+  // Chiều cao quyết định ĐỘ DÀI, không quyết định vòng áo. Luật cũ biến người
+  // 152cm/78kg thành size S chỉ vì thấp; đây là lỗi fit nghiêm trọng.
+  if ((w && w < 48) || bmi < 17.5) return 'S';
   if ((w && w > 125) || bmi > 40) return '5XL';
   if ((w && w > 112) || bmi > 36) return '4XL';
   if ((w && w > 100) || bmi > 33) return 'XXXL';
   if ((w && w > 88) || bmi > 29) return 'XXL';
-  if ((h && h > 177) || (w && w > 78) || bmi > 26) return 'XL';
-  if ((h && h > 168) || (w && w > 64) || bmi > 22.5) return 'L';
+  if ((w && w > 78) || bmi > 26) return 'XL';
+  if ((w && w > 64) || bmi > 22.5) return 'L';
   return 'M';
+}
+
+const SIZE_SEQUENCE = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', '5XL'];
+
+function availableSizesFor(product) {
+  if (!product || typeof product !== 'object') return [];
+  const raw = [
+    ...(Array.isArray(product.sizes) ? product.sizes : []),
+    ...(Array.isArray(product.variants) ? product.variants.map((item) => item?.size) : []),
+  ];
+  return [...new Set(raw.map((value) => String(value || '').trim().toUpperCase()))]
+    .filter((size) => SIZE_SEQUENCE.includes(size))
+    .sort((left, right) => SIZE_SEQUENCE.indexOf(left) - SIZE_SEQUENCE.indexOf(right));
+}
+
+function closestAvailableSize(ideal, available) {
+  const target = SIZE_SEQUENCE.indexOf(String(ideal || '').toUpperCase());
+  if (target < 0 || !available.length) return null;
+  return [...available].sort((left, right) => {
+    const leftDistance = Math.abs(SIZE_SEQUENCE.indexOf(left) - target);
+    const rightDistance = Math.abs(SIZE_SEQUENCE.indexOf(right) - target);
+    return leftDistance - rightDistance || SIZE_SEQUENCE.indexOf(left) - SIZE_SEQUENCE.indexOf(right);
+  })[0] || null;
 }
 
 // Hệ thống gợi ý size dạng "expert system": ưu tiên số đo vòng (bust/waist/hip) khi có, nếu
 // không thì suy ra từ chiều cao/cân nặng theo ngưỡng + BMI ước lượng — minh bạch, không cần ảnh.
-function adviseSize(payload = {}) {
+function adviseSize(payload = {}, product = null) {
   const height = payload.height ?? payload.heightCm;
   const weight = payload.weight ?? payload.weightKg;
   const measured = sizeFromMeasurements(payload);
-  const size = measured || sizeFromHeightWeight(height, weight);
+  const idealSize = measured || sizeFromHeightWeight(height, weight);
   const usedMeasurements = Boolean(measured);
-  const advice = usedMeasurements
-    ? `Theo số đo vòng ngực, eo và hông bạn nhập, kích cỡ ${size} là lựa chọn sát nhất.`
-    : `Chưa có số đo vòng cụ thể — tạm tính theo chiều cao và cân nặng: kích cỡ ${size}. Nhập thêm vòng ngực, eo và hông để chính xác hơn.`;
-  return { size, advice, usedMeasurements };
+  const availableSizes = availableSizesFor(product);
+  if (product && !availableSizes.length) {
+    return {
+      size: null, idealSize, fitReferenceSize: null, availableSizes: [], sizingMode: 'no_size',
+      outsideAvailableRange: false, usedMeasurements,
+      advice: 'Sản phẩm chưa có size hoặc số đo thành phẩm. Bạn vẫn có thể thử hình ảnh, nhưng hệ thống không kết luận chật/rộng và không tự bịa size M.',
+    };
+  }
+  const size = product ? closestAvailableSize(idealSize, availableSizes) : idealSize;
+  const outsideAvailableRange = Boolean(product && idealSize && size && size !== idealSize);
+  const h = finiteNumber(height, 0);
+  const lengthAdvice = h && h < 158
+    ? ' Chiều dài tay/gấu có thể dài hơn mong muốn; chiều cao không được dùng để ép xuống size S.'
+    : h && h > 177
+      ? ' Hãy kiểm tra thêm chiều dài tay/gấu; chiều cao không được dùng để tự động tăng vòng size.'
+      : '';
+  let advice;
+  if (!idealSize) {
+    advice = availableSizes.length === 1
+      ? `Sản phẩm chỉ có size ${availableSizes[0]}; cần số đo sản phẩm để kết luận độ vừa.`
+      : 'Chưa đủ số đo để khuyến nghị size. Hãy nhập cân nặng hoặc vòng ngực/eo/hông.';
+  } else if (outsideAvailableRange) {
+    advice = `Cỡ cơ thể ước tính gần ${idealSize}, nhưng sản phẩm chỉ có ${availableSizes.join(', ')}. Size ${size} là lựa chọn gần nhất đang bán và vẫn có thể không vừa.`;
+  } else if (usedMeasurements) {
+    advice = `Theo số đo vòng bạn nhập, kích cỡ ${size} là lựa chọn sát nhất.`;
+  } else {
+    advice = `Tạm tính theo cân nặng/BMI: kích cỡ ${size}. Nhập vòng ngực, eo và hông để chính xác hơn.`;
+  }
+  return {
+    size, idealSize, fitReferenceSize: idealSize, availableSizes,
+    sizingMode: availableSizes.length === 1 ? 'one_size' : 'standard',
+    outsideAvailableRange, advice: `${advice}${lengthAdvice}`.trim(), usedMeasurements,
+  };
 }
 
 const ROLE_WORD = {
@@ -279,4 +333,7 @@ function styleRecommendation(state, { userId = 'guest', profile, dominantHex, li
   };
 }
 
-module.exports = { composeOutfit, todaysOutfit, adviseSize, styleRecommendation, roleOf, colorHarmony, reasonForProduct };
+module.exports = {
+  composeOutfit, todaysOutfit, adviseSize, styleRecommendation, roleOf, colorHarmony, reasonForProduct,
+  sizeFromHeightWeight, availableSizesFor, closestAvailableSize,
+};

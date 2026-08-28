@@ -160,3 +160,98 @@ class CoverageQualityTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# --- Vải màu nude không được tính là da trần --------------------------------
+# Cardigan hồng phấn từng làm vùng ngực nhảy từ 13% lên 50% "da" và cổng an toàn
+# huỷ ảnh của một người mặc kín — lỗi bắt được khi test thật trên Redmi.
+
+class SkinToneReferenceTest(unittest.TestCase):
+    def _anh_co_mat(self, mau_nguc):
+        """Ảnh có khuôn mặt tông da rõ và vùng ngực màu tuỳ chọn."""
+        image = Image.new('RGB', SIZE, BACKGROUND)
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((250, 60, 350, 180), fill=SKIN)          # khuôn mặt
+        draw.rectangle((180, 190, 420, 480), fill=mau_nguc)     # thân trên
+        return image
+
+    def _pose_co_mat(self):
+        pose = dict(POSE)
+        pose['keypoints'] = {
+            'left_eye': [283.0, 110.0], 'right_eye': [317.0, 110.0], 'nose': [300.0, 140.0],
+        }
+        return pose
+
+    def test_da_that_van_duoc_nhan_dien(self):
+        from accessory_pipeline import face_skin_reference, _skin_ratio
+        anh = self._anh_co_mat(SKIN)
+        mau = face_skin_reference(anh, self._pose_co_mat())
+        self.assertIsNotNone(mau, 'phải lấy được tông da từ khuôn mặt')
+        ty_le = _skin_ratio(anh.crop((190, 200, 410, 470)), mau)
+        self.assertGreater(ty_le, .9, 'da thật cùng tông với mặt phải được đếm')
+
+    def test_vai_hong_phan_khong_bi_tinh_la_da(self):
+        from accessory_pipeline import face_skin_reference, _skin_ratio
+        HONG_PHAN = (238, 200, 196)
+        anh = self._anh_co_mat(HONG_PHAN)
+        mau = face_skin_reference(anh, self._pose_co_mat())
+        self.assertIsNotNone(mau)
+        vung = anh.crop((190, 200, 410, 470))
+        self.assertGreater(_skin_ratio(vung), .5,
+                           'ngưỡng chung vẫn nhận nhầm — đây chính là lý do cần mẫu da')
+        self.assertLess(_skin_ratio(vung, mau), .1,
+                        'có mẫu da khuôn mặt thì vải hồng phấn phải bị loại')
+
+    def test_khong_thay_mat_thi_quay_ve_nguong_chung(self):
+        from accessory_pipeline import face_skin_reference, _skin_ratio
+        anh = self._anh_co_mat(SKIN)
+        self.assertIsNone(face_skin_reference(anh, {'box': POSE['box'], 'keypoints': {}}))
+        self.assertGreater(_skin_ratio(anh.crop((190, 200, 410, 470)), None), .9,
+                           'thiếu mẫu thì phải chặt tay hơn, không được bỏ sót da')
+
+
+# --- Vùng cơ thể neo theo keypoint ------------------------------------------
+# Ô "ngực" từng được tính bằng tỉ lệ trên khung người (0.17-0.36 chiều cao) nên
+# thực chất phủ CỔ. Đổi áo cổ lọ sang cardigan cổ V làm lộ cổ — chuyện bình
+# thường — và cổng an toàn huỷ ảnh với lý do "hở ngực". Lỗi bắt được trên Redmi.
+
+class ZoneAnchorTest(unittest.TestCase):
+    """Vai ở y=200, hông ở y=470 -> thân dài 270px."""
+
+    POSE = {
+        'box': [150.0, 40.0, 450.0, 870.0], 'confidence': .9, 'fallback': False,
+        'keypoints': {
+            'left_shoulder': [240.0, 200.0], 'right_shoulder': [360.0, 200.0],
+            'left_hip': [255.0, 470.0], 'right_hip': [345.0, 470.0],
+        },
+    }
+
+    def test_o_nguc_nam_duoi_duong_vai(self):
+        from accessory_pipeline import zone_box
+        box = zone_box(self.POSE, SIZE, 'chest')
+        self.assertGreater(box[1], 200, 'mép trên phải nằm DƯỚI vai, không trùm lên cổ')
+        self.assertLess(box[3], 470, 'mép dưới phải nằm trên hông')
+
+    def test_o_nguc_khong_con_dinh_co_khi_anh_cat_khac_nhau(self):
+        """Cùng người, khung ảnh khác nhau -> ô ngực vẫn bám vai/hông."""
+        from accessory_pipeline import zone_box
+        rong = dict(self.POSE, box=[80.0, 10.0, 520.0, 940.0])
+        self.assertEqual(zone_box(self.POSE, SIZE, 'chest'), zone_box(rong, SIZE, 'chest'))
+
+    def test_thieu_keypoint_thi_quay_ve_ti_le_khung_nguoi(self):
+        from accessory_pipeline import zone_box, BODY_ZONE_BOXES
+        khong_kp = {'box': self.POSE['box'], 'keypoints': {}, 'confidence': .9, 'fallback': False}
+        box = zone_box(khong_kp, SIZE, 'chest')
+        x1, y1, x2, y2 = self.POSE['box']
+        mong_doi_top = int(y1 + (y2 - y1) * BODY_ZONE_BOXES['chest'][1])
+        self.assertEqual(box[1], mong_doi_top)
+
+    def test_nguc_tran_that_su_van_bi_chan(self):
+        """Nới ô ngực không được làm mất khả năng bắt ảnh cởi đồ."""
+        from accessory_pipeline import zone_box, _skin_ratio
+        anh = Image.new('RGB', SIZE, BACKGROUND)
+        draw = ImageDraw.Draw(anh)
+        box = zone_box(self.POSE, SIZE, 'chest')
+        draw.rectangle(box, fill=SKIN)
+        self.assertGreater(_skin_ratio(anh.crop(box)), .9,
+                           'vùng ngực toàn da phải bị chấm là hở')

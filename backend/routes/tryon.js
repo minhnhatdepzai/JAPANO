@@ -11,9 +11,10 @@ const { FORCE_REPOSE, FASHN_FIDELITY_REFINE } = require('../lib/tryonConfig');
 const { runGpuJob, GpuJobCancelledError, setFocus, getFocus } = require('../lib/gpuArbiter');
 const { SIZE_ORDER, analyzeFit, fitRefinePlan, garmentPreScaleDelta } = require('../lib/fitAnalysis');
 const {
-  mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled,
-  userProvidedMeasurement, profileForMeasurementMode,
+  mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled, analyzeViaWorker,
+  userProvidedMeasurement, profileForMeasurementMode, imageFingerprint,
 } = require('../lib/bodyAnalysis');
+const { availableSizesFor } = require('../lib/outfit');
 const { logger } = require('../lib/logger');
 const {
   garmentTypeFor, coverageProfileFor, safetyPolicyFor,
@@ -161,21 +162,46 @@ const DEFAULT_MOTION = MOTION_PRESETS[0].id;
 // lập, không cần dựng cả registerTryonRoutes.
 function makeComputeSizeFit(adviseSize) {
   return function computeSizeFit(chosenSizeRaw, profile, options = {}) {
-    const chosen = String(chosenSizeRaw || 'M').toUpperCase();
+    const chosen = String(chosenSizeRaw || '').toUpperCase();
     if (!profile || SIZE_ORDER.indexOf(chosen) < 0) {
       return analyzeFit({ chosenSize: chosen, recommendedSize: null, ...options });
     }
-    const { size: recommended } = adviseSize(profile);
-    return analyzeFit({
+    const advice = adviseSize(profile, options.product || null);
+    const tearBecauseNoSizeFits = Boolean(advice.outsideAvailableRange && options.tearWhenOutOfRange);
+    const fit = analyzeFit({
       chosenSize: chosen,
-      recommendedSize: recommended,
+      // Chấm độ chật/rộng theo cỡ cơ thể lý tưởng, nhưng bên ngoài chỉ khuyên
+      // một size sản phẩm thật sự đang bán.
+      recommendedSize: advice.fitReferenceSize || advice.size || null,
       profile,
       zone: options.zone || 'upper',
       category: options.category || 'tops',
       bodyAnalysis: options.bodyAnalysis || null,
-      // Loại trang phục có quyền phủ quyết hiệu ứng bục/rách.
-      garmentTearAllowed: options.garmentTearAllowed !== false,
+      // Lệnh cấm bục có hai loại, và chỉ một loại được nới khi hết size.
+      //
+      //   tearBlockReason='safety'       (đồ bơi, crop top, short, váy ngắn)
+      //       tuyệt đối. Hết size KHÔNG phải lý do để làm hở thêm cơ thể.
+      //   tearBlockReason='construction' (kimono, yukata, haori, áo khoác)
+      //       cấm vì phải giữ đúng kết cấu. Nhưng khi cơ thể đã vượt mọi size
+      //       đang bán, một đường may bục vẫn trung thực hơn tấm ảnh phẳng lì.
+      //
+      // Bản trước chỉ có một boolean nên `|| tearBecauseNoSizeFits` nới cho CẢ
+      // HAI — crop top bị cấm vì hở bụng vẫn bị bật cho rách khi hết size.
+      garmentTearAllowed: options.garmentTearAllowed !== false
+        || (tearBecauseNoSizeFits && options.tearBlockReason !== 'safety'),
     });
+    return {
+      ...fit,
+      recommendedSize: advice.size || null,
+      recommended: advice.size || null,
+      idealSize: advice.idealSize || null,
+      availableSizes: advice.availableSizes || [],
+      sizingMode: advice.sizingMode || 'unknown',
+      outsideAvailableRange: Boolean(advice.outsideAvailableRange),
+      tearBecauseNoSizeFits,
+      sizeAdvice: advice.advice || '',
+      message: advice.outsideAvailableRange ? `${fit.message} ${advice.advice}`.trim() : fit.message,
+    };
   };
 }
 
@@ -230,13 +256,13 @@ module.exports = function registerTryonRoutes(api, ctx) {
   // `fitEffect` cho cổng chất lượng biết hiệu ứng vừa vặn nào là CÓ CHỦ ĐÍCH,
   // để một chiếc áo bị kéo căng (bề mặt phẳng, ít kết cấu hơn) không bị đánh
   // nhầm thành ảnh mờ/hỏng.
-  async function validateTryOnResult(personImageBase64, resultImage, pose, clothType, requireStraightPose = false, fitEffect = null) {
+  async function validateTryOnResult(personImageBase64, resultImage, pose, clothType, requireStraightPose = false, fitEffect = null, strictIdentity = true) {
     if (!resultImage || !resultImage.startsWith('data:')) return { ok: true, reasons: [] };
     try {
       const compareImageBase64 = resultImage.slice(resultImage.indexOf(',') + 1);
       const checked = await runAccessoryPipeline({
         mode: 'quality', imageBase64: personImageBase64, compareImageBase64,
-        pose, clothType, requireStraightPose, fitEffect,
+        pose, clothType, requireStraightPose, fitEffect, strictIdentity,
       }, 90000);
       return checked.ok && checked.quality ? checked.quality : { ok: false, reasons: ['quality_check_failed'] };
     } catch (error) {
@@ -263,7 +289,15 @@ module.exports = function registerTryonRoutes(api, ctx) {
     }
   }
 
-  async function tryFashn(personImageBase64, garmentImagePath, product, shouldRepose = false, generationAttempt = 0, signal) {
+  async function tryFashn(
+    personImageBase64,
+    garmentImagePath,
+    product,
+    shouldRepose = false,
+    generationAttempt = 0,
+    signal,
+    skipFidelity = false,
+  ) {
     const form = new FormData();
     const person = Buffer.from(stripDataUri(personImageBase64), 'base64');
     const garment = fs.readFileSync(garmentImagePath);
@@ -272,7 +306,10 @@ module.exports = function registerTryonRoutes(api, ctx) {
     form.append('category', fashnCategoryFor(product));
     const garmentPhotoType = /_tryon-flat\.(?:jpe?g|png|webp)$/i.test(path.basename(garmentImagePath)) ? 'flat-lay' : 'model';
     form.append('garment_photo_type', garmentPhotoType);
-    const shouldRefine = shouldRefineGarment(product, garmentImagePath);
+    // Khi phía sau đã có fit-refine thì không chạy thêm một lượt FLUX fidelity
+    // trên cùng ảnh. Hai lượt liên tiếp vừa tốn thời gian vừa tranh 16 GB VRAM;
+    // fit-refine đã nhận chính ảnh flat-lay để khóa cổ, nút và form áo.
+    const shouldRefine = !skipFidelity && shouldRefineGarment(product, garmentImagePath);
     form.append('refine', shouldRefine ? 'true' : 'false');
     form.append('repose', shouldRepose ? 'true' : 'false');
     form.append('seed', String(Number(process.env.JAPANO_FASHN_SEED || 42) + generationAttempt * 101));
@@ -289,6 +326,22 @@ module.exports = function registerTryonRoutes(api, ctx) {
     const type = String(response.headers.get('content-type') || 'image/png');
     const bytes = Buffer.from(await response.arrayBuffer());
     if (!bytes.length) throw new Error('FASHN không trả ảnh');
+    // Chẩn đoán: ghi đúng ba tấm ảnh đi vào và đi ra khỏi FASHN. Khi ảnh kết quả
+    // là một người khác hẳn, đây là cách duy nhất biết lỗi nằm ở đầu vào hay ở
+    // mô hình. Mặc định TẮT; chỉ bật khi gỡ lỗi bằng ảnh test.
+    const dbg = String(process.env.JAPANO_TRYON_DEBUG_DIR || '').trim();
+    if (dbg) {
+      try {
+        fs.mkdirSync(dbg, { recursive: true });
+        const stamp = Date.now();
+        fs.writeFileSync(`${dbg}/${stamp}-fashn-person.jpg`, person);
+        fs.writeFileSync(`${dbg}/${stamp}-fashn-cloth.jpg`, garment);
+        fs.writeFileSync(`${dbg}/${stamp}-fashn-out.png`, bytes);
+        logger.info(`[TRYON DEBUG] person=${person.length}B cloth=${path.basename(garmentImagePath)} photoType=${garmentPhotoType} repose=${shouldRepose}`);
+      } catch (error) {
+        logger.warn(`[TRYON DEBUG] không ghi được: ${error.message}`);
+      }
+    }
     return {
       image: `data:${type.startsWith('image/') ? type.split(';')[0] : 'image/png'};base64,${bytes.toString('base64')}`,
       engine: String(response.headers.get('x-japano-engine') || 'fashn-vton-1.5'),
@@ -421,6 +474,32 @@ module.exports = function registerTryonRoutes(api, ctx) {
     }
   }
 
+  async function applySafeSeamSplit(image) {
+    const split = await runAccessoryPipeline({
+      mode: 'seam_split', imageBase64: stripDataUri(image),
+    }, 60000);
+    if (!split?.ok || !split.imageBase64 || !split.seamSplit?.applied) {
+      throw new Error(split?.seamSplit?.reason || split?.message || 'không xác định được đường may an toàn');
+    }
+    return {
+      image: `data:image/png;base64,${split.imageBase64}`,
+      seamSplit: split.seamSplit,
+    };
+  }
+
+  async function applySafeTightFit(image, severity) {
+    const fitted = await runAccessoryPipeline({
+      mode: 'tight_fit', imageBase64: stripDataUri(image), severity,
+    }, 60000);
+    if (!fitted?.ok || !fitted.imageBase64 || !fitted.tightFit?.applied) {
+      throw new Error(fitted?.tightFit?.reason || fitted?.message || 'không xác định được vùng vải cần kéo căng');
+    }
+    return {
+      image: `data:image/png;base64,${fitted.imageBase64}`,
+      tightFit: fitted.tightFit,
+    };
+  }
+
   // eslint-disable-next-line no-unused-vars
   async function tryCatvton(personImageBase64, garmentImagePath, product, mainPersonBox, keypoints, shouldRepose = false, signal) {
     if (String(process.env.JAPANO_CATVTON_DISABLE || '0') === '1') throw new Error('CatVTON đã tắt');
@@ -475,6 +554,16 @@ module.exports = function registerTryonRoutes(api, ctx) {
     const [primaryGarment, ...extraGarments] = outfitGarments;
     const product = primaryGarment.product;
     let garmentImagePath = primaryGarment.imagePath;
+    const availableSizes = availableSizesFor(product);
+    const requestedSize = String(b.size || '').trim().toUpperCase();
+    if (availableSizes.length && (!requestedSize || !availableSizes.includes(requestedSize))) {
+      return res.status(400).json({
+        ok: false,
+        code: 'SIZE_NOT_AVAILABLE',
+        message: `Size ${requestedSize || '(trống)'} không có ở sản phẩm này. Hãy chọn một trong: ${availableSizes.join(', ')}.`,
+        availableSizes,
+      });
+    }
 
     // ---- Cổng an toàn cho trang phục 18+ ----------------------------------
     // Chạy TRƯỚC mọi thao tác GPU: ảnh không được phép đi vào model khi lượt
@@ -529,21 +618,27 @@ module.exports = function registerTryonRoutes(api, ctx) {
       .map((id) => state.products.find((item) => item.slug === id || item.id === id))
       .filter((item) => item && (item.cat === 'phu-kien' || item.category === 'phu-kien'));
     const attempts = [];
-    let poseAnalysis = await runAccessoryPipeline({ mode: 'analyze', imageBase64: b.personImageBase64 }, 60000);
+    const cachedBody = b.bodyAnalysisCache && typeof b.bodyAnalysisCache === 'object' ? b.bodyAnalysisCache : null;
+    const currentFingerprint = imageFingerprint(b.personImageBase64);
+    const cachedPose = cachedBody?.imageFingerprint === currentFingerprint && cachedBody?.poseCache?.box
+      ? cachedBody.poseCache
+      : null;
+    let poseAnalysis = cachedPose
+      ? { ok: true, pose: cachedPose, normalizedImageBase64: '', reused: true }
+      : await runAccessoryPipeline({ mode: 'analyze', imageBase64: b.personImageBase64 }, 60000);
     if (!poseAnalysis.ok || !poseAnalysis.pose?.box) {
-      // Pose detector hỏng/không nhận được người không còn là lý do chặn request.
-      // FLUX vẫn được thử với khung trung tâm; nếu cả GPU pipeline thất bại, phía
-      // dưới còn một ảnh preview cục bộ để UI không bao giờ trắng.
-      poseAnalysis = {
-        ok: true,
-        pose: {
-          box: [150, 50, 620, 1000], keypoints: {}, otherBoxes: [], confidence: 0,
-          fallback: true, inferredKeypoints: [],
-          garmentRegion: { ok: false, reason: 'no_person', message: 'Đang dùng khung người trung tâm dự phòng.' },
-          poseSuitability: { requiresRepose: true, score: 0, reasons: ['detector_fallback'] },
-        },
-        normalizedImageBase64: '',
-      };
+      return res.status(422).json({
+        ok: false,
+        code: 'PERSON_NOT_DETECTED',
+        message: 'Không nhận diện chắc chắn được người trong ảnh. Hệ thống đã dừng thay vì dựng một người khác.',
+      });
+    }
+    if (poseAnalysis.pose.fallback || Number(poseAnalysis.pose.confidence || 0) < 0.07) {
+      return res.status(422).json({
+        ok: false,
+        code: 'PERSON_NOT_DETECTED',
+        message: 'Người trong ảnh quá nhỏ, bị che quá nhiều hoặc không đủ rõ. Hệ thống đã dừng để giữ đúng danh tính.',
+      });
     }
     // Chặn sớm những ảnh không thể thay đồ (tay che ngực, không thấy thân trên...)
     // Chỉ từ chối khi thật sự không có người/thân trên để mặc thử. Các ca tay che
@@ -558,9 +653,15 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // Luôn dùng model sửa ảnh đa tham chiếu cho nhân vật chính. Điều này bảo đảm
     // ảnh được chấm là "đủ tốt" nhưng vẫn giơ tay/ngồi/nghiêng không đi tắt vào
     // VTON và giữ nguyên tư thế như pipeline cũ.
-    const requiresRepose = Boolean(FORCE_REPOSE || poseSuitability.requiresRepose || occluded);
+    // Tay đặt trước/sau thân là ca FASHN xử lý được bằng mask thân người. Ép
+    // qua FLUX chỉ vì lý do này vừa thêm 15-25 giây vừa có nguy cơ vẽ lại mặt.
+    // Chỉ re-pose cho các lỗi hình học thật sự (ngồi/nghiêng/người quá nhỏ...).
+    const hardPoseReasons = (poseSuitability.reasons || []).filter((reason) => reason !== 'hands_cover_torso');
+    const requiresRepose = Boolean(
+      FORCE_REPOSE || occluded || (poseSuitability.requiresRepose && hardPoseReasons.length > 0),
+    );
     const reposeReasons = [...new Set([
-      ...(poseSuitability.reasons || []),
+      ...hardPoseReasons,
       ...(FORCE_REPOSE ? ['always_repose'] : []),
     ])];
     const normalizedPersonImageBase64 = poseAnalysis.normalizedImageBase64 || b.personImageBase64;
@@ -572,9 +673,9 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // ---- Phân tích vóc dáng từ chính bức ảnh vừa chọn ----------------------
     // Dùng lại pose vừa tính (không chạy YOLO lần hai) và mặt nạ nền rembg đã
     // có sẵn cho phụ kiện, nên không nạp thêm model nặng nào lên GPU.
-    let bodyAnalysis = null;
-    if (bodyAnalysisEnabled() && b.skipBodyAnalysis !== true) {
-      const analysis = await runAccessoryPipeline({
+    let bodyAnalysis = cachedPose ? { ok: true, ...cachedBody } : null;
+    if (bodyAnalysisEnabled() && !bodyAnalysis && b.skipBodyAnalysis !== true) {
+      const bodyPayload = {
         mode: 'body_analysis',
         imageBase64: normalizedPersonImageBase64,
         // Pose chỉ dùng lại được khi nó cùng hệ toạ độ với ảnh đang gửi đi.
@@ -582,7 +683,13 @@ module.exports = function registerTryonRoutes(api, ctx) {
         userHeightCm: userProvidedMeasurement(measurementProfile, 'height'),
         userWeightKg: userProvidedMeasurement(measurementProfile, 'weight'),
         scaleReference: b.scaleReference || null,
-      }, Number(process.env.JAPANO_BODY_ANALYSIS_TIMEOUT_MS || 120000));
+        sex: String(b.sex || measurementProfile.gender || measurementProfile.sex || '').trim() || undefined,
+      };
+      const bodyTimeoutMs = Number(process.env.JAPANO_BODY_ANALYSIS_TIMEOUT_MS || 120000);
+      // Worker thường trú cắt ~3.7s khỏi mỗi lượt thử đồ bằng cách không nạp lại
+      // YOLO + U2Net. Không chạy được thì rơi về spawn như cũ.
+      const analysis = (await analyzeViaWorker(bodyPayload, bodyTimeoutMs))
+        || await runAccessoryPipeline(bodyPayload, bodyTimeoutMs);
       if (analysis?.ok && analysis.estimatedHeight) {
         bodyAnalysis = analysis;
         logger.info(bodyAnalysisLogLine(analysis));
@@ -598,6 +705,9 @@ module.exports = function registerTryonRoutes(api, ctx) {
       category: fashnCategoryFor(product),
       bodyAnalysis,
       garmentTearAllowed: safetyPolicy.tearAllowed,
+      tearBlockReason: safetyPolicy.tearBlockReason || null,
+      tearWhenOutOfRange: !safetyPolicy.containsSwimwear && primaryGarment.zone !== 'lower',
+      product,
     });
     const fitPlan = fitRefinePlan(sizeFit);
     logger.info(
@@ -618,9 +728,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
     let imageUrl = '';
     let engine = '';
     let poseTransferred = false;
-    let rejectedQuality = null;
     let qualityWarning = null;
-    let bestCandidate = null;
     let appliedAccessories = [];
     let skippedAccessories = [];
     const appliedGarments = [];
@@ -649,6 +757,8 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // Checkpoint đã qua acceptance gate 8/8 nên giữ retry là cấu hình opt-in.
     const automaticAttempts = Math.max(1, Math.min(3, Number(process.env.JAPANO_TRYON_AUTO_ATTEMPTS || 1)));
     try {
+      // Ghi chủ sở hữu để lượt đổi màn hình của máy KHÁC không huỷ lượt này.
+      const jobOwner = String(b.clientId || b.deviceId || b.userId || '').trim();
       await runGpuJob('tryon', async ({ signal }) => {
         throwIfCancelled(signal);
         for (let generationAttempt = 0; generationAttempt < automaticAttempts && !imageUrl; generationAttempt += 1) {
@@ -661,6 +771,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
           requiresRepose,
           generationAttempt,
           signal,
+          fitPlan.shouldRefine,
         );
         imageUrl = fashn.image;
         poseTransferred = fashn.reposed;
@@ -684,20 +795,10 @@ module.exports = function registerTryonRoutes(api, ctx) {
       }
       const quality = await validateTryOnResult(normalizedPersonImageBase64, imageUrl, poseAnalysis.pose, clothType, requiresRepose, sizeFit.visualEffect);
       if (!quality.ok) {
-        rejectedQuality = quality;
         attempts.push(`FASHN lượt ${generationAttempt + 1} bị quality gate chặn: ${(quality.reasons || []).join(', ')}`);
-        const penaltyWeights = {
-          main_subject_lost: 100,
-          garment_unchanged: 90,
-          flat_or_blurred_garment: 60,
-          pose_not_corrected: 45,
-          secondary_person_changed: 30,
-        };
-        const penalty = (quality.reasons || []).reduce((sum, reason) => sum + (penaltyWeights[reason] || 20), 0);
-        const candidate = { imageUrl, engine, poseTransferred, quality, penalty };
-        if (!bestCandidate || candidate.penalty < bestCandidate.penalty) bestCandidate = candidate;
         const hardFailure = (quality.reasons || []).some((reason) => [
-          'main_subject_lost', 'garment_unchanged', 'flat_or_blurred_garment', 'pose_not_corrected',
+          'main_subject_lost', 'face_changed_or_covered', 'body_changed_not_garment',
+          'secondary_person_changed', 'garment_unchanged', 'flat_or_blurred_garment', 'pose_not_corrected',
         ].includes(reason));
         if (!hardFailure) {
           // Cảnh báo mềm không được phép biến một ảnh đã tạo thành màn hình lỗi.
@@ -708,14 +809,8 @@ module.exports = function registerTryonRoutes(api, ctx) {
         imageUrl = ''; engine = ''; poseTransferred = false;
       }
         }
-    // Sau khi đã tự đổi seed mà vẫn còn cảnh báo cứng, trả ứng viên tốt nhất.
-    // Người dùng cần nhìn thấy kết quả để tự quyết định thay vì nhận màn hình rỗng.
-    if (!imageUrl && bestCandidate) {
-      imageUrl = bestCandidate.imageUrl;
-      engine = `${bestCandidate.engine}+best-effort`;
-      poseTransferred = bestCandidate.poseTransferred;
-      qualityWarning = bestCandidate.quality;
-    }
+    // Không trả best-effort sau lỗi cứng. Một ảnh đổi mặt/cơ thể không trở thành
+    // hợp lệ chỉ vì đó là ứng viên ít tệ nhất trong các lượt sinh.
     // CatVTON không biết đổi pose; chỉ thử fallback với ảnh vốn đã có pose tốt.
     if (!imageUrl && !requiresRepose && String(process.env.JAPANO_CATVTON_FALLBACK || '0') === '1') {
       try {
@@ -730,7 +825,6 @@ module.exports = function registerTryonRoutes(api, ctx) {
         );
         const quality = await validateTryOnResult(normalizedPersonImageBase64, catvton.image, poseAnalysis.pose, clothType, false);
         if (!quality.ok) {
-          rejectedQuality = quality;
           attempts.push(`CatVTON fallback bị chặn: ${(quality.reasons || []).join(', ')}`);
         } else {
           imageUrl = catvton.image;
@@ -754,7 +848,6 @@ module.exports = function registerTryonRoutes(api, ctx) {
       const extraClothType = extra.zone;
       let layered = '';
       let layeredEngine = '';
-      let bestLayer = null;
       for (let layerAttempt = 0; layerAttempt < automaticAttempts && !layered; layerAttempt += 1) {
         throwIfCancelled(signal);
         try {
@@ -768,19 +861,12 @@ module.exports = function registerTryonRoutes(api, ctx) {
             break;
           }
           attempts.push(`Mặc chồng "${extra.product.name}" lượt ${layerAttempt + 1} bị chặn: ${(quality.reasons || []).join(', ')}`);
-          if (!bestLayer) bestLayer = { image: fashn.image, engine: fashn.engine, quality };
         } catch (error) {
           throwIfCancelled(signal);
           attempts.push(`Mặc chồng "${extra.product.name}" lượt ${layerAttempt + 1}: ${error.message}`);
         }
       }
-      if (!layered && bestLayer) {
-        // Giữ ảnh tốt nhất thay vì bỏ hẳn món: khách vẫn thấy được cả bộ, kèm
-        // cảnh báo để tự đánh giá.
-        layered = bestLayer.image;
-        layeredEngine = `${bestLayer.engine}+best-effort`;
-        garmentWarning = `Đã mặc thêm "${extra.product.name}" bằng ảnh tốt nhất, chất lượng ghép chưa hoàn hảo.`;
-      }
+      // Không mặc chồng bằng ảnh bị quality gate từ chối; giữ ảnh lớp trước.
       if (layered) {
         imageUrl = layered;
         engine = `${engine}+${extraClothType}:${layeredEngine || 'fashn'}`;
@@ -817,7 +903,36 @@ module.exports = function registerTryonRoutes(api, ctx) {
       }
     }
 
-    if (imageUrl && fitPlan.shouldRefine) {
+    // Hậu kỳ texture ngay trên ảnh VTON sạch: hoa văn bị kéo ngang và nếp căng
+    // hội tụ từ hai sườn. Cách này rõ hơn prompt FLUX, không sinh lại người/nền
+    // và bỏ được một lượt model tuần tự vốn chiếm thêm 20-30 giây trên GPU 16 GB.
+    //
+    // Điều kiện là ĐỘ CHẬT THẬT SỰ, không phải "catalog hết size". Bản trước bám
+    // vào `tearBecauseNoSizeFits`, nên một người 95kg tự chọn size S vẫn ra ảnh
+    // phẳng lì nếu shop có bán tới 5XL — trong khi chính người đó mặc S là
+    // trường hợp cần thấy hệ quả rõ nhất. `tearAllowed` đã gồm đủ các chốt:
+    // very_tight, severity >= 0.85, không phải thân dưới, và loại trang phục cho
+    // phép. Đo trên đường cong severity: 55kg chọn S chỉ 0.34, 70kg chọn S là
+    // 0.66 — cả hai đều KHÔNG chạm ngưỡng, nên đổi cổng này không làm rách nhầm.
+    if (imageUrl && sizeFit.visualEffect.tearAllowed) {
+      try {
+        const fitted = await applySafeTightFit(imageUrl, sizeFit.severity);
+        imageUrl = fitted.image;
+        engine = `${engine}+fit:${sizeFit.verdict}:safe-tension`;
+        fitEffect = {
+          ...fitEffect,
+          applied: true,
+          reason: sizeFit.tearBecauseNoSizeFits ? 'no_sold_size_safe_tension' : 'very_tight_safe_tension',
+          engine: 'deterministic-safe-tension',
+          tightFit: fitted.tightFit,
+          quality: { ok: true, reasons: [], safeTensionApplied: true },
+        };
+      } catch (error) {
+        attempts.push(`Không tạo được nếp căng vải an toàn: ${error.message}`);
+      }
+    }
+
+    if (imageUrl && fitPlan.shouldRefine && !fitEffect.applied) {
       const cleanFitInput = imageUrl;
       const maxFitAttempts = fitPlan.mandatory
         ? Math.max(1, Math.min(3, Number(process.env.JAPANO_FIT_REFINE_ATTEMPTS || 1)))
@@ -855,7 +970,42 @@ module.exports = function registerTryonRoutes(api, ctx) {
       }
       if (!fitEffect.applied) {
         fitEffect.reason = 'refine_failed';
-        logger.info(`[TRYON FIT EFFECT] không áp dụng được hiệu ứng fit (${(fitEffect.quality?.reasons || []).join(', ') || 'lỗi engine'})`);
+        // In kèm số đo đã khiến cổng từ chối: khi hiệu ứng biến mất, biết
+        // "trượt ở đâu, trượt bao nhiêu" quan trọng hơn nhiều so với chỉ biết tên lý do.
+        const q = fitEffect.quality || {};
+        const drift = Object.entries(q.bodyDrift || {})
+          .map(([key, value]) => `${key}=${value}`).join(' ');
+        logger.info(
+          `[TRYON FIT EFFECT] không áp dụng được hiệu ứng fit (${(q.reasons || []).join(', ') || 'lỗi engine'})`
+          + (drift ? ` drift[${drift}]` : '')
+          + ` skinGain=${q.skinGain} colorShift=${q.colorShift} structureChange=${q.structureChange}`,
+        );
+      }
+    }
+
+    // Quá chật tới mức very_tight thì vết bục là BẮT BUỘC, dù shop còn size lớn
+    // hơn hay không — khách chọn size nhỏ là để nhìn thấy đúng hệ quả đó. Hậu kỳ
+    // đúng đường vai trên ảnh đã qua gate, không ép model sinh lại mặt/cơ thể.
+    if (imageUrl && sizeFit.visualEffect.tearAllowed) {
+      try {
+        const previousQuality = fitEffect.quality;
+        const split = await applySafeSeamSplit(imageUrl);
+        imageUrl = split.image;
+        engine = `${engine}+safe-seam-split`;
+        fitEffect = {
+          ...fitEffect,
+          applied: true,
+          reason: fitEffect.applied ? fitEffect.reason : 'safe_seam_split_fallback',
+          engine: `${fitEffect.engine || 'deterministic'}+safe-seam-split`,
+          seamSplitApplied: true,
+          seamSplit: split.seamSplit,
+          refineRejectedReasons: previousQuality?.ok === false ? previousQuality.reasons || [] : [],
+          quality: previousQuality?.ok === true
+            ? { ...previousQuality, seamSplitApplied: true }
+            : { ok: true, reasons: [], seamSplitApplied: true },
+        };
+      } catch (error) {
+        attempts.push(`Không tạo được vết bục đường may bắt buộc: ${error.message}`);
       }
     }
 
@@ -868,7 +1018,34 @@ module.exports = function registerTryonRoutes(api, ctx) {
       );
       const criticalCoverage = (coverageQuality.reasons || []).filter((reason) => reason.startsWith('required_zone_exposed'));
       if (criticalCoverage.length) {
-        logger.warn(`[TRYON SAFETY] chặn ảnh vì hở vùng bắt buộc kín: ${criticalCoverage.join(', ')}`);
+        // Kèm số đo da của từng vùng: khi cổng chặn nhầm, biết "vùng nào, da
+        // trước bao nhiêu, sau bao nhiêu" là cách duy nhất phân biệt ảnh thật sự
+        // hở với khung vùng đặt sai chỗ.
+        // Chẩn đoán: khi bật JAPANO_TRYON_DEBUG_DIR, ghi lại đúng tấm ảnh vừa bị
+        // chặn để soi bằng mắt. Cổng an toàn chặn nhầm hay chặn đúng là câu hỏi
+        // không thể trả lời bằng số liệu suông. Mặc định TẮT — ảnh thử đồ là dữ
+        // liệu nhạy cảm, chỉ bật khi đang gỡ lỗi với ảnh test.
+        const debugDir = String(process.env.JAPANO_TRYON_DEBUG_DIR || '').trim();
+        if (debugDir) {
+          try {
+            const fsp = require('fs');
+            fsp.mkdirSync(debugDir, { recursive: true });
+            const stamp = Date.now();
+            for (const [ten, anh] of [['clean', normalizedPersonImageBase64], ['blocked', imageUrl]]) {
+              if (!anh?.startsWith('data:')) continue;
+              fsp.writeFileSync(`${debugDir}/${stamp}-${ten}.png`, Buffer.from(anh.split(',')[1], 'base64'));
+            }
+            logger.info(`[TRYON SAFETY] đã ghi ảnh chẩn đoán vào ${debugDir}`);
+          } catch (error) {
+            logger.warn(`[TRYON SAFETY] không ghi được ảnh chẩn đoán: ${error.message}`);
+          }
+        }
+        const zoneDetail = Object.entries(coverageQuality.zones || {})
+          .map(([zone, v]) => `${zone}:${v.before}->${v.after}(+${v.gain})`).join(' ');
+        logger.warn(
+          `[TRYON SAFETY] chặn ảnh vì hở vùng bắt buộc kín: ${criticalCoverage.join(', ')}`
+          + (zoneDetail ? ` | ${zoneDetail}` : ''),
+        );
         imageUrl = '';
         coverageBlocked = criticalCoverage;
       } else if (!coverageQuality.ok) {
@@ -955,6 +1132,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
       }, {
         userId: String(b.userId || 'guest'),
         productId: product.slug,
+        owner: jobOwner,
       });
     } catch (error) {
       if (error instanceof GpuJobCancelledError || error?.code === 'GPU_JOB_CANCELLED') {
@@ -1047,7 +1225,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
               requires18Plus: safetyPolicy.requires18Plus,
               containsSwimwear: safetyPolicy.containsSwimwear,
               allowedExposedZones: safetyPolicy.allowedExposedZones,
-              tearAllowed: safetyPolicy.tearAllowed,
+              tearAllowed: sizeFit.visualEffect.tearAllowed,
               coverageOk: coverageQuality ? coverageQuality.ok : null,
               coverageReasons: coverageQuality?.reasons || [],
             },
@@ -1060,7 +1238,10 @@ module.exports = function registerTryonRoutes(api, ctx) {
     res.json({
       ok: true,
       imageBase64: imageUrl,
-      imageUrl,
+      // Kết quả local là data URI vài MB. Không lặp lại cùng dữ liệu ở hai field:
+      // React Native phải parse/copy gấp đôi JSON trên máy cấu hình thấp như Redmi.
+      // Client đã ưu tiên imageUrl và tự fallback sang imageBase64.
+      imageUrl: /^https?:|^file:/i.test(imageUrl) ? imageUrl : undefined,
       engine,
       attempts,
       // Danh sách món đã thực sự lên ảnh — client cần biết để hiện đúng những gì
@@ -1094,7 +1275,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
         intentionalSkinExposure: safetyPolicy.intentionalSkinExposure,
         allowedExposedZones: safetyPolicy.allowedExposedZones,
         requiredCoveredZones: safetyPolicy.requiredCoveredZones,
-        tearAllowed: safetyPolicy.tearAllowed,
+        tearAllowed: sizeFit.visualEffect.tearAllowed,
         coverageCheck: coverageQuality
           ? { ok: coverageQuality.ok, reasons: coverageQuality.reasons, warnings: coverageQuality.warnings || [] }
           : null,

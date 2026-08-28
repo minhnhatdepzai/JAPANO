@@ -9,8 +9,8 @@ const {
   GOAL_FUND_CONFIG, ensureGoalFund, fundView, addDeposit, removeDeposit, ensureGoalRewardVoucher,
 } = require('../lib/goalFund');
 const {
-  mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled,
-  userProvidedMeasurement, profileForMeasurementMode,
+  mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled, analyzeViaWorker,
+  userProvidedMeasurement, profileForMeasurementMode, imageFingerprint,
 } = require('../lib/bodyAnalysis');
 const { logger } = require('../lib/logger');
 
@@ -35,7 +35,10 @@ module.exports = function registerStylistRoutes(api, ctx) {
   // đây chỉ là tín hiệu tối ưu tài nguyên, không đọc/ghi dữ liệu người dùng.
   api.post('/gpu/focus', async (req, res) => {
     const focus = String(req.body?.focus || '').trim();
-    const result = await setFocus(focus, { cancelActive: true }).catch((error) => ({
+    // Mỗi máy tự khai danh tính để lượt đổi màn hình của nó không cắt ngang
+    // lượt thử đồ đang chạy trên máy khác.
+    const owner = String(req.body?.clientId || req.body?.userId || '').trim();
+    const result = await setFocus(focus, { cancelActive: true, owner }).catch((error) => ({
       ok: false,
       message: error?.message || 'Không đổi được ưu tiên GPU.',
     }));
@@ -332,10 +335,13 @@ module.exports = function registerStylistRoutes(api, ctx) {
   api.post('/stylist/size', (req, res) => {
     const b = req.body || {};
     const measurements = { ...b, ...(b.profile || {}) };
+    const state = read();
+    const productId = String(b.productId || '').trim();
+    const product = productId ? state.products.find((item) => item.slug === productId || item.id === productId) : null;
     // Dùng cùng luật hợp nhất với /tryon: estimate đã lưu riêng chỉ là nguồn AI,
     // không được âm thầm trở thành số đo thật ở lần gọi sau.
-    const result = adviseSize(mergeBodySignals(measurements, null).profile);
-    res.json({ ok: true, size: result.size, recommendedSize: result.size, advice: result.advice, message: result.advice });
+    const result = adviseSize(mergeBodySignals(measurements, null).profile, product);
+    res.json({ ok: true, ...result, recommendedSize: result.size, message: result.advice });
   });
 
   // Phân tích vóc dáng từ ảnh: chiều cao/cân nặng ước lượng + tỉ lệ cơ thể.
@@ -358,19 +364,28 @@ module.exports = function registerStylistRoutes(api, ctx) {
     }
     const profile = profileForMeasurementMode(b.profile || {}, b.measurementMode);
     try {
-      const analysis = await runAccessoryPipeline({
+      const pipelinePayload = {
         mode: 'body_analysis',
         imageBase64,
         userHeightCm: userProvidedMeasurement(profile, 'height'),
         userWeightKg: userProvidedMeasurement(profile, 'weight'),
         scaleReference: b.scaleReference || null,
-      }, Number(process.env.JAPANO_BODY_ANALYSIS_TIMEOUT_MS || 120000));
+        sex: String(b.sex || profile.gender || profile.sex || '').trim() || undefined,
+      };
+      const timeoutMs = Number(process.env.JAPANO_BODY_ANALYSIS_TIMEOUT_MS || 120000);
+      // Worker giữ YOLO + U2Net thường trú; nếu chưa bật thì rơi về spawn như cũ.
+      const analysis = (await analyzeViaWorker(pipelinePayload, timeoutMs))
+        || await runAccessoryPipeline(pipelinePayload, timeoutMs);
       if (!analysis?.ok) {
         return res.status(503).json({ ok: false, message: analysis?.message || 'Không phân tích được vóc dáng từ ảnh này.' });
       }
+      analysis.imageFingerprint = imageFingerprint(imageBase64);
       // Số đo thật (nếu khách đã nhập) luôn thắng ước lượng của AI khi tính size.
       const merged = mergeBodySignals(profile, analysis);
-      const advice = adviseSize(merged.profile);
+      const productId = String(b.productId || '').trim();
+      const state = read();
+      const product = productId ? state.products.find((item) => item.slug === productId || item.id === productId) : null;
+      const advice = adviseSize(merged.profile, product);
       logger.info(bodyAnalysisLogLine(analysis));
       res.json({
         ok: true,

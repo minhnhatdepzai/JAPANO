@@ -82,6 +82,14 @@ backend/ai_training/models/*
 !backend/ai_training/models/.gitkeep
 backend/ai_training/manual_evaluation.csv
 
+# Dữ liệu suy ra từ dataset PHI THƯƠNG MẠI (VITON-HD CC-BY-NC-SA, BodyM CC-BY-NC).
+# Sinh lại bằng build_torso_calibration.py / fetch_bodym_dataset.py — đừng commit.
+backend/ai_training/body_dataset/torso_calibration.jsonl
+# Ảnh sinh ra khi đánh giá (contact sheet, baseline/lora renders) — nặng, tái tạo được.
+backend/ai_training/evaluation/**/*.jpg
+backend/ai_training/evaluation/**/*.png
+backend/ai_training/contact_sheets/
+
 # Credential Kaggle — KHÔNG BAO GIỜ commit
 kaggle.json
 .kaggle/
