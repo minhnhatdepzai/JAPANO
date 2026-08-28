@@ -1,0 +1,42 @@
+{
+  "dataset": "BodyM (Amazon body measurement dataset)",
+  "paper": "Ruiz et al., Human Body Measurement Estimation with Adversarial Augmentation (arXiv:2210.05667)",
+  "canonicalUrl": "https://registry.opendata.aws/bodym/",
+  "bucket": "arn:aws:s3:::amazon-bodym (us-west-2, truy cập ẩn danh)",
+  "license": "CC-BY-NC-4.0",
+  "licenseImplications": [
+    "NonCommercial: chỉ dùng cho nghiên cứu/đồ án. KHÔNG dùng cho bản thương mại của JAPANO.",
+    "Attribution: phải ghi nguồn Amazon BodyM khi công bố kết quả.",
+    "Checkpoint train từ bộ này thừa hưởng ràng buộc phi thương mại."
+  ],
+  "containsCredential": false,
+  "fields": {
+    "hwg_metadata.csv": "subject_id, gender, height_cm, weight_kg",
+    "measurements.csv": "subject_id + 14 số đo cm (chest, waist, hip, height, shoulder-breadth, ...)",
+    "subject_to_photo_map.csv": "subject_id -> photo_id (nhiều ảnh mỗi người)",
+    "mask/": "silhouette nhị phân CHÍNH DIỆN, mask_left/: silhouette NGHIÊNG"
+  },
+  "identitySplit": "Có subject_id. train/testA/testB là ba tập người KHÁC NHAU do tác giả chia; testB chụp trong điều kiện ít kiểm soát nên là lát cắt \"ngoài phòng lab\".",
+  "limits": [
+    "Chỉ có silhouette nhị phân, KHÔNG có ảnh RGB — không đo được ảnh hưởng của tách nền hay hoa văn quần áo.",
+    "Người mẫu mặc đồ bó sát khi chụp, nên không đại diện cho ảnh mặc áo phom rộng.",
+    "Không công bố phân bố dân tộc/tuổi chi tiết."
+  ],
+  "downloadedAt": "2026-08-27T21:49:48.782825+00:00",
+  "localPath": "/home/nhat/jp/datasets/bodym",
+  "splits": {
+    "train": {
+      "subjects": 2018,
+      "photos": 6134,
+      "filesDownloadedNow": 762,
+      "views": [
+        "mask"
+      ],
+      "checksums": {
+        "hwg_metadata.csv": "703e98428939767aaf877f38ccfd12b9563ef7d0b0688e0590738acbf876f175",
+        "measurements.csv": "1a21380ea9eb77e4d0736f32fd7b5335859e1d27746a105914677a9e366a94c3",
+        "subject_to_photo_map.csv": "21e7486d3952a4e3a63048c88d9fbfa70be3ca6d277763d32b423a03c20497d8"
+      }
+    }
+  }
+}

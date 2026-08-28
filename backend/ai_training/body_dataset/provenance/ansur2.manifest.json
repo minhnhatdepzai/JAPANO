@@ -1,0 +1,25 @@
+{
+  "dataset": "ANSUR II (2012 US Army Anthropometric Survey), bản Public",
+  "canonicalUrl": "https://www.openlab.psu.edu/ansur2/",
+  "kaggleMirror": "seshadrikolluri/ansur-ii",
+  "license": "CC0-1.0 (public domain dedication)",
+  "licenseImplications": [
+    "Không hạn chế thương mại, không bắt buộc ghi nguồn — nhưng vẫn ghi nguồn khi công bố.",
+    "Checkpoint fit từ riêng bộ này KHÔNG bị ràng buộc phi thương mại."
+  ],
+  "localPath": "/home/nhat/jp/datasets/ansur2",
+  "files": ["ANSUR II FEMALE Public.csv", "ANSUR II MALE Public.csv"],
+  "sampleSize": 6068,
+  "sampleSizeBySex": {"F": 1986, "M": 4082},
+  "hasImages": false,
+  "fields": "93 số đo nhân trắc bằng thước + cân nặng + giới tính + tuổi",
+  "usedFor": [
+    "prior nhân trắc (tỉ lệ mốc cơ thể, độ sâu/bề ngang) -> models/anthropometry.json",
+    "hồi quy SỐ ĐO VẬT LÝ -> cân nặng / vòng ngực / vòng eo / vòng hông",
+    "hồi quy TỈ LỆ bề ngang -> BMI (không cần thang cm)",
+    "cực trị giải phẫu cho chốt chặn khung xương (gateLimits)"
+  ],
+  "notUsedFor": "Không dùng làm dataset ảnh->số đo. Bộ này KHÔNG có ảnh.",
+  "populationCaveat": "Quân nhân Mỹ đang tại ngũ: trẻ, thể trạng tốt hơn dân số chung, ít mỡ bụng hơn ở cùng bề ngang. Đo trên BodyM cho thấy sai lệch hệ thống khoảng -13cm vòng đo khi áp lên dân số chung — xem evaluation/body_pipeline_testB.json.",
+  "containsCredential": false
+}
