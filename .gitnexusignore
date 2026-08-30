@@ -1,0 +1,21 @@
+# Credentials, local configuration, and personal test media
+.env
+.env.*
+*.pem
+*.key
+kaggle.json
+.kaggle/
+access_token
+test-assets/
+test-results/
+
+# Large/generated/runtime data that is not application source
+node_modules/
+JAPANO/
+backend/ai_training/**/images/
+backend/ai_training/models/
+backend/ai_training/evaluation/
+backend/ai_training/contact_sheets/
+backend/data/migration-backups/
+*.apk
+*.log

@@ -219,6 +219,22 @@ window.A={
   delBanner(id){DB.banners=DB.banners.filter(x=>x.id!==id);save();renderView();toast('Đã xoá ảnh quảng bá','info');},
   /* settings */
   async saveShop(){const patch={name:$('#set-name').value,hotline:$('#set-hotline').value,email:$('#set-email').value,address:$('#set-addr').value};try{await persistShop(patch);toast('Đã lưu thông tin cửa hàng');}catch(e){toast('Không lưu được thông tin cửa hàng','err');}},
+  async saveStoreLocations(){
+    const rows=[...document.querySelectorAll('[data-store-location]')];
+    const locations=rows.map((row,index)=>({
+      id:row.dataset.locationId||`japano-location-${index+1}`,
+      name:row.querySelector('[data-location-name]').value.trim(),
+      address:row.querySelector('[data-location-address]').value.trim(),
+      latitude:Number(row.querySelector('[data-location-lat]').value),
+      longitude:Number(row.querySelector('[data-location-lng]').value),
+      phone:row.querySelector('[data-location-phone]').value.trim(),
+      openingHours:row.querySelector('[data-location-hours]').value.trim(),
+      services:row.querySelector('[data-location-services]').value.split(',').map(value=>value.trim()).filter(Boolean),
+      active:row.querySelector('[data-location-active]').checked,
+    }));
+    try{const saved=await persistShop({locations});DB.shop.locations=saved.locations||locations;renderView();toast('Đã lưu địa điểm storefront');}
+    catch(e){toast(e.message||'Không lưu được địa điểm','err');}
+  },
   async setShip(v){try{await persistShop({shipFee:+v||0});toast('Đã cập nhật phí vận chuyển');}catch(e){toast('Không cập nhật được phí vận chuyển','err');}},
   async toggleShop(k){const value=!DB.shop[k];const label={cod:'Thanh toán khi nhận hàng (COD)',stripe:'Thanh toán Stripe',vnpay:'Thanh toán VNPay'}[k]||k;try{await persistShop({[k]:value});renderView();toast(value?'Đã bật '+label+'':'Đã tắt '+label,'info');}catch(e){toast('Không cập nhật được cấu hình','err');}},
   uploadLogo(){const inp=document.createElement('input');inp.type='file';inp.accept='image/png,image/jpeg,image/webp,image/svg+xml';inp.onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>3*1024*1024){toast('Logo vượt quá 3 MB','err');return;}const reader=new FileReader();reader.onload=async()=>{try{await persistShop({logo:String(reader.result)});renderView();toast('Đã đổi logo · ứng dụng sẽ tự cập nhật');}catch(err){toast('Không tải được logo','err');}};reader.readAsDataURL(file);};inp.click();},

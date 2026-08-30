@@ -1,9 +1,12 @@
 // Ánh xạ giữa state mà các route hiện dùng và các collection MongoDB chuẩn hoá.
 // MongoDB là nguồn dữ liệu thật; state chỉ là mô hình đã JOIN trong bộ nhớ để
 // giữ API mobile/admin tương thích trong lúc dữ liệu vật lý được tách đúng thực thể.
+const crypto = require('crypto');
 const { emptyState } = require('../seed');
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 8;
+const STORAGE_SCHEMA_ID = 'storage_schema';
+const LEAN_STORAGE_VERSION = 8;
 
 const DIRECT_COLLECTIONS = Object.freeze({
   categories: 'categories',
@@ -17,20 +20,17 @@ const DIRECT_COLLECTIONS = Object.freeze({
   reviewReactions: 'review_reactions',
   moderationSamples: 'moderation_samples',
   notifications: 'notifications',
-  discountRules: 'discount_rules',
   vouchers: 'vouchers',
   flagcards: 'flagcards',
   flagcardCollections: 'flagcard_collections',
-  vipMemberships: 'vip_memberships',
   voucherRedemptions: 'voucher_redemptions',
-  banners: 'banners',
   interactions: 'interactions',
   searchLogs: 'search_logs',
   pushTokens: 'push_tokens',
   profiles: 'profiles',
   chats: 'chats',
   goals: 'goals',
-  aiDescriptions: 'ai_descriptions',
+  japanSpots: 'japan_spots',
   japanSpotReviews: 'japan_spot_reviews',
   japanSpotSuggestions: 'japan_spot_suggestions',
 });
@@ -39,7 +39,6 @@ const NORMALIZED_COLLECTIONS = Object.freeze([
   'settings',
   'categories',
   'products',
-  'product_details',
   'product_variants',
   'product_media',
   'users',
@@ -50,7 +49,6 @@ const NORMALIZED_COLLECTIONS = Object.freeze([
   'order_items',
   'payments',
   'return_requests',
-  'discount_rules',
   'vouchers',
   'voucher_redemptions',
   'reviews',
@@ -59,17 +57,31 @@ const NORMALIZED_COLLECTIONS = Object.freeze([
   'notifications',
   'flagcards',
   'flagcard_collections',
-  'vip_memberships',
-  'banners',
   'interactions',
   'search_logs',
   'push_tokens',
   'profiles',
   'chats',
   'goals',
-  'ai_descriptions',
+  'japan_spots',
   'japan_spot_reviews',
   'japan_spot_suggestions',
+]);
+
+// Chỉ đọc trong giai đoạn chuyển 34 -> 29 collection. Các collection này
+// không xuất hiện trong serializeState()/ensureMongoIndexes(), vì vậy code mới
+// không ghi thêm hay vô tình tạo lại chúng. Migration có backup riêng mới được
+// phép drop; boot thường tuyệt đối không drop năm collection này.
+const LEGACY_COMPAT_COLLECTIONS = Object.freeze([
+  'product_details',
+  'discount_rules',
+  'vip_memberships',
+  'banners',
+  'ai_descriptions',
+]);
+
+const RUNTIME_ARRAY_FIELDS = Object.freeze([
+  'discountRules', 'vipMemberships', 'banners', 'aiDescriptions',
 ]);
 
 const LEGACY_COLLECTIONS = Object.freeze([
@@ -110,9 +122,15 @@ function normalizeState(input) {
   for (const key of Object.keys(DIRECT_COLLECTIONS)) {
     normalized[key] = Array.isArray(source[key]) ? source[key] : [];
   }
+  for (const key of RUNTIME_ARRAY_FIELDS) {
+    normalized[key] = Array.isArray(source[key]) ? source[key] : clone(defaults[key] || []);
+  }
+  // Mô tả AI là cache suy luận, không phải dữ liệu nghiệp vụ. Cache thật nằm
+  // trong RAM ở catalog.js; xoá khỏi state cũng ngăn nó lọt vào db.json khi
+  // MongoDB fallback.
+  normalized.aiDescriptions = [];
   normalized.products = Array.isArray(source.products) ? source.products : [];
   normalized.orders = Array.isArray(source.orders) ? source.orders : [];
-  if (!normalized.discountRules.length) normalized.discountRules = clone(defaults.discountRules);
   normalized.schemaVersion = SCHEMA_VERSION;
   normalized.seeded = Boolean(source.seeded || normalized.products.length);
   return normalized;
@@ -144,7 +162,6 @@ function runtimeProductSlug(value, maps) {
 
 function serializeProducts(products) {
   const core = [];
-  const details = [];
   const variants = [];
   const media = [];
 
@@ -162,13 +179,9 @@ function serializeProducts(products) {
       ...coreFields,
       id,
       categoryId,
-      compareAtPrice: Number(compareAtPrice ?? old) > Number(product.price || 0)
-        ? Number(compareAtPrice ?? old)
-        : null,
-    });
-    details.push({
-      _id: id,
-      productId: id,
+      // Các field nhỏ, luôn đọc cùng sản phẩm và có quan hệ đúng 1:1 được
+      // nhúng thẳng. Tách product_details tạo thêm collection/index/round-trip
+      // nhưng không tiết kiệm document hay truy vấn nào cho catalog hiện tại.
       description: String(description ?? desc ?? ''),
       story: String(story || ''),
       colorHex: String(colorHex || ''),
@@ -176,6 +189,9 @@ function serializeProducts(products) {
       visualTags: Array.isArray(visualTags) ? visualTags : [],
       rating: Number(rating || 0),
       sold: Number(sold || 0),
+      compareAtPrice: Number(compareAtPrice ?? old) > Number(product.price || 0)
+        ? Number(compareAtPrice ?? old)
+        : null,
     });
 
     for (const [index, rawVariant] of (Array.isArray(productVariants) ? productVariants : []).entries()) {
@@ -194,7 +210,7 @@ function serializeProducts(products) {
     (Array.isArray(images) ? images : []).forEach((value, index) => addMedia(value, 'image', index, index === 0));
     (Array.isArray(videos) ? videos : []).forEach((value, index) => addMedia(value, 'video', index, false));
   }
-  return { core, details, variants, media };
+  return { core, variants, media };
 }
 
 function hydrateProducts(coreDocs, detailDocs, variantDocs, mediaDocs) {
@@ -217,6 +233,11 @@ function hydrateProducts(coreDocs, detailDocs, variantDocs, mediaDocs) {
     const core = withoutMongoId(raw);
     const id = String(core.id || raw._id);
     const detail = details.get(id) || {};
+    // Ưu tiên field nhúng nếu field thực sự tồn tại, kể cả chuỗi/mảng rỗng.
+    // Như vậy Admin cố ý xoá mô tả/tags không bị product_details cũ hồi sinh.
+    const detailValue = (field, fallback) => Object.prototype.hasOwnProperty.call(core, field)
+      ? core[field]
+      : (Object.prototype.hasOwnProperty.call(detail, field) ? detail[field] : fallback);
     const variantList = (variants.get(id) || []).sort((a, b) => a.position - b.position).map(({ value }) => {
       const { id: variantId, ...rest } = value;
       return variantId && !rest.sku ? { ...rest, id: variantId } : rest;
@@ -229,7 +250,12 @@ function hydrateProducts(coreDocs, detailDocs, variantDocs, mediaDocs) {
     });
     const price = Math.max(0, Number(core.price || 0));
     const old = Number(core.compareAtPrice || 0) > price ? Number(core.compareAtPrice) : null;
-    const { categoryId, compareAtPrice: _compareAtPrice, ...base } = core;
+    const {
+      categoryId, compareAtPrice: _compareAtPrice,
+      description: _description, story: _story, colorHex: _colorHex,
+      tags: _tags, visualTags: _visualTags, rating: _rating, sold: _sold,
+      ...base
+    } = core;
     return {
       ...base,
       id,
@@ -238,13 +264,13 @@ function hydrateProducts(coreDocs, detailDocs, variantDocs, mediaDocs) {
       old,
       sale: null,
       discountPercent: old ? Math.round((1 - price / old) * 100) : 0,
-      desc: String(detail.description || ''),
-      story: String(detail.story || ''),
-      colorHex: String(detail.colorHex || ''),
-      tags: Array.isArray(detail.tags) ? detail.tags : [],
-      visualTags: Array.isArray(detail.visualTags) ? detail.visualTags : [],
-      rating: Number(detail.rating || 0),
-      sold: Number(detail.sold || 0),
+      desc: String(detailValue('description', '') || ''),
+      story: String(detailValue('story', '') || ''),
+      colorHex: String(detailValue('colorHex', '') || ''),
+      tags: Array.isArray(detailValue('tags', [])) ? detailValue('tags', []) : [],
+      visualTags: Array.isArray(detailValue('visualTags', [])) ? detailValue('visualTags', []) : [],
+      rating: Number(detailValue('rating', 0) || 0),
+      sold: Number(detailValue('sold', 0) || 0),
       variants: variantList,
       images,
       image: images[0] || '',
@@ -436,7 +462,6 @@ function serializeState(stateInput) {
   const collections = new Map();
   const products = serializeProducts(state.products);
   collections.set('products', products.core);
-  collections.set('product_details', products.details);
   collections.set('product_variants', products.variants);
   collections.set('product_media', products.media);
   const maps = productMaps(state.products);
@@ -456,10 +481,23 @@ function serializeState(stateInput) {
   collections.set('orders', orderData.orders);
   collections.set('order_items', orderData.items);
   collections.set('payments', orderData.payments);
+  // Banner và quy tắc giảm giá là DỮ LIỆU CẤU HÌNH: vài document, chỉ Admin sửa,
+  // luôn đọc trọn gói. Giữ mỗi thứ một collection riêng tốn sàn 36 KB storage +
+  // 36 KB index cho tổng cộng chưa tới 1 KB dữ liệu thật.
+  //
+  // Chúng đi vào `settings` dưới dạng danh sách bọc trong một document. Bọc
+  // trong `{ items: [...] }` chứ không đặt mảng ở gốc, vì `_id` phải nằm cạnh
+  // nội dung và một document Mongo không thể là mảng.
   collections.set('settings', [
     { _id: 'shop', ...clone(state.shop) },
     { _id: 'integrations', ...clone(state.integrations) },
     { _id: 'flagcard_config', ...clone(state.flagcardConfig) },
+    { _id: 'banners', items: clone(state.banners || []) },
+    { _id: 'discount_rules', items: clone(state.discountRules || []) },
+    // Dấu mốc lược đồ. Boot phải hỏi "database này đã chuẩn hoá chưa" bằng một
+    // dấu mốc TƯỜNG MINH, chứ không bằng cách đếm một collection nào đó — xem
+    // hasNormalizedStorage().
+    { _id: STORAGE_SCHEMA_ID, version: LEAN_STORAGE_VERSION, schemaVersion: SCHEMA_VERSION },
   ]);
   return collections;
 }
@@ -498,10 +536,56 @@ function hydrateDirectRow(key, raw, maps, vouchersById) {
   return row;
 }
 
+/**
+ * Đọc một danh sách đã nhúng trong `settings`, có đường lùi về collection cũ.
+ *
+ * Quy tắc phân biệt nằm ở `hasOwnProperty('items')`, không ở `items.length`:
+ * document settings TỒN TẠI nghĩa là đã migrate, kể cả khi danh sách rỗng. Dùng
+ * độ dài để quyết định sẽ làm sống lại dữ liệu mà Admin vừa xoá hẳn.
+ */
+function embeddedList(settings, settingsId, legacyRows) {
+  const doc = settings.get(settingsId);
+  if (doc && Object.prototype.hasOwnProperty.call(doc, 'items')) {
+    return Array.isArray(doc.items) ? doc.items.map(withoutMongoId) : [];
+  }
+  return (legacyRows || []).map(withoutMongoId);
+}
+
+/**
+ * Database này đã ở lược đồ chuẩn hoá chưa?
+ *
+ * Trả lời bằng dấu mốc tường minh `settings/_id=storage_schema`, và với database
+ * có trước dấu mốc thì hỏi thẳng: "có sản phẩm nào không?".
+ *
+ * Vì sao không đếm một collection cụ thể: boot cũ dùng
+ * `product_details.countDocuments()`. Khi product_details được gộp vào products
+ * và bị drop, phép đếm trả 0 — cùng một con số với "database trống tinh". Boot
+ * hiểu nhầm là database trống, nạp db.json rồi GHI ĐÈ lên Atlas. Lần chạy thật
+ * đã xoá mất 17 sản phẩm, 85 biến thể và 17 ảnh chỉ tồn tại trên Atlas. Một
+ * database đã có dữ liệu KHÔNG BAO GIỜ được bị db.json ghi đè.
+ */
+async function hasNormalizedStorage(db) {
+  const marker = await db.collection('settings').findOne({ _id: STORAGE_SCHEMA_ID }).catch(() => null);
+  if (marker) return true;
+  const products = await db.collection('products').estimatedDocumentCount().catch(() => 0);
+  return products > 0;
+}
+
 async function loadStateFromCollections(db) {
   const reads = new Map();
   await Promise.all(NORMALIZED_COLLECTIONS.map(async (name) => {
     reads.set(name, await db.collection(name).find({}).toArray());
+  }));
+  // Giai đoạn chuyển 34 -> 29 collection: các collection cũ không còn được ghi
+  // nữa, nhưng database thật vẫn còn document của chúng cho tới khi migration
+  // có backup được chạy. Đọc thêm ở đây để dữ liệu cũ vẫn hydrate được thay vì
+  // im lặng biến mất; collection không tồn tại chỉ trả về mảng rỗng.
+  await Promise.all(LEGACY_COMPAT_COLLECTIONS.map(async (name) => {
+    try {
+      reads.set(name, await db.collection(name).find({}).toArray());
+    } catch {
+      reads.set(name, []);
+    }
   }));
   const settings = new Map((reads.get('settings') || []).map((row) => [String(row._id), withoutMongoId(row)]));
   const products = hydrateProducts(
@@ -515,12 +599,19 @@ async function loadStateFromCollections(db) {
     shop: { ...emptyState().shop, ...(settings.get('shop') || {}) },
     integrations: { ...emptyState().integrations, ...(settings.get('integrations') || {}) },
     flagcardConfig: { ...emptyState().flagcardConfig, ...(settings.get('flagcard_config') || {}) },
+    // Dual-read cho giai đoạn chuyển: đọc settings mới trước, chưa có thì lấy
+    // collection cũ. Phân biệt bằng `hasOwnProperty` chứ KHÔNG bằng độ dài mảng
+    // — "Admin đã xoá hết banner" và "chưa migrate" đều cho mảng rỗng, và đoán
+    // nhầm sẽ hồi sinh banner mà người vận hành vừa cố ý xoá.
+    banners: embeddedList(settings, 'banners', reads.get('banners')),
+    discountRules: embeddedList(settings, 'discount_rules', reads.get('discount_rules')),
     products,
   };
   for (const [key, collection] of Object.entries(DIRECT_COLLECTIONS)) {
     if (key === 'payments' || key === 'returnRequests' || key === 'voucherRedemptions') continue;
-    const rows = (reads.get(collection) || []).map(withoutMongoId);
-    state[key] = key === 'discountRules' && !rows.length ? clone(emptyState().discountRules) : rows;
+    // discountRules đã rời DIRECT_COLLECTIONS để nhúng vào settings, nên nhánh
+    // fallback cũ ở đây không còn được chạm tới; xem embeddedList() phía trên.
+    state[key] = (reads.get(collection) || []).map(withoutMongoId);
   }
   const vouchersById = new Map((state.vouchers || []).map((row) => [String(row.id), row]));
   for (const key of Object.keys(DIRECT_COLLECTIONS)) {
@@ -671,16 +762,51 @@ async function replaceCollection(db, name, documents) {
   const docs = documents.map((row) => clone(row));
   const ids = docs.map((row) => row._id);
   if (docs.length) {
+    // Xoá document thừa TRƯỚC khi upsert, không phải sau.
+    //
+    // Khi quy ước sinh `_id` đổi, cùng một biến thể tồn tại dưới hai `_id`: bản
+    // cũ `variant-jp1-0` và bản mới `variant-jp1-JP001-DEF-S`. Cả hai cùng khoá
+    // unique {productId, colorName, size}. Upsert trước thì bản mới đụng ngay
+    // bản cũ — thứ đằng nào cũng sắp bị xoá ở dòng kế tiếp — và ném E11000 làm
+    // hỏng cả lượt ghi, khiến backend treo lúc khởi động. Đổi thứ tự làm chỗ
+    // trống được dọn trước khi có ai cần tới nó.
+    await collection.deleteMany({ _id: { $nin: ids } });
+    // `ordered: false` để một document hỏng không chặn 496 document còn lại.
     await collection.bulkWrite(docs.map((document) => ({
       replaceOne: { filter: { _id: document._id }, replacement: document, upsert: true },
-    })), { ordered: true });
-    await collection.deleteMany({ _id: { $nin: ids } });
+    })), { ordered: false });
   } else {
     await collection.deleteMany({});
   }
 }
 
-async function persistStateToCollections(db, state, { only = null } = {}) {
+// Vân tay nội dung của từng collection sau lần ghi gần nhất.
+//
+// Vì sao cần: `write()` trong store.js đẩy TOÀN BỘ state xuống Mongo, nên thêm
+// đúng một món vào giỏ cũng ghi lại 34 collection / 2.073 document / 68 lệnh.
+// Phần lớn số đó không hề đổi. So vân tay trước khi ghi giúp bỏ qua chúng.
+//
+// Khoá theo `db.databaseName` chứ không theo tiến trình: một tiến trình có thể
+// đổi database khi fallback rồi quay lại, và vân tay của database này không nói
+// gì về database kia.
+const lastWrittenDigests = new Map();
+
+function collectionDigest(docs) {
+  // JSON.stringify đủ cho mục đích này: dữ liệu đã được serialize thành BSON
+  // thuần, thứ tự document ổn định vì sinh ra từ cùng một mảng nguồn.
+  return crypto.createHash('sha1').update(JSON.stringify(docs)).digest('hex');
+}
+
+/**
+ * Quên vân tay đã nhớ. Bắt buộc gọi khi không còn chắc Mongo khớp với bộ nhớ:
+ * sau fallback về file, sau migration, hoặc khi một tiến trình khác vừa ghi.
+ */
+function forgetPersistedDigests(db = null) {
+  if (db && db.databaseName) lastWrittenDigests.delete(db.databaseName);
+  else lastWrittenDigests.clear();
+}
+
+async function persistStateToCollections(db, state, { only = null, skipUnchanged = false } = {}) {
   const errors = relationshipErrors(state);
   if (errors.length) {
     const error = new Error(`Dữ liệu vi phạm liên kết:\n- ${errors.slice(0, 12).join('\n- ')}`);
@@ -690,10 +816,34 @@ async function persistStateToCollections(db, state, { only = null } = {}) {
   }
   const serialized = serializeState(state);
   const selected = only ? new Set(only) : null;
+  const key = db && db.databaseName ? db.databaseName : '__default__';
+  const digests = skipUnchanged ? (lastWrittenDigests.get(key) || new Map()) : null;
+  const nextDigests = skipUnchanged ? new Map() : null;
+  const written = [];
+
   for (const [name, docs] of serialized) {
     if (selected && !selected.has(name)) continue;
+    if (skipUnchanged) {
+      const digest = collectionDigest(docs);
+      nextDigests.set(name, digest);
+      // Chỉ bỏ qua khi ĐÃ từng ghi collection này và nội dung y hệt. Lần đầu
+      // (digests rỗng) vẫn ghi đủ, nên khởi động nguội không bị hụt dữ liệu.
+      if (digests.get(name) === digest) continue;
+    }
     await replaceCollection(db, name, docs);
+    written.push(name);
   }
+
+  if (skipUnchanged) {
+    // Chỉ ghi nhận vân tay SAU khi mọi lệnh ghi đã thành công. Nếu có lệnh nào
+    // ném lỗi, hàm đã thoát trước dòng này và vân tay cũ được giữ nguyên, nên
+    // lần persist kế tiếp sẽ ghi lại collection đó thay vì bỏ qua nhầm.
+    for (const [name, digest] of digests) {
+      if (!nextDigests.has(name)) nextDigests.set(name, digest);
+    }
+    lastWrittenDigests.set(key, nextDigests);
+  }
+  serialized.writtenCollections = written;
   return serialized;
 }
 
@@ -701,7 +851,6 @@ async function ensureMongoIndexes(db) {
   const definitions = {
     categories: [[{ id: 1 }, { unique: true, name: 'uq_categories_id' }]],
     products: [[{ id: 1 }, { unique: true, name: 'uq_products_id' }], [{ slug: 1 }, { unique: true, name: 'uq_products_slug' }], [{ categoryId: 1 }, { name: 'ix_products_category' }]],
-    product_details: [[{ productId: 1 }, { unique: true, name: 'uq_product_details_product' }]],
     product_variants: [[{ id: 1 }, { unique: true, name: 'uq_product_variants_id' }], [{ productId: 1 }, { name: 'ix_product_variants_product' }], [{ sku: 1 }, { unique: true, sparse: true, name: 'uq_product_variants_sku' }], [{ productId: 1, colorName: 1, size: 1 }, { unique: true, name: 'uq_product_variants_selection' }]],
     product_media: [[{ id: 1 }, { unique: true, name: 'uq_product_media_id' }], [{ productId: 1, position: 1 }, { name: 'ix_product_media_product' }]],
     users: [[{ id: 1 }, { unique: true, name: 'uq_users_id' }], [{ email: 1 }, { name: 'ix_users_email' }]],
@@ -713,13 +862,17 @@ async function ensureMongoIndexes(db) {
     payments: [[{ id: 1 }, { unique: true, name: 'uq_payments_id' }], [{ orderId: 1 }, { name: 'ix_payments_order' }], [{ userId: 1 }, { name: 'ix_payments_user' }]],
     return_requests: [[{ id: 1 }, { unique: true, name: 'uq_return_requests_id' }], [{ orderId: 1 }, { name: 'ix_return_requests_order' }], [{ paymentId: 1 }, { name: 'ix_return_requests_payment' }], [{ userId: 1 }, { name: 'ix_return_requests_user' }]],
     vouchers: [[{ id: 1 }, { unique: true, name: 'uq_vouchers_id' }], [{ code: 1 }, { unique: true, name: 'uq_vouchers_code' }]],
-    discount_rules: [[{ id: 1 }, { unique: true, name: 'uq_discount_rules_id' }], [{ code: 1 }, { unique: true, name: 'uq_discount_rules_code' }]],
     voucher_redemptions: [[{ id: 1 }, { unique: true, name: 'uq_voucher_redemptions_id' }], [{ voucherId: 1 }, { name: 'ix_voucher_redemptions_voucher' }], [{ userId: 1 }, { name: 'ix_voucher_redemptions_user' }], [{ orderId: 1 }, { name: 'ix_voucher_redemptions_order' }]],
     reviews: [[{ id: 1 }, { unique: true, name: 'uq_reviews_id' }], [{ productId: 1 }, { name: 'ix_reviews_product' }], [{ userId: 1 }, { name: 'ix_reviews_user' }], [{ orderId: 1 }, { name: 'ix_reviews_order' }]],
     review_reactions: [[{ id: 1 }, { unique: true, name: 'uq_review_reactions_id' }], [{ reviewId: 1, userId: 1 }, { unique: true, name: 'uq_review_reactions_review_user' }]],
-    vip_memberships: [[{ id: 1 }, { unique: true, name: 'uq_vip_memberships_id' }], [{ userId: 1, status: 1 }, { name: 'ix_vip_memberships_user_status' }], [{ discountRuleId: 1 }, { name: 'ix_vip_memberships_discount_rule' }]],
     profiles: [[{ userId: 1 }, { unique: true, name: 'uq_profiles_user' }]],
     push_tokens: [[{ token: 1 }, { unique: true, name: 'uq_push_tokens_token' }], [{ userId: 1 }, { name: 'ix_push_tokens_user' }]],
+    japan_spots: [
+      [{ id: 1 }, { unique: true, name: 'uq_japan_spots_id' }],
+      [{ place: 1, prefecture: 1 }, { unique: true, name: 'uq_japan_spots_place_prefecture' }],
+      [{ prefecture: 1, active: 1 }, { name: 'ix_japan_spots_prefecture_active' }],
+      [{ productId: 1 }, { name: 'ix_japan_spots_product' }],
+    ],
   };
   for (const name of NORMALIZED_COLLECTIONS) {
     // Tạo collection rỗng có chủ đích để Compass phản ánh đúng schema hỗ trợ.
@@ -757,9 +910,13 @@ async function dropLegacyCollections(db) {
 
 module.exports = {
   SCHEMA_VERSION,
+  forgetPersistedDigests,
   DIRECT_COLLECTIONS,
   NORMALIZED_COLLECTIONS,
   LEGACY_COLLECTIONS,
+  STORAGE_SCHEMA_ID,
+  LEAN_STORAGE_VERSION,
+  hasNormalizedStorage,
   normalizeState,
   serializeState,
   loadStateFromCollections,

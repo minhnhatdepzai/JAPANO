@@ -8,6 +8,14 @@
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 const { pushNotification } = require('../lib/notify');
 const { SPOT_REWARD_CONFIG, ensureSuggestionReward, issueSpotRewardVoucher } = require('../lib/communityRewards');
+const { fetchBackgroundImage, composeViaWorker, findSceneBackground, findScene, scenesForSpot, loadSceneBackground } = require('../lib/japanScenePhoto');
+const { listSceneBackgrounds } = require('../lib/japanSceneBackgrounds');
+const { loadTryonPreset } = require('../lib/tryonPresets');
+const { recommendForSpot, sizesInStock } = require('../lib/japanSpotRecommendations');
+const { logger } = require('../lib/logger');
+
+// Ảnh địa điểm là tệp Creative Commons; ghi công phải đi kèm mọi ảnh trả ra.
+const PHOTO_ATTRIBUTION = 'Ảnh nền: Wikimedia Commons (Creative Commons)';
 
 module.exports = function registerJapanSpotsRoutes(api, ctx) {
   const { read, update, httpError, moderateReview, REVIEW_MODERATION_MODEL, uploadReviewMedia, requireAdmin, sendPushToUser } = ctx;
@@ -32,6 +40,19 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
   function publicSpotReview(review) {
     return { id: review.id, place: review.place, prefecture: review.prefecture, userName: review.userName, rating: review.rating, comment: review.comment, media: review.media || null, createdAt: review.createdAt };
   }
+
+  // Danh mục địa điểm chuẩn được lưu trong MongoDB. Ảnh chỉ lưu URL và thông
+  // tin nguồn; tệp ảnh thật vẫn ở Wikimedia/Cloudinary để Atlas không phình.
+  api.get('/japan-spots/catalog', (req, res) => {
+    const prefecture = String(req.query.prefecture || '').trim();
+    const region = String(req.query.region || '').trim();
+    const spots = (read().japanSpots || [])
+      .filter((spot) => spot.active !== false)
+      .filter((spot) => !prefecture || spot.prefecture === prefecture)
+      .filter((spot) => !region || spot.region === region)
+      .sort((left, right) => String(left.place || '').localeCompare(String(right.place || ''), 'vi'));
+    res.json({ ok: true, count: spots.length, spots });
+  });
 
   // Đi qua state store chung để collection MongoDB luôn là nguồn dữ liệu
   // duy nhất. Store tự materialize thành japan_spot_reviews/suggestions để xem.
@@ -86,6 +107,192 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
 
   // Chương trình thưởng được công khai để app hiển thị đúng mức thưởng thật.
   api.get('/japan-spots/reward-program', (req, res) => res.json({ ok: true, config: SPOT_REWARD_CONFIG }));
+
+  // ---- Ghép ảnh khách vào phong cảnh Nhật Bản --------------------------------
+  // Mặc định là ghép bằng tách nền: người được CẮT ra và đặt lên ảnh địa điểm
+  // thật, không hề đi qua mô hình sinh ảnh. Nhờ vậy khuôn mặt, cơ thể, màu da và
+  // trang phục không thể bị vẽ lại — đúng ràng buộc của tính năng thử đồ.
+  api.get('/japan-spots/scene-backgrounds', (req, res) => {
+    res.json({ ok: true, spots: listSceneBackgrounds() });
+  });
+
+  // Góc chụp đã được duyệt cho một địa điểm. Địa điểm chưa có góc nào sẽ trả
+  // mảng rỗng — app phải nói thẳng "chưa có góc chụp" thay vì ghép bừa lên một
+  // ảnh không có chỗ đặt chân.
+  api.get('/japan-spots/scenes', (req, res) => {
+    const place = String(req.query.place || '').trim();
+    const prefecture = String(req.query.prefecture || '').trim();
+    if (!place || !prefecture) return res.status(400).json({ ok: false, message: 'Thiếu place hoặc prefecture.' });
+    res.json({ ok: true, place, prefecture, scenes: scenesForSpot(place, prefecture) });
+  });
+
+  // ---- Gợi ý trang phục theo địa điểm ---------------------------------------
+  // Cache RAM có hạn dùng và giới hạn số mục. KHÔNG tạo collection MongoDB:
+  // đây là kết quả suy ra từ catalog, dựng lại được bất cứ lúc nào.
+  const RECO_CACHE = new Map();
+  const RECO_TTL_MS = 5 * 60 * 1000;
+  const RECO_CACHE_MAX = 120;
+
+  function recoCacheKey(parts) {
+    return JSON.stringify(parts);
+  }
+
+  api.get('/japan-spots/recommendations', (req, res) => {
+    const startedAt = Date.now();
+    try {
+      const place = String(req.query.place || '').trim();
+      const prefecture = String(req.query.prefecture || '').trim();
+      if (!place) throw httpError(400, 'Thiếu place.');
+
+      const body = {
+        height: Number(req.query.height) || 0,
+        weight: Number(req.query.weight) || 0,
+        preferredSize: String(req.query.preferredSize || '').trim().toUpperCase() || null,
+      };
+      const season = String(req.query.season || '').trim() || null;
+      const limit = Number(req.query.limit) || 12;
+      const adultAllowed = req.query.adultConsent === 'true';
+
+      // Bucket hồ sơ cơ thể theo bậc 10 để hai người gần giống nhau dùng chung
+      // một mục cache, thay vì mỗi số đo lẻ tạo một mục mới.
+      const bucket = `${Math.round(body.height / 10)}-${Math.round(body.weight / 10)}-${body.preferredSize || ''}`;
+      const state = read();
+      const catalogVersion = (state.products || []).length;
+      const key = recoCacheKey([place, prefecture, season, bucket, limit, adultAllowed, catalogVersion]);
+
+      const hit = RECO_CACHE.get(key);
+      if (hit && Date.now() - hit.at < RECO_TTL_MS) {
+        return res.json({ ...hit.payload, cached: true, durationMs: Date.now() - startedAt });
+      }
+
+      const result = recommendForSpot(state.products || [], {
+        place, prefecture, season, body, limit, adultAllowed,
+      });
+      const payload = {
+        ok: true,
+        spot: { place, prefecture, ...result.profile },
+        season: result.season,
+        scenes: scenesForSpot(place, prefecture),
+        recommendations: result.recommendations.map((item) => ({
+          product: {
+            id: item.product.id,
+            slug: item.product.slug,
+            name: item.product.name,
+            price: item.product.price,
+            oldPrice: item.product.old || null,
+            category: item.product.cat || item.product.categoryId || '',
+            garmentType: item.product.garmentType || null,
+            colorHex: item.product.colorHex || null,
+            image: (item.product.images || [])[0] || null,
+            tags: item.product.tags || [],
+            sizes: sizesInStock(item.product),
+          },
+          score: item.score,
+          recommendedSize: item.recommendedSize,
+          fitConfidence: item.fitConfidence,
+          reasons: item.reasons,
+          seasonMatch: item.seasonMatch,
+          weatherMatch: item.weatherMatch,
+          colorHarmony: item.colorHarmony,
+          culturalNote: item.culturalNote,
+          photoTip: item.photoTip,
+        })),
+      };
+
+      if (RECO_CACHE.size >= RECO_CACHE_MAX) RECO_CACHE.delete(RECO_CACHE.keys().next().value);
+      RECO_CACHE.set(key, { at: Date.now(), payload });
+      res.json({ ...payload, cached: false, durationMs: Date.now() - startedAt });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không tải được gợi ý.' });
+    }
+  });
+
+  api.post('/japan-spots/scene-photo', async (req, res) => {
+    const startedAt = Date.now();
+    try {
+      const b = req.body || {};
+      const place = String(b.place || '').trim();
+      const prefecture = String(b.prefecture || '').trim();
+      if (!place || !prefecture) throw httpError(400, 'Thiếu địa điểm hoặc tỉnh.');
+
+      // Ảnh người: hoặc ảnh khách gửi lên, hoặc một mẫu dựng sẵn. Với preset,
+      // máy chủ tự nạp ảnh của mình và tự kiểm SHA-256 — client không đẩy được
+      // nội dung ảnh vào nhánh đó.
+      let personImageBase64 = '';
+      let usedPreset = null;
+      if (b.presetId) {
+        const loaded = loadTryonPreset(b.presetId);
+        if (!loaded.ok) throw httpError(loaded.reason === 'unknown_preset' ? 404 : 503, 'Mẫu thử nhanh không dùng được.');
+        personImageBase64 = loaded.imageBase64;
+        usedPreset = loaded.preset.id;
+      } else {
+        personImageBase64 = String(b.personImageBase64 || '');
+        if (!personImageBase64) throw httpError(400, 'Thiếu ảnh người. Hãy chọn ảnh của bạn hoặc một mẫu thử nhanh.');
+      }
+
+      // Ưu tiên GÓC CHỤP đã duyệt: nó mang toạ độ đặt chân, khoảng chiều cao
+      // và hướng sáng riêng. Ảnh minh hoạ địa điểm cũ chỉ là đường lùi, và
+      // chính nó đã cho ra bức Naoshima với người đứng giữa biển.
+      const scene = b.sceneId ? findScene(b.sceneId) : (scenesForSpot(place, prefecture)[0]
+        ? findScene(scenesForSpot(place, prefecture)[0].id) : null);
+      if (b.sceneId && !scene) throw httpError(404, 'Góc chụp không tồn tại. Hãy tải lại danh sách góc chụp.');
+      if (scene && (scene.spotPlace !== place || scene.spotPrefecture !== prefecture)) {
+        throw httpError(400, 'Góc chụp không thuộc địa điểm này.');
+      }
+
+      const spot = findSceneBackground(place, prefecture);
+      if (!scene && !spot) {
+        throw httpError(404, `Chưa có ảnh nền cho địa điểm "${place}" ở ${prefecture}.`);
+      }
+
+      // Slot chỉ được chọn trong danh sách của chính scene — không nhận toạ độ
+      // tự do từ client, nếu không người lại đứng ra ngoài mặt đất.
+      let anchorX;
+      if (scene && b.slotId) {
+        const slot = (scene.composition.personSlots || []).find((item) => item.id === String(b.slotId));
+        if (!slot) throw httpError(400, 'Vị trí đứng không hợp lệ cho góc chụp này.');
+        anchorX = slot.x;
+      }
+
+      const backgroundImageBase64 = scene
+        ? loadSceneBackground(scene)
+        : await fetchBackgroundImage(spot.photoUrl);
+      const composed = await composeViaWorker({
+        personImageBase64,
+        backgroundImageBase64,
+        composition: scene ? scene.composition : null,
+        heightRatio: b.heightRatio,
+        anchorX,
+      });
+      if (!composed.ok) {
+        return res.status(composed.code === 'PERSON_NOT_SEGMENTED' ? 422 : 503).json({
+          ok: false, code: composed.code, message: composed.message,
+        });
+      }
+
+      // Log chỉ ghi tên địa điểm và thời gian — tuyệt đối không ghi base64.
+      logger.info(`[scene-photo] ${place} (${prefecture}) góc=${scene ? scene.id : 'ảnh-địa-điểm-cũ'} nguồn=${usedPreset ? `preset:${usedPreset}` : 'ảnh khách'} ${Date.now() - startedAt}ms`);
+      res.json({
+        ok: true,
+        imageBase64: composed.imageBase64,
+        width: composed.width,
+        height: composed.height,
+        method: composed.method,
+        placement: composed.placement || null,
+        place: scene ? scene.spotPlace : spot.place,
+        prefecture: scene ? scene.spotPrefecture : spot.prefecture,
+        sceneId: scene ? scene.id : null,
+        sceneName: scene ? scene.name : null,
+        // Ảnh nền là tệp Creative Commons, nên phải hiện ghi công ngay trên ảnh.
+        attribution: scene ? scene.attribution : PHOTO_ATTRIBUTION,
+        sourceLabel: scene ? `${scene.author} · ${scene.license}` : spot.sourceLabel,
+        sourceUrl: scene ? scene.sourceUrl : spot.sourceUrl,
+        durationMs: Date.now() - startedAt,
+      });
+    } catch (error) {
+      res.status(error.status || 500).json({ ok: false, message: error.message || 'Không ghép được ảnh.' });
+    }
+  });
 
   // Trạng thái thưởng chỉ hiện cho chính người đóng góp (kèm userId), người
   // khác chỉ thấy nội dung gợi ý.

@@ -273,12 +273,19 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { ok: false, message: 'Quá nhiều lần thử, vui lòng thử lại sau ít phút.' },
 });
-api.use('/auth', authLimiter);
+// Chỉ các endpoint thật sự nhận thông tin đăng nhập mới bị siết. `/auth/me` là
+// kiểm tra phiên và `/auth/providers` là đọc cấu hình công khai — đặt chúng dưới
+// bộ đếm chống brute-force khiến 20 lần mở app trong 15 phút (nhiều máy dùng
+// chung một IP ra Internet là đủ) trả 429; ứng dụng coi đó là phiên bị thu hồi
+// và xoá token trong SecureStore, tức là đăng xuất oan. Hai route đó vẫn nằm
+// dưới giới hạn API chung ở `app.use('/api', generalApiLimiter, api)`.
+api.use(['/auth/login', '/auth/register', '/auth/google', '/auth/forgot-password', '/auth/reset-password'], authLimiter);
 
 // Mount từng domain — thứ tự không quan trọng vì các path không giao nhau,
 // trừ /orders/:id (GET ở orders.js, PATCH ở returns.js — khác method nên vẫn ổn).
 require('./routes/auth')(api, ctx);
 require('./routes/push')(api, ctx);
+require('./routes/apkDownload')(api, ctx);
 require('./routes/admin')(api, ctx);
 require('./routes/health')(api, ctx);
 require('./routes/catalog')(api, ctx);
@@ -289,6 +296,7 @@ require('./routes/addresses')(api, ctx);
 require('./routes/loyalty')(api, ctx);
 require('./routes/stylist')(api, ctx);
 require('./routes/tryon')(api, ctx);
+require('./routes/asyncAiJobs')(api, ctx);
 require('./routes/orders')(api, ctx);
 require('./routes/paymentsStripe')(api, ctx);
 require('./routes/paymentsVnpay')(api, ctx);

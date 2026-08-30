@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { Href, Stack, useRouter, usePathname, useRootNavigationState, useSegments } from 'expo-router';
 import { syncLocalNotifications } from '../lib/localNotify';
@@ -15,6 +15,7 @@ import { DailyJapanSpot } from '../components/DailyJapanSpot';
 import { ShopProvider } from '../lib/shop';
 import { ToastProvider } from '../lib/toast';
 import { FloatingCartButton } from '../components/FloatingCartButton';
+import { BrandSplash } from '../components/BrandSplash';
 import {
   useFonts,
   Arimo_400Regular,
@@ -116,6 +117,8 @@ function NotificationBridge() {
 }
 
 export default function RootLayout() {
+  const [brandSplashVisible, setBrandSplashVisible] = useState(true);
+  const finishBrandSplash = useCallback(() => setBrandSplashVisible(false), []);
   // Không để việc tải font chặn toàn bộ ứng dụng. Ở một số máy Android cũ,
   // Expo Font có thể không trả kết quả sau khi app được khôi phục từ nền; cách
   // cũ `return null` biến tình huống đó thành một màn hình nền trống vĩnh viễn.
@@ -177,6 +180,7 @@ export default function RootLayout() {
         <Stack.Screen name="policy" />
       </Stack>
       <FloatingCartButton />
+      {brandSplashVisible && <BrandSplash onFinish={finishBrandSplash} />}
       </BotChatProvider>
       </CatalogProvider>
       </StoreProvider>

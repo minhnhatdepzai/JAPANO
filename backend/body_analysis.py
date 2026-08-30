@@ -1196,6 +1196,15 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
         warnings.append('Không tách được nền, cân nặng chỉ suy từ tỉ lệ khung xương.')
     if measure['tiltDeg'] > 18:
         warnings.append('Người trong ảnh đang nghiêng — số đo bề ngang có thể bị thu hẹp.')
+    cut_levels = [name for name in ('chest', 'waist', 'hip')
+                  if (measure['torsoProfile'].get(name) or {}).get('rowNearMaskEdge')]
+    if cut_levels:
+        label = {'chest': 'ngực', 'waist': 'eo', 'hip': 'hông'}
+        warnings.append(
+            'Ảnh bị cắt ngay tại vị trí đo '
+            + '/'.join(label[name] for name in cut_levels)
+            + ' — vòng đo ở đó suy từ khung xương, không đo được trên ảnh. '
+              'Chụp lại thấy trọn người sẽ chính xác hơn nhiều.')
     if float(measure.get('clothingSlack') or 1.0) > 1.15:
         warnings.append('Bạn đang mặc đồ khá rộng — ước lượng cân nặng có thể cao hơn thực tế.')
     if weight.get('outOfDistribution'):
@@ -1206,6 +1215,11 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
         )
     if height['valueCm'] is None:
         warnings.append('Không đủ dữ liệu để ước lượng chiều cao đáng tin cậy.')
+        if height.get('cueRejected') == 'head_count_out_of_range':
+            warnings.append(
+                'Tỉ lệ đầu/thân nằm ngoài miền dữ liệu hiệu chuẩn. Hệ thống không '
+                'ép về chiều cao trung bình vì có thể làm sai cả cân nặng và vòng đo.'
+            )
     if weight['valueKg'] is None:
         warnings.append(
             'Không đủ dữ liệu để ước lượng cân nặng đáng tin cậy.'
@@ -1272,9 +1286,20 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             adjusted, applied = calibrate_to_population(
                 'weight', weight['valueKg'], height_cm, slack, sex)
             if applied:
+                # Hiệu chuẩn dịch chuyển điểm ước lượng, nên khoảng bất định và
+                # bin hiển thị phải đi theo. Bỏ sót bước này từng cho ra người
+                # 79.4 kg kèm khoảng "48-65 kg" và bin "50-60" — tức là chính
+                # điểm ước lượng nằm ngoài khoảng của nó, và gợi ý size đọc phải
+                # con số của một cơ thể khác.
+                shift = adjusted - weight['valueKg']
+                bin_min = int(math.floor(adjusted / 10.0) * 10)
                 weight = {**weight, 'valueKg': adjusted,
-                          'minKg': int(math.floor(adjusted / 10.0) * 10),
-                          'maxKg': int(math.floor(adjusted / 10.0) * 10) + 10}
+                          'minKg': bin_min, 'maxKg': bin_min + 10,
+                          'displayBinKg': [bin_min, bin_min + 10]}
+                if weight.get('uncertaintyMinKg') is not None:
+                    weight['uncertaintyMinKg'] = round(max(0.0, weight['uncertaintyMinKg'] + shift))
+                if weight.get('uncertaintyMaxKg') is not None:
+                    weight['uncertaintyMaxKg'] = round(weight['uncertaintyMaxKg'] + shift)
                 population_calibrated.append('weight')
 
     # Chốt chặn giải phẫu: số nào không thể tồn tại trên một người thật thì bỏ
@@ -1282,11 +1307,37 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
     # cắt sát hông từng cho ra "vòng hông 57cm" và "vòng eo 114cm" theo đường
     # xấp xỉ elip — cả hai đều đi qua mọi kiểm tra cũ.
     girths, rejected_girths = girth_plausibility(girths, height.get('valueCm'))
+
+    # Hàng đo nằm ngay chỗ ảnh bị cắt thì KHÔNG có phép đo nào ở đó — chỉ có một
+    # con số suy từ khung xương. Trả nó ra như một vòng đo là nói dối.
+    #
+    # Đo trên cùng một người: ảnh đủ -> 58.9kg; cắt còn 62% -> 80.9kg. Toàn bộ
+    # chênh lệch đó đến từ bề ngang đọc ở hàng bị cắt, chia cho một chiều cao
+    # cũng phải ngoại suy. Vòng đo ở mốc bị cắt vì vậy bị loại hẳn.
+    for _name in cut_levels:
+        _key = {'chest': 'bust', 'waist': 'waist', 'hip': 'hip'}[_name]
+        if _key in girths:
+            rejected_girths[_key] = 'ảnh bị cắt ngay tại hàng đo — không đo được trên ảnh'
+            girths.pop(_key, None)
     if rejected_girths:
         warnings.append(
             'Một số vòng đo bị loại vì không hợp lý về giải phẫu: '
             + '; '.join(f'{key} ({reason})' for key, reason in rejected_girths.items())
             + '. Hãy chụp lại toàn thân, đứng thẳng, nền đơn giản.')
+
+    # Cân nặng suy từ CHÍNH những bề ngang đó, nên nó thừa hưởng nguyên vẹn lỗi.
+    # Không có cách nào cứu: hàng đo bị cắt thì không tồn tại phép đo để sửa.
+    #
+    # Trả một con số sai kèm cảnh báo vẫn là trả số sai — người dùng đọc con số
+    # trước khi đọc cảnh báo. Cùng một người, ảnh cắt cho 90-100kg trong khi ảnh
+    # đủ cho 50-60kg; chênh 40kg thì thà nói "chưa đo được" và xin chụp lại.
+    if cut_levels and weight.get('source') != 'user_provided':
+        weight = {
+            **weight,
+            'valueKg': None, 'minKg': None, 'maxKg': None,
+            'usableForSizing': False,
+            'unusableReason': f"hàng đo {'/'.join(cut_levels)} nằm ở chỗ ảnh bị cắt",
+        }
 
     weight_ok, weight_reason = weight_plausibility(weight.get('valueKg'), height.get('valueCm'))
     if not weight_ok:
@@ -1359,6 +1410,7 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             level: {key: value for key, value in measure['torsoProfile'][level].items()}
             for level in ('shoulder', 'chest', 'waist', 'hip')
         },
+        'measurementRowsCutOff': cut_levels or None,
         'pixels': {
             'staturePx': round(measure['staturePx'], 1),
             'headPx': round(measure['headPx'], 1),

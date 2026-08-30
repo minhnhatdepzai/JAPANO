@@ -65,25 +65,93 @@ function applyRoleScope(){
   }
 }
 function showAuthGate(message){
-  const gate=document.getElementById('authGate'),err=document.getElementById('authGateError');
+  const gate=document.getElementById('authGate'),shell=document.getElementById('appShell'),err=document.getElementById('authGateError');
   if(err)err.textContent=message||'';
-  if(gate)gate.classList.add('show');
+  if(shell){shell.setAttribute('aria-hidden','true');shell.inert=true;}
+  if(gate){gate.classList.add('show');gate.removeAttribute('aria-hidden');}
+  requestAnimationFrame(()=>document.getElementById(message?'authGatePassword':'authGateEmail')?.focus());
 }
 function hideAuthGate(){
-  const gate=document.getElementById('authGate'),err=document.getElementById('authGateError');
-  if(gate)gate.classList.remove('show');
+  const gate=document.getElementById('authGate'),shell=document.getElementById('appShell'),err=document.getElementById('authGateError');
+  if(gate){gate.classList.remove('show');gate.setAttribute('aria-hidden','true');}
+  if(shell){shell.removeAttribute('aria-hidden');shell.inert=false;}
   if(err)err.textContent='';
 }
 let _authGateWired=false;
 function wireAuthGate(onSuccess){
   if(_authGateWired)return;
   _authGateWired=true;
+  const password=document.getElementById('authGatePassword');
+  const passwordToggle=document.getElementById('authGatePasswordToggle');
+  passwordToggle?.addEventListener('click',()=>{
+    const showing=password.type==='text';
+    password.type=showing?'password':'text';
+    passwordToggle.setAttribute('aria-pressed',String(!showing));
+    passwordToggle.setAttribute('aria-label',showing?'Hiện mật khẩu':'Ẩn mật khẩu');
+    passwordToggle.textContent=showing?'Hiện':'Ẩn';
+    password.focus();
+  });
+  const recovery=document.getElementById('authGateRecovery');
+  const forgot=document.getElementById('authGateForgot');
+  const resetFields=document.getElementById('authGateResetFields');
+  const recoveryStatus=document.getElementById('authGateRecoveryStatus');
+  const setRecoveryOpen=(open)=>{
+    recovery.hidden=!open;
+    forgot.setAttribute('aria-expanded',String(open));
+    if(!open){resetFields.hidden=true;recoveryStatus.textContent='';recoveryStatus.classList.remove('ok');}
+    (open?document.getElementById('authGateSendCode'):password)?.focus();
+  };
+  forgot?.addEventListener('click',()=>setRecoveryOpen(recovery.hidden));
+  document.getElementById('authGateRecoveryClose')?.addEventListener('click',()=>setRecoveryOpen(false));
+  document.getElementById('authGateSendCode')?.addEventListener('click',async(e)=>{
+    const email=document.getElementById('authGateEmail');
+    if(!email.reportValidity())return;
+    const btn=e.currentTarget;
+    btn.disabled=true;btn.setAttribute('aria-busy','true');
+    recoveryStatus.textContent='Đang gửi mã xác nhận…';recoveryStatus.classList.remove('ok');
+    try{
+      const r=await _nativeFetch(API+'/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.value.trim()})});
+      const body=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(body?.message||'Chưa gửi được mã xác nhận.');
+      resetFields.hidden=false;
+      recoveryStatus.textContent=body?.message||'Nếu email tồn tại, mã xác nhận đã được gửi.';
+      recoveryStatus.classList.add('ok');
+      if(body?.sandboxPreviewUrl){
+        const link=document.createElement('a');
+        link.href=body.sandboxPreviewUrl;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent=' Mở hộp thư thử nghiệm';recoveryStatus.append(link);
+      }
+      document.getElementById('authGateResetCode')?.focus();
+    }catch(err){recoveryStatus.textContent=err.message||'Chưa gửi được mã xác nhận.';}
+    finally{btn.disabled=false;btn.removeAttribute('aria-busy');}
+  });
+  const submitPasswordReset=async()=>{
+    const email=document.getElementById('authGateEmail');
+    const code=document.getElementById('authGateResetCode');
+    const newPassword=document.getElementById('authGateNewPassword');
+    const btn=document.getElementById('authGateResetPassword');
+    if(!email.reportValidity())return;
+    if(!/^\d{6}$/.test(code.value.trim())){recoveryStatus.textContent='Mã xác nhận phải gồm đúng 6 chữ số.';code.focus();return;}
+    if(newPassword.value.length<8){recoveryStatus.textContent='Mật khẩu mới cần ít nhất 8 ký tự.';newPassword.focus();return;}
+    btn.disabled=true;btn.setAttribute('aria-busy','true');recoveryStatus.textContent='Đang cập nhật mật khẩu…';recoveryStatus.classList.remove('ok');
+    try{
+      const r=await _nativeFetch(API+'/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.value.trim(),code:code.value.trim(),newPassword:newPassword.value})});
+      const body=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(body?.message||'Chưa đặt lại được mật khẩu.');
+      password.value='';code.value='';newPassword.value='';
+      recoveryStatus.textContent='Mật khẩu đã được cập nhật. Hãy đóng phần này và đăng nhập.';recoveryStatus.classList.add('ok');
+      document.getElementById('authGateRecoveryClose')?.focus();
+    }catch(err){recoveryStatus.textContent=err.message||'Chưa đặt lại được mật khẩu.';}
+    finally{btn.disabled=false;btn.removeAttribute('aria-busy');}
+  };
+  document.getElementById('authGateResetPassword')?.addEventListener('click',submitPasswordReset);
+  document.getElementById('authGateNewPassword')?.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();submitPasswordReset();}});
   document.getElementById('authGateForm').addEventListener('submit',async(e)=>{
     e.preventDefault();
     const email=document.getElementById('authGateEmail').value.trim();
     const password=document.getElementById('authGatePassword').value;
     const btn=document.getElementById('authGateSubmit');
-    btn.disabled=true;btn.textContent='Đang đăng nhập…';
+    btn.disabled=true;btn.classList.add('loading');btn.setAttribute('aria-busy','true');
     try{
       const r=await _nativeFetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
       const body=await r.json().catch(()=>({}));
@@ -96,7 +164,7 @@ function wireAuthGate(onSuccess){
     }catch(err){
       showAuthGate(err.message||'Đăng nhập thất bại.');
     }finally{
-      btn.disabled=false;btn.textContent='Đăng nhập';
+      btn.disabled=false;btn.classList.remove('loading');btn.removeAttribute('aria-busy');
     }
   });
   const logoutBtn=document.getElementById('logoutBtn');
@@ -111,6 +179,7 @@ function ensureAdminSession(){
         const body=await r.json().catch(()=>({}));
         if(!r.ok||!PANEL_ROLES.includes(body?.user?.role))throw new Error('unauthorized');
         applyAdminUser(body.user);
+        hideAuthGate();
         resolve();
       })
       .catch(()=>{setAdminToken('');showAuthGate();});
@@ -130,7 +199,7 @@ const SIZES=['S','M','L','XL','XXL','XXXL','4XL','5XL'];
 
 function emptyDB(){return{
   seeded:false, apiDown:false,
-  shop:{name:'JAPANO Store',hotline:'1900 6868',email:'shop@japano.vn',address:'123 Lê Lợi, P. Bến Nghé, HCM',shipFee:30000,cod:true,stripe:true,vnpay:true,logo:null},
+  shop:{name:'JAPANO Store',hotline:'1900 6868',email:'shop@japano.vn',address:'123 Lê Lợi, P. Bến Nghé, HCM',shipFee:30000,cod:true,stripe:true,vnpay:true,logo:null,locations:[]},
   integrations:{mongo:true,cloudinary:true,ai:true},
   categories:JSON.parse(JSON.stringify(CATS)),
   products:[],orders:[],payments:[],returnRequests:[],carts:[],reviews:[],reviewReactions:[],moderationSamples:[],users:[],addresses:[],wishlists:[],notifications:[],vouchers:[],banners:[],
@@ -516,7 +585,11 @@ function refreshChrome(){
 
 /* ---------- router ---------- */
 const TITLES={dashboard:'Bảng điều khiển',tryon:'Chẩn đoán thử đồ AI',orders:'Quản lý đơn hàng',payments:'Thanh toán trực tuyến',returns:'Trả hàng & hoàn tiền',products:'Quản lý sản phẩm',reviews:'Đánh giá & kiểm duyệt',moderation:'Kiểm duyệt AI — chống lách từ nhạy cảm',users:'Quản lý người dùng',japan:'Khám phá Nhật Bản — đóng góp cộng đồng',notifications:'Thông báo',categories:'Danh mục',vouchers:'Mã giảm giá',flagcards:'Chương trình thẻ địa danh',banners:'Ảnh quảng bá ứng dụng',settings:'Cài đặt hệ thống'};
-function go(route){state.route=route;document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.route===route));
+function go(route){state.route=route;document.querySelectorAll('#nav a').forEach(a=>{
+    const active=a.dataset.route===route;
+    a.classList.toggle('on',active);
+    a.setAttribute('aria-current',active?'page':'false');
+  });
   $('#pageTitle').textContent=TITLES[route];
   updateCrumb(route);
   // Trên màn hình hẹp thanh điều hướng là ngăn kéo đè lên nội dung — chọn xong
@@ -527,6 +600,7 @@ function go(route){state.route=route;document.querySelectorAll('#nav a').forEach
   // để lượt render thật ngay sau đó không bị lớp "HTML giống hệt" bỏ qua.
   _renderedHTML='';_renderedRoute='';
   $('#content').classList.add('render-fresh');
+  $('#content').setAttribute('aria-busy','true');
   $('#content').innerHTML=skeleton(route);
   // Nhịp đồng bộ nay bỏ qua lượt làm mới analytics khi dữ liệu vận hành không
   // đổi, nên lúc mở lại Bảng điều khiển phải tự nạp một lượt để số liệu và cờ
@@ -545,7 +619,16 @@ async function loadPolicy(){
 }
 async function loadJapan(){JAPAN_STATUS='loading';try{JAPAN=await requestJSON('/japan-spots/admin',8000);SPOT_REWARD=JAPAN.rewardConfig||SPOT_REWARD;JAPAN_STATUS='ready';}catch(e){JAPAN_STATUS='error';}if(state.route==='japan')renderView();}
 async function loadModeration(){MOD_STATUS='loading';try{MOD=await requestJSON('/reviews/admin',8000);MOD_STATUS='ready';}catch(e){MOD_STATUS='error';}if(state.route==='moderation')renderView();}
-document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.route)));
+document.querySelectorAll('#nav a').forEach(a=>{
+  a.tabIndex=0;
+  a.setAttribute('role','button');
+  a.addEventListener('click',()=>go(a.dataset.route));
+  a.addEventListener('keydown',(event)=>{
+    if(event.key!=='Enter'&&event.key!==' ')return;
+    event.preventDefault();
+    go(a.dataset.route);
+  });
+});
 
 /* ---------- khung giao diện: thu gọn menu, ngăn kéo, trình đơn tài khoản ----
  * Ba thứ này thuần giao diện, không đụng tới dữ liệu hay quyền hạn. Trạng thái
@@ -649,6 +732,11 @@ function renderView(){
   const scrollers=[...content.querySelectorAll('.tablewrap,.scrolly')].map(el=>[el.scrollLeft,el.scrollTop]);
   content.classList.toggle('render-fresh',routeChanged);
   content.innerHTML=html;
+  content.querySelectorAll('.tablewrap').forEach((table,index)=>{
+    table.tabIndex=0;
+    if(!table.getAttribute('aria-label'))table.setAttribute('aria-label',`Bảng dữ liệu ${index+1} của ${TITLES[state.route]||'trang quản trị'}`);
+  });
+  content.setAttribute('aria-busy','false');
   _renderedHTML=html;_renderedRoute=state.route;
   if(!routeChanged){
     [...content.querySelectorAll('.tablewrap,.scrolly')].forEach((el,i)=>{
@@ -665,7 +753,7 @@ function errState(){return `<div class="panel"><div class="empty"><div class="ar
 /* ---------- skeletons ---------- */
 function skRows(n){let r='';for(let i=0;i<n;i++)r+=`<div style="display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line2)"><div class="sk" style="width:38px;height:44px"></div><div style="flex:1"><div class="sk" style="height:11px;width:40%;margin-bottom:7px"></div><div class="sk" style="height:9px;width:25%"></div></div><div class="sk" style="width:80px;height:22px;border-radius:99px"></div></div>`;return r;}
 function skeleton(route){
-  if(route==='dashboard')return `<div class="grid kpis">${Array(4).fill('<div class="kpi"><div class="sk" style="height:12px;width:50%"></div><div class="sk" style="height:24px;width:70%;margin-top:12px"></div><div class="sk" style="height:10px;width:35%;margin-top:8px"></div></div>').join('')}</div>
+  if(route==='dashboard')return `<div class="dash-intro dash-intro-loading" aria-hidden="true"><div><div class="sk dash-sk-eyebrow"></div><div class="sk dash-sk-title"></div><div class="sk dash-sk-copy"></div><div class="sk dash-sk-action"></div></div><div class="dash-intro-state"><div class="sk" style="height:34px;width:68%"></div><div class="sk" style="height:46px;width:100%"></div></div></div><div class="grid kpis">${Array(4).fill('<div class="kpi"><div class="sk" style="height:12px;width:50%"></div><div class="sk" style="height:24px;width:70%;margin-top:12px"></div><div class="sk" style="height:10px;width:35%;margin-top:8px"></div></div>').join('')}</div>
     <div class="grid g-2-1 mt"><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div><div class="panel" style="height:260px"><div class="pb"><div class="sk" style="height:100%"></div></div></div></div>`;
   return `<div class="filters"><div class="sk" style="height:34px;width:280px;border-radius:8px"></div><div class="sk" style="height:34px;width:120px;border-radius:8px"></div></div><div class="panel">${skRows(7)}</div>`;
 }

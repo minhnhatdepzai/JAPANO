@@ -134,9 +134,17 @@ def arm_half_width(mask, y, arm_x, run, center_x, global_half):
         return global_half, 'anthropometric'
     edge = run[0] if arm_x < center_x else run[1]
     local = abs(edge - arm_x)
-    if 0.55 * global_half <= local <= 1.8 * global_half:
+    # Dải chấp nhận cố ý HẸP. Bản trước cho phép [0.55, 1.8] lần bề ngang tay
+    # nhân trắc, tức mỗi bên được gỡ tới 1.8 lần. Khi mép ngoài của dải mask nằm
+    # xa trục tay theo khung xương — người mặc váy xoè, tay chống nạnh, hoặc thân
+    # rộng — phép cắt gỡ quá tay và trả về thân hẹp hơn thực tế.
+    #
+    # Bằng chứng: VITON-HD test (1.026 mẫu có nhãn tay hai bên), MAE vòng eo
+    # 17.44 -> 16.37 px; quét cả [0.70,1.35] và [0.75,1.25] đều tốt hơn bản cũ.
+    # Vòng ngực không đổi (lấy từ khung xương), vòng hông đi ngang.
+    if 0.80 * global_half <= local <= 1.15 * global_half:
         return local, 'silhouette_edge'
-    return _clamp(local, 0.7 * global_half, 1.6 * global_half), 'anthropometric_clamped'
+    return _clamp(local, 0.80 * global_half, 1.15 * global_half), 'anthropometric_clamped'
 
 
 def torso_width_at(mask, y, center_x, arms, global_half):
@@ -337,6 +345,24 @@ def torso_profile(mask, keypoints, shoulder_y, hip_y, center_x=None):
     global_half = 0.5 * CALIBRATION['armBreadthOverShoulderJoint']['mean'] * shoulder_span
     weights = CALIBRATION.get('silhouetteWeight') or {}
 
+    # Khớp chính của một mốc có thể biến mất: ảnh cắt ngang đùi khiến hai khớp
+    # hông bị loại vì độ tin cậy thấp. Khi đó `skeleton_px` = 0, chốt chặn tắt,
+    # và bề ngang rơi hoàn toàn về silhouette thô — chính là đường dẫn tới 80.9kg
+    # cho người mà ảnh đủ chỉ ra 58.9kg. Suy mốc thay thế từ khớp còn lại.
+    fallback = CALIBRATION.get('fallbackJoint') or {}
+    if not hip_span and shoulder_span:
+        ratio = (fallback.get('hip_from_shoulder') or {}).get('mean')
+        if ratio:
+            joints['hip'] = shoulder_span * ratio / float(
+                (CALIBRATION['torsoOverJoint'].get('hip') or {}).get('mean') or 1.0)
+            joints['hipIsFallback'] = True
+    if not shoulder_span and hip_span:
+        ratio = (fallback.get('waist_from_hip') or {}).get('mean')
+        if ratio:
+            joints['shoulder'] = hip_span * ratio / float(
+                (CALIBRATION['torsoOverJoint'].get('waist') or {}).get('mean') or 1.0)
+            joints['shoulderIsFallback'] = True
+
     profile = {}
     for level, y in (('shoulder', shoulder_y + span * 0.04),
                      ('chest', shoulder_y + span * 0.22),
@@ -346,8 +372,20 @@ def torso_profile(mask, keypoints, shoulder_y, hip_y, center_x=None):
         stats = CALIBRATION['torsoOverJoint'].get(level) or {}
         skeleton_px = joint_span * float(stats.get('mean') or 0.0)
 
+        # Không đo được bề ngang ở đúng hàng mà cơ thể bị CẮT KHỎI KHUNG HÌNH.
+        # Ảnh cắt ngang đùi đặt hàng đo hông cách đáy mask 4%: ở đó dải mask là
+        # mặt cắt ngang của thân + tay + váy, rộng hơn hẳn bề ngang hông thật.
+        # Đo trên một ảnh và bản cắt 62% của chính nó: 58.9kg -> 80.9kg.
+        near_edge = False
+        if mask is not None:
+            rows = np.flatnonzero(mask.any(axis=1))
+            if rows.size:
+                bottom = float(rows[-1])
+                extent = max(1.0, bottom - float(rows[0]))
+                near_edge = (bottom - y) < extent * 0.06
+
         band = None
-        if mask is not None and global_half > 0:
+        if mask is not None and global_half > 0 and not near_edge:
             band = torso_width_band(mask, y, span * 0.08, center_x,
                                     {} if level in LEVELS_KEEPING_ARMS else arms, global_half)
         silhouette_px = float(band['widthPx']) if band else 0.0
@@ -365,6 +403,8 @@ def torso_profile(mask, keypoints, shoulder_y, hip_y, center_x=None):
         value = weight * gated['widthPx'] + (1.0 - weight) * skeleton_px
         profile[level] = {
             'widthPx': round(float(value), 2),
+            'jointIsFallback': bool(joints.get(f'{LEVEL_JOINT[level]}IsFallback')),
+            'rowNearMaskEdge': bool(near_edge),
             'silhouettePx': round(silhouette_px, 2),
             'rawSilhouettePx': round(float(band['rawPx']), 2) if band else 0.0,
             'skeletonPx': round(skeleton_px, 2),

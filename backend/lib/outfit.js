@@ -241,6 +241,10 @@ function adviseSize(payload = {}, product = null) {
     size, idealSize, fitReferenceSize: idealSize, availableSizes,
     sizingMode: availableSizes.length === 1 ? 'one_size' : 'standard',
     outsideAvailableRange, advice: `${advice}${lengthAdvice}`.trim(), usedMeasurements,
+    // Tách riêng lời khuyên về CHIỀU DÀI khỏi lời khuyên về VÒNG. Trước đây hai
+    // thứ bị nối vào cùng một chuỗi `advice`, nên màn hình không có cách nào
+    // hiển thị riêng cảnh báo "tay/gấu áo có thể quá dài hoặc quá ngắn".
+    lengthNote: lengthAdvice.trim() || null,
   };
 }
 

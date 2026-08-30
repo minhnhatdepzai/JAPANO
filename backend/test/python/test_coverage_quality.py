@@ -108,6 +108,37 @@ class CoverageQualityTest(unittest.TestCase):
         self.assertFalse(quality['ok'])
         self.assertTrue(any('pelvis' in r for r in quality['reasons']), quality['reasons'])
 
+    def test_bikini_cham_loi_vai_bao_ve_khong_danh_rot_da_hop_le_xung_quanh(self):
+        clean = render()
+        result = render(chest=SKIN, abdomen=SKIN, pelvis=SKIN, buttocks=SKIN,
+                        legs=SKIN, shoulders=SKIN, upper_arms=SKIN)
+        # Vải bikini chỉ cần nằm đúng lõi bảo vệ; da quanh cleavage, hông và
+        # chân là đúng thiết kế. Vẽ lại ba lõi giống định nghĩa production.
+        draw = ImageDraw.Draw(result)
+        for zone in ('chest', 'pelvis', 'buttocks'):
+            x1, y1, x2, y2 = zone_box(POSE, SIZE, zone)
+            width, height = x2 - x1, y2 - y1
+            draw.rectangle((x1 + width * .15, y1, x1 + width * .85, y1 + height * .58), fill=FABRIC)
+        quality = coverage_quality(clean, result, POSE, {
+            'coverageStyle': 'minimal-swimwear',
+            'allowedExposedZones': ['abdomen', 'shoulders', 'upperArms', 'legs'],
+            'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+        })
+        self.assertTrue(quality['ok'], quality)
+        self.assertLess(quality['zones']['pelvis']['protectedAfter'], .72)
+
+    def test_bikini_van_chan_neu_loi_bao_ve_la_da(self):
+        clean = render()
+        result = render(chest=SKIN, abdomen=SKIN, pelvis=SKIN, buttocks=SKIN,
+                        legs=SKIN, shoulders=SKIN, upper_arms=SKIN)
+        quality = coverage_quality(clean, result, POSE, {
+            'coverageStyle': 'minimal-swimwear',
+            'allowedExposedZones': ['abdomen', 'shoulders', 'upperArms', 'legs'],
+            'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+        })
+        self.assertFalse(quality['ok'])
+        self.assertTrue(any(r.startswith('required_zone_exposed:') for r in quality['reasons']), quality)
+
     def test_da_moi_xuat_hien_ngoai_thiet_ke_bi_bao_loi(self):
         # Áo dài tay mà tự nhiên hở bắp tay = model đã cởi bớt đồ.
         clean = render()

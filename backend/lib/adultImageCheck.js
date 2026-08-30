@@ -15,6 +15,34 @@
 const PROMPT = 'Look at the main person. Is this clearly an adult (18+)? '
   + 'Reply with only one word: yes, no, or unsure.';
 
+// Chỉ lưu quyết định không nhận dạng theo fingerprint đã có sẵn; tuyệt đối
+// không giữ ảnh/base64. Cache ngắn giúp lượt body-analysis và lượt try-on kế
+// tiếp của đúng cùng ảnh không phải nạp Qwen3-VL hai lần.
+const ADULT_CHECK_CACHE = new Map();
+const CACHE_TTL_MS = Math.max(30_000, Number(process.env.JAPANO_ADULT_CHECK_CACHE_MS || 10 * 60_000));
+const CACHE_MAX = 256;
+
+function readCachedAdultCheck(cacheKey) {
+  const key = String(cacheKey || '').trim();
+  if (!key) return null;
+  const entry = ADULT_CHECK_CACHE.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.savedAt > CACHE_TTL_MS) {
+    ADULT_CHECK_CACHE.delete(key);
+    return null;
+  }
+  return { ...entry.result, cached: true, ms: 0 };
+}
+
+function writeCachedAdultCheck(cacheKey, result) {
+  const key = String(cacheKey || '').trim();
+  if (!key || !result?.available) return;
+  if (ADULT_CHECK_CACHE.size >= CACHE_MAX) {
+    ADULT_CHECK_CACHE.delete(ADULT_CHECK_CACHE.keys().next().value);
+  }
+  ADULT_CHECK_CACHE.set(key, { savedAt: Date.now(), result: { ...result, cached: false } });
+}
+
 function parseAnswer(text) {
   const raw = String(text || '').trim();
   if (!raw) return 'unsure';
@@ -43,8 +71,10 @@ function parseAnswer(text) {
  *   khác hẳn với `verdict='unsure'` nghĩa là đã hỏi nhưng model không dám kết
  *   luận. Cả hai đều dẫn tới từ chối, nhưng thông báo cho người dùng khác nhau.
  */
-async function checkAdultImage({ imageBase64, ollamaUrl, model, timeoutMs }) {
+async function checkAdultImage({ imageBase64, ollamaUrl, model, timeoutMs, cacheKey }) {
   const started = Date.now();
+  const cached = readCachedAdultCheck(cacheKey);
+  if (cached) return cached;
   const base = String(ollamaUrl || process.env.JAPANO_OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
   const visionModel = model || process.env.JAPANO_VISION_MODEL || 'qwen3-vl:8b';
   const limit = Number(timeoutMs || process.env.JAPANO_ADULT_CHECK_TIMEOUT_MS || 120000);
@@ -70,11 +100,13 @@ async function checkAdultImage({ imageBase64, ollamaUrl, model, timeoutMs }) {
       return { available: false, verdict: 'unsure', ms: Date.now() - started, error: `http_${response.status}` };
     }
     const data = await response.json();
-    return {
+    const result = {
       available: true,
       verdict: parseAnswer(data.message?.content || data.response),
       ms: Date.now() - started,
     };
+    writeCachedAdultCheck(cacheKey, result);
+    return result;
   } catch (error) {
     return {
       available: false,
@@ -87,4 +119,6 @@ async function checkAdultImage({ imageBase64, ollamaUrl, model, timeoutMs }) {
   }
 }
 
-module.exports = { checkAdultImage, parseAnswer, PROMPT };
+module.exports = {
+  checkAdultImage, parseAnswer, PROMPT, readCachedAdultCheck, writeCachedAdultCheck,
+};

@@ -14,6 +14,8 @@ import { C, F } from '../theme/tokens';
 const one = (value:string|string[]|undefined)=>Array.isArray(value)?value[0]:value;
 const onlyNumber = (value:string)=>value.replace(/[^0-9.]/g,'');
 type Tab='shopping'|'health'|'japan';
+type HealthGoal='gradual-loss'|'maintain'|'move-more'|'sleep-energy';
+type ActivityLevel='low'|'some'|'regular';
 const QUICK_DEPOSITS=[50000,100000,200000,500000];
 const dateOf=(at:number)=>new Date(at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
 
@@ -71,6 +73,8 @@ export default function Goals(){
   const [expenses,setExpenses]=useState('11000000');
   const [saved,setSaved]=useState('200000');
   const [months,setMonths]=useState('6');
+  const [healthGoal,setHealthGoal]=useState<HealthGoal>('gradual-loss');
+  const [activityLevel,setActivityLevel]=useState<ActivityLevel>('low');
   const [plan,setPlan]=useState<GoalPlan|null>(null);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState('');
@@ -94,6 +98,8 @@ export default function Goals(){
       if(input.currentWeightKg)setCurrentWeight(String(input.currentWeightKg));if(input.targetWeightKg)setTargetWeight(String(input.targetWeightKg));
       if(input.monthlyIncome)setIncome(String(input.monthlyIncome));if(input.fixedExpenses)setExpenses(String(input.fixedExpenses));
       if(input.currentSavings!=null)setSaved(String(input.currentSavings));if(input.targetMonths)setMonths(String(input.targetMonths));
+      if(['gradual-loss','maintain','move-more','sleep-energy'].includes(String(input.healthGoal)))setHealthGoal(input.healthGoal as HealthGoal);
+      if(['low','some','regular'].includes(String(input.activityLevel)))setActivityLevel(input.activityLevel as ActivityLevel);
     }).catch(()=>undefined);
     return()=>{live=false;};
   },[user?.id]);
@@ -110,6 +116,7 @@ export default function Goals(){
       const response=await createGoalPlan({
         productId:product.slug,age,heightCm:height,currentWeightKg:currentWeight,targetWeightKg:targetWeight,
         monthlyIncome:income,fixedExpenses:expenses,currentSavings:saved,targetMonths:months,
+        goalType:tab==='health'?'health':'shopping',healthGoal,activityLevel,
       });
       setPlan(response.goal.plan);
       upsertGoal(response.goal);
@@ -135,7 +142,7 @@ export default function Goals(){
 
         <TabBar tab={tab} setTab={setTab} />
 
-        {tab!=='japan' && (
+        {tab==='shopping' && (
           <>
             <Title icon="shirt-outline" title="Chọn món bạn muốn" sub="Lộ trình sẽ tính đúng theo giá sản phẩm trong cửa hàng." />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:10,paddingVertical:4}}>
@@ -172,6 +179,24 @@ export default function Goals(){
         {tab==='health' && (
           <>
             <Title icon="heart-outline" title="Lộ trình khỏe và tự tin" sub="Dành cho người trưởng thành; gợi ý tự động không thay thế bác sĩ hoặc chuyên gia dinh dưỡng." />
+            <Text style={st.fieldLabel}>Bạn muốn tập trung vào điều gì?</Text>
+            <View style={st.choiceRow}>
+              {([
+                ['gradual-loss','Giảm từ từ'],['maintain','Duy trì'],['move-more','Vận động'],['sleep-energy','Ngủ & năng lượng'],
+              ] as Array<[HealthGoal,string]>).map(([value,label])=>(
+                <Pressable key={value} style={[st.choice,healthGoal===value&&st.choiceOn]} onPress={()=>setHealthGoal(value)}>
+                  <Text style={[st.choiceText,healthGoal===value&&st.choiceTextOn]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={st.fieldLabel}>Mức vận động hiện tại</Text>
+            <View style={st.choiceRow}>
+              {([['low','Ít vận động'],['some','Thỉnh thoảng'],['regular','Đều đặn']] as Array<[ActivityLevel,string]>).map(([value,label])=>(
+                <Pressable key={value} style={[st.choice,activityLevel===value&&st.choiceOn]} onPress={()=>setActivityLevel(value)}>
+                  <Text style={[st.choiceText,activityLevel===value&&st.choiceTextOn]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
             <View style={st.formGrid}>
               <Field label="Tuổi" value={age} onChange={setAge} />
               <Field label="Chiều cao" value={height} onChange={setHeight} suffix="cm" />
@@ -435,6 +460,9 @@ const st=StyleSheet.create({
   selected:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:C.washi2,borderRadius:14,padding:10,marginTop:10},selectedImg:{width:50,height:60,borderRadius:9},
   selectedName:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},selectedPrice:{fontFamily:F.bodyX,fontSize:12,color:C.ink,marginTop:3},view:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   formGrid:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',rowGap:10},fieldWrap:{width:'48%'},fieldLabel:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink,marginBottom:5},
+  choiceRow:{flexDirection:'row',flexWrap:'wrap',gap:7,marginBottom:12},
+  choice:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:12,backgroundColor:'#fff'},
+  choiceOn:{backgroundColor:C.primary,borderColor:C.primary},choiceText:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink},choiceTextOn:{color:'#fff'},
   field:{height:46,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:'#fff',paddingHorizontal:11},input:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},suffix:{fontFamily:F.body,fontSize:11,color:C.muted},
   safety:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:C.muted,backgroundColor:C.washi2,borderRadius:10,padding:10,marginTop:10},
   loading:{flexDirection:'row',alignItems:'center',gap:8,justifyContent:'center',padding:12},loadingText:{fontFamily:F.body,fontSize:11,color:C.muted,flex:1},error:{fontFamily:F.bodyB,fontSize:12,color:C.danger,textAlign:'center',marginTop:10},

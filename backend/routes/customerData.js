@@ -67,21 +67,30 @@ module.exports = function registerCustomerDataRoutes(api, ctx) {
     res.json({ ok: true });
   });
 
-  api.post('/carts/sync', (req, res) => {
+  api.post('/carts/sync', requireSelfOrStaff((req) => req.body?.userId), (req, res) => {
     try {
       const userId = String(req.body?.userId || '');
       if (!userId || userId === 'guest') throw httpError(401, 'Bạn cần đăng nhập để đồng bộ giỏ hàng.');
       const items = Array.isArray(req.body?.items) ? req.body.items : [];
       let cart;
       update((state) => {
-        state.carts = state.carts.filter((item) => item.userId !== userId);
+        const merge = req.body?.merge === true;
+        if (!merge) state.carts = state.carts.filter((item) => item.userId !== userId);
         const now = Date.now();
         for (const item of items) {
           const productId = String(item.productId || item.slug || '');
           const product = state.products.find((candidate) => candidate.slug === productId || candidate.id === productId);
           const quantity = Math.min(20, Math.max(0, Number(item.quantity ?? item.qty) || 0));
           if (!product || quantity <= 0) continue;
-          state.carts.push({ userId, productId: product.slug, color: String(item.color || item.colorName || 'Mặc định'), size: String(item.size || 'M'), quantity, updatedAt: now });
+          const color = String(item.color || item.colorName || 'Mặc định');
+          const size = String(item.size || 'M');
+          const existing = merge ? state.carts.find((row) => row.userId === userId && row.productId === product.slug && row.color === color && row.size === size) : null;
+          if (existing) {
+            existing.quantity = Math.min(20, Math.max(existing.quantity || 0, quantity));
+            existing.updatedAt = now;
+          } else {
+            state.carts.push({ userId, productId: product.slug, color, size, quantity, updatedAt: now });
+          }
         }
         cart = state.carts.filter((item) => item.userId === userId);
         return state;

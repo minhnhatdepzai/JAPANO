@@ -59,6 +59,15 @@ class TryOnIdentityQualityTest(unittest.TestCase):
         self.assertNotIn('face_changed_or_covered', quality['reasons'])
         self.assertLess(quality['faceDiff'], 45.0)
 
+    def test_doi_tu_the_khong_bi_chan_boi_so_pixel_nhung_cong_cau_truc_van_chay(self):
+        source = person_image()
+        changed = person_image(face=(20, 20, 20), garment=(170, 50, 50))
+        with patch('accessory_pipeline.analyze', return_value=POSE):
+            quality = tryon_quality(source, changed, POSE, strict_identity=False)
+        self.assertNotIn('face_changed_or_covered', quality['reasons'])
+        self.assertNotIn('body_changed_not_garment', quality['reasons'])
+        self.assertNotIn('garment_unchanged', quality['reasons'])
+
     def test_vet_buc_duong_may_khong_cham_vao_mat(self):
         source = person_image()
         with patch('accessory_pipeline.analyze', return_value=POSE):

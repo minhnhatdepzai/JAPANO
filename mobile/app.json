@@ -2,7 +2,8 @@
   "expo": {
     "name": "JAPANO",
     "slug": "japano",
-    "version": "1.0.1",
+    "version": "1.0.12",
+    "icon": "./assets/brand/japano-app-icon.png",
     "orientation": "portrait",
     "scheme": [
       "japano",
@@ -10,7 +11,9 @@
     ],
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#F4EDE1"
+      "image": "./assets/brand/japano-logo-transparent.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6F0E5"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -21,7 +24,12 @@
     },
     "android": {
       "package": "vn.japano.app",
-      "versionCode": 2,
+      "versionCode": 13,
+      "icon": "./assets/brand/japano-app-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/japano-adaptive-foreground.png",
+        "backgroundColor": "#F6F0E5"
+      },
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

@@ -4,8 +4,15 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const {
-  stripDataUri, normalizeImageResult, clothTypeFor, garmentLayerFor, shouldRefineGarment, fashnCategoryFor, makeComputeSizeFit, MAX_TRYON_ACCESSORIES, choosePassingAccessoryCandidate,
+  stripDataUri, normalizeImageResult, clothTypeFor, garmentLayerFor, shouldRefineGarment, fashnCategoryFor, makeComputeSizeFit, MAX_TRYON_ACCESSORIES, choosePassingAccessoryCandidate, identityPolicyForPoseTransfer,
 } = require('../routes/tryon');
+
+test('ảnh phải đổi tư thế vẫn qua cổng cấu trúc nhưng luôn cảnh báo sai lệch danh tính', () => {
+  assert.deepEqual(identityPolicyForPoseTransfer(false), { strictIdentity:true, warning:'' });
+  const transferred = identityPolicyForPoseTransfer(true);
+  assert.equal(transferred.strictIdentity, false);
+  assert.match(transferred.warning, /dựng lại tư thế/);
+});
 
 test('biến coverageFixRequested sống tới lúc dựng response, không làm request treo', () => {
   // Regression cho lỗi production: biến từng được khai báo bên trong callback
@@ -13,8 +20,9 @@ test('biến coverageFixRequested sống tới lúc dựng response, không làm
   // ReferenceError khiến client chờ tới lúc báo Network request failed.
   const source = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tryon.js'), 'utf8');
   const declarations = [...source.matchAll(/let coverageFixRequested = false;/g)].map((match) => match.index);
+  const runGpuJobIndex = source.indexOf('await runGpuJob(');
   assert.equal(declarations.length, 1, 'coverageFixRequested phải chỉ có một khai báo');
-  assert.ok(declarations[0] < source.indexOf("await runGpuJob('tryon'"),
+  assert.ok(runGpuJobIndex > 0 && declarations[0] < runGpuJobIndex,
     'coverageFixRequested phải nằm ngoài callback runGpuJob');
   assert.ok(source.indexOf('coverageFixRequested,', declarations[0]) > declarations[0],
     'response phải dùng lại biến đã khai báo ở scope handler');
@@ -123,6 +131,13 @@ const { resolveGarmentImage } = require('../lib/garmentImages');
 
 test('Haori dùng ảnh flat-lay đã duyệt thay vì bộ ảnh khăn bị gắn nhầm', () => {
   assert.equal(path.basename(resolveGarmentImage('haori-dang-dai')), 'haori-dang-dai_tryon-flat.png');
+});
+
+test('bikini hai mảnh dùng flat-lay sạch chỉ có một áo và một quần', () => {
+  assert.equal(
+    path.basename(resolveGarmentImage('bikini-hoa-anh-dao')),
+    'bikini-hoa-anh-dao_single-set_tryon-flat.png',
+  );
 });
 
 function outfitState() {

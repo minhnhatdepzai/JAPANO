@@ -175,6 +175,7 @@ test('một lượt nhiều món gộp theo hướng an toàn nhất', () => {
   assert.equal(policy.containsSwimwear, true);
   assert.equal(policy.tearAllowed, false, 'chỉ cần một món cấm rách là cả lượt cấm');
   assert.deepEqual(policy.requiredCoveredZones, ALWAYS_COVERED_ZONES);
+  assert.equal(policy.coverageStyle, 'minimal-swimwear');
 });
 
 test('lượt thử đồ thường không kích hoạt cổng 18+ và vẫn cho phép rách', () => {
@@ -183,6 +184,7 @@ test('lượt thử đồ thường không kích hoạt cổng 18+ và vẫn cho
   assert.equal(policy.containsSwimwear, false);
   assert.equal(policy.tearAllowed, true);
   assert.equal(policy.intentionalSkinExposure, false);
+  assert.equal(policy.coverageStyle, 'standard');
 });
 
 test('bikini top + bikini bottom được xem là một bộ hai mảnh hợp lệ', () => {

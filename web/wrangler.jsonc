@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "japano-storefront",
+  "compatibility_date": "2026-08-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "vinext/server/fetch-handler",
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "cache": { "enabled": true },
+  "vars": {
+    "JAPANO_API_ORIGIN": "https://rd-system.tail6502ce.ts.net:4101",
+    "NEXT_PUBLIC_SITE_URL": "http://localhost:4200"
+  }
+}

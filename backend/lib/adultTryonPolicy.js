@@ -1,15 +1,14 @@
 // Cổng an toàn cho việc thử đồ bơi và trang phục hở (chỉ dành cho người 18+).
 //
-// Hai điều kiện ĐỘC LẬP, phải thoả cả hai:
+// Hai điều kiện ĐỘC LẬP:
 //
 //   1. Người dùng tự xác nhận đủ 18 tuổi và có quyền dùng bức ảnh.
-//   2. Ảnh không có dấu hiệu là trẻ vị thành niên.
+//   2. Ảnh không có tín hiệu rõ ràng là trẻ vị thành niên.
 //
-// Điều kiện 2 KHÔNG phải là "đoán tuổi cho chính xác". Hệ thống chỉ hỏi một câu
-// nhị phân: có đủ căn cứ để tin đây là người trưởng thành không? Không đủ căn
-// cứ cũng là TỪ CHỐI — mặc định fail-closed. Đoán sai theo hướng cho phép là
-// loại sai lầm không được phép xảy ra ở đây, còn đoán sai theo hướng từ chối
-// chỉ gây phiền một chút cho người dùng hợp lệ.
+// Model thị giác không phải giấy tờ xác minh tuổi. `unsure` thường chỉ có nghĩa
+// ảnh xa/ánh sáng khó, nên nếu đã có xác nhận 18+ thì cho phép đi tiếp với cờ
+// `attestationFallback`; kết quả vẫn phải qua sàn che phủ ngực/vùng chậu/mông.
+// `no` vẫn chặn tuyệt đối, còn service không chạy được vẫn fail-closed.
 
 // Kết quả của lib/adultImageCheck.js: 'yes' | 'no' | 'unsure'.
 const ADULT_VERDICT = 'yes';
@@ -58,7 +57,11 @@ function evaluateAdultGate({ policy, adultConsent, imageCheck }) {
     return { allowed: false, required: true, code: 'MINOR_SUSPECTED', message: REFUSALS.MINOR_SUSPECTED, verdict };
   }
   if (verdict !== ADULT_VERDICT) {
-    return { allowed: false, required: true, code: 'AGE_UNVERIFIED', message: REFUSALS.AGE_UNVERIFIED, verdict };
+    return {
+      allowed: true, required: true, code: null, message: '', verdict,
+      attestationFallback: true,
+      warning: 'Không suy đoán được tuổi từ ảnh; lượt thử tiếp tục dựa trên xác nhận 18+ của người dùng.',
+    };
   }
   return { allowed: true, required: true, code: null, message: '', verdict };
 }
@@ -73,6 +76,7 @@ function adultGateLogLine(gate, policy) {
     `allowed=${gate.allowed}`,
     gate.code ? `reason=${gate.code}` : 'reason=none',
     gate.verdict ? `adultCheck=${gate.verdict}` : '',
+    gate.attestationFallback ? 'attestationFallback=true' : '',
   ].filter(Boolean).join(' | ');
 }
 

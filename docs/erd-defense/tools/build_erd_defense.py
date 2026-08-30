@@ -443,7 +443,8 @@ def create_diagrams():
         shutil.copy2(DB_PATH, SNAPSHOTS / "db_schema.json")
     if not LOCAL_CATALOG.exists():
         shutil.copy2(EXTERNAL / "defense_catalog.py", LOCAL_CATALOG)
-    shutil.copy2(ROOT / "erd.drawio", DIAGRAMS / "ERD-00-overview.drawio")
+    # Repo chỉ giữ một file editable duy nhất ở ROOT/JAPANO_ERD.drawio. Không
+    # sao chép thêm một .drawio vào gói tài liệu bảo vệ.
     visual = ROOT / "ERD_HINH_ANH_CHI_TIET"
     overview_candidates = list(visual.rglob("00_tong_the.png"))
     if overview_candidates:
@@ -454,7 +455,7 @@ def create_diagrams():
         candidates = list(visual.rglob(module["png"]))
         if candidates:
             shutil.copy2(candidates[0], DIAGRAMS / f"{base}.png")
-    readme = "# Diagrams\n\n- `ERD-00-overview.drawio` là bản editable của ERD tổng; PNG là bản chiếu.\n- Mỗi ERD con có source Mermaid `.mmd` và PNG render/crop từ `erd.drawio` hiện hành.\n- Màu vàng trong Mermaid đánh dấu shared table. Không thêm cạnh ngoài 50 relationship gốc.\n\n"
+    readme = "# Diagrams\n\n- File editable duy nhất là `JAPANO_ERD.drawio` ở gốc repo; thư mục này không tạo bản sao `.drawio`.\n- Mỗi ERD con có source Mermaid `.mmd` và PNG phục vụ tài liệu bảo vệ cũ.\n- Màu vàng trong Mermaid đánh dấu shared table.\n\n"
     for m in MODULES:
         base = f"{m['id']}-{m['slug']}"
         readme += f"- [{m['id']} source]({base}.mmd) · [{m['id']} PNG]({base}.png) — {m['name']}\n"

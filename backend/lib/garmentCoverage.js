@@ -178,6 +178,16 @@ const TYPE_PATTERNS = [
   // Tên/slug hiện đại phải thắng category nhóm hàng cũ. Ví dụ cardigan p6
   // từng nằm trong cat="haori" và bị cấm hiệu ứng bục đường may như Haori.
   ['cardigan', /(cardigan|[áa]o\s*len\s*kho[áa]c)/i],
+  // "Kimono"/"yukata" trong tên áo thường chỉ KIỂU TAY, không phải loại trang phục.
+  //
+  // "Áo blouse tay Kimono" từng bị bắt thành garmentType=kimono, zone=overall,
+  // fashnCategory=one-pieces. Backend báo FASHN đây là đồ liền thân nên nó vẽ lại
+  // cả người và XOÁ MẤT quần short của khách, để hở vùng chậu; cổng an toàn chặn
+  // ảnh và API trả 422 COVERAGE_UNSAFE. Người dùng chỉ thấy "thử đồ hỏng".
+  //
+  // Vì vậy danh từ chỉ áo thân trên phải được xét TRƯỚC các loại trang phục Nhật.
+  // Cố ý KHÔNG bắt "áo choàng"/"áo khoác" — đó thật sự là haori/áo khoác ngoài.
+  ['tops', new RegExp(`${W}[áa]o\\s*(blouse|thun|s[ơo]\\s*mi|ph[ôo]ng|ki[ểe]u|croptop)\\b`, 'i')],
   ['hakama', /\bhakama\b/i],
   ['jinbei', /\bjinbei\b/i],
   ['samue', /\bsamue\b/i],
@@ -260,6 +270,13 @@ function safetyPolicyFor(products = []) {
     allowedExposedZones: [...exposed],
     // Sàn an toàn tuyệt đối, không phụ thuộc sản phẩm.
     requiredCoveredZones: [...ALWAYS_COVERED_ZONES],
+    // Bikini che các vùng nhạy cảm bằng những mảng vải nhỏ nằm ở lõi vùng
+    // ngực/chậu/mông; phần da hợp lệ xung quanh không thể chấm bằng ngưỡng
+    // "cả ô phải kín" của áo/quần thường. Cổng Python vẫn giữ nguyên ba vùng
+    // bắt buộc nhưng dùng các lõi bảo vệ đúng hình học đồ bơi.
+    coverageStyle: profiles.some((profile) => profile.swimwear)
+      ? 'minimal-swimwear'
+      : 'standard',
     tearAllowed: profiles.every((profile) => profile.tearAllowed),
     // VÌ SAO bị cấm bục — hai lý do rất khác nhau, và chỉ một trong hai là tuyệt đối.
     //

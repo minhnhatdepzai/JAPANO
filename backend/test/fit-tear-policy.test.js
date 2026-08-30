@@ -98,3 +98,36 @@ test('garmentCoverage phân biệt được hai lý do cấm bục', () => {
   assert.equal(safetyPolicyFor([{ name: 'Quần short kaki' }]).tearBlockReason, 'safety');
   assert.equal(safetyPolicyFor([{ name: 'Áo thun cotton basic' }]).tearBlockReason, null);
 });
+
+// "Kimono"/"yukata" trong tên áo thường chỉ KIỂU TAY, không phải loại trang phục.
+//
+// "Áo blouse tay Kimono" từng bị phân loại thành garmentType=kimono,
+// fashnCategory=one-pieces. Backend báo FASHN đây là đồ liền thân nên nó vẽ lại
+// cả người và xoá mất quần short của khách; cổng an toàn chặn ảnh và API trả
+// 422 COVERAGE_UNSAFE.
+test('tên áo có chữ kimono/yukata vẫn phải là trang phục thân trên', () => {
+  const { coverageProfileFor } = require('../lib/garmentCoverage');
+  const blouse = coverageProfileFor({ name: 'Áo blouse tay Kimono', slug: 'ao-blouse-tay-kimono' });
+  assert.equal(blouse.zone, 'upper');
+  assert.equal(blouse.fashnCategory, 'tops');
+  assert.notEqual(blouse.garmentType, 'kimono');
+});
+
+test('kimono/yukata thật vẫn là đồ liền thân', () => {
+  const { coverageProfileFor } = require('../lib/garmentCoverage');
+  for (const [name, slug] of [
+    ['Kimono truyền thống Hoa', 'kimono-hong'],
+    ['Kimono Furisode tay dài', 'kimono-furisode-do'],
+    ['Yukata hoa anh đào', 'yukata-hoa-anh-dao'],
+  ]) {
+    const profile = coverageProfileFor({ name, slug });
+    assert.equal(profile.zone, 'overall', `${name} phải là overall`);
+    assert.equal(profile.fashnCategory, 'one-pieces', `${name} phải là one-pieces`);
+  }
+});
+
+test('áo choàng Haori không bị nhận nhầm thành áo thun', () => {
+  const { coverageProfileFor } = require('../lib/garmentCoverage');
+  const haori = coverageProfileFor({ name: 'Áo choàng Haori dáng dài', slug: 'haori-dai' });
+  assert.equal(haori.garmentType, 'haori');
+});

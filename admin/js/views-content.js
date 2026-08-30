@@ -202,10 +202,10 @@ function viewNotifications(){
   return `<div class="grid g-2 align-start">
     <div class="panel"><div class="ph"><h3>Soạn thông báo</h3><span class="sub">Gửi tới tất cả người dùng</span></div>
       <div class="pb">
-        <div class="field"><label>Tiêu đề</label><input id="n-title" class="inp" placeholder="VD: Ưu đãi cuối tuần -30%"></div>
-        <div class="field"><label>Nội dung</label><textarea id="n-body" class="ta" placeholder="Nội dung thông báo hiển thị trong app..."></textarea></div>
-        <div class="row2"><div class="field"><label>Loại</label><select id="n-type" class="sel"><option>Khuyến mãi</option><option>Hệ thống</option><option>Đơn hàng</option></select></div>
-          <div class="field"><label>Đối tượng (để trống = tất cả)</label><input id="n-target" class="inp" placeholder="Email khách hàng — để trống để gửi chung"></div></div>
+        <div class="field"><label for="n-title">Tiêu đề</label><input id="n-title" class="inp" placeholder="VD: Ưu đãi cuối tuần -30%"></div>
+        <div class="field"><label for="n-body">Nội dung</label><textarea id="n-body" class="ta" placeholder="Nội dung thông báo hiển thị trong app..."></textarea></div>
+        <div class="row2"><div class="field"><label for="n-type">Loại</label><select id="n-type" class="sel"><option>Khuyến mãi</option><option>Hệ thống</option><option>Đơn hàng</option></select></div>
+          <div class="field"><label for="n-target">Đối tượng (để trống = tất cả)</label><input id="n-target" class="inp" placeholder="Email khách hàng — để trống để gửi chung"></div></div>
         <div class="banner warn" style="margin:2px 0 12px"><div class="bi">${icon('megaphone-outline',15)}</div><div>Để trống ô Đối tượng: gửi cho <b>tất cả</b> ${DB.users.length} người dùng. Nhập email: chỉ <b>riêng khách đó</b> nhận được (cả trong app lẫn thông báo đẩy).</div></div>
         <button class="btn p blk" onclick="A.sendNoti()">${icon('megaphone-outline')} Gửi thông báo</button>
       </div></div>
@@ -219,15 +219,15 @@ function viewCategories(){
   return `<div class="filters"><div class="hspace"></div><button class="btn p" onclick="A.addCategory()">${icon('add')}Thêm danh mục</button></div>
   <div class="panel"><table class="tbl acts"><thead><tr><th>Danh mục</th><th>Kanji</th><th>Slug</th><th class="center">Sản phẩm</th><th></th></tr></thead>
   <tbody>${DB.categories.map(c=>`<tr><td class="bold">${esc(c.name)}</td><td style="font-size:16px">${c.kanji||'—'}</td><td class="mono faint">${c.id}</td><td class="center">${DB.products.filter(p=>p.cat===c.id).length}</td>
-  <td class="right"><button class="iconbtn d" onclick="A.delCategory('${escJs(c.id)}')">${icon('trash-outline')}</button></td></tr>`).join('')}</tbody></table></div>`;}
+  <td class="right"><button class="iconbtn d" aria-label="Xoá danh mục ${esc(c.name)}" onclick="A.delCategory('${escJs(c.id)}')">${icon('trash-outline')}</button></td></tr>`).join('')}</tbody></table></div>`;}
 function voucherRow(v){
   const isFlag=v.source==='flagcard-collection';
   return `<tr><td class="bold mono">${v.code}</td><td class="bold">${v.type==='percent'?v.value+'%':money(v.value)}</td><td>${v.min?money(v.min):'—'}</td>
   <td>${isFlag?`<span class="bdg b-violet"><span class="d"></span>${icon('flag-outline',12)} Thẻ địa danh</span>`:'<span class="bdg b-blue"><span class="d"></span>Khuyến mãi</span>'}</td>
   <td>${v.ownerUserId?`<span class="mono faint">${esc(v.ownerUserId)}</span>`:'<span class="faint">Công khai</span>'}</td>
   <td class="faint">${v.expiry}</td><td>${v.used}/${v.limit}</td>
-  <td><div class="switch ${v.active?'on':''}" onclick="A.toggleVoucher('${escJs(v.code)}')"><i></i></div></td>
-  <td class="right">${isFlag?'':`<button class="iconbtn d" onclick="A.delVoucher('${escJs(v.code)}')">${icon('trash-outline')}</button>`}</td></tr>`;
+  <td><button type="button" class="switch ${v.active?'on':''}" aria-label="${v.active?'Tắt':'Bật'} mã giảm giá ${esc(v.code)}" aria-pressed="${v.active?'true':'false'}" onclick="A.toggleVoucher('${escJs(v.code)}')"><i></i></button></td>
+  <td class="right">${isFlag?'':`<button class="iconbtn d" aria-label="Xoá mã giảm giá ${esc(v.code)}" onclick="A.delVoucher('${escJs(v.code)}')">${icon('trash-outline')}</button>`}</td></tr>`;
 }
 function viewVouchers(){
   const flagV=DB.vouchers.filter(v=>v.source==='flagcard-collection');
@@ -253,7 +253,7 @@ function flagcardMini(c){
     <div class="muted" style="font-size:11.5px;margin-top:8px;line-height:1.5;max-height:48px;overflow:hidden">${esc(c.summary||'')}</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
       ${c.active!==false?'<span class="bdg b-green"><span class="d"></span>Đang phát</span>':'<span class="bdg b-gray"><span class="d"></span>Tạm ẩn</span>'}
-      <div class="switch ${c.active!==false?'on':''}" onclick="A.toggleFlagcardActive('${escJs(c.id)}')"><i></i></div>
+      <button type="button" class="switch ${c.active!==false?'on':''}" aria-label="${c.active!==false?'Tạm ẩn':'Hiển thị'} thẻ ${esc(c.title)}" aria-pressed="${c.active!==false?'true':'false'}" onclick="A.toggleFlagcardActive('${escJs(c.id)}')"><i></i></button>
     </div>
   </div></div>`;
 }
@@ -294,23 +294,23 @@ function viewFlagcards(){
       <div class="panel"><div class="ph"><h3>Điều kiện chương trình</h3></div><div class="pb">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 14px;border-bottom:1px solid var(--line2)">
           <div><div class="bold" style="font-size:12.5px">Đang chạy chương trình</div><div class="faint" style="font-size:11.5px">Tắt để ngưng phát thẻ mới cho đơn hàng mới</div></div>
-          <div class="switch ${cfg.active?'on':''}" onclick="A.toggleFlagcardProgram()"><i></i></div>
+          <button type="button" class="switch ${cfg.active?'on':''}" aria-label="${cfg.active?'Tắt':'Bật'} chương trình thẻ địa danh" aria-pressed="${cfg.active?'true':'false'}" onclick="A.toggleFlagcardProgram()"><i></i></button>
         </div>
-        <div class="field" style="margin-top:14px"><label>Đơn tối thiểu để nhận thẻ (₫)</label><input id="fc-min" class="inp mono" type="number" value="${cfg.qualifyingOrderMin}"></div>
+        <div class="field" style="margin-top:14px"><label for="fc-min">Đơn tối thiểu để nhận thẻ (₫)</label><input id="fc-min" class="inp mono" type="number" value="${cfg.qualifyingOrderMin}"></div>
         <div class="row2">
-          <div class="field"><label>Số thẻ cần đủ bộ</label><input id="fc-req" class="inp mono" type="number" min="1" max="${cards.length}" value="${cfg.requiredCards}"></div>
-          <div class="field"><label>% giảm giá thưởng</label><input id="fc-pct" class="inp mono" type="number" min="1" max="100" value="${cfg.rewardPercent}"></div>
+          <div class="field"><label for="fc-req">Số thẻ cần đủ bộ</label><input id="fc-req" class="inp mono" type="number" min="1" max="${cards.length}" value="${cfg.requiredCards}"></div>
+          <div class="field"><label for="fc-pct">% giảm giá thưởng</label><input id="fc-pct" class="inp mono" type="number" min="1" max="100" value="${cfg.rewardPercent}"></div>
         </div>
         <div class="row2">
-          <div class="field"><label>Đơn tối thiểu dùng voucher (₫)</label><input id="fc-vmin" class="inp mono" type="number" value="${cfg.rewardVoucherMinOrder}"></div>
-          <div class="field"><label>Hạn dùng voucher (ngày)</label><input id="fc-days" class="inp mono" type="number" value="${cfg.rewardValidityDays}"></div>
+          <div class="field"><label for="fc-vmin">Đơn tối thiểu dùng voucher (₫)</label><input id="fc-vmin" class="inp mono" type="number" value="${cfg.rewardVoucherMinOrder}"></div>
+          <div class="field"><label for="fc-days">Hạn dùng voucher (ngày)</label><input id="fc-days" class="inp mono" type="number" value="${cfg.rewardValidityDays}"></div>
         </div>
         <button class="btn p blk" onclick="A.saveFlagcardConfig()">Lưu cấu hình</button>
       </div></div>
       <div class="panel" style="margin-top:14px"><div class="ph"><h3>Cấp thẻ thủ công</h3></div><div class="pb">
-        <div class="field"><label>Khách hàng (userId)</label><input id="fc-grant-user" class="inp" placeholder="VD: demo-minh" list="fc-users"></div>
+        <div class="field"><label for="fc-grant-user">Khách hàng (userId)</label><input id="fc-grant-user" class="inp" placeholder="VD: demo-minh" list="fc-users"></div>
         <datalist id="fc-users">${(DB.users||[]).map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('')}${cols.map(c=>`<option value="${esc(c.userId)}">`).join('')}</datalist>
-        <div class="field"><label>Thẻ địa danh</label><select id="fc-grant-card" class="sel">${cards.map(c=>`<option value="${c.id}">${c.glyph} ${esc(c.title)}</option>`).join('')}</select></div>
+        <div class="field"><label for="fc-grant-card">Thẻ địa danh</label><select id="fc-grant-card" class="sel">${cards.map(c=>`<option value="${c.id}">${c.glyph} ${esc(c.title)}</option>`).join('')}</select></div>
         <button class="btn blk" onclick="A.grantFlagcard()">${icon('gift-outline')} Cấp thẻ cho khách</button>
         <div class="hint">Dùng khi hỗ trợ khách gặp lỗi đơn hàng hoặc tặng thẻ sự kiện.</div>
       </div></div>
@@ -321,7 +321,7 @@ function viewBanners(){
   return `<div class="filters"><div class="hspace"></div><button class="btn p" onclick="A.addBanner()">${icon('add')}Thêm ảnh quảng bá</button></div>
   <div class="grid g-3">${DB.banners.map(b=>`<div class="panel"><div style="height:110px;background:${b.img};border-radius:8px 8px 0 0;display:flex;align-items:flex-end;padding:12px"><div style="color:#fff"><div style="font-size:10.5px;letter-spacing:2px;opacity:.85">JAPANO</div><div style="font-weight:800;font-size:16px">${esc(b.title)}</div></div></div>
   <div class="pb" style="display:flex;align-items:center;justify-content:space-between"><div><div class="faint mono" style="font-size:11.5px">${esc(b.link)}</div><div style="margin-top:4px">${b.active?'<span class="bdg b-green"><span class="d"></span>Đang hiển thị</span>':'<span class="bdg b-gray"><span class="d"></span>Đã tắt</span>'}</div></div>
-  <div style="display:flex;gap:8px;align-items:center"><div class="switch ${b.active?'on':''}" onclick="A.toggleBanner('${escJs(b.id)}')"><i></i></div><button class="iconbtn d" onclick="A.delBanner('${escJs(b.id)}')">${icon('trash-outline')}</button></div></div></div>`).join('')||emptyPanel(icon('image-outline'),'Chưa có ảnh quảng bá','Thêm ảnh quảng bá để làm nổi bật khuyến mãi trên trang chủ ứng dụng.',[['p','A.addBanner()',`${icon('add')} Thêm ảnh quảng bá`]])}</div>`;}
+  <div style="display:flex;gap:8px;align-items:center"><button type="button" class="switch ${b.active?'on':''}" aria-label="${b.active?'Tắt':'Bật'} ảnh quảng bá ${esc(b.title)}" aria-pressed="${b.active?'true':'false'}" onclick="A.toggleBanner('${escJs(b.id)}')"><i></i></button><button class="iconbtn d" aria-label="Xoá ảnh quảng bá ${esc(b.title)}" onclick="A.delBanner('${escJs(b.id)}')">${icon('trash-outline')}</button></div></div></div>`).join('')||emptyPanel(icon('image-outline'),'Chưa có ảnh quảng bá','Thêm ảnh quảng bá để làm nổi bật khuyến mãi trên trang chủ ứng dụng.',[['p','A.addBanner()',`${icon('add')} Thêm ảnh quảng bá`]])}</div>`;}
 
 /* ================= SETTINGS ================= */
 function intRow(label,ok,key){return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)">
@@ -335,22 +335,31 @@ async function persistShop(patch){
   return result.shop;
 }
 function viewSettings(){
-  const sw=(on,fn)=>`<div class="switch ${on?'on':''}" onclick="${fn}"><i></i></div>`;
+  const sw=(on,fn,label)=>`<button type="button" class="switch ${on?'on':''}" aria-label="${on?'Tắt':'Bật'} ${esc(label)}" aria-pressed="${on?'true':'false'}" onclick="${fn}"><i></i></button>`;
+  const locations=Array.isArray(DB.shop.locations)?DB.shop.locations:[];
+  const locationEditor=locations.map((location,index)=>`<div data-store-location data-location-id="${esc(location.id||`japano-location-${index+1}`)}" style="padding:14px 0;border-top:1px solid var(--line2)">
+    <div class="row2"><div class="field"><label for="location-${index}-name">Tên điểm JAPANO</label><input id="location-${index}-name" class="inp" data-location-name value="${esc(location.name||'')}"></div><div class="field"><label for="location-${index}-phone">Hotline tại điểm</label><input id="location-${index}-phone" class="inp" data-location-phone value="${esc(location.phone||DB.shop.hotline||'')}"></div></div>
+    <div class="field"><label for="location-${index}-address">Địa chỉ hiển thị</label><input id="location-${index}-address" class="inp" data-location-address value="${esc(location.address||'')}"></div>
+    <div class="row2"><div class="field"><label for="location-${index}-lat">Vĩ độ</label><input id="location-${index}-lat" class="inp mono" data-location-lat type="number" step="any" value="${Number(location.latitude||0)}"></div><div class="field"><label for="location-${index}-lng">Kinh độ</label><input id="location-${index}-lng" class="inp mono" data-location-lng type="number" step="any" value="${Number(location.longitude||0)}"></div></div>
+    <div class="row2"><div class="field"><label for="location-${index}-hours">Giờ mở cửa</label><input id="location-${index}-hours" class="inp" data-location-hours value="${esc(location.openingHours||'Liên hệ trước khi đến')}"></div><div class="field"><label for="location-${index}-services">Dịch vụ (ngăn bằng dấu phẩy)</label><input id="location-${index}-services" class="inp" data-location-services value="${esc((location.services||[]).join(', '))}"></div></div>
+    <label style="display:flex;align-items:center;gap:8px;min-height:44px"><input type="checkbox" data-location-active ${location.active!==false?'checked':''}> Hiển thị trên website</label>
+  </div>`).join('');
   return `<div class="grid g-2 align-start">
     <div class="panel"><div class="ph"><h3>Thông tin cửa hàng</h3></div><div class="pb">
       <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${DB.shop.logo?`<img src="${esc(DB.shop.logo)}" alt="Logo cửa hàng" style="width:58px;height:58px;border-radius:12px;object-fit:contain;background:#fff;border:1px solid var(--line);padding:4px">`:'<div style="width:58px;height:58px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px">ジ</div>'}
       <div><button class="btn sm" onclick="A.uploadLogo()">Thay logo</button>${DB.shop.logo?'<button class="btn sm" style="margin-left:6px" onclick="A.removeLogo()">Gỡ logo</button>':''}<div class="hint" style="margin-top:4px">PNG/JPG/WebP/SVG · tối đa 3 MB · ứng dụng tự đồng nhận logo mới</div></div></div>
-      <div class="field"><label>Tên cửa hàng</label><input id="set-name" class="inp" value="${esc(DB.shop.name)}"></div>
-      <div class="row2"><div class="field"><label>Hotline</label><input id="set-hotline" class="inp" value="${esc(DB.shop.hotline)}"></div><div class="field"><label>Email</label><input id="set-email" class="inp" value="${esc(DB.shop.email)}"></div></div>
-      <div class="field"><label>Địa chỉ</label><input id="set-addr" class="inp" value="${esc(DB.shop.address)}"></div>
+      <div class="field"><label for="set-name">Tên cửa hàng</label><input id="set-name" class="inp" value="${esc(DB.shop.name)}"></div>
+      <div class="row2"><div class="field"><label for="set-hotline">Hotline</label><input id="set-hotline" class="inp" value="${esc(DB.shop.hotline)}"></div><div class="field"><label for="set-email">Email</label><input id="set-email" class="inp" value="${esc(DB.shop.email)}"></div></div>
+      <div class="field"><label for="set-addr">Địa chỉ</label><input id="set-addr" class="inp" value="${esc(DB.shop.address)}"></div>
       <button class="btn p" onclick="A.saveShop()">Lưu thông tin</button>
+      <div style="margin-top:20px"><div class="bold">Địa điểm trên website</div><div class="hint">Lưu trong <span class="mono">shop.locations[]</span>; không tạo bảng/collection cửa hàng riêng.</div>${locationEditor||'<div class="hint" style="padding:14px 0">Backend sẽ bổ sung điểm JAPANO — QTSC9 khi tải lại.</div>'}<button class="btn" onclick="A.saveStoreLocations()">Lưu địa điểm</button></div>
     </div></div>
     <div>
       <div class="panel"><div class="ph"><h3>Thanh toán &amp; vận chuyển</h3></div><div class="pb">
-        <div class="field"><label>Phí vận chuyển mặc định</label><input id="set-ship" class="inp mono" type="number" value="${DB.shop.shipFee}" onchange="A.setShip(this.value)"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán khi nhận (COD)</div><div class="faint" style="font-size:11.5px">Cho phép khách chọn COD</div></div>${sw(DB.shop.cod,"A.toggleShop('cod')")}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán Stripe</div><div class="faint" style="font-size:11.5px">Thẻ quốc tế qua Stripe Checkout</div></div>${sw(DB.shop.stripe,"A.toggleShop('stripe')")}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán VNPay</div><div class="faint" style="font-size:11.5px">Thẻ ATM nội địa, QR, ví qua VNPay Sandbox</div></div>${sw(DB.shop.vnpay,"A.toggleShop('vnpay')")}</div>
+        <div class="field"><label for="set-ship">Phí vận chuyển mặc định</label><input id="set-ship" class="inp mono" type="number" value="${DB.shop.shipFee}" onchange="A.setShip(this.value)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán khi nhận (COD)</div><div class="faint" style="font-size:11.5px">Cho phép khách chọn COD</div></div>${sw(DB.shop.cod,"A.toggleShop('cod')",'thanh toán khi nhận hàng')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán Stripe</div><div class="faint" style="font-size:11.5px">Thẻ quốc tế qua Stripe Checkout</div></div>${sw(DB.shop.stripe,"A.toggleShop('stripe')",'thanh toán Stripe')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line2)"><div><div class="bold" style="font-size:12.5px">Thanh toán VNPay</div><div class="faint" style="font-size:11.5px">Thẻ ATM nội địa, QR, ví qua VNPay Sandbox</div></div>${sw(DB.shop.vnpay,"A.toggleShop('vnpay')",'thanh toán VNPay')}</div>
       </div></div>
       <div class="panel" style="margin-top:14px"><div class="ph"><h3>Tích hợp &amp; trạng thái</h3></div><div class="pb" style="padding-top:4px">
         ${intRow('Cơ sở dữ liệu JSON',healthOr(HEALTH.database,NET_OK),'database')}

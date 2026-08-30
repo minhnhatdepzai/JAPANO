@@ -45,12 +45,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
+      let restoredFromCache = false;
       try {
         const cachedRaw = await AsyncStorage.getItem(USER_KEY);
         const token = await SecureStore.getItemAsync(TOKEN_KEY);
         if (!token) return;
         setAuthToken(token);
-        if (cachedRaw) setUser(toAuthUser(JSON.parse(cachedRaw)));
+        if (cachedRaw) {
+          setUser(toAuthUser(JSON.parse(cachedRaw)));
+          restoredFromCache = true;
+          // Không chặn màn hình đầu bằng một request mạng. Hồ sơ cache và token
+          // SecureStore đủ để khôi phục giao diện ngay; apiMe vẫn xác thực phiên
+          // ở nền và sẽ đăng xuất nếu token đã hết hạn/bị thu hồi.
+          setHydrated(true);
+        }
         // Xác thực lại với backend — token có thể đã hết hạn hoặc bị thu hồi.
         const { user: me } = await apiMe();
         setUser(toAuthUser(me));
@@ -62,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAuthToken(null);
         setUser(null);
       } finally {
-        setHydrated(true);
+        if (!restoredFromCache) setHydrated(true);
       }
     })();
   }, []);

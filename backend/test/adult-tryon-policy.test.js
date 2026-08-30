@@ -1,8 +1,8 @@
 // Cổng an toàn 18+ cho đồ bơi và trang phục hở.
 //
-// Mọi bài test ở đây đều kiểm tra theo hướng "thà từ chối nhầm còn hơn cho qua
-// nhầm": thiếu xác nhận, thiếu căn cứ tuổi, hay dịch vụ kiểm tra chết đều phải
-// dẫn tới TỪ CHỐI.
+// Thiếu xác nhận, tín hiệu trẻ vị thành niên hoặc dịch vụ kiểm tra chết đều bị
+// từ chối. `unsure` không phải bằng chứng là trẻ em: sau xác nhận 18+ có thể đi
+// tiếp, nhưng kết quả vẫn phải qua quality gate che phủ bắt buộc.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -34,13 +34,15 @@ test('xác nhận 18+ nhưng ảnh có dấu hiệu trẻ vị thành niên thì
   assert.equal(gate.code, 'MINOR_SUSPECTED');
 });
 
-test('model đã hỏi nhưng không dám kết luận thì TỪ CHỐI, không đoán bừa', () => {
+test('model đã hỏi nhưng không dám kết luận thì dựa vào xác nhận 18+, không bịa tuổi', () => {
   for (const verdict of ['unsure', '', 'khong-ro', undefined]) {
     const gate = evaluateAdultGate({
       policy: swimwear, adultConsent: true, imageCheck: { available: true, verdict },
     });
-    assert.equal(gate.allowed, false, `verdict=${verdict} phải bị từ chối`);
-    assert.equal(gate.code, 'AGE_UNVERIFIED');
+    assert.equal(gate.allowed, true, `verdict=${verdict} được tiếp tục sau xác nhận`);
+    assert.equal(gate.code, null);
+    assert.equal(gate.attestationFallback, true);
+    assert.match(gate.warning, /xác nhận 18\+/i);
   }
 });
 

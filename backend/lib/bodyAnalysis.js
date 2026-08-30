@@ -14,6 +14,7 @@
 // nó "tự tin" hơn. Người dùng biết chiều cao của chính họ.
 
 const crypto = require('crypto');
+const { matchBodyAnchor, anchorSizingProfile } = require('./bodyAnchors');
 
 // Worker thường trú cho bước phân tích cơ thể.
 //
@@ -176,6 +177,7 @@ function mergeBodySignals(profile = {}, bodyAnalysis = null) {
   if (realWeight) sources.weight = 'user';
 
   let usedEstimate = false;
+  let usedAnchor = false;
   if (bodyAnalysisEnabled()) {
     const estimatedHeight = (bodyAnalysis && heightEstimationEnabled()
       ? usableEstimate(bodyAnalysis.estimatedHeight, 'valueCm') : 0)
@@ -195,6 +197,28 @@ function mergeBodySignals(profile = {}, bodyAnalysis = null) {
       sources.weight = 'image-estimation';
       usedEstimate = true;
     }
+    // Khi ảnh không đủ scale tuyệt đối, dùng mẫu hình học gần nhất làm PRIOR
+    // cho việc chọn size. Hai midpoint này chỉ sống trong `profile` nội bộ của
+    // phép tư vấn; response số đo vẫn giữ null và nói rõ đây là dải tham chiếu.
+    // Như vậy khách không phải nhập tay nhưng hệ thống cũng không gọi prior là
+    // số đo thật.
+    const referenceProfile = bodyAnalysis?.referenceProfile || matchBodyAnchor(
+      bodyAnalysis,
+      profile.gender || profile.sex,
+    );
+    const anchorProfile = anchorSizingProfile(referenceProfile);
+    if (!realHeight && !estimatedHeight && anchorProfile.height) {
+      merged.height = anchorProfile.height;
+      merged.heightCm = anchorProfile.heightCm;
+      sources.height = 'body-anchor-prior';
+      usedAnchor = true;
+    }
+    if (!realWeight && !estimatedWeight && anchorProfile.weight) {
+      merged.weight = anchorProfile.weight;
+      merged.weightKg = anchorProfile.weightKg;
+      sources.weight = 'body-anchor-prior';
+      usedAnchor = true;
+    }
     // Vòng ngực/eo/hông đo từ ảnh CỐ Ý không được dùng để tính size.
     //
     // Đường viền ngoài của một người đang mặc quần áo là đường viền của QUẦN ÁO:
@@ -207,13 +231,32 @@ function mergeBodySignals(profile = {}, bodyAnalysis = null) {
     // dùng cho bảng size.
   }
 
-  return { profile: merged, sources, usedEstimate };
+  return { profile: merged, sources, usedEstimate, usedAnchor };
 }
 
 // Rút gọn kết quả phân tích cho phần response/log: không mang theo mảng pixel,
 // không mang theo ảnh.
 function summarizeBodyAnalysis(bodyAnalysis) {
   if (!bodyAnalysis?.ok) return null;
+  const referenceProfile = bodyAnalysis.referenceProfile || matchBodyAnchor(bodyAnalysis);
+  const measurementCount = [
+    bodyAnalysis.estimatedHeight?.valueCm,
+    bodyAnalysis.estimatedWeight?.valueKg,
+    bodyAnalysis.estimatedGirthRanges?.bust?.valueCm,
+    bodyAnalysis.estimatedGirthRanges?.waist?.valueCm,
+    bodyAnalysis.estimatedGirthRanges?.hip?.valueCm,
+  ].filter((value) => Number(value) > 0).length;
+  const measurementStatus = measurementCount === 0
+    ? 'insufficient_evidence'
+    : measurementCount < 5 ? 'partial' : 'estimated';
+  const rejectedCue = String(bodyAnalysis.estimatedHeight?.cueRejected || '');
+  const measurementMessage = measurementStatus === 'insufficient_evidence'
+    ? (rejectedCue === 'head_count_out_of_range'
+      ? `Tỉ lệ cơ thể nằm ngoài miền dữ liệu có thể đo tuyệt đối.${referenceProfile ? ' AI dùng dải vóc dáng tham chiếu gần nhất để chọn size và thử đồ, không coi đó là số đo thật.' : ' Bạn vẫn có thể thử trang phục.'}`
+      : `Ảnh chưa có đủ bằng chứng để suy ra số đo tuyệt đối.${referenceProfile ? ' AI dùng dải vóc dáng tham chiếu gần nhất để chọn size và thử đồ, không coi đó là số đo thật.' : ' Bạn vẫn có thể thử trang phục.'}`)
+    : measurementStatus === 'partial'
+      ? 'AI chỉ ước lượng được một phần số đo từ ảnh này; các ô trống không được dùng để chọn size.'
+      : 'Các số dưới đây là khoảng ước lượng từ ảnh, không phải phép đo bằng thước.';
   return {
     estimatedHeight: bodyAnalysis.estimatedHeight,
     estimatedWeight: bodyAnalysis.estimatedWeight,
@@ -226,8 +269,15 @@ function summarizeBodyAnalysis(bodyAnalysis) {
     // áo, không phải vòng cơ thể, nên không dùng để chốt size.
     girthsMeasureClothing: bodyAnalysis.girthsMeasureClothing !== false,
     bodyShape: bodyAnalysis.bodyShape,
+    referenceProfile,
     quality: bodyAnalysis.quality,
     warnings: bodyAnalysis.warnings || [],
+    measurementStatus,
+    measurementMessage,
+    // Thử đồ chỉ cần nhận diện/segmentation người; không phụ thuộc việc có suy
+    // ra được cm/kg hay không. Route try-on vẫn có cổng riêng cho ảnh không có
+    // người, chất lượng sinh ảnh và độ che phủ.
+    tryOnEligible: true,
     // Chỉ là keypoint/bounding box, không chứa ảnh. Client gửi lại cùng
     // imageFingerprint để try-on tránh phân tích pose trùng lặp.
     poseCache: bodyAnalysis.poseCache,

@@ -18,6 +18,7 @@ worker không chạy, nên bật/tắt service này không làm hỏng tính nă
     JAPANO_BODY_WORKER_PORT=7863 python3 backend/body_analysis_service.py
 """
 
+import base64
 import json
 import os
 import sys
@@ -30,6 +31,17 @@ sys.path.insert(0, str(ROOT))
 
 PORT = int(os.getenv('JAPANO_BODY_WORKER_PORT', '7863'))
 MAX_BODY_BYTES = int(os.getenv('JAPANO_BODY_WORKER_MAX_BYTES', str(48 * 1024 * 1024)))
+
+
+def _clamp_float(value, fallback, low, high):
+    """Số từ client, kẹp vào khoảng dùng được. Giá trị hỏng thì lấy mặc định."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    if number != number:  # NaN
+        return fallback
+    return min(high, max(low, number))
 
 
 def warm_up():
@@ -78,7 +90,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {'ok': False, 'message': 'not found'})
 
     def do_POST(self):
-        if self.path.rstrip('/') != '/analyze':
+        route = self.path.rstrip('/')
+        if route == '/compose':
+            self._handle_compose()
+            return
+        if route != '/analyze':
             self._send(404, {'ok': False, 'message': 'not found'})
             return
         length = int(self.headers.get('Content-Length') or 0)
@@ -113,6 +129,72 @@ class Handler(BaseHTTPRequestHandler):
             result['durationMs'] = int((time.time() - started) * 1000)
             result['servedBy'] = 'warm-worker'
             self._send(200, result)
+        except Exception as error:
+            self._send(500, {'ok': False, 'message': f'{type(error).__name__}: {error}'})
+
+    def _handle_compose(self):
+        """Ghép người vào ảnh phong cảnh. Chạy ở đây vì phiên U2Net đã ấm sẵn.
+
+        Backend đã tải ảnh nền và tự quyết định địa điểm trước khi gọi vào đây;
+        worker không nhận URL từ bên ngoài và không tự đi tải gì cả.
+        """
+        length = int(self.headers.get('Content-Length') or 0)
+        if length <= 0 or length > MAX_BODY_BYTES:
+            self._send(413, {'ok': False, 'message': 'payload rỗng hoặc quá lớn'})
+            return
+        try:
+            payload = json.loads(self.rfile.read(length))
+        except Exception as error:
+            self._send(400, {'ok': False, 'message': f'JSON không hợp lệ: {error}'})
+            return
+
+        from accessory_pipeline import decode_image
+        import body_analysis as BA
+        import scene_compose
+
+        started = time.time()
+        try:
+            person = decode_image(payload.get('personImageBase64'))
+            background = decode_image(payload.get('backgroundImageBase64'))
+            if person is None or background is None:
+                self._send(400, {'ok': False, 'message': 'Thiếu ảnh người hoặc ảnh nền.'})
+                return
+            person = person.convert('RGB')
+            mask = BA.person_mask(person)
+            if mask is None:
+                self._send(422, {
+                    'ok': False,
+                    'code': 'PERSON_NOT_SEGMENTED',
+                    'message': 'Không tách được người khỏi nền trong ảnh này. Hãy chọn ảnh có người rõ và nền đơn giản hơn.',
+                })
+                return
+            # Vị trí đặt người đến từ metadata của scene (backend/lib/japanScenes.js).
+            # Hai tham số dưới đây chỉ là tinh chỉnh của người dùng quanh vị trí
+            # đó, và vẫn bị compose_scene kẹp lại trong personHeightRatio.
+            composition = payload.get('composition') or None
+            ratio = payload.get('heightRatio')
+            ratio = _clamp_float(ratio, None, 0.20, 0.95) if ratio is not None else None
+            anchor_x = payload.get('anchorX')
+            anchor_x = _clamp_float(anchor_x, None, 0.0, 1.0) if anchor_x is not None else None
+            quality = int(_clamp_float(payload.get('quality'), 90, 60, 95))
+
+            composed, placement = scene_compose.compose_scene(
+                person, background, mask,
+                composition=composition,
+                height_ratio=ratio,
+                anchor_x=anchor_x,
+            )
+            jpeg = scene_compose.encode_jpeg(composed, quality=quality)
+            self._send(200, {
+                'ok': True,
+                'imageBase64': 'data:image/jpeg;base64,' + base64.b64encode(jpeg).decode('ascii'),
+                'width': composed.width,
+                'height': composed.height,
+                'placement': placement,
+                'durationMs': int((time.time() - started) * 1000),
+                'servedBy': 'warm-worker',
+                'method': 'segmentation-composite',
+            })
         except Exception as error:
             self._send(500, {'ok': False, 'message': f'{type(error).__name__}: {error}'})
 

@@ -245,7 +245,34 @@ def open_rgb(path: Path) -> Image.Image:
         return ImageOps.exif_transpose(source).convert("RGB")
 
 
-def polish_output(image: Image.Image) -> Image.Image:
+def tryon_quality_profile(mode: str | None = None):
+    """Profile theo request: giảm bước suy luận nhưng vẫn upscale/sharpen nét.
+
+    `balanced` là mặc định của app: 20 bước thay vì 25 trên máy hiện tại, còn
+    cạnh dài vẫn 1536 nên preview trên điện thoại không bị mềm. `high` giữ đúng
+    cấu hình acceptance cũ; `fast` dành cho màn xem nhanh.
+    """
+    requested = str(mode or "high").strip().lower()
+    if requested not in {"fast", "balanced", "high"}:
+        requested = "balanced"
+    high_steps = max(1, int(os.getenv("JAPANO_FASHN_STEPS", "25")))
+    high_edge = max(0, int(os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")))
+    if requested == "fast":
+        return {
+            "name": "fast",
+            "steps": min(high_steps, max(8, int(os.getenv("JAPANO_FASHN_FAST_STEPS", "16")))),
+            "longEdge": min(high_edge or 1280, max(768, int(os.getenv("JAPANO_TRYON_FAST_LONG_EDGE", "1280")))),
+        }
+    if requested == "balanced":
+        return {
+            "name": "balanced",
+            "steps": min(high_steps, max(10, int(os.getenv("JAPANO_FASHN_BALANCED_STEPS", "20")))),
+            "longEdge": high_edge,
+        }
+    return {"name": "high", "steps": high_steps, "longEdge": high_edge}
+
+
+def polish_output(image: Image.Image, target_long_edge: int | None = None) -> Image.Image:
     """Xuất ảnh nét đồng nhất mà không gọi thêm model sinh ảnh.
 
     FASHN gốc sinh ở lưới suy luận của model. Upscale Lanczos + unsharp nhẹ giữ nguyên
@@ -254,7 +281,10 @@ def polish_output(image: Image.Image) -> Image.Image:
     tuần tự phần weights không hoạt động về RAM để vừa GPU 16 GB.
     """
     result = image.convert("RGB")
-    target_long_edge = max(0, int(os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")))
+    target_long_edge = max(0, int(
+        os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")
+        if target_long_edge is None else target_long_edge
+    ))
     current_long_edge = max(result.size)
     if target_long_edge and current_long_edge < target_long_edge:
         scale = target_long_edge / current_long_edge
@@ -853,6 +883,93 @@ def run_accessory_refine_locked(
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
 
 
+def render_two_piece_swimwear(
+    person: Image.Image,
+    top: Image.Image,
+    bottom: Image.Image,
+    seed: int,
+    repose: bool = False,
+    low_memory: bool = False,
+) -> Image.Image:
+    """Mặc bikini hai mảnh trong một lượt edit đa tham chiếu.
+
+    FASHN chỉ có tops/bottoms/one-pieces. Thực nghiệm thật cho thấy gửi cả set
+    bằng one-pieces tạo jumpsuit, còn hai lượt tuần tự kéo quần thành váy và
+    làm drift cơ thể. FLUX nhận đồng thời hai flat-lay nên khóa được khoảng hở
+    ở eo và hình học quần bikini mà chỉ cần một lượt inference.
+    """
+    pipe = load_flux()
+    width, height = normalized_output_size(person, low_memory)
+    references = [person, top, bottom]
+    pose_note = ""
+    if repose:
+        references.append(open_rgb(POSE_REFERENCE))
+        pose_note = (
+            "Image 4 is an identity-free pose guide. Move only the main person into its upright front-facing stance, "
+            "while retaining the exact identity and body proportions from image 1. "
+        )
+    prompt = (
+        "Edit image 1 only. Image 1 is the adult user's photograph and is the absolute identity, face, hair, body, pose, "
+        "background and lighting reference. Image 2 is the exact bikini top. Image 3 is the exact matching bikini bottom. "
+        + pose_note
+        + "Replace only the main person's current upper and lower garments with the exact two-piece swimwear from images 2 and 3. "
+        "The top is a fitted halter bikini top: it must cover the entire chest and end immediately below the bust/ribcage. "
+        "Leave a clearly visible natural strip of bare midriff between the two separate pieces. "
+        "The bottom is a high-waisted bikini brief with exactly two high-cut leg openings; it must end at the upper thighs and fully cover the pelvis and buttocks. "
+        "Match the white fabric and pink cherry-blossom branch print exactly. Preserve the person's exact face, age, skin tone, "
+        "body width, height, limbs, hands and proportions. Do not slim, enlarge, reshape or sexualize the body. "
+        "ABSOLUTELY NO skirt, shorts, dress, romper, jumpsuit, bodysuit, apron, loose cloth panel, fabric bridge across the abdomen, "
+        "fabric extending down either thigh, transparency, nudity, tearing or exposed chest/pelvis/buttocks. "
+        "No extra person, limb, prop or text. Photorealistic Japanese fashion catalog image with natural fabric contact and sharp print."
+    )
+    generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(seed)
+    return pipe(
+        image=references,
+        prompt=prompt,
+        width=width,
+        height=height,
+        guidance_scale=float(os.getenv("JAPANO_SWIMWEAR_CFG", "1.0")),
+        num_inference_steps=int(os.getenv("JAPANO_SWIMWEAR_STEPS", "5")),
+        generator=generator,
+    ).images[0].convert("RGB")
+
+
+def run_swimwear_tryon_locked(
+    person_path: Path,
+    top_path: Path,
+    bottom_path: Path,
+    seed: int,
+    repose: bool = False,
+):
+    global LAST_ENGINE
+    with LOCK:
+        GPU_ACTIVE_FILE.write_text(str(os.getpid()), encoding="utf-8")
+        try:
+            check_cancelled()
+            unload_fashn()
+            release_ollama_vram()
+            cuda_cleanup()
+            person = open_rgb(person_path)
+            top = open_rgb(top_path)
+            bottom = open_rgb(bottom_path)
+            prefer_low_memory = os.getenv("JAPANO_SWIMWEAR_LOW_MEMORY", "1").strip().lower() not in {
+                "0", "false", "no", "off"
+            }
+            result = render_two_piece_swimwear(
+                person, top, bottom, seed, repose=repose, low_memory=prefer_low_memory,
+            )
+            check_cancelled()
+            output_path = RUNTIME_DIR / f"swimwear-{time.time_ns()}.png"
+            polish_output(result).save(output_path, optimize=True)
+            LAST_ENGINE = "flux2-klein-4b-two-piece-swimwear" + ("+pose" if repose else "")
+            return output_path
+        finally:
+            GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            if os.getenv("JAPANO_UNLOAD_AFTER_TRYON", "1").strip().lower() not in {"0", "false", "no", "off"}:
+                unload_flux()
+            cuda_cleanup()
+
+
 def run_tryon(
     person_path: Path,
     cloth_path: Path,
@@ -862,6 +979,7 @@ def run_tryon(
     refine: bool,
     seed: int,
     low_memory: bool = False,
+    quality_mode: str = "high",
 ):
     global LAST_ENGINE
     check_cancelled()
@@ -878,13 +996,14 @@ def run_tryon(
     pipeline = load_fashn()
     check_cancelled()
     cloth = open_rgb(cloth_path)
+    quality = tryon_quality_profile(quality_mode)
     output = pipeline(
         person_image=person,
         garment_image=cloth,
         category=category,
         garment_photo_type=garment_photo_type,
         num_samples=1,
-        num_timesteps=int(os.getenv("JAPANO_FASHN_STEPS", "30")),
+        num_timesteps=quality["steps"],
         guidance_scale=float(os.getenv("JAPANO_FASHN_CFG", "1.5")),
         seed=seed,
         segmentation_free=True,
@@ -904,12 +1023,13 @@ def run_tryon(
         finally:
             unload_flux()
     output_path = RUNTIME_DIR / f"tryon-{time.time_ns()}.png"
-    output = polish_output(output)
+    output = polish_output(output, quality["longEdge"])
     output.save(output_path, optimize=True)
     stages = []
     if repose:
         stages.append("flux2-klein-4b-pose")
     stages.append("fashn-vton-1.5")
+    stages.append(f"{quality['name']}-{quality['steps']}steps")
     if refined:
         stages.append("flux2-klein-4b-fidelity")
     elif refine:
@@ -928,6 +1048,7 @@ def run_tryon_locked(
     repose: bool,
     refine: bool,
     seed: int,
+    quality_mode: str = "high",
 ):
     """Serialize GPU jobs without ever blocking FastAPI's event loop.
 
@@ -954,6 +1075,7 @@ def run_tryon_locked(
                         refine,
                         seed,
                         low_memory=prefer_low_memory or attempt > 0,
+                        quality_mode=quality_mode,
                     )
                 except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
                     retryable = isinstance(exc, torch.cuda.OutOfMemoryError) or any(
@@ -1003,6 +1125,7 @@ def health():
         "primary": "fashn-vton-1.5",
         "poseEditor": "flux2-klein-4b" if flux_ready else "unavailable",
         "accessoryRefiner": "flux2-klein-4b-multi-reference" if flux_ready else "unavailable",
+        "twoPieceSwimwear": "flux2-klein-4b-multi-reference" if flux_ready else "unavailable",
         "fitRefiner": "flux2-klein-4b-fit-refine" if flux_ready else "unavailable",
         "fitRefinerReady": flux_ready,
         "fitLora": fit_lora_status(),
@@ -1019,6 +1142,9 @@ def health():
             "lowMemory": os.getenv("JAPANO_TRYON_LOW_MEMORY", "1") not in {"0", "false", "no", "off"},
             "fitLowMemory": os.getenv("JAPANO_FIT_LOW_MEMORY", "1") not in {"0", "false", "no", "off"},
             "outputLongEdge": int(os.getenv("JAPANO_TRYON_OUTPUT_LONG_EDGE", "1536")),
+            "profiles": {
+                name: tryon_quality_profile(name) for name in ("fast", "balanced", "high")
+            },
         },
     }
 
@@ -1114,6 +1240,48 @@ async def accessory_refine(
             item_path.unlink(missing_ok=True)
 
 
+@api.post("/swimwear-tryon")
+async def swimwear_tryon(
+    person: UploadFile = File(...),
+    top: UploadFile = File(...),
+    bottom: UploadFile = File(...),
+    repose: bool = Form(False),
+    seed: int = Form(43),
+):
+    person_path = RUNTIME_DIR / f"swimwear-person-{time.time_ns()}.png"
+    top_path = RUNTIME_DIR / f"swimwear-top-{time.time_ns()}.png"
+    bottom_path = RUNTIME_DIR / f"swimwear-bottom-{time.time_ns()}.png"
+    person_path.write_bytes(await person.read())
+    top_path.write_bytes(await top.read())
+    bottom_path.write_bytes(await bottom.read())
+    try:
+        CANCEL_REQUESTED.clear()
+        output_path = await run_in_threadpool(
+            run_swimwear_tryon_locked, person_path, top_path, bottom_path, int(seed), bool(repose),
+        )
+        return FileResponse(
+            output_path,
+            media_type="image/png",
+            headers={
+                "x-japano-engine": LAST_ENGINE,
+                "x-japano-reposed": "true" if repose else "false",
+            },
+        )
+    except torch.cuda.OutOfMemoryError as exc:
+        unload_flux()
+        unload_fashn()
+        raise HTTPException(status_code=507, detail="GPU không đủ VRAM cho thử bikini hai mảnh") from exc
+    except GpuJobCancelled as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        print(f"Two-piece swimwear try-on failed: {exc}", flush=True)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        person_path.unlink(missing_ok=True)
+        top_path.unlink(missing_ok=True)
+        bottom_path.unlink(missing_ok=True)
+
+
 @api.post("/fit-refine")
 async def fit_refine(
     person: UploadFile = File(...),
@@ -1197,6 +1365,7 @@ async def tryon(
     repose: bool = Form(False),
     refine: bool = Form(False),
     seed: int = Form(42),
+    quality_mode: str = Form("high"),
 ):
     if category not in {"tops", "bottoms", "one-pieces"}:
         raise HTTPException(status_code=400, detail="category không hợp lệ")
@@ -1209,7 +1378,7 @@ async def tryon(
     try:
         CANCEL_REQUESTED.clear()
         output_path, reposed_path = await run_in_threadpool(
-            run_tryon_locked, person_path, cloth_path, category, garment_photo_type, repose, refine, seed
+            run_tryon_locked, person_path, cloth_path, category, garment_photo_type, repose, refine, seed, quality_mode
         )
         return FileResponse(
             output_path,

@@ -5,12 +5,14 @@ const { getDb, mongoEnabled } = require('./mongo');
 const { logger } = require('./logger');
 const {
   normalizeState,
+  hasNormalizedStorage,
   loadStateFromCollections,
   persistStateToCollections,
   ensureMongoIndexes,
   dropLegacyCollections,
   repairLegacyReferences,
   relationshipErrors,
+  forgetPersistedDigests,
 } = require('./mongoCollections');
 
 // Thông tin xác thực KHÔNG được rời khỏi máy chủ. Trước đây GET /api/state và
@@ -57,6 +59,7 @@ function preserveCredentials(currentUsers, incomingUsers) {
 const SERVER_MANAGED_FIELDS = Object.freeze([
   'orders', 'interactions', 'searchLogs', 'pushTokens', 'profiles', 'chats',
   'goals', 'aiDescriptions', 'flagcardCollections',
+  'japanSpots',
   'voucherRedemptions', 'vipMemberships', 'payments', 'returnRequests', 'carts',
   'reviews', 'reviewReactions', 'moderationSamples', 'addresses', 'wishlists',
 ]);
@@ -111,6 +114,10 @@ function createStore(filePath) {
     useMongo = false;
     mongoReady = false;
     mongoState = null;
+    // Bộ nhớ vân tay chỉ đúng khi tiến trình này là người ghi duy nhất. Sau khi
+    // rớt về file, Mongo có thể bị người khác sửa; quên hết để lần kết nối lại
+    // ghi đủ mọi collection thay vì bỏ qua nhầm collection đã lệch.
+    forgetPersistedDigests();
     // Ghi đè db.json bằng state lấy từ MongoDB là thao tác PHÁ HUỶ, và nó xảy ra
     // đúng lúc tệ nhất: khi MongoDB vừa trục trặc. Nếu dữ liệu trên MongoDB
     // đang thiếu (migration dở dang, script ghi sai collection), bản thiếu đó
@@ -150,7 +157,15 @@ function createStore(filePath) {
     persistTimer = setTimeout(() => {
       persistTimer = null;
       persistQueue = persistQueue
-        .then(async () => persistStateToCollections(await getDb(), snapshot))
+        // `skipUnchanged` so vân tay nội dung từng collection với lần ghi trước
+        // và chỉ gửi collection thật sự đổi. Trước đây thêm một món vào giỏ ghi
+        // lại 34 collection / 2.073 document / 68 lệnh Mongo; giờ còn đúng
+        // cart_items: 1 collection / 6 document / 2 lệnh.
+        //
+        // An toàn vì tiến trình này là người ghi duy nhất vào các collection đó.
+        // Mọi đường thoát khỏi giả định đó — fallback về file, migration, script
+        // ngoài — đều phải gọi forgetPersistedDigests().
+        .then(async () => persistStateToCollections(await getDb(), snapshot, { skipUnchanged: true }))
         .catch((error) => activateFileFallback(snapshot, error));
     }, 40);
   }
@@ -203,10 +218,16 @@ function createStore(filePath) {
       const db = await getDb();
       if (!db) throw new Error('MongoDB không khả dụng');
       const legacy = await db.collection('app_state').findOne({ _id: 'main' });
-      const normalizedProductCount = await db.collection('product_details').countDocuments({});
+      // Hỏi dấu mốc lược đồ, KHÔNG đếm product_details.
+      //
+      // product_details đã được gộp vào products rồi drop. Phép đếm cũ trả 0 —
+      // trùng đúng con số của "database hoàn toàn trống" — nên boot tưởng phải
+      // seed lại và ghi đè Atlas bằng db.json. Lần chạy thật đã xoá 17 sản
+      // phẩm, 85 biến thể và 17 ảnh chỉ tồn tại trên Atlas.
+      const normalized = await hasNormalizedStorage(db);
       let migrated = false;
 
-      if (legacy && normalizedProductCount === 0) {
+      if (legacy && !normalized) {
         const { _id, _updatedAt, _syncedAt, ...legacyState } = legacy;
         const repaired = repairLegacyReferences(legacyState);
         mongoState = normalizeState(repaired.state);
@@ -220,11 +241,19 @@ function createStore(filePath) {
         mongoState = verified;
         migrated = true;
         if (repaired.report.length) logger.warn({ repairs: repaired.report }, 'Đã sửa tham chiếu mồ côi khi bỏ app_state.');
-      } else if (normalizedProductCount > 0) {
+      } else if (normalized) {
         mongoState = await loadStateFromCollections(db);
         // app_state cũ có thể còn sót sau một lần migration bị ngắt ở bước cuối.
         if (legacy) await dropLegacyCollections(db);
       } else {
+        // Chỉ seed từ db.json khi database THẬT SỰ trống. Kiểm lại một lần nữa
+        // ngay trước khi ghi: seed đè lên một database đang có dữ liệu là thao
+        // tác phá huỷ không thể hoàn tác, và nó chỉ được phép xảy ra khi không
+        // có gì để mất.
+        const existing = await db.collection('products').estimatedDocumentCount().catch(() => 0);
+        if (existing > 0) {
+          throw new Error(`Database đã có ${existing} sản phẩm nhưng thiếu dấu mốc lược đồ. Dừng để không ghi đè bằng db.json — hãy kiểm tra thủ công.`);
+        }
         const repaired = repairLegacyReferences(readFileState());
         mongoState = normalizeState(repaired.state);
         await persistStateToCollections(db, mongoState);

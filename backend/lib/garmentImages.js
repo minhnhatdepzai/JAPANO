@@ -9,7 +9,7 @@ const PRODUCT_ASSETS_DIR = path.join(__dirname, '..', '..', 'mobile', 'assets', 
 // thể để sót da/tay/người mẫu; tự động tin mọi file *_tryon-flat sẽ làm model
 // mặc cả những phần đó lên khách hàng.
 const APPROVED_TRYON_FLATS = new Set(
-  String(process.env.JAPANO_APPROVED_TRYON_FLATS || 'kimono-hong,ao-len-cardigan,yumeko,haori-dang-dai')
+  String(process.env.JAPANO_APPROVED_TRYON_FLATS || 'kimono-hong,ao-len-cardigan,yumeko,haori-dang-dai,bikini-hoa-anh-dao')
     .split(',').map((value) => value.trim()).filter(Boolean),
 );
 
@@ -19,11 +19,35 @@ function resolveGarmentImage(productId) {
     // Ảnh *_tryon-flat là reference sạch dành riêng cho VTON: không có người
     // mẫu, bó hoa hay cảnh nền để parser nhận nhầm thành một phần trang phục.
     const cleanTryon = APPROVED_TRYON_FLATS.has(String(productId))
-      ? files.find((name) => /_tryon-flat\.(?:jpe?g|png|webp)$/i.test(name))
+      ? files.find((name) => new RegExp(`^${productId}_(?:single-set_)?tryon-flat\\.(?:jpe?g|png|webp)$`, 'i').test(name))
       : null;
     if (cleanTryon) return path.join(PRODUCT_ASSETS_DIR, cleanTryon);
     const catalogFiles = files.filter((name) => !/_tryon-(?:flat|candidate)\.(?:jpe?g|png|webp)$/i.test(name));
     return catalogFiles.length ? path.join(PRODUCT_ASSETS_DIR, catalogFiles[0]) : null;
+  } catch { return null; }
+}
+
+// FASHN chỉ nhận một vùng quần áo cho mỗi lượt. Một bộ bikini hai mảnh không
+// được gửi bằng category "one-pieces" vì model sẽ nối phần eo thành jumpsuit.
+// Hai ảnh dưới đây là cùng một thiết kế catalog, tách thành đúng một áo và một
+// quần để backend mặc tuần tự bottoms -> tops.
+function resolveTwoPieceGarmentImages(productId) {
+  try {
+    const id = String(productId || '').trim();
+    if (!id || !APPROVED_TRYON_FLATS.has(id)) return null;
+    const files = fs.readdirSync(PRODUCT_ASSETS_DIR);
+    const findPart = (part) => files.find((name) => (
+      name === `${id}_${part}_tryon-flat.png`
+      || name === `${id}_${part}_tryon-flat.jpg`
+      || name === `${id}_${part}_tryon-flat.webp`
+    ));
+    const top = findPart('top');
+    const bottom = findPart('bottom');
+    if (!top || !bottom) return null;
+    return {
+      top: path.join(PRODUCT_ASSETS_DIR, top),
+      bottom: path.join(PRODUCT_ASSETS_DIR, bottom),
+    };
   } catch { return null; }
 }
 
@@ -47,4 +71,10 @@ function resolveAccessoryImage(productId) {
   } catch { return null; }
 }
 
-module.exports = { PRODUCT_ASSETS_DIR, APPROVED_TRYON_FLATS, resolveGarmentImage, resolveAccessoryImage };
+module.exports = {
+  PRODUCT_ASSETS_DIR,
+  APPROVED_TRYON_FLATS,
+  resolveGarmentImage,
+  resolveTwoPieceGarmentImages,
+  resolveAccessoryImage,
+};

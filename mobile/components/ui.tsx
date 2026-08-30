@@ -33,8 +33,9 @@ export const Header = ({ title, onBack, right }:{ title?:string; onBack?:()=>voi
 
 export const Btn = ({ label, onPress, variant='primary', style, icon, disabled }:
   { label:string; onPress?:()=>void; variant?:'primary'|'ghost'|'ink'; style?:ViewStyle; icon?:string; disabled?:boolean }) => {
-  const bg = variant==='primary'?C.shu: variant==='ink'?C.ai:'transparent';
+  const bg = variant==='primary'?C.shu: variant==='ink'?C.sumi:'transparent';
   const fg = variant==='ghost'?C.shu:'#fff';
+  const borderColor = variant==='ink'?C.sumi:C.shuDeep;
   return (
     // Nút vô hiệu hoá không được co lại khi chạm — phản hồi chạm mà không có
     // hành động nào xảy ra sau đó là một lời hứa suông.
@@ -45,7 +46,7 @@ export const Btn = ({ label, onPress, variant='primary', style, icon, disabled }
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: Boolean(disabled) }}
-      style={[s.btn,{ backgroundColor:bg, borderWidth:1.5, borderColor:C.shuDeep }, disabled&&{ opacity:0.42 }, style]}
+      style={[s.btn,{ backgroundColor:bg, borderWidth:1.5, borderColor }, disabled&&{ opacity:0.42 }, style]}
     >
       {!!icon && <Ionicons name={icon as any} size={18} color={fg} style={{ marginRight:8 }} />}
       <Text style={{ color:fg, fontFamily:F.bodyB, fontSize:15 }}>{label}</Text>

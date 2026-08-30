@@ -12,7 +12,10 @@ const {
   mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled, analyzeViaWorker,
   userProvidedMeasurement, profileForMeasurementMode, imageFingerprint,
 } = require('../lib/bodyAnalysis');
+const { matchBodyAnchor } = require('../lib/bodyAnchors');
 const { logger } = require('../lib/logger');
+const { safetyPolicyFor } = require('../lib/garmentCoverage');
+const { checkAdultImage } = require('../lib/adultImageCheck');
 
 // map 4 lựa chọn phong cách của app sang đúng từ vựng tag đang có trong catalog (backend/seed.js) để content-based match được
 const STYLE_LABELS = {
@@ -22,6 +25,22 @@ const STYLE_LABELS = {
   'nhat-co': ['truyền thống', 'nhật', 'lễ hội'],
 };
 const styleTags = (style) => STYLE_LABELS[style] || [style];
+
+function groundedRewriteOrDraft(generated, draft) {
+  const output = String(generated || '').trim();
+  const grounded = String(draft || '').trim();
+  if (!output) return { message: grounded, accepted:false, reason:'ollama-empty' };
+  const refusal = /(không thể trả lời|không trả lời được|không có khả năng|tôi không thể|xin lỗi.*không thể|không hỗ trợ câu hỏi)/i;
+  if (refusal.test(output) && !refusal.test(grounded)) {
+    return { message: grounded, accepted:false, reason:'ollama-unhelpful-refusal' };
+  }
+  // Giá/voucher/order là dữ kiện dễ bị model làm rơi. Nếu draft có số tiền/mã
+  // mà bản viết lại xoá sạch mọi chữ số, giữ nguyên draft grounded.
+  if (/\d/.test(grounded) && !/\d/.test(output)) {
+    return { message: grounded, accepted:false, reason:'ollama-dropped-grounded-facts' };
+  }
+  return { message: output, accepted:true, reason:null };
+}
 
 module.exports = function registerStylistRoutes(api, ctx) {
   const {
@@ -107,13 +126,13 @@ module.exports = function registerStylistRoutes(api, ctx) {
         return { message: draft, used: false, model: 'local-grounded-retrieval', latencyMs: Date.now() - startedAt, fallbackReason: `ollama-http-${response.status}` };
       }
       const data = await response.json();
-      const message = String(data.response || '').trim();
+      const checked = groundedRewriteOrDraft(data.response, draft);
       return {
-        message: message || draft,
-        used: Boolean(message),
-        model: message ? model : 'local-grounded-retrieval',
+        message: checked.message,
+        used: checked.accepted,
+        model: checked.accepted ? model : 'local-grounded-retrieval',
         latencyMs: Date.now() - startedAt,
-        fallbackReason: message ? null : 'ollama-empty',
+        fallbackReason: checked.reason,
       };
     } catch (error) {
       return {
@@ -207,15 +226,25 @@ module.exports = function registerStylistRoutes(api, ctx) {
     // đúng một tài khoản, không thể tạo mục tiêu "giả danh" người khác.
     const userId = String(req.user.id);
     const state = read();
+    const goalType = String(input.goalType) === 'health' ? 'health' : 'shopping';
     const requestedId = String(input.productId || '');
-    const product = state.products.find((item) => item.slug === requestedId || item.id === requestedId);
-    if (!product) return res.status(400).json({ ok: false, message: 'Hãy chọn một sản phẩm JAPANO làm mục tiêu.' });
+    const catalogProduct = state.products.find((item) => item.slug === requestedId || item.id === requestedId);
+    if (goalType === 'shopping' && !catalogProduct) {
+      return res.status(400).json({ ok: false, message: 'Hãy chọn một sản phẩm JAPANO làm mục tiêu.' });
+    }
+    // Lộ trình sức khỏe là mục tiêu độc lập, không gắn giả vào món hàng đang
+    // được chọn trên tab Mua sắm. Điều này loại lời khuyên kiểu “để mặc áo X”
+    // khỏi tab sức khỏe và không tạo quỹ/voucher mua hàng ngoài ngữ cảnh.
+    const product = goalType === 'health'
+      ? { slug: 'health-wellness', name: 'Sức khỏe bền vững', price: 0, image: '' }
+      : catalogProduct;
     const plan = buildGoalPlan(input, product);
     if (String(process.env.JAPANO_GOALS_LLM || '1') !== '0' && !tryonGpuBusy()) {
       plan.coaching = await enhanceCoaching({
         product,
         saving: plan.saving,
         wellness: plan.wellness,
+        goalType: plan.goalType,
         ollamaUrl: OLLAMA_URL,
         model: process.env.JAPANO_GOALS_MODEL || 'qwen2.5:7b',
         timeoutMs: Number(process.env.JAPANO_GOALS_TIMEOUT_MS || 90000),
@@ -223,7 +252,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
     }
     const now = Date.now();
     const goal = {
-      id: `goal-${userId}-${product.slug}`,
+      id: goalType === 'health' ? `goal-${userId}-health` : `goal-${userId}-${product.slug}`,
       userId,
       productId: product.slug,
       product: { slug: product.slug, name: product.name, price: product.price, image: product.image },
@@ -236,6 +265,9 @@ module.exports = function registerStylistRoutes(api, ctx) {
         fixedExpenses: Number(input.fixedExpenses) || 0,
         currentSavings: Number(input.currentSavings) || 0,
         targetMonths: Number(input.targetMonths) || 6,
+        goalType: plan.goalType,
+        healthGoal: String(input.healthGoal || ''),
+        activityLevel: String(input.activityLevel || ''),
       },
       plan,
       createdAt: now,
@@ -251,6 +283,10 @@ module.exports = function registerStylistRoutes(api, ctx) {
         next.goals[index] = goal;
       } else {
         next.goals.push(goal);
+      }
+      if (goalType === 'health') {
+        goal.fund = null;
+        return next;
       }
       ensureGoalFund(goal, product.price, now);
       // Số "đã tiết kiệm" khách khai lúc lập kế hoạch được ghi thành khoản đầu
@@ -380,11 +416,35 @@ module.exports = function registerStylistRoutes(api, ctx) {
         return res.status(503).json({ ok: false, message: analysis?.message || 'Không phân tích được vóc dáng từ ảnh này.' });
       }
       analysis.imageFingerprint = imageFingerprint(imageBase64);
+      // Năm ảnh mẫu chỉ là prior chạy ngầm. Không trả id/URL ảnh cho app và
+      // không thay ảnh khách; chúng bổ sung đường chọn size khi ảnh thiếu scale.
+      analysis.referenceProfile = matchBodyAnchor(
+        analysis,
+        b.sex || profile.gender || profile.sex,
+      );
       // Số đo thật (nếu khách đã nhập) luôn thắng ước lượng của AI khi tính size.
       const merged = mergeBodySignals(profile, analysis);
       const productId = String(b.productId || '').trim();
       const state = read();
       const product = productId ? state.products.find((item) => item.slug === productId || item.id === productId) : null;
+      const adultPolicy = product ? safetyPolicyFor([product]) : null;
+      let adultVerification;
+      if (adultPolicy?.requires18Plus) {
+        const focusBeforeCheck = getFocus()?.focus || 'browse';
+        await setFocus('vision').catch(() => undefined);
+        try {
+          adultVerification = await checkAdultImage({
+            imageBase64,
+            ollamaUrl: OLLAMA_URL,
+            cacheKey: analysis.imageFingerprint,
+          });
+        } finally {
+          const restoreFocus = adultPolicy.garmentTypes.includes('bikini_two_piece')
+            ? 'swimwear'
+            : focusBeforeCheck;
+          await setFocus(restoreFocus).catch(() => undefined);
+        }
+      }
       const advice = adviseSize(merged.profile, product);
       logger.info(bodyAnalysisLogLine(analysis));
       res.json({
@@ -394,6 +454,12 @@ module.exports = function registerStylistRoutes(api, ctx) {
         sizeAdvice: advice.advice,
         sources: merged.sources,
         usedEstimate: merged.usedEstimate,
+        usedAnchor: merged.usedAnchor,
+        adultVerification: adultVerification ? {
+          available: adultVerification.available,
+          verdict: adultVerification.verdict,
+          cached: Boolean(adultVerification.cached),
+        } : undefined,
       });
     } catch (error) {
       res.status(500).json({ ok: false, message: error.message || 'Lỗi phân tích vóc dáng.' });
@@ -473,7 +539,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
         generationModel: generation.model, latencyMs: generation.latencyMs,
         fallbackReason: generation.fallbackReason,
       });
-      const explicitProductIntent = ['lookup', 'price', 'outfit'].includes(result.intent);
+      const explicitProductIntent = ['lookup', 'shopping', 'price', 'outfit'].includes(result.intent);
       (result.productIds || []).forEach((productId, index) => state.interactions.push({
         id: `chat-i-${createdAt}-${index}`, userId, productId,
         type: explicitProductIntent ? 'chat' : 'impression',
@@ -492,3 +558,5 @@ module.exports = function registerStylistRoutes(api, ctx) {
     });
   });
 };
+
+module.exports.groundedRewriteOrDraft = groundedRewriteOrDraft;

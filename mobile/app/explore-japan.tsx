@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -8,7 +8,12 @@ import { SmartImage } from '../components/SmartImage';
 import { JapanMap } from '../components/JapanMap';
 import { useCatalog } from '../lib/data';
 import { JapanSpot, PHOTO_ATTRIBUTION, PREFECTURE_VIDEO, prefecturesInRegion, regionsList, spotsInPrefecture } from '../lib/japanSpots';
-import { getJapanSpotReviews, getJapanSpotSuggestions, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion, SpotRewardConfig } from '../lib/api';
+import { composeScenePhoto, generateTryOn, getJapanSpotReviews, getJapanSpotSuggestions, getSpotRecommendations, JapanScene, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion, SpotRecommendation, SpotRewardConfig, TryOnSafetyError } from '../lib/api';
+import * as ImagePicker from 'expo-image-picker';
+import { saveMediaToLibrary, shareMedia } from '../lib/media';
+import { loadStyleProfile } from '../lib/profile';
+import { useStore } from '../lib/store';
+import { beginGpuJob, endGpuJob } from '../lib/useGpuFocus';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../lib/toast';
 import { MediaAttachPicker, ReviewMediaPlayer } from '../components/MediaAttach';
@@ -139,6 +144,8 @@ function SpotDetail({ spot }: { spot: JapanSpot }) {
       </GuideSection>
       <Pressable style={st.source} onPress={openSource}><Ionicons name="shield-checkmark-outline" size={14} color={C.kin} /><Text style={st.sourceText}>Nguồn kiểm chứng: {spot.sourceLabel}</Text><Ionicons name="open-outline" size={12} color={C.kin} /></Pressable>
 
+      <TravelTryOnBox spot={spot} />
+
       <ReviewsBox place={spot.place} prefecture={spot.prefecture} />
 
       {product && (
@@ -149,6 +156,315 @@ function SpotDetail({ spot }: { spot: JapanSpot }) {
         </>
       )}
     </>
+  );
+}
+
+/**
+ * "Đưa mình tới đây": ghép ảnh khách vào chính địa điểm đang xem.
+ *
+ * App chỉ gửi tên địa điểm; ảnh nền do máy chủ tự tra và tự tải. Người trong
+ * ảnh được CẮT ra rồi đặt lên nền, không đi qua model sinh ảnh — nên khuôn mặt
+ * và cơ thể không thể bị vẽ lại.
+ */
+/**
+ * Thử đồ JAPANO ngay tại trang địa điểm.
+ *
+ * Câu hỏi khối này trả lời: "nếu tôi mặc món này của JAPANO và chụp ở đây thì
+ * có hợp không?" — nên nó phải nằm CÙNG trang với địa điểm, không đẩy người
+ * dùng sang một màn hình khác rồi bắt chọn lại ảnh và địa điểm.
+ *
+ * Thứ tự xử lý cố định:
+ *   ảnh người dùng → thử sản phẩm → ghép người ĐÃ MẶC ĐỒ vào phong cảnh
+ *
+ * Không bao giờ ghép vào cảnh trước rồi mới thử đồ: khi người đã nằm trên hậu
+ * cảnh phức tạp, model giữ khuôn mặt và phối cảnh khó hơn nhiều.
+ *
+ * Đổi sản phẩm giữ nguyên: ảnh người, địa điểm, góc chụp, vị trí cuộn.
+ */
+type TravelPhoto = { uri: string; base64: string; label: string };
+type TravelStep = 'idle' | 'tryon' | 'fit' | 'scene' | 'finishing';
+
+const TRAVEL_STEP: Record<Exclude<TravelStep, 'idle'>, (product: string, place: string) => string> = {
+  tryon: (product) => `Đang mặc thử ${product}…`,
+  fit: () => 'Đang kiểm tra độ vừa…',
+  scene: (_p, place) => `Đang đưa bạn đến ${place}…`,
+  finishing: () => 'Đang hoàn thiện ảnh…',
+};
+
+const TRAVEL_FILTERS: { id: string; label: string; match: (r: SpotRecommendation) => boolean }[] = [
+  { id: 'all', label: 'Tất cả', match: () => true },
+  { id: 'kimono', label: 'Kimono/Yukata', match: (r) => /kimono|yukata|haori|hakama/i.test(`${r.product.name} ${r.product.garmentType || ''}`) },
+  { id: 'top', label: 'Áo', match: (r) => /^áo|blouse|shirt/i.test(r.product.name) },
+  { id: 'skirt', label: 'Váy', match: (r) => /váy|skirt|dress/i.test(r.product.name) },
+  { id: 'pants', label: 'Quần', match: (r) => /quần|culottes|short/i.test(r.product.name) },
+  { id: 'outer', label: 'Áo khoác', match: (r) => /khoác|cardigan|blazer|hanten/i.test(r.product.name) },
+  { id: 'weather', label: 'Hợp thời tiết', match: (r) => r.weatherMatch },
+  { id: 'color', label: 'Hợp màu cảnh', match: (r) => r.colorHarmony === 'tương phản dễ chịu' },
+];
+
+function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { addToCart } = useStore();
+
+  const [photo, setPhoto] = useState<TravelPhoto | null>(null);
+  const [recos, setRecos] = useState<SpotRecommendation[]>([]);
+  const [scenes, setScenes] = useState<JapanScene[]>([]);
+  const [spotInfo, setSpotInfo] = useState<any>(null);
+  const [season, setSeason] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+
+  const [activeScene, setActiveScene] = useState<JapanScene | null>(null);
+  const [selected, setSelected] = useState<SpotRecommendation | null>(null);
+  const [size, setSize] = useState('');
+  const [step, setStep] = useState<TravelStep>('idle');
+  const [tryonImage, setTryonImage] = useState('');
+  const [sceneImage, setSceneImage] = useState('');
+  const [tab, setTab] = useState<'before' | 'tryon' | 'scene'>('scene');
+  const [error, setError] = useState('');
+  const [sceneRetry, setSceneRetry] = useState(false);
+  const [timings, setTimings] = useState<{ tryon?: number; scene?: number }>({});
+
+  // Gợi ý tải ngay khi mở địa điểm, song song với mọi thứ khác. Huỷ khi đổi
+  // địa điểm để một phản hồi đến muộn không ghi đè danh sách mới.
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    (async () => {
+      try {
+        const profile = await loadStyleProfile().catch(() => null);
+        const result = await getSpotRecommendations({
+          place: spot.place, prefecture: spot.prefecture,
+          height: Number(profile?.heightEstimateCm) || undefined,
+          weight: Number(profile?.weightEstimateKg) || undefined,
+          limit: 20, signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setRecos(result.recommendations);
+        setScenes(result.scenes);
+        setSpotInfo(result.spot);
+        setSeason(result.season);
+        setActiveScene(result.scenes[0] || null);
+      } catch { /* để danh sách rỗng, phần dưới sẽ báo */ }
+      finally { if (!controller.signal.aborted) setLoading(false); }
+    })();
+    return () => controller.abort();
+  }, [spot.place, spot.prefecture]);
+
+  const visibleFilters = useMemo(
+    () => TRAVEL_FILTERS.filter(f => f.id === 'all' || recos.some(f.match)), [recos]);
+  const shown = useMemo(() => {
+    const active = TRAVEL_FILTERS.find(f => f.id === filter) || TRAVEL_FILTERS[0];
+    return recos.filter(active.match);
+  }, [recos, filter]);
+
+  const clearResult = () => { setTryonImage(''); setSceneImage(''); setError(''); setSceneRetry(false); setTimings({}); };
+
+  const pickPhoto = async (camera: boolean) => {
+    setError('');
+    if (camera) {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) { Alert.alert('Cần quyền camera', 'Hãy cấp quyền camera để chụp ảnh.'); return; }
+    }
+    const pick = camera
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, base64: true })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, base64: true });
+    const asset = pick.canceled ? null : pick.assets?.[0];
+    if (!asset?.base64) return;
+    setPhoto({ uri: asset.uri, base64: `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`, label: 'Ảnh của bạn' });
+    clearResult();
+  };
+
+  const run = async (item: SpotRecommendation, chosenSize: string, sceneOnly = false) => {
+    if (!photo) { Alert.alert('Chưa có ảnh', 'Hãy chụp ảnh hoặc chọn ảnh có sẵn.'); return; }
+    setError(''); setSceneRetry(false);
+    beginGpuJob();
+    let worn = sceneOnly ? tryonImage : '';
+    try {
+      if (!worn) {
+        setStep('tryon');
+        const t0 = Date.now();
+        const output = await generateTryOn({
+          personImageBase64: photo.base64,
+          productId: item.product.slug,
+          size: chosenSize,
+          qualityMode: 'balanced',
+        });
+        if (!output.imageUrl) throw new Error(output.message || 'Chưa tạo được ảnh thử đồ.');
+        setStep('fit');
+        worn = output.imageUrl;
+        setTryonImage(worn);
+        setTimings(t => ({ ...t, tryon: Date.now() - t0 }));
+        setTab('tryon');
+      }
+      setStep('scene');
+      const t1 = Date.now();
+      const composed = await composeScenePhoto({
+        place: spot.place, prefecture: spot.prefecture,
+        personImageBase64: worn,
+        sceneId: activeScene?.id,
+      });
+      setStep('finishing');
+      setSceneImage(composed.imageUrl);
+      setTimings(t => ({ ...t, scene: Date.now() - t1 }));
+      setTab('scene');
+    } catch (err: any) {
+      if (err instanceof TryOnSafetyError) setError(err.message);
+      else if (worn) {
+        // Thử đồ xong, chỉ ghép cảnh hỏng: giữ ảnh mặc đồ, cho ghép lại, KHÔNG
+        // bắt chạy lại try-on.
+        setSceneRetry(true);
+        setError(`Ảnh mặc thử đã tạo xong nhưng chưa ghép được vào ${spot.place}. Bạn có thể thử ghép cảnh lại mà không cần thử đồ lại.`);
+        setTab('tryon');
+      } else setError(String(err?.message || 'Chưa tạo được ảnh. Hãy thử lại.'));
+    } finally { endGpuJob(); setStep('idle'); }
+  };
+
+  const tryProduct = (item: SpotRecommendation) => {
+    const chosen = item.recommendedSize || item.product.sizes[0] || 'M';
+    setSelected(item); setSize(chosen); clearResult();
+    void run(item, chosen);
+  };
+
+  const busy = step !== 'idle';
+  const shownImage = tab === 'scene' ? sceneImage : tab === 'tryon' ? tryonImage : (photo?.uri || '');
+  const addSelected = () => {
+    if (!selected) return;
+    addToCart(selected.product.slug, undefined, size);
+    toast(`Đã thêm ${selected.product.name} (size ${size}) vào giỏ ✓`);
+  };
+
+  return (
+    <GuideSection icon="shirt-outline" title="THỬ ĐỒ JAPANO TẠI ĐÂY">
+      <Text style={st.guideText}>
+        Chọn một sản phẩm JAPANO để xem bạn mặc tại {spot.place} có phù hợp không.
+        {spotInfo?.culturalNote ? ` ${spotInfo.culturalNote}` : ''}
+      </Text>
+      {!!season && <Text style={st.tvMeta}>Mùa {season}{spotInfo?.activity ? ` · ${spotInfo.activity}` : ''}</Text>}
+
+      <Text style={st.tvLabel}>1. Ảnh của bạn</Text>
+      <View style={st.tvPickRow}>
+        <Pressable style={st.tvPick} onPress={() => void pickPhoto(true)}><Text style={st.tvPickT}>📷 Chụp</Text></Pressable>
+        <Pressable style={st.tvPick} onPress={() => void pickPhoto(false)}><Text style={st.tvPickT}>▧ Thư viện</Text></Pressable>
+      </View>
+      {!!photo && <Text style={st.tvNote}>Đang dùng: {photo.label}. Đổi sản phẩm vẫn giữ nguyên ảnh này.</Text>}
+
+      {scenes.length > 1 && (
+        <>
+          <Text style={st.tvLabel}>Góc chụp</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tvRow}>
+            {scenes.map(scene => (
+              <Pressable key={scene.id} style={[st.tvScene, activeScene?.id === scene.id && st.tvOn]}
+                onPress={() => { setActiveScene(scene); if (selected && tryonImage) void run(selected, size, true); }}>
+                <SmartImage source={{ uri: scene.thumbnailUrl }} style={st.tvSceneImg} recyclingKey={`tv-s-${scene.id}`} />
+                <Text style={st.tvPresetT} numberOfLines={1}>{scene.name}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      )}
+
+      <Text style={st.tvLabel}>2. Chọn trang phục</Text>
+      {visibleFilters.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tvRow}>
+          {visibleFilters.map(f => (
+            <Pressable key={f.id} style={[st.tvChip, filter === f.id && st.tvChipOn]} onPress={() => setFilter(f.id)}>
+              <Text style={[st.tvChipT, filter === f.id && st.tvChipTOn]}>{f.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+      {loading && <View style={st.tvRow}>{[0, 1, 2].map(i => <View key={i} style={st.tvSkeleton} />)}</View>}
+      {!loading && shown.length === 0 && <Text style={st.tvMeta}>Chưa có sản phẩm nào hợp bộ lọc này.</Text>}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tvRow}>
+        {shown.map(item => (
+          <View key={item.product.slug} style={st.tvCard}>
+            <SmartImage source={{ uri: item.product.image || '' }} style={st.tvCardImg} recyclingKey={`tv-c-${item.product.slug}`} />
+            <View style={st.tvBadgeRow}>
+              {item.seasonMatch && <Text style={st.tvBadge}>Hợp mùa</Text>}
+              {item.colorHarmony === 'tương phản dễ chịu' && <Text style={st.tvBadge}>Hợp cảnh</Text>}
+            </View>
+            <Text style={st.tvCardName} numberOfLines={2}>{item.product.name}</Text>
+            <Text style={st.tvCardPrice}>{money(item.product.price)}</Text>
+            {!!item.recommendedSize && <Text style={st.tvMeta}>Size gợi ý {item.recommendedSize}</Text>}
+            {!!item.reasons[0] && <Text style={st.tvReason} numberOfLines={3}>{item.reasons[0]}</Text>}
+            <Pressable style={[st.tvTry, busy && st.tvTryOff]} disabled={busy} onPress={() => tryProduct(item)}>
+              <Text style={st.tvTryT}>Thử ngay</Text>
+            </Pressable>
+          </View>
+        ))}
+      </ScrollView>
+
+      {busy && (
+        <View style={st.tvProgress}>
+          <ActivityIndicator size="small" color={C.ink} />
+          <Text style={st.tvProgressT}>{TRAVEL_STEP[step as Exclude<TravelStep, 'idle'>](selected?.product.name || 'trang phục', spot.place)}</Text>
+        </View>
+      )}
+      {!!error && (
+        <View style={st.tvErr}>
+          <Text style={st.tvErrT}>{error}</Text>
+          {sceneRetry && selected && (
+            <Pressable style={st.tvErrBtn} onPress={() => void run(selected, size, true)}>
+              <Text style={st.tvErrBtnT}>Thử ghép cảnh lại</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {!!shownImage && (
+        <>
+          <View style={st.tvTabRow}>
+            {([['before', 'Ảnh gốc'], ['tryon', 'Mặc sản phẩm'], ['scene', 'Tại địa điểm']] as const).map(([key, label]) => {
+              const on = key === 'before' ? Boolean(photo) : key === 'tryon' ? Boolean(tryonImage) : Boolean(sceneImage);
+              return (
+                <Pressable key={key} disabled={!on} style={[st.tvTab, tab === key && st.tvTabOn, !on && st.tvTabOff]} onPress={() => setTab(key)}>
+                  <Text style={[st.tvTabT, tab === key && st.tvTabTOn]} numberOfLines={1}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <SmartImage source={{ uri: shownImage }} style={st.tvResult} recyclingKey={`tv-out-${tab}`} />
+          {!!activeScene && tab === 'scene' && <Text style={st.photoCredit}>{activeScene.attribution}</Text>}
+          {(timings.tryon || timings.scene) && (
+            <Text style={st.tvMeta}>
+              {timings.tryon ? `Thử đồ ${(timings.tryon / 1000).toFixed(1)}s` : ''}
+              {timings.tryon && timings.scene ? ' · ' : ''}
+              {timings.scene ? `ghép cảnh ${(timings.scene / 1000).toFixed(1)}s` : ''}
+            </Text>
+          )}
+        </>
+      )}
+
+      {!!selected && (
+        <View style={st.tvBuy}>
+          <Text style={st.tvBuyName}>{selected.product.name}</Text>
+          <Text style={st.tvBuyPrice}>{money(selected.product.price)} · size {size}</Text>
+          <View style={st.tvSizeRow}>
+            {selected.product.sizes.map(s => (
+              <Pressable key={s} style={[st.tvChip, size === s && st.tvChipOn]} onPress={() => { setSize(s); void run(selected, s); }}>
+                <Text style={[st.tvChipT, size === s && st.tvChipTOn]}>{s}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={st.tvCtaRow}>
+            <Btn label="Thêm vào giỏ" variant="ghost" style={{ flex: 1 }} onPress={addSelected} />
+            <Btn label="Mua ngay" style={{ flex: 1 }} onPress={() => { addSelected(); router.push('/cart'); }} />
+          </View>
+          {!!sceneImage && (
+            <View style={st.tvCtaRow}>
+              <Pressable style={st.tvMini} onPress={() => void saveMediaToLibrary(sceneImage, 'photo').then(() => toast('Đã lưu ảnh ✓')).catch(() => toast({ message: 'Chưa lưu được ảnh.', kind: 'error' }))}>
+                <Ionicons name="download-outline" size={14} color={C.ink} /><Text style={st.tvMiniT}>Lưu ảnh</Text>
+              </Pressable>
+              <Pressable style={st.tvMini} onPress={() => void shareMedia(sceneImage, 'photo').catch(() => undefined)}>
+                <Ionicons name="share-social-outline" size={14} color={C.ink} /><Text style={st.tvMiniT}>Chia sẻ</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      )}
+    </GuideSection>
   );
 }
 
@@ -396,6 +712,65 @@ const st = StyleSheet.create({
   spotTip: { fontFamily: F.body, fontSize: 11, color: C.muted, marginTop: 2, lineHeight: 15.5 },
   heroImg: { width: '100%', height: 200, borderRadius: 16, marginBottom: 4 },
   photoCredit: { fontFamily: F.body, fontSize: 9.5, color: C.muted, marginBottom: 10, textAlign: 'right' },
+  travelCta: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.ink, borderRadius: 13, padding: 14, marginTop: 16 },
+  travelCtaT: { fontFamily: F.bodyX, fontSize: 14, color: '#fff' },
+  travelCtaSub: { fontFamily: F.body, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,0.78)', marginTop: 2 },
+  tvMeta: { fontFamily: F.body, fontSize: 10.5, color: C.muted, marginTop: 3 },
+  tvLabel: { fontFamily: F.bodyX, fontSize: 11, letterSpacing: .5, color: C.ink, marginTop: 14 },
+  tvPickRow: { flexDirection: 'row', gap: 9, marginTop: 8 },
+  tvPick: { flex: 1, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingVertical: 9, alignItems: 'center', backgroundColor: C.card },
+  tvPickT: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink },
+  tvRow: { gap: 8, paddingVertical: 9, paddingRight: 4 },
+  tvOn: { borderColor: C.shu, borderWidth: 2 },
+  tvPreset: { width: 72, borderWidth: 1, borderColor: C.line, borderRadius: 9, backgroundColor: C.card, padding: 4 },
+  tvPresetImg: { width: '100%', aspectRatio: 2 / 3, borderRadius: 5, backgroundColor: C.washi2 },
+  tvPresetT: { fontFamily: F.bodyB, fontSize: 9, color: C.ink, marginTop: 3 },
+  tvScene: { width: 118, borderWidth: 1, borderColor: C.line, borderRadius: 9, backgroundColor: C.card, padding: 4 },
+  tvSceneImg: { width: '100%', height: 74, borderRadius: 5, backgroundColor: C.washi2 },
+  tvNote: { fontFamily: F.body, fontSize: 10.5, color: C.muted, backgroundColor: C.washi2, borderRadius: 8, padding: 8 },
+  tvChip: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.card },
+  tvChipOn: { backgroundColor: C.ink, borderColor: C.ink },
+  tvChipT: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
+  tvChipTOn: { color: '#fff' },
+  tvSkeleton: { width: 150, height: 230, borderRadius: 11, backgroundColor: C.washi2 },
+  tvCard: { width: 150, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.card, padding: 7 },
+  tvCardImg: { width: '100%', aspectRatio: 3 / 4, borderRadius: 7, backgroundColor: C.washi2 },
+  tvBadgeRow: { flexDirection: 'row', gap: 4, marginTop: 5, flexWrap: 'wrap' },
+  tvBadge: { fontFamily: F.bodyB, fontSize: 8, color: C.shu, borderWidth: 1, borderColor: C.shu, borderRadius: 999, paddingHorizontal: 5, paddingVertical: 1 },
+  tvCardName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, marginTop: 4 },
+  tvCardPrice: { fontFamily: F.bodyX, fontSize: 12, color: C.shu, marginTop: 1 },
+  tvReason: { fontFamily: F.body, fontSize: 9.5, lineHeight: 13.5, color: C.muted, marginTop: 4 },
+  tvTry: { marginTop: 7, backgroundColor: C.ink, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  tvTryOff: { opacity: .4 },
+  tvTryT: { fontFamily: F.bodyB, fontSize: 11, color: '#fff' },
+  tvProgress: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: C.washi2, borderRadius: 10, padding: 10 },
+  tvProgressT: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, flex: 1 },
+  tvErr: { marginTop: 11, backgroundColor: '#FCE8E8', borderColor: '#EBC4C4', borderWidth: 1, borderRadius: 10, padding: 10 },
+  tvErrT: { fontFamily: F.body, fontSize: 11, lineHeight: 16, color: C.ink },
+  tvErrBtn: { marginTop: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.ink, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 6 },
+  tvErrBtnT: { fontFamily: F.bodyB, fontSize: 11, color: C.ink },
+  tvTabRow: { flexDirection: 'row', gap: 5, marginTop: 12 },
+  tvTab: { flex: 1, borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 7, alignItems: 'center', backgroundColor: C.card },
+  tvTabOn: { backgroundColor: C.ink, borderColor: C.ink },
+  tvTabOff: { opacity: .4 },
+  tvTabT: { fontFamily: F.bodyB, fontSize: 10, color: C.ink },
+  tvTabTOn: { color: '#fff' },
+  tvResult: { width: '100%', aspectRatio: 2 / 3, borderRadius: 12, marginTop: 8, backgroundColor: C.washi2 },
+  tvBuy: { marginTop: 12, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 12, backgroundColor: C.card },
+  tvBuyName: { fontFamily: F.bodyX, fontSize: 14, color: C.ink },
+  tvBuyPrice: { fontFamily: F.bodyB, fontSize: 12, color: C.shu, marginTop: 2 },
+  tvSizeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 9 },
+  tvCtaRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  tvMini: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 8 },
+  tvMiniT: { fontFamily: F.bodyB, fontSize: 11, color: C.ink },
+  sceneRow: { flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' },
+  sceneBtn: { minWidth: 74, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 8, backgroundColor: C.card },
+  sceneBtnT: { fontFamily: F.bodyB, fontSize: 10, color: C.ink },
+  sceneThumb: { width: 34, height: 51, borderRadius: 5, backgroundColor: C.washi2 },
+  sceneBusy: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
+  sceneBusyT: { fontFamily: F.body, fontSize: 11.5, color: C.muted },
+  sceneErr: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.shu, marginTop: 8 },
+  sceneResult: { width: '100%', aspectRatio: 2 / 3, borderRadius: 12, marginTop: 12, backgroundColor: C.washi2 },
   info: { flexDirection: 'row', gap: 9, backgroundColor: C.washi2, borderRadius: 12, padding: 11 },
   time: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink }, tip: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.muted, marginTop: 2 },
   section: { marginTop: 16 }, sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 7 }, sectionIcon: { width: 26, height: 26, borderRadius: 8, backgroundColor: C.washi2, alignItems: 'center', justifyContent: 'center' }, sectionTitleText: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1.15, color: C.shuDeep },

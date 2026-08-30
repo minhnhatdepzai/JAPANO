@@ -22,6 +22,13 @@ const FOCUS_PROFILES = {
     embeddingDevice: 'off',
     label: 'Thử đồ AI',
   },
+  // Bikini hai mảnh chạy FLUX trên cùng service cổng 7862 nhưng không dùng
+  // checkpoint FASHN. Tách focus để giữ service mà KHÔNG warm FASHN vô ích.
+  swimwear: {
+    keep: ['fashn'],
+    embeddingDevice: 'off',
+    label: 'Thử đồ bơi AI',
+  },
   motion: {
     keep: ['motion'],
     embeddingDevice: 'off',
@@ -142,8 +149,23 @@ const RELEASERS = {
   ollama: releaseOllama,
 };
 
+// Job đang chạy cần service nào. Nhả model của service đó giữa chừng làm hỏng
+// đúng bức ảnh mà người dùng đang chờ: log thật cho thấy FASHN sinh xong ảnh,
+// rồi bị unload trước khi backend kịp trả về, và request kết thúc bằng 503.
+const SERVICE_NEEDED_BY_JOB = {
+  tryon: 'fashn',
+  swimwear: 'fashn',
+  motion: 'motion',
+};
+
+function serviceLockedByActiveJob() {
+  const active = gpuQueue.status()?.active;
+  if (!active) return '';
+  return SERVICE_NEEDED_BY_JOB[String(active.type)] || '';
+}
+
 function cancellationTargets(focus) {
-  if (focus === 'tryon') return ['motion', 'vision', 'recommendation'];
+  if (focus === 'tryon' || focus === 'swimwear') return ['motion', 'vision', 'recommendation'];
   if (focus === 'motion') return ['tryon', 'vision', 'recommendation'];
   if (focus === 'home' || focus === 'browse' || focus === 'chat') return ['tryon', 'motion', 'vision'];
   return [];
@@ -152,8 +174,15 @@ function cancellationTargets(focus) {
 async function applyFocus(next, changed, force) {
   const profile = focusProfile(next);
   const keep = new Set(profile.keep);
+  // Không bao giờ nhả service mà job ĐANG CHẠY còn cần. Đổi màn hình chỉ nói
+  // lên ý định của người dùng cho lượt SAU; nó không được phá lượt đang dở.
+  const locked = serviceLockedByActiveJob();
+  if (locked) keep.add(locked);
   const targets = Object.keys(RELEASERS).filter((service) => !keep.has(service));
   const actions = [];
+  if (locked) {
+    actions.push({ service: locked, released: false, reason: 'đang phục vụ một job GPU chưa xong' });
+  }
 
   for (const service of targets) {
     try {

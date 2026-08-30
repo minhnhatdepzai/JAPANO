@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TextInput, Pressable, useWindowDimensions } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { Animated, View, Text, StyleSheet, ScrollView, TextInput, Pressable, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F } from '../../theme/tokens';
@@ -8,6 +8,7 @@ import { CATEGORIES, CAT_LABEL, GARMENT_FILTERS, matchesGarmentFilter, Product }
 import { useCatalog } from '../../lib/data';
 import { logSearch, trackInteraction } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { useReduceMotion } from '../../components/motion';
 
 const norm = (s:string)=> s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 
@@ -50,14 +51,48 @@ const SORTS = [
 ] as const;
 type SortKey = typeof SORTS[number]['key'];
 
+function CinematicProductCell({item,index,width,imgH,screenHeight,scrollY}:{
+  item:Product;index:number;width:number;imgH:number;screenHeight:number;scrollY:Animated.Value;
+}){
+  const reduced=useReduceMotion();
+  const row=Math.floor(index/2);
+  const rowHeight=imgH+78;
+  const itemTop=row*rowHeight;
+  // Khi một hàng đi vào 1/3 dưới màn hình: ảnh nổi lên, tiến gần camera và rõ
+  // dần. Mọi phép biến đổi chạy native; người bật Reduce Motion thấy trạng thái
+  // cuối ngay lập tức.
+  const enterStart=itemTop-screenHeight*.76;
+  const enterEnd=itemTop-screenHeight*.47;
+  const reveal=scrollY.interpolate({
+    inputRange:[enterStart,Math.max(enterStart+1,enterEnd)],
+    outputRange:[0,1],extrapolate:'clamp',
+  });
+  return (
+    <Animated.View style={[
+      {width},
+      !reduced&&{
+        opacity:reveal.interpolate({inputRange:[0,1],outputRange:[.42,1]}),
+        transform:[
+          {translateY:reveal.interpolate({inputRange:[0,1],outputRange:[34,0]})},
+          {scale:reveal.interpolate({inputRange:[0,1],outputRange:[.94,1]})},
+        ],
+      },
+    ]}>
+      <ProductCard p={item} index={index} width={width} imgH={imgH}/>
+    </Animated.View>
+  );
+}
+
 export default function Products() {
   const { user, isAuthenticated } = useAuth();
-  const { width:screenWidth } = useWindowDimensions();
+  const { width:screenWidth,height:screenHeight } = useWindowDimensions();
+  const scrollY=useRef(new Animated.Value(0)).current;
   const [cat, setCat] = useState('all');
   const [garment, setGarment] = useState('all');
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<SortKey>('new');
   const [sortOpen, setSortOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   // Lấy từ context chứ không đọc hằng `PRODUCTS` của module: `setCatalog()` thay
   // giá trị đó SAU khi API trả về, nhưng useMemo đã đóng gói giá trị cũ và không
   // có cớ gì để chạy lại — nên màn hình đứng yên ở danh sách đóng gói sẵn và
@@ -88,9 +123,13 @@ export default function Products() {
   // FlatList tái sử dụng ô khi cuộn, nên `index` ở đây chỉ dùng để rải nhịp
   // xuất hiện của MÀN HÌNH ĐẦU TIÊN; các hàng cuộn tới sau đều rơi vào trần
   // 8 nhịp nên hiện gần như tức thì, đúng như mong đợi khi đang cuộn nhanh.
+  const cardImageHeight=Math.round(cardWidth*1.17);
   const renderItem = useCallback(({ item, index }:{ item:Product; index:number })=>(
-    <ProductCard p={item} index={index} width={cardWidth} imgH={Math.round(cardWidth*1.17)} />
-  ),[cardWidth]);
+    <CinematicProductCell
+      item={item} index={index} width={cardWidth} imgH={cardImageHeight}
+      screenHeight={screenHeight} scrollY={scrollY}
+    />
+  ),[cardImageHeight,cardWidth,screenHeight,scrollY]);
   useEffect(()=>{
     const query=q.trim();
     if(query.length<2)return;
@@ -110,38 +149,47 @@ export default function Products() {
   return (
     <SafeAreaView edges={['top']} style={{ flex:1, backgroundColor:C.washi }}>
       <View style={{ paddingHorizontal:18, paddingTop:8 }}>
-        <Text style={{ fontFamily:F.display, fontSize:22, color:C.sumi, marginBottom:10 }}>Sản phẩm</Text>
+        <Text style={st.eyebrow}>BỘ SƯU TẬP JAPANO</Text>
+        <Text style={st.title}>Sản phẩm</Text>
         <View style={st.search}>
           <Ionicons name="search" size={18} color={C.muted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Tìm kimono, áo khoác, đồ hóa thân, phụ kiện…" placeholderTextColor={C.muted} style={{ flex:1, fontFamily:F.body, fontSize:14, color:C.ink }} />
-          {q.length>0 && <Pressable onPress={()=>setQ('')} hitSlop={8}><Ionicons name="close-circle" size={18} color={C.muted} /></Pressable>}
+          <TextInput accessibilityLabel="Tìm sản phẩm" value={q} onChangeText={setQ} placeholder="Tìm kimono, áo khoác, phụ kiện…" placeholderTextColor={C.muted} style={{ flex:1, fontFamily:F.body, fontSize:14, color:C.ink }} />
+          {q.length>0 && <Pressable accessibilityRole="button" accessibilityLabel="Xóa nội dung tìm kiếm" onPress={()=>setQ('')} hitSlop={8}><Ionicons name="close-circle" size={18} color={C.muted} /></Pressable>}
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }} contentContainerStyle={{ gap:8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:9 }} contentContainerStyle={{ gap:8, paddingRight:18 }}>
           {CATEGORIES.map(c=>(
-            <Pressable key={c.key} style={[st.chip, cat===c.key&&st.chipOn]} onPress={()=>setCat(c.key)}>
+            <Pressable key={c.key} accessibilityRole="button" accessibilityState={{selected:cat===c.key}} style={[st.chip, cat===c.key&&st.chipOn]} onPress={()=>setCat(c.key)}>
               <Text style={{ color:cat===c.key?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12.5 }}>{c.label}</Text>
             </Pressable>
           ))}
         </ScrollView>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }} contentContainerStyle={{ gap:8 }}>
-          <Pressable style={[st.chip, garment==='all'&&st.chipOn]} onPress={()=>setGarment('all')}>
-            <Text style={{ color:garment==='all'?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>Mọi kiểu</Text>
-          </Pressable>
-          {GARMENT_FILTERS.map(f=>(
-            <Pressable key={f.key} style={[st.chip, garment===f.key&&st.chipOn]} onPress={()=>setGarment(garment===f.key?'all':f.key)}>
-              <Text style={{ color:garment===f.key?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>
-                {f.label}{f.adultOnly?' 18+':''}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-        <View style={{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+        <View style={st.toolsRow}>
           <Text style={{ fontFamily:F.body, fontSize:12.5, color:C.muted }}>{list.length} sản phẩm</Text>
-          <Pressable style={{ flexDirection:'row', alignItems:'center', gap:4 }} onPress={()=>setSortOpen(o=>!o)}>
-            <Text style={{ fontFamily:F.bodyM, fontSize:12.5, color:C.ink }}>Sắp xếp: {sortLabel}</Text>
+          <View style={st.toolActions}>
+            <Pressable accessibilityRole="button" accessibilityState={{expanded:filtersOpen}} accessibilityLabel="Mở bộ lọc kiểu trang phục" style={[st.toolButton,garment!=='all'&&st.toolButtonOn]} onPress={()=>{setFiltersOpen(o=>!o);setSortOpen(false);}}>
+              <Ionicons name="options-outline" size={15} color={garment!=='all'?'#fff':C.ink}/>
+              <Text style={[st.toolText,garment!=='all'&&{color:'#fff'}]}>Bộ lọc{garment!=='all'?' · 1':''}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityState={{expanded:sortOpen}} accessibilityLabel={`Sắp xếp theo ${sortLabel}`} style={st.toolButton} onPress={()=>{setSortOpen(o=>!o);setFiltersOpen(false);}}>
+              <Text style={st.toolText}>{sortLabel}</Text>
             <Ionicons name={sortOpen?'chevron-up':'chevron-down'} size={14} color={C.ink} />
-          </Pressable>
+            </Pressable>
+          </View>
         </View>
+        {filtersOpen && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:8 }} contentContainerStyle={{ gap:8, paddingRight:18 }}>
+            <Pressable accessibilityRole="button" accessibilityState={{selected:garment==='all'}} style={[st.chip, garment==='all'&&st.chipOn]} onPress={()=>setGarment('all')}>
+              <Text style={{ color:garment==='all'?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>Mọi kiểu</Text>
+            </Pressable>
+            {GARMENT_FILTERS.map(f=>(
+              <Pressable key={f.key} accessibilityRole="button" accessibilityState={{selected:garment===f.key}} style={[st.chip, garment===f.key&&st.chipOn]} onPress={()=>setGarment(garment===f.key?'all':f.key)}>
+                <Text style={{ color:garment===f.key?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12 }}>
+                  {f.label}{f.adultOnly?' 18+':''}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
         {sortOpen && (
           <View style={st.sortMenu}>
             {SORTS.map(s=>(
@@ -157,7 +205,7 @@ export default function Products() {
           nhìn. Danh mục còn nhỏ thì khác biệt chưa rõ, nhưng khi kho hàng lớn
           dần thì cách cũ mount toàn bộ ảnh cùng lúc — vừa giật khi mở tab vừa
           ngốn bộ nhớ ảnh. */}
-      <FlatList
+      <Animated.FlatList
         data={list}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
@@ -166,6 +214,11 @@ export default function Products() {
         contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24, gap:cardGap }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{nativeEvent:{contentOffset:{y:scrollY}}}],
+          {useNativeDriver:true},
+        )}
+        scrollEventThrottle={16}
         initialNumToRender={6}
         maxToRenderPerBatch={6}
         windowSize={7}
@@ -181,9 +234,16 @@ export default function Products() {
   );
 }
 const st = StyleSheet.create({
+  eyebrow:{fontFamily:F.bodyM,fontSize:9.5,letterSpacing:1.6,color:C.muted,marginBottom:2},
+  title:{fontFamily:F.display,fontSize:24,color:C.sumi,marginBottom:10},
   search:{ flexDirection:'row', alignItems:'center', gap:8, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, marginBottom:12 },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
   chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
+  toolsRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8},
+  toolActions:{flexDirection:'row',alignItems:'center',gap:7},
+  toolButton:{minHeight:38,flexDirection:'row',alignItems:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:999,backgroundColor:'#fff',paddingHorizontal:11},
+  toolButtonOn:{backgroundColor:C.primary,borderColor:C.primary},
+  toolText:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
   sortMenu:{ borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', marginBottom:10, overflow:'hidden' },
   sortOpt:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:11, paddingHorizontal:14, borderTopWidth:1, borderTopColor:C.hair },
 });

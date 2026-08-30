@@ -1,0 +1,188 @@
+{
+  "source": "VITON-HD (marquis03/high-resolution-viton-zalando-dataset)",
+  "license": "CC-BY-NC-SA-4.0 — phi thương mại, dùng cho kiểm thử đồ án",
+  "measuredBy": "backend/body_analysis.py (cùng bộ đo pipeline dùng khi chạy thật)",
+  "bodyClassNote": "Nhãn lớp suy từ phân vị bodyWidthRatio của chính tập đã đo, không gán bằng mắt.",
+  "people": [
+    {
+      "id": "very_slim_00566_00",
+      "file": "people/very_slim/00566_00.jpg",
+      "body_class": "very_slim",
+      "metrics": {
+        "bodyWidthRatio": 0.1833,
+        "shoulderHipRatio": 1.1957,
+        "torsoRatio": 0.265,
+        "legRatio": 0.0,
+        "coverage": "hip",
+        "quality": 0.729,
+        "tiltDeg": 1.6
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "very_slim_00568_00",
+      "file": "people/very_slim/00568_00.jpg",
+      "body_class": "very_slim",
+      "metrics": {
+        "bodyWidthRatio": 0.1944,
+        "shoulderHipRatio": 1.2843,
+        "torsoRatio": 0.2866,
+        "legRatio": 0.0,
+        "coverage": "hip",
+        "quality": 0.706,
+        "tiltDeg": 12.0
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "slim_00151_00",
+      "file": "people/slim/00151_00.jpg",
+      "body_class": "slim",
+      "metrics": {
+        "bodyWidthRatio": 0.2208,
+        "shoulderHipRatio": 1.0848,
+        "torsoRatio": 0.2899,
+        "legRatio": 0.0,
+        "coverage": "hip",
+        "quality": 0.727,
+        "tiltDeg": 7.2
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "slim_00740_00",
+      "file": "people/slim/00740_00.jpg",
+      "body_class": "slim",
+      "metrics": {
+        "bodyWidthRatio": 0.2211,
+        "shoulderHipRatio": 1.19,
+        "torsoRatio": 0.2687,
+        "legRatio": 0.0,
+        "coverage": "hip",
+        "quality": 0.721,
+        "tiltDeg": 1.0
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "average_00858_00",
+      "file": "people/average/00858_00.jpg",
+      "body_class": "average",
+      "metrics": {
+        "bodyWidthRatio": 0.2353,
+        "shoulderHipRatio": 1.0418,
+        "torsoRatio": 0.2908,
+        "legRatio": 0.4116,
+        "coverage": "knee",
+        "quality": 0.854,
+        "tiltDeg": 0.6
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "average_00261_00",
+      "file": "people/average/00261_00.jpg",
+      "body_class": "average",
+      "metrics": {
+        "bodyWidthRatio": 0.2358,
+        "shoulderHipRatio": 1.0111,
+        "torsoRatio": 0.3132,
+        "legRatio": 0.4071,
+        "coverage": "knee",
+        "quality": 0.839,
+        "tiltDeg": 5.0
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "fuller_00611_00",
+      "file": "people/fuller/00611_00.jpg",
+      "body_class": "fuller",
+      "metrics": {
+        "bodyWidthRatio": 0.2507,
+        "shoulderHipRatio": 1.2655,
+        "torsoRatio": 0.2577,
+        "legRatio": 0.0,
+        "coverage": "hip",
+        "quality": 0.735,
+        "tiltDeg": 0.7
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "fuller_00458_00",
+      "file": "people/fuller/00458_00.jpg",
+      "body_class": "fuller",
+      "metrics": {
+        "bodyWidthRatio": 0.2509,
+        "shoulderHipRatio": 1.0638,
+        "torsoRatio": 0.3147,
+        "legRatio": 0.3642,
+        "coverage": "knee",
+        "quality": 0.842,
+        "tiltDeg": 6.1
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "plus_00698_00",
+      "file": "people/plus/00698_00.jpg",
+      "body_class": "plus",
+      "metrics": {
+        "bodyWidthRatio": 0.2733,
+        "shoulderHipRatio": 1.1696,
+        "torsoRatio": 0.3057,
+        "legRatio": 0.3736,
+        "coverage": "knee",
+        "quality": 0.816,
+        "tiltDeg": 3.2
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    },
+    {
+      "id": "plus_00859_00",
+      "file": "people/plus/00859_00.jpg",
+      "body_class": "plus",
+      "metrics": {
+        "bodyWidthRatio": 0.2735,
+        "shoulderHipRatio": 0.9107,
+        "torsoRatio": 0.3032,
+        "legRatio": 0.3771,
+        "coverage": "knee",
+        "quality": 0.836,
+        "tiltDeg": 3.8
+      },
+      "expected_behavior": "garment scales with measured torso, body itself unchanged"
+    }
+  ],
+  "hardImages": [
+    {
+      "file": "people/difficult/00858_00_I04_low_light.jpg",
+      "variant": "I04_low_light"
+    },
+    {
+      "file": "people/difficult/00858_00_I05_bright.jpg",
+      "variant": "I05_bright"
+    },
+    {
+      "file": "people/difficult/00858_00_I06_low_res.jpg",
+      "variant": "I06_low_res"
+    },
+    {
+      "file": "people/difficult/00858_00_I09_square.jpg",
+      "variant": "I09_square"
+    },
+    {
+      "file": "people/difficult/00858_00_I10_small_person.jpg",
+      "variant": "I10_small_person"
+    },
+    {
+      "file": "people/difficult/00858_00_I11_edge.jpg",
+      "variant": "I11_edge"
+    },
+    {
+      "file": "people/difficult/00858_00_I02_dark_bg.jpg",
+      "variant": "I02_dark_bg"
+    }
+  ]
+}

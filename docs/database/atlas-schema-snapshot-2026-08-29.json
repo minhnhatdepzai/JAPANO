@@ -1,0 +1,5091 @@
+{
+  "database": "japano",
+  "snapshotAt": "2026-08-29T01:32:56.090Z",
+  "sampleSizePerCollection": 400,
+  "collectionCount": 29,
+  "documentTotal": 2122,
+  "ttlIndexCount": 0,
+  "validatorCount": 0,
+  "uniqueIndexCount": 26,
+  "collections": [
+    {
+      "name": "interactions",
+      "count": 671,
+      "sizeBytes": 120862,
+      "storageBytes": 118784,
+      "avgObjBytes": 180,
+      "totalIndexBytes": 81920,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "type",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "source",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "value",
+          "bsonTypes": [
+            "int:75%"
+          ],
+          "presencePct": 75,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:68%"
+          ],
+          "presencePct": 68,
+          "nullPct": 0
+        },
+        {
+          "field": "metadata",
+          "bsonTypes": [
+            "object:48%"
+          ],
+          "presencePct": 48,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-15T04:33:55.548Z"
+      }
+    },
+    {
+      "name": "product_variants",
+      "count": 497,
+      "sizeBytes": 89273,
+      "storageBytes": 98304,
+      "avgObjBytes": 179,
+      "totalIndexBytes": 274432,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_product_variants_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_product_variants_product",
+          "key": {
+            "productId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_product_variants_sku",
+          "key": {
+            "sku": 1
+          },
+          "unique": true,
+          "sparse": true,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_product_variants_selection",
+          "key": {
+            "productId": 1,
+            "colorName": 1,
+            "size": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "sku"
+        ],
+        [
+          "productId",
+          "colorName",
+          "size"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "size",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "stock",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "position",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "colorName",
+          "bsonTypes": [
+            "string:79%"
+          ],
+          "presencePct": 79,
+          "nullPct": 0
+        },
+        {
+          "field": "colorHex",
+          "bsonTypes": [
+            "string:79%"
+          ],
+          "presencePct": 79,
+          "nullPct": 0
+        },
+        {
+          "field": "sku",
+          "bsonTypes": [
+            "string:79%"
+          ],
+          "presencePct": 79,
+          "nullPct": 0
+        },
+        {
+          "field": "color",
+          "bsonTypes": [
+            "string:21%"
+          ],
+          "presencePct": 21,
+          "nullPct": 0
+        },
+        {
+          "field": "price",
+          "bsonTypes": [
+            "int:1%"
+          ],
+          "presencePct": 1,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "order_items",
+      "count": 154,
+      "sizeBytes": 43617,
+      "storageBytes": 53248,
+      "avgObjBytes": 283,
+      "totalIndexBytes": 147456,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_order_items_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_order_items_order",
+          "key": {
+            "orderId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_order_items_product",
+          "key": {
+            "productId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "colorName",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "colorHex",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "size",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "qty",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "price",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productSlug",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productName",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "position",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "product_media",
+      "count": 151,
+      "sizeBytes": 31008,
+      "storageBytes": 45056,
+      "avgObjBytes": 205,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_product_media_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_product_media_product",
+          "key": {
+            "productId": 1,
+            "position": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "url",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "type",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "position",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "isPrimary",
+          "bsonTypes": [
+            "boolean:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "orders",
+      "count": 94,
+      "sizeBytes": 67494,
+      "storageBytes": 69632,
+      "avgObjBytes": 718,
+      "totalIndexBytes": 147456,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_orders_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_orders_code",
+          "key": {
+            "code": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_orders_user_created",
+          "key": {
+            "userId": 1,
+            "createdAt": -1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "code"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "code",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "customer",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "address",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "total",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "ship",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "history",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "source",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "voucherId",
+          "bsonTypes": [
+            "null:98%",
+            "string:2%"
+          ],
+          "presencePct": 100,
+          "nullPct": 98
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:99%"
+          ],
+          "presencePct": 99,
+          "nullPct": 0
+        },
+        {
+          "field": "subtotal",
+          "bsonTypes": [
+            "int:61%"
+          ],
+          "presencePct": 61,
+          "nullPct": 0
+        },
+        {
+          "field": "discount",
+          "bsonTypes": [
+            "int:61%"
+          ],
+          "presencePct": 61,
+          "nullPct": 0
+        },
+        {
+          "field": "discountCode",
+          "bsonTypes": [
+            "string:61%"
+          ],
+          "presencePct": 61,
+          "nullPct": 0
+        },
+        {
+          "field": "voucherDiscount",
+          "bsonTypes": [
+            "int:60%"
+          ],
+          "presencePct": 60,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentDiscount",
+          "bsonTypes": [
+            "int:60%"
+          ],
+          "presencePct": 60,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentPromotion",
+          "bsonTypes": [
+            "object:45%",
+            "null:15%"
+          ],
+          "presencePct": 60,
+          "nullPct": 15
+        },
+        {
+          "field": "addressDetails",
+          "bsonTypes": [
+            "object:57%"
+          ],
+          "presencePct": 57,
+          "nullPct": 0
+        },
+        {
+          "field": "vipDiscount",
+          "bsonTypes": [
+            "int:45%"
+          ],
+          "presencePct": 45,
+          "nullPct": 0
+        },
+        {
+          "field": "vipPromotion",
+          "bsonTypes": [
+            "null:45%"
+          ],
+          "presencePct": 45,
+          "nullPct": 45
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:35%"
+          ],
+          "presencePct": 35,
+          "nullPct": 0
+        },
+        {
+          "field": "completedAt",
+          "bsonTypes": [
+            "int:21%"
+          ],
+          "presencePct": 21,
+          "nullPct": 0
+        },
+        {
+          "field": "clientRequestId",
+          "bsonTypes": [
+            "string:9%",
+            "null:1%"
+          ],
+          "presencePct": 10,
+          "nullPct": 1
+        },
+        {
+          "field": "returnStatus",
+          "bsonTypes": [
+            "string:6%"
+          ],
+          "presencePct": 6,
+          "nullPct": 0
+        },
+        {
+          "field": "flagcardAward",
+          "bsonTypes": [
+            "object:5%"
+          ],
+          "presencePct": 5,
+          "nullPct": 0
+        },
+        {
+          "field": "stockRestoredAt",
+          "bsonTypes": [
+            "int:5%"
+          ],
+          "presencePct": 5,
+          "nullPct": 0
+        },
+        {
+          "field": "stockRestoredReason",
+          "bsonTypes": [
+            "string:5%"
+          ],
+          "presencePct": 5,
+          "nullPct": 0
+        },
+        {
+          "field": "deliveredAt",
+          "bsonTypes": [
+            "int:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "autoCompleted",
+          "bsonTypes": [
+            "boolean:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-11T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "payments",
+      "count": 94,
+      "sizeBytes": 44450,
+      "storageBytes": 53248,
+      "avgObjBytes": 472,
+      "totalIndexBytes": 147456,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_payments_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_payments_order",
+          "key": {
+            "orderId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_payments_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "code",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "provider",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "method",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "amount",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "currency",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "transactionCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "refundable",
+          "bsonTypes": [
+            "boolean:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "refunds",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "paidAt",
+          "bsonTypes": [
+            "int:37%"
+          ],
+          "presencePct": 37,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:35%"
+          ],
+          "presencePct": 35,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentIntentId",
+          "bsonTypes": [
+            "string:33%"
+          ],
+          "presencePct": 33,
+          "nullPct": 0
+        },
+        {
+          "field": "checkoutSessionId",
+          "bsonTypes": [
+            "string:32%"
+          ],
+          "presencePct": 32,
+          "nullPct": 0
+        },
+        {
+          "field": "originalAmount",
+          "bsonTypes": [
+            "int:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "discount",
+          "bsonTypes": [
+            "int:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "voucherDiscount",
+          "bsonTypes": [
+            "int:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentDiscount",
+          "bsonTypes": [
+            "int:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "promotionCode",
+          "bsonTypes": [
+            "string:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentMethodType",
+          "bsonTypes": [
+            "string:13%"
+          ],
+          "presencePct": 13,
+          "nullPct": 0
+        },
+        {
+          "field": "chargeId",
+          "bsonTypes": [
+            "string:9%"
+          ],
+          "presencePct": 9,
+          "nullPct": 0
+        },
+        {
+          "field": "receiptUrl",
+          "bsonTypes": [
+            "string:9%"
+          ],
+          "presencePct": 9,
+          "nullPct": 0
+        },
+        {
+          "field": "customer",
+          "bsonTypes": [
+            "object:9%"
+          ],
+          "presencePct": 9,
+          "nullPct": 0
+        },
+        {
+          "field": "card",
+          "bsonTypes": [
+            "object:9%"
+          ],
+          "presencePct": 9,
+          "nullPct": 0
+        },
+        {
+          "field": "intentStatus",
+          "bsonTypes": [
+            "string:7%"
+          ],
+          "presencePct": 7,
+          "nullPct": 0
+        },
+        {
+          "field": "nativeAttempt",
+          "bsonTypes": [
+            "int:7%"
+          ],
+          "presencePct": 7,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpCreateDate",
+          "bsonTypes": [
+            "string:7%"
+          ],
+          "presencePct": 7,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpTransactionNo",
+          "bsonTypes": [
+            "string:4%"
+          ],
+          "presencePct": 4,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpBankCode",
+          "bsonTypes": [
+            "string:4%"
+          ],
+          "presencePct": 4,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpCardType",
+          "bsonTypes": [
+            "string:4%"
+          ],
+          "presencePct": 4,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpPayDate",
+          "bsonTypes": [
+            "string:4%"
+          ],
+          "presencePct": 4,
+          "nullPct": 0
+        },
+        {
+          "field": "failureReason",
+          "bsonTypes": [
+            "string:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "vipDiscount",
+          "bsonTypes": [
+            "int:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "vipPromotion",
+          "bsonTypes": [
+            "null:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 3
+        },
+        {
+          "field": "amountSubtotal",
+          "bsonTypes": [
+            "int:2%"
+          ],
+          "presencePct": 2,
+          "nullPct": 0
+        },
+        {
+          "field": "refundedAmount",
+          "bsonTypes": [
+            "int:2%"
+          ],
+          "presencePct": 2,
+          "nullPct": 0
+        },
+        {
+          "field": "pendingRefundAmount",
+          "bsonTypes": [
+            "int:2%"
+          ],
+          "presencePct": 2,
+          "nullPct": 0
+        },
+        {
+          "field": "refundId",
+          "bsonTypes": [
+            "string:2%"
+          ],
+          "presencePct": 2,
+          "nullPct": 0
+        },
+        {
+          "field": "refundedAt",
+          "bsonTypes": [
+            "int:2%"
+          ],
+          "presencePct": 2,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-11T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "review_reactions",
+      "count": 88,
+      "sizeBytes": 18696,
+      "storageBytes": 36864,
+      "avgObjBytes": 212,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_review_reactions_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_review_reactions_review_user",
+          "key": {
+            "reviewId": 1,
+            "userId": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "reviewId",
+          "userId"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "reviewId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "value",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:27%"
+          ],
+          "presencePct": 27,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "updatedAt",
+        "iso": "2026-08-01T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "products",
+      "count": 71,
+      "sizeBytes": 75026,
+      "storageBytes": 69632,
+      "avgObjBytes": 1056,
+      "totalIndexBytes": 147456,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_products_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_products_slug",
+          "key": {
+            "slug": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_products_category",
+          "key": {
+            "categoryId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "slug"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "slug",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "name",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "sku",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "brand",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "price",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "categoryId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "description",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "story",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "colorHex",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "tags",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "visualTags",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "rating",
+          "bsonTypes": [
+            "double:82%",
+            "int:18%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "sold",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "compareAtPrice",
+          "bsonTypes": [
+            "null:80%",
+            "int:20%"
+          ],
+          "presencePct": 100,
+          "nullPct": 80
+        },
+        {
+          "field": "kanji",
+          "bsonTypes": [
+            "string:99%"
+          ],
+          "presencePct": 99,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:99%"
+          ],
+          "presencePct": 99,
+          "nullPct": 0
+        },
+        {
+          "field": "garmentType",
+          "bsonTypes": [
+            "string:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "adultOnlyTryOn",
+          "bsonTypes": [
+            "boolean:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "tearAllowed",
+          "bsonTypes": [
+            "boolean:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "sizes",
+          "bsonTypes": [
+            "array:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "tryonFlat",
+          "bsonTypes": [
+            "string:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "imageSource",
+          "bsonTypes": [
+            "string:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "informationSources",
+          "bsonTypes": [
+            "array:51%"
+          ],
+          "presencePct": 51,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:1%"
+          ],
+          "presencePct": 1,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-26T01:30:07.540Z"
+      }
+    },
+    {
+      "name": "chats",
+      "count": 68,
+      "sizeBytes": 22441,
+      "storageBytes": 45056,
+      "avgObjBytes": 330,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "role",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "message",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:71%"
+          ],
+          "presencePct": 71,
+          "nullPct": 0
+        },
+        {
+          "field": "productIds",
+          "bsonTypes": [
+            "array:46%"
+          ],
+          "presencePct": 46,
+          "nullPct": 0
+        },
+        {
+          "field": "engine",
+          "bsonTypes": [
+            "string:19%"
+          ],
+          "presencePct": 19,
+          "nullPct": 0
+        },
+        {
+          "field": "intent",
+          "bsonTypes": [
+            "string:19%"
+          ],
+          "presencePct": 19,
+          "nullPct": 0
+        },
+        {
+          "field": "confidence",
+          "bsonTypes": [
+            "double:19%"
+          ],
+          "presencePct": 19,
+          "nullPct": 0
+        },
+        {
+          "field": "latencyMs",
+          "bsonTypes": [
+            "int:19%"
+          ],
+          "presencePct": 19,
+          "nullPct": 0
+        },
+        {
+          "field": "modelTrace",
+          "bsonTypes": [
+            "object:15%"
+          ],
+          "presencePct": 15,
+          "nullPct": 0
+        },
+        {
+          "field": "generationModel",
+          "bsonTypes": [
+            "string:15%"
+          ],
+          "presencePct": 15,
+          "nullPct": 0
+        },
+        {
+          "field": "fallbackReason",
+          "bsonTypes": [
+            "string:15%"
+          ],
+          "presencePct": 15,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:9%"
+          ],
+          "presencePct": 9,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-13T15:39:47.664Z"
+      }
+    },
+    {
+      "name": "notifications",
+      "count": 46,
+      "sizeBytes": 13904,
+      "storageBytes": 45056,
+      "avgObjBytes": 302,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "title",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "body",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "type",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "reach",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "at",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:83%",
+            "null:11%"
+          ],
+          "presencePct": 93,
+          "nullPct": 11
+        },
+        {
+          "field": "action",
+          "bsonTypes": [
+            "string:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:24%"
+          ],
+          "presencePct": 24,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "at",
+        "iso": "2026-08-13T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "users",
+      "count": 36,
+      "sizeBytes": 10319,
+      "storageBytes": 36864,
+      "avgObjBytes": 286,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_users_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_users_email",
+          "key": {
+            "email": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "name",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "email",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "role",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "joinedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "tryons",
+          "bsonTypes": [
+            "int:97%"
+          ],
+          "presencePct": 97,
+          "nullPct": 0
+        },
+        {
+          "field": "passwordHash",
+          "bsonTypes": [
+            "string:97%"
+          ],
+          "presencePct": 97,
+          "nullPct": 0
+        },
+        {
+          "field": "authProviders",
+          "bsonTypes": [
+            "array:31%"
+          ],
+          "presencePct": 31,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:28%"
+          ],
+          "presencePct": 28,
+          "nullPct": 0
+        },
+        {
+          "field": "stripeCustomerId",
+          "bsonTypes": [
+            "string:6%"
+          ],
+          "presencePct": 6,
+          "nullPct": 0
+        },
+        {
+          "field": "resetCodeHash",
+          "bsonTypes": [
+            "string:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "resetCodeExpiresAt",
+          "bsonTypes": [
+            "int:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "googleId",
+          "bsonTypes": [
+            "string:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        },
+        {
+          "field": "avatar",
+          "bsonTypes": [
+            "string:3%"
+          ],
+          "presencePct": 3,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "reviews",
+      "count": 31,
+      "sizeBytes": 17915,
+      "storageBytes": 45056,
+      "avgObjBytes": 577,
+      "totalIndexBytes": 184320,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_reviews_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_reviews_product",
+          "key": {
+            "productId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_reviews_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_reviews_order",
+          "key": {
+            "orderId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userName",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "rating",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "comment",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "media",
+          "bsonTypes": [
+            "null:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 100
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "moderation",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "adminNote",
+          "bsonTypes": [
+            "string:32%"
+          ],
+          "presencePct": 32,
+          "nullPct": 0
+        },
+        {
+          "field": "moderatedAt",
+          "bsonTypes": [
+            "int:32%"
+          ],
+          "presencePct": 32,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:29%"
+          ],
+          "presencePct": 29,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-07T05:58:06.532Z"
+      }
+    },
+    {
+      "name": "wishlist_items",
+      "count": 13,
+      "sizeBytes": 2143,
+      "storageBytes": 36864,
+      "avgObjBytes": 164,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_wishlist_items_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_wishlist_items_user_product",
+          "key": {
+            "userId": 1,
+            "productId": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "userId",
+          "productId"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:62%"
+          ],
+          "presencePct": 62,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-10T11:17:57.061Z"
+      }
+    },
+    {
+      "name": "search_logs",
+      "count": 13,
+      "sizeBytes": 2287,
+      "storageBytes": 36864,
+      "avgObjBytes": 175,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "query",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "resultCount",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:62%"
+          ],
+          "presencePct": 62,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-13T07:25:13.135Z"
+      }
+    },
+    {
+      "name": "profiles",
+      "count": 12,
+      "sizeBytes": 3294,
+      "storageBytes": 36864,
+      "avgObjBytes": 274,
+      "totalIndexBytes": 73728,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_profiles_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "userId"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "preferredStyles",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "heightCm",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "weightKg",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "gender",
+          "bsonTypes": [
+            "string:92%"
+          ],
+          "presencePct": 92,
+          "nullPct": 0
+        },
+        {
+          "field": "skinTone",
+          "bsonTypes": [
+            "string:92%"
+          ],
+          "presencePct": 92,
+          "nullPct": 0
+        },
+        {
+          "field": "occasion",
+          "bsonTypes": [
+            "string:92%"
+          ],
+          "presencePct": 92,
+          "nullPct": 0
+        },
+        {
+          "field": "budget",
+          "bsonTypes": [
+            "int:92%"
+          ],
+          "presencePct": 92,
+          "nullPct": 0
+        },
+        {
+          "field": "usualSize",
+          "bsonTypes": [
+            "string:92%"
+          ],
+          "presencePct": 92,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:42%"
+          ],
+          "presencePct": 42,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "updatedAt",
+        "iso": "2026-08-10T11:04:15.410Z"
+      }
+    },
+    {
+      "name": "addresses",
+      "count": 11,
+      "sizeBytes": 4165,
+      "storageBytes": 36864,
+      "avgObjBytes": 378,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_addresses_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_addresses_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "title",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "name",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "phone",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "street",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "wardCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "ward",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "provinceCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "province",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "isDefault",
+          "bsonTypes": [
+            "boolean:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:55%"
+          ],
+          "presencePct": 55,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-10T11:57:48.481Z"
+      }
+    },
+    {
+      "name": "return_requests",
+      "count": 8,
+      "sizeBytes": 7409,
+      "storageBytes": 36864,
+      "avgObjBytes": 926,
+      "totalIndexBytes": 184320,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_return_requests_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_return_requests_order",
+          "key": {
+            "orderId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_return_requests_payment",
+          "key": {
+            "paymentId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_return_requests_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "code",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "paymentCode",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "reason",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "note",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "items",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "amount",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "currency",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "timeline",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "kind",
+          "bsonTypes": [
+            "string:88%"
+          ],
+          "presencePct": 88,
+          "nullPct": 0
+        },
+        {
+          "field": "photos",
+          "bsonTypes": [
+            "array:88%"
+          ],
+          "presencePct": 88,
+          "nullPct": 0
+        },
+        {
+          "field": "adminNote",
+          "bsonTypes": [
+            "string:75%"
+          ],
+          "presencePct": 75,
+          "nullPct": 0
+        },
+        {
+          "field": "codManualRefund",
+          "bsonTypes": [
+            "boolean:50%"
+          ],
+          "presencePct": 50,
+          "nullPct": 0
+        },
+        {
+          "field": "refundId",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "refundStatus",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "coversWholeOrder",
+          "bsonTypes": [
+            "boolean:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "stockRestoredAt",
+          "bsonTypes": [
+            "int:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-07T06:22:30.492Z"
+      }
+    },
+    {
+      "name": "goals",
+      "count": 8,
+      "sizeBytes": 23058,
+      "storageBytes": 45056,
+      "avgObjBytes": 2882,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "product",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "input",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "plan",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "fund",
+          "bsonTypes": [
+            "object:50%"
+          ],
+          "presencePct": 50,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:38%"
+          ],
+          "presencePct": 38,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-10T11:17:20.162Z"
+      }
+    },
+    {
+      "name": "flagcards",
+      "count": 7,
+      "sizeBytes": 11912,
+      "storageBytes": 45056,
+      "avgObjBytes": 1701,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "order",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "glyph",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "accent",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "title",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "japanese",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "region",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "summary",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "formationHistory",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "legend",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "funFacts",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "checkins",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "outfit",
+          "bsonTypes": [
+            "object:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "recommendedProductIds",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "sourceUrl",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "active",
+          "bsonTypes": [
+            "boolean:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "settings",
+      "count": 6,
+      "sizeBytes": 1459,
+      "storageBytes": 36864,
+      "avgObjBytes": 243,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "items",
+          "bsonTypes": [
+            "array:33%"
+          ],
+          "presencePct": 33,
+          "nullPct": 0
+        },
+        {
+          "field": "name",
+          "bsonTypes": [
+            "string:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "hotline",
+          "bsonTypes": [
+            "string:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "email",
+          "bsonTypes": [
+            "string:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "address",
+          "bsonTypes": [
+            "string:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "shipFee",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "cod",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "stripe",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "vnpay",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "logo",
+          "bsonTypes": [
+            "null:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 17
+        },
+        {
+          "field": "mongo",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "cloudinary",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "ai",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "active",
+          "bsonTypes": [
+            "boolean:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "qualifyingOrderMin",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "requiredCards",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "rewardPercent",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "rewardVoucherMinOrder",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "rewardValidityDays",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "version",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        },
+        {
+          "field": "schemaVersion",
+          "bsonTypes": [
+            "int:17%"
+          ],
+          "presencePct": 17,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "moderation_samples",
+      "count": 6,
+      "sizeBytes": 1460,
+      "storageBytes": 36864,
+      "avgObjBytes": 243,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "reviewId",
+          "bsonTypes": [
+            "null:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 100
+        },
+        {
+          "field": "label",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "normalizedText",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "learnedPhrases",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "source",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:33%"
+          ],
+          "presencePct": 33,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "updatedAt",
+        "iso": "2026-08-13T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "japan_spot_suggestions",
+      "count": 5,
+      "sizeBytes": 1997,
+      "storageBytes": 36864,
+      "avgObjBytes": 399,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "prefecture",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userName",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "suggestion",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "place",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 0
+        },
+        {
+          "field": "moderation",
+          "bsonTypes": [
+            "object:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        },
+        {
+          "field": "reward",
+          "bsonTypes": [
+            "object:20%"
+          ],
+          "presencePct": 20,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-13T15:19:26.486Z"
+      }
+    },
+    {
+      "name": "japan_spot_reviews",
+      "count": 5,
+      "sizeBytes": 2173,
+      "storageBytes": 36864,
+      "avgObjBytes": 434,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "place",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "prefecture",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userName",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "rating",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "comment",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "media",
+          "bsonTypes": [
+            "null:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 80
+        },
+        {
+          "field": "status",
+          "bsonTypes": [
+            "string:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 0
+        },
+        {
+          "field": "moderation",
+          "bsonTypes": [
+            "object:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:60%"
+          ],
+          "presencePct": 60,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-09T16:39:47.664Z"
+      }
+    },
+    {
+      "name": "categories",
+      "count": 5,
+      "sizeBytes": 416,
+      "storageBytes": 36864,
+      "avgObjBytes": 83,
+      "totalIndexBytes": 73728,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_categories_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "name",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "kanji",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "voucher_redemptions",
+      "count": 5,
+      "sizeBytes": 1182,
+      "storageBytes": 36864,
+      "avgObjBytes": 236,
+      "totalIndexBytes": 184320,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_voucher_redemptions_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_voucher_redemptions_voucher",
+          "key": {
+            "voucherId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_voucher_redemptions_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_voucher_redemptions_order",
+          "key": {
+            "orderId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "code",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "orderId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "discount",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "redeemedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "voucherId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:60%"
+          ],
+          "presencePct": 60,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": null
+    },
+    {
+      "name": "cart_items",
+      "count": 5,
+      "sizeBytes": 1281,
+      "storageBytes": 36864,
+      "avgObjBytes": 256,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_cart_items_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_cart_items_selection",
+          "key": {
+            "userId": 1,
+            "productId": 1,
+            "color": 1,
+            "size": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "userId",
+          "productId",
+          "color",
+          "size"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "productId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "color",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "size",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "quantity",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:80%"
+          ],
+          "presencePct": 80,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "updatedAt",
+        "iso": "2026-08-13T15:20:23.648Z"
+      }
+    },
+    {
+      "name": "push_tokens",
+      "count": 4,
+      "sizeBytes": 990,
+      "storageBytes": 36864,
+      "avgObjBytes": 247,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_push_tokens_token",
+          "key": {
+            "token": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "ix_push_tokens_user",
+          "key": {
+            "userId": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "token"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "token",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "platform",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "demoBatch",
+          "bsonTypes": [
+            "string:75%"
+          ],
+          "presencePct": 75,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-13T15:19:26.500Z"
+      }
+    },
+    {
+      "name": "flagcard_collections",
+      "count": 4,
+      "sizeBytes": 1564,
+      "storageBytes": 36864,
+      "avgObjBytes": 391,
+      "totalIndexBytes": 36864,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "userId",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "cardIds",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "awards",
+          "bsonTypes": [
+            "array:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "createdAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "updatedAt",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "createdAt",
+        "iso": "2026-08-04T16:41:05.651Z"
+      }
+    },
+    {
+      "name": "vouchers",
+      "count": 4,
+      "sizeBytes": 876,
+      "storageBytes": 36864,
+      "avgObjBytes": 219,
+      "totalIndexBytes": 110592,
+      "indexes": [
+        {
+          "name": "_id_",
+          "key": {
+            "_id": 1
+          },
+          "unique": false,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_vouchers_id",
+          "key": {
+            "id": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        },
+        {
+          "name": "uq_vouchers_code",
+          "key": {
+            "code": 1
+          },
+          "unique": true,
+          "sparse": false,
+          "partialFilterExpression": null
+        }
+      ],
+      "uniqueFields": [
+        [
+          "id"
+        ],
+        [
+          "code"
+        ]
+      ],
+      "ttlIndexes": [],
+      "validator": null,
+      "hasValidator": false,
+      "fields": [
+        {
+          "field": "_id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "code",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "type",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "value",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "min",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "expiry",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "limit",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "used",
+          "bsonTypes": [
+            "int:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "active",
+          "bsonTypes": [
+            "boolean:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "id",
+          "bsonTypes": [
+            "string:100%"
+          ],
+          "presencePct": 100,
+          "nullPct": 0
+        },
+        {
+          "field": "appliesTo",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "ownerUserId",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "source",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "reason",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "issuedBy",
+          "bsonTypes": [
+            "string:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        },
+        {
+          "field": "issuedAt",
+          "bsonTypes": [
+            "int:25%"
+          ],
+          "presencePct": 25,
+          "nullPct": 0
+        }
+      ],
+      "newestDocument": {
+        "field": "issuedAt",
+        "iso": "2026-08-07T06:17:07.166Z"
+      }
+    }
+  ],
+  "references": [
+    {
+      "from": "addresses",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 11,
+      "withField": 11,
+      "coveragePct": 100,
+      "resolved": 11,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "cart_items",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 5,
+      "withField": 5,
+      "coveragePct": 100,
+      "resolved": 5,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "cart_items",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 5,
+      "withField": 5,
+      "coveragePct": 100,
+      "resolved": 5,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "wishlist_items",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 13,
+      "withField": 13,
+      "coveragePct": 100,
+      "resolved": 13,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "wishlist_items",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 13,
+      "withField": 13,
+      "coveragePct": 100,
+      "resolved": 13,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "orders",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 94,
+      "withField": 93,
+      "coveragePct": 99,
+      "resolved": 93,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "orders",
+      "field": "voucherId",
+      "to": "vouchers",
+      "key": "id",
+      "sourceDocs": 94,
+      "withField": 2,
+      "coveragePct": 2,
+      "resolved": 2,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "order_items",
+      "field": "orderId",
+      "to": "orders",
+      "key": "id",
+      "sourceDocs": 154,
+      "withField": 154,
+      "coveragePct": 100,
+      "resolved": 154,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "order_items",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 154,
+      "withField": 154,
+      "coveragePct": 100,
+      "resolved": 154,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "payments",
+      "field": "orderId",
+      "to": "orders",
+      "key": "id",
+      "sourceDocs": 94,
+      "withField": 94,
+      "coveragePct": 100,
+      "resolved": 94,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "payments",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 94,
+      "withField": 93,
+      "coveragePct": 99,
+      "resolved": 93,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "return_requests",
+      "field": "orderId",
+      "to": "orders",
+      "key": "id",
+      "sourceDocs": 8,
+      "withField": 8,
+      "coveragePct": 100,
+      "resolved": 8,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "return_requests",
+      "field": "paymentId",
+      "to": "payments",
+      "key": "id",
+      "sourceDocs": 8,
+      "withField": 5,
+      "coveragePct": 63,
+      "resolved": 5,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "return_requests",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 8,
+      "withField": 8,
+      "coveragePct": 100,
+      "resolved": 8,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "products",
+      "field": "categoryId",
+      "to": "categories",
+      "key": "id",
+      "sourceDocs": 71,
+      "withField": 71,
+      "coveragePct": 100,
+      "resolved": 71,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "product_variants",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 497,
+      "withField": 497,
+      "coveragePct": 100,
+      "resolved": 497,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "product_media",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 151,
+      "withField": 151,
+      "coveragePct": 100,
+      "resolved": 151,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "reviews",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 31,
+      "withField": 31,
+      "coveragePct": 100,
+      "resolved": 31,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "reviews",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 31,
+      "withField": 31,
+      "coveragePct": 100,
+      "resolved": 31,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "reviews",
+      "field": "orderId",
+      "to": "orders",
+      "key": "id",
+      "sourceDocs": 31,
+      "withField": 31,
+      "coveragePct": 100,
+      "resolved": 31,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "review_reactions",
+      "field": "reviewId",
+      "to": "reviews",
+      "key": "id",
+      "sourceDocs": 88,
+      "withField": 88,
+      "coveragePct": 100,
+      "resolved": 88,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "review_reactions",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 88,
+      "withField": 88,
+      "coveragePct": 100,
+      "resolved": 88,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "interactions",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 671,
+      "withField": 527,
+      "coveragePct": 79,
+      "resolved": 527,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "interactions",
+      "field": "productId",
+      "to": "products",
+      "key": "id",
+      "sourceDocs": 671,
+      "withField": 671,
+      "coveragePct": 100,
+      "resolved": 671,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "profiles",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 12,
+      "withField": 12,
+      "coveragePct": 100,
+      "resolved": 12,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "voucher_redemptions",
+      "field": "voucherId",
+      "to": "vouchers",
+      "key": "id",
+      "sourceDocs": 5,
+      "withField": 5,
+      "coveragePct": 100,
+      "resolved": 5,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "voucher_redemptions",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 5,
+      "withField": 5,
+      "coveragePct": 100,
+      "resolved": 5,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "flagcard_collections",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 4,
+      "withField": 4,
+      "coveragePct": 100,
+      "resolved": 4,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "moderation_samples",
+      "field": "reviewId",
+      "to": "reviews",
+      "key": "id",
+      "sourceDocs": 6,
+      "withField": 0,
+      "coveragePct": 0,
+      "resolved": 0,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "goals",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 8,
+      "withField": 8,
+      "coveragePct": 100,
+      "resolved": 8,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "chats",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 68,
+      "withField": 48,
+      "coveragePct": 71,
+      "resolved": 48,
+      "orphans": 0,
+      "observedOptionality": "optional",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    },
+    {
+      "from": "push_tokens",
+      "field": "userId",
+      "to": "users",
+      "key": "id",
+      "sourceDocs": 4,
+      "withField": 4,
+      "coveragePct": 100,
+      "resolved": 4,
+      "orphans": 0,
+      "observedOptionality": "required",
+      "observedCardinality": "nhiều-1",
+      "enforcedBy": "application-level (MongoDB không có FK phía server)"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ActivityIndicator, Modal, PanResponder } from 'react-native';
+import { Animated, View, Text, StyleSheet, ScrollView, Pressable, Dimensions, ActivityIndicator, Modal, PanResponder, Share } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F, money } from '../../theme/tokens';
@@ -11,6 +11,8 @@ import { SmartImage } from '../../components/SmartImage';
 import { useAuth } from '../../lib/auth';
 import { ResizeMode, Video } from 'expo-av';
 import { ReviewMediaPlayer } from '../../components/MediaAttach';
+import { prefecturesForProduct, spotsForProduct } from '../../lib/japanSpots';
+import { useReduceMotion } from '../../components/motion';
 
 const W = Dimensions.get('window').width;
 const COLORS = [
@@ -21,14 +23,16 @@ const DEFAULT_SIZES = ['S','M','L','XL','XXL','XXXL','4XL','5XL'];
 
 function KenBurnsImage({ source, style, recyclingKey }:{ source:any; style:any; recyclingKey?:string }) {
   const t = useRef(new Animated.Value(0)).current;
+  const reduced = useReduceMotion();
   useEffect(() => {
+    if(reduced){t.setValue(0);return;}
     const loop = Animated.loop(Animated.sequence([
       Animated.timing(t, { toValue:1, duration:7000, useNativeDriver:true }),
       Animated.timing(t, { toValue:0, duration:7000, useNativeDriver:true }),
     ]));
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [reduced,t]);
   const scale = t.interpolate({ inputRange:[0,1], outputRange:[1, 1.14] });
   const translateX = t.interpolate({ inputRange:[0,1], outputRange:[0, -16] });
   const translateY = t.interpolate({ inputRange:[0,1], outputRange:[0, 12] });
@@ -124,6 +128,10 @@ export default function Detail() {
     ...(p.videos||[]).map((video,index)=>({kind:'video' as const,source:typeof video==='string'?video:video.url,index})),
   ];
   const story = storyFor(p.cat);
+  // Địa điểm Nhật Bản hợp với đúng món này. Bảng SPOTS là nguồn duy nhất, nên
+  // trang sản phẩm và màn Khám phá không thể mô tả lệch nhau.
+  const japanSpots = useMemo(()=>spotsForProduct(p.slug),[p.slug]);
+  const japanPrefectures = useMemo(()=>prefecturesForProduct(p.slug),[p.slug]);
   const isNew = (p.sold||0) < 10;
   const isHandmade = /thủ công/i.test(story.craftText);
   const badgeLabel = [isNew && 'MỚI', isHandmade && 'MAY THỦ CÔNG'].filter(Boolean).join(' · ');
@@ -201,6 +209,10 @@ export default function Detail() {
   const outfitItems = useMemo(()=>(outfit?.items||[]).map(i=>PRODUCTS.find(x=>x.slug===i.slug)).filter(Boolean) as Product[],[outfit]);
   const wished = isAuthenticated && isWished(p.slug);
   const openMemberRoute=(target:any)=>{if(requireAuth(target))router.push(target);};
+  const shareProduct=()=>void Share.share({
+    title:p.name,
+    message:`${p.name} · ${money(shownPrice)} tại JAPANO`,
+  });
   const react=async(reviewId:string,value:'helpful'|'not_helpful')=>{if(!requireAuth())return;try{await reactToReview(reviewId,user!.id,value);await loadReviews();}catch{}};
 
   return (
@@ -223,8 +235,8 @@ export default function Detail() {
           </Pressable>
           <View style={{ position:'absolute', right:14, top:48, flexDirection:'row', gap:8 }}>
             <Pressable accessibilityLabel="Phóng to ảnh sản phẩm" style={st.round} onPress={()=>setZoomOpen(true)}><Ionicons name="search" size={20} color="#fff" /></Pressable>
-            <Pressable style={st.round} onPress={()=>toggleWish(p.slug)}><Ionicons name={wished?'heart':'heart-outline'} size={20} color="#fff" /></Pressable>
-            <View style={st.round}><Ionicons name="share-social-outline" size={20} color="#fff" /></View>
+            <Pressable accessibilityRole="button" accessibilityLabel={wished?'Bỏ khỏi danh sách yêu thích':'Thêm vào danh sách yêu thích'} accessibilityState={{selected:wished}} style={st.round} onPress={()=>toggleWish(p.slug)}><Ionicons name={wished?'heart':'heart-outline'} size={20} color="#fff" /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Chia sẻ sản phẩm" style={st.round} onPress={shareProduct}><Ionicons name="share-social-outline" size={20} color="#fff" /></Pressable>
           </View>
           {!!badgeLabel && <View style={st.flag}><Text style={{ color:'#fff', fontFamily:F.bodyX, fontSize:10 }}>{badgeLabel}</Text></View>}
           {media.length>1 && (
@@ -258,14 +270,14 @@ export default function Detail() {
             <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
               <View style={st.aiIcon}><Ionicons name="eye-outline" size={18} color="#fff" /></View>
               <View style={{ flex:1 }}>
-                <Text style={st.aiLabel}>{isVisionDescription ? 'TRÍ TUỆ NHÂN TẠO ĐỌC ẢNH SẢN PHẨM' : 'MÔ TẢ TỰ ĐỘNG TỪ DỮ LIỆU SẢN PHẨM'}</Text>
-                <Text style={st.aiEngine}>{isVisionDescription ? 'Đối chiếu ảnh với dữ liệu sản phẩm' : 'Chưa phân tích được ảnh — tạo từ tên/loại sản phẩm'}</Text>
+                <Text style={st.aiLabel}>GỢI Ý PHONG CÁCH JAPANO</Text>
+                <Text style={st.aiEngine}>{isVisionDescription ? 'Phân tích từ hình ảnh và thông tin sản phẩm' : 'Tóm tắt từ thông tin sản phẩm đã xác nhận'}</Text>
               </View>
             </View>
             {aiLoading ? (
               <View style={{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:12 }}>
                 <ActivityIndicator size="small" color={C.ink} />
-                <Text style={st.aiMuted}>Đang đọc ảnh và đối chiếu “{p.name}”…</Text>
+                <Text style={st.aiMuted}>Đang chuẩn bị gợi ý phối đồ dành cho bạn…</Text>
               </View>
             ) : aiDescription ? (
               <>
@@ -274,12 +286,12 @@ export default function Detail() {
                 {aiDescription.details.slice(0,3).map((detail,index)=><Text key={index} style={st.aiBullet}>• {detail}</Text>)}
                 <View style={st.aiTip}><Text style={st.aiTipTitle}>Cách phối</Text><Text style={st.aiBody}>{aiDescription.stylingTip}</Text></View>
                 <Text style={st.aiReason}>{aiDescription.purchaseReason}</Text>
-                {!isVisionDescription && <Text style={[st.aiMuted,{ marginTop:8 }]}>* Hệ thống chưa phân tích trực tiếp ảnh sản phẩm này (đang bận hoặc chưa sẵn sàng); nội dung trên được tạo từ tên, danh mục và mô tả sản phẩm.</Text>}
+                {!isVisionDescription && <Text style={[st.aiMuted,{ marginTop:8 }]}>Gợi ý dựa trên tên, danh mục và mô tả đã được cửa hàng xác nhận.</Text>}
               </>
             ) : <Text style={st.aiMuted}>Chưa tải được mô tả tự động; thông tin bên dưới vẫn dùng dữ liệu sản phẩm đã xác nhận.</Text>}
             <Pressable style={st.goalLink} onPress={()=>openMemberRoute({ pathname:'/goals', params:{ productId:p.slug } } as any)}>
               <Ionicons name="flag-outline" size={16} color={C.ink} />
-              <Text style={st.goalLinkText}>Lập lộ trình để mua món này</Text>
+              <Text style={st.goalLinkText}>Lưu vào mục tiêu mua sắm</Text>
               <Ionicons name="chevron-forward" size={16} color={C.ink} />
             </Pressable>
           </View>
@@ -291,7 +303,7 @@ export default function Detail() {
               const total = hasVariants ? sizesFor(c.name).reduce((sum,o)=>sum+(o.stock||0),0) : null;
               const empty = total===0;
               return (
-                <Pressable key={c.name} onPress={()=>selectColor(c.name)} style={[st.sw,{ backgroundColor:c.hex }, colorName===c.name&&st.swSel, empty&&st.swEmpty]}>
+                  <Pressable key={c.name} accessibilityRole="button" accessibilityLabel={`Màu ${c.name}${empty?', đã hết hàng':''}`} accessibilityState={{selected:colorName===c.name,disabled:empty}} onPress={()=>selectColor(c.name)} style={[st.sw,{ backgroundColor:c.hex }, colorName===c.name&&st.swSel, empty&&st.swEmpty]}>
                   {colorName===c.name && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </Pressable>
               );
@@ -308,7 +320,7 @@ export default function Detail() {
             {currentSizes.map((s)=>{
               const soldOut = s.stock===0;
               return (
-                <Pressable key={s.size} disabled={soldOut} onPress={()=>setSize(s.size)} style={{ alignItems:'center' }}>
+                <Pressable key={s.size} accessibilityRole="button" accessibilityLabel={`Kích thước ${s.size}${soldOut?', đã hết hàng':s.stock!==null?`, còn ${s.stock}`:''}`} accessibilityState={{selected:size===s.size,disabled:soldOut}} disabled={soldOut} onPress={()=>setSize(s.size)} style={{ alignItems:'center' }}>
                   <View style={[st.size, size===s.size&&st.sizeSel, soldOut&&st.sizeOff]}>
                     <Text style={{ fontFamily:F.bodyB, fontSize:13, color:soldOut?C.muted:(size===s.size?'#fff':C.ink), textDecorationLine:soldOut?'line-through':'none' }}>{s.size}</Text>
                   </View>
@@ -369,6 +381,32 @@ export default function Detail() {
             </View>
           </StoryBlock>
 
+          {/* Món đồ gắn với địa điểm có thật, không phải một câu quảng cáo chung.
+              Mỗi dòng lấy thẳng từ bảng SPOTS nên giờ chụp và lời khuyên luôn
+              khớp với những gì màn Khám phá Nhật Bản đang hiển thị. */}
+          {japanSpots.length>0 && (
+            <>
+              <SectionHeader kanji="旅" label="Mặc bộ này ở đâu trên đất Nhật" action={`${japanSpots.length} nơi`} />
+              <Text style={st.p}>
+                {japanSpots.length===1
+                  ? `Bộ này hợp nhất với một địa điểm trong hành trình JAPANO — ${japanSpots[0].place} (${japanSpots[0].prefecture}).`
+                  : `Bộ này hợp với ${japanSpots.length} địa điểm ở ${japanPrefectures.join(', ')}. Mỗi nơi một khung giờ và một kiểu ánh sáng khác nhau.`}
+              </Text>
+              {japanSpots.map(spot=>(
+                <Pressable key={spot.place} style={st.tripRow} onPress={()=>router.push('/explore-japan')}>
+                  <SmartImage source={{ uri: spot.photoUrl }} style={st.tripImg} recyclingKey={`trip-${spot.place}`} />
+                  <View style={{ flex:1 }}>
+                    <Text style={st.tripPlace}>{spot.place}</Text>
+                    <Text style={st.tripMeta}>{spot.prefecture} · {spot.time}</Text>
+                    <Text style={st.tripTip}>{spot.tip}</Text>
+                    <Text style={st.tripSpot} numberOfLines={2}>Góc đẹp nhất: {spot.photoSpots[0]?.name} — {spot.photoSpots[0]?.tip}</Text>
+                  </View>
+                </Pressable>
+              ))}
+              <Btn label="Mở Khám phá Nhật Bản" variant="ghost" style={{ marginTop:10 }} onPress={()=>router.push('/explore-japan')} />
+            </>
+          )}
+
           {/* AI ghép đồ: hoà sắc + tương đồng chủ đề + xu hướng */}
           {outfitItems.length>1 && (
             <>
@@ -417,9 +455,8 @@ export default function Detail() {
 
       {/* sticky bar */}
       <View style={st.sticky}>
-        <View style={st.stickyTryOn}><Btn label="Thử đồ thông minh" variant="ghost" style={st.stickyButton} onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)} /></View>
-        <View style={st.stickyGoal}><Btn label="Mục tiêu" variant="ink" style={st.stickyButton} onPress={()=>openMemberRoute({ pathname:'/goals', params:{ productId:p.slug } } as any)} /></View>
-        <View style={st.stickyCart}><Btn label={outOfStock?'Hết hàng':'Thêm giỏ'} disabled={outOfStock} style={st.stickyButton} onPress={()=>addToCart(p.slug, colorName, chosenSize)} /></View>
+        <View style={st.stickyTryOn}><Btn label="Thử trên ảnh" icon="shirt-outline" variant="ghost" style={st.stickyButton} onPress={()=>openMemberRoute({ pathname:'/tryon', params:{ productId:p.slug, color:colorName, size:chosenSize } } as any)} /></View>
+        <View style={st.stickyCart}><Btn label={outOfStock?'Hết hàng':'Thêm vào giỏ'} icon="bag-outline" variant="ink" disabled={outOfStock} style={st.stickyButton} onPress={()=>addToCart(p.slug, colorName, chosenSize)} /></View>
       </View>
     </View>
   );
@@ -441,6 +478,12 @@ const st = StyleSheet.create({
   sizeSel:{ backgroundColor:C.sumi, borderColor:C.sumi },
   sizeOff:{ backgroundColor:C.washi2, borderColor:C.line },
   story:{ paddingVertical:14, borderTopWidth:1, borderTopColor:C.hair },
+  tripRow:{ flexDirection:'row', gap:12, paddingVertical:11, borderBottomWidth:1, borderBottomColor:C.hair },
+  tripImg:{ width:72, height:96, borderRadius:9, backgroundColor:C.washi2 },
+  tripPlace:{ fontFamily:F.bodyX, fontSize:13, color:C.ink },
+  tripMeta:{ fontFamily:F.body, fontSize:10.5, color:C.muted, marginTop:1 },
+  tripTip:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.ink, marginTop:4 },
+  tripSpot:{ fontFamily:F.body, fontSize:10.5, lineHeight:15.5, color:C.muted, marginTop:4 },
   p:{ fontFamily:F.body, fontSize:13, lineHeight:22, color:C.ink },
   spec:{ fontFamily:F.bodyB, fontSize:12, color:C.ink }, specV:{ fontFamily:F.body, fontSize:11, color:C.muted },
   reviewTop:{ flexDirection:'row', gap:14, alignItems:'center', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14 },
@@ -449,21 +492,20 @@ const st = StyleSheet.create({
   review:{ marginTop:10, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:12 },
   reaction:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:6,paddingHorizontal:10,backgroundColor:'#fff'},reactionOn:{borderColor:C.primary,backgroundColor:C.washi2},reactionText:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink},
   aiCard:{ marginTop:14, backgroundColor:'#fff', borderWidth:1, borderColor:'#DAC7BB', borderRadius:16, padding:14 },
-  aiIcon:{ width:34, height:34, borderRadius:10, backgroundColor:C.ai, alignItems:'center', justifyContent:'center' },
-  aiLabel:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:.7, color:C.ai },
+  aiIcon:{ width:34, height:34, borderRadius:10, backgroundColor:C.sumi, alignItems:'center', justifyContent:'center' },
+  aiLabel:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:.7, color:C.sumi },
   aiEngine:{ fontFamily:F.body, fontSize:10.5, color:C.muted, marginTop:1 },
   aiHeadline:{ fontFamily:F.display, fontSize:17, lineHeight:24, color:C.sumi, marginTop:12 },
   aiBody:{ fontFamily:F.body, fontSize:12.5, lineHeight:20, color:C.ink, marginTop:6 },
   aiBullet:{ fontFamily:F.body, fontSize:12, lineHeight:19, color:C.ink, marginTop:4 },
   aiMuted:{ fontFamily:F.body, fontSize:12, lineHeight:18, color:C.muted },
-  aiTip:{ backgroundColor:C.aiSoft, borderRadius:12, padding:10, marginTop:10 },
-  aiTipTitle:{ fontFamily:F.bodyX, fontSize:11, color:C.ai },
+  aiTip:{ backgroundColor:C.washi2, borderRadius:12, padding:10, marginTop:10 },
+  aiTipTitle:{ fontFamily:F.bodyX, fontSize:11, color:C.sumi },
   aiReason:{ fontFamily:F.bodyB, fontSize:12.5, lineHeight:20, color:C.shuDeep, marginTop:10 },
   goalLink:{ flexDirection:'row', alignItems:'center', gap:7, borderTopWidth:1, borderTopColor:C.hair, paddingTop:12, marginTop:12 },
   goalLinkText:{ flex:1, fontFamily:F.bodyB, fontSize:12.5, color:C.ink },
   sticky:{ position:'absolute', left:0, right:0, bottom:0, flexDirection:'row', alignItems:'stretch', gap:8, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
-  stickyTryOn:{ flex:1.55 },
-  stickyGoal:{ flex:.82 },
-  stickyCart:{ flex:1.05 },
+  stickyTryOn:{ flex:1 },
+  stickyCart:{ flex:1.12 },
   stickyButton:{ width:'100%' },
 });

@@ -18,8 +18,10 @@ const PROFILE_KEY = '@japano/style-profile/v1';
  *   2 — 2026-08-28: tách tay khỏi thân, chiều cao chuyển sang prior dân số,
  *       hồi quy train lại và hiệu chuẩn theo BodyM. Ước lượng của thế hệ 1
  *       (đầu ra kiểu 202cm/117kg) bị loại bỏ.
+ *   3 — 2026-08-29: 5 mẫu chuyển thành anchor chạy ngầm; app tự áp size được
+ *       backend chọn và không còn lưu kết quả của mẫu như số đo người dùng.
  */
-export const BODY_ESTIMATOR_GENERATION = 2;
+export const BODY_ESTIMATOR_GENERATION = 3;
 
 export type SavedStyleProfile = StyleProfile & {
   style: string;

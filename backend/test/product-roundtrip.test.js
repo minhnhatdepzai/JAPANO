@@ -75,10 +75,14 @@ test('giá gạch (old) đi qua compareAtPrice rồi quay về đúng', () => {
 test('ảnh phải nằm ở product_media, không phải product_details', () => {
   const collections = serializeState({ products: [sample()] });
   const media = collections.get('product_media') || [];
-  const details = collections.get('product_details') || [];
   assert.equal(media.filter((row) => row.type === 'image').length, 2, 'hai ảnh phải thành hai document media');
   assert.ok(media.every((row) => row.productId === 'p-test-1'));
-  assert.equal(details[0].images, undefined, 'product_details không được mang mảng ảnh');
+  // product_details đã bị gộp vào chính document sản phẩm, nên nó không được
+  // sinh ra nữa: mô tả nằm trong products, ảnh nằm trong product_media.
+  assert.equal(collections.has('product_details'), false, 'không được ghi lại product_details');
+  const [product] = collections.get('products') || [];
+  assert.equal(product.images, undefined, 'document sản phẩm không được mang mảng ảnh');
+  assert.ok(String(product.description || '').length > 0, 'mô tả phải nhúng trong products');
 });
 
 // Đây là bài kiểm tra thật sự đáng giá: bộ sản phẩm Nhật Bản đang bán phải đi

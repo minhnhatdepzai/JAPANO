@@ -104,6 +104,28 @@ test('lượt thử đồ bơi bị chặn ở backend khi thiếu xác nhận, 
   assert.equal(evaluateAdultGate({ policy, adultConsent: true, imageCheck: { available: true, verdict: 'yes' } }).allowed, true);
 });
 
+test('ảnh người lớn khó đoán vẫn được thử bikini sau xác nhận 18+, nhưng tín hiệu trẻ em vẫn bị chặn', () => {
+  const policy = safetyPolicyFor([product('a', 'Bikini hai mảnh')]);
+  const unsure = evaluateAdultGate({
+    policy, adultConsent: true, imageCheck: { available: true, verdict: 'unsure' },
+  });
+  assert.equal(unsure.allowed, true);
+  assert.equal(unsure.attestationFallback, true);
+  assert.match(unsure.warning, /xác nhận 18\+/i);
+
+  const minor = evaluateAdultGate({
+    policy, adultConsent: true, imageCheck: { available: true, verdict: 'no' },
+  });
+  assert.equal(minor.allowed, false);
+  assert.equal(minor.code, 'MINOR_SUSPECTED');
+
+  const unavailable = evaluateAdultGate({
+    policy, adultConsent: true, imageCheck: { available: false, verdict: 'unsure' },
+  });
+  assert.equal(unavailable.allowed, false);
+  assert.equal(unavailable.code, 'AGE_VERIFICATION_UNAVAILABLE');
+});
+
 test('resolveOutfitGarments vẫn giữ luật cũ: một món thân dưới mỗi lượt', () => {
   const state = stateWith(
     product('quan-short-hoa-van', 'Quần short hoa văn Nhật'),

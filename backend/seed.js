@@ -99,7 +99,7 @@ function emptyState() {
   return {
     seeded: false,
     schemaVersion: 5,
-    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, vnpay: true, logo: null },
+    shop: { name: 'JAPANO Store', hotline: '1900 6868', email: 'shop@japano.vn', address: '123 Lê Lợi, P. Bến Nghé, HCM', shipFee: 30000, cod: true, stripe: true, vnpay: true, logo: null, locations: [{ id: 'japano-qtsc9', name: 'JAPANO Store — QTSC9', address: 'Tòa nhà QTSC9 (tòa T), đường Tô Ký, phường Trung Mỹ Tây, TP Hồ Chí Minh', latitude: 10.8537915, longitude: 106.6260636, phone: '1900 6868', openingHours: 'Liên hệ trước khi đến', services: ['Tư vấn sản phẩm', 'Hỗ trợ đặt hàng', 'Hướng dẫn thử đồ AI'], active: true }] },
     integrations: { mongo: false, cloudinary: false, ai: false },
     categories: JSON.parse(JSON.stringify(CATS)),
     products: [],
@@ -129,6 +129,7 @@ function emptyState() {
     chats: [],
     goals: [],
     aiDescriptions: [],
+    japanSpots: [],
     japanSpotReviews: [],
     japanSpotSuggestions: [],
   };

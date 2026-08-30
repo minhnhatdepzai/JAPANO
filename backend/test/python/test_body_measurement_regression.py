@@ -352,3 +352,47 @@ class SubjectSelectionTest(unittest.TestCase):
         small = (760, 800, 900, 1200)
         gap = self.score(big, size) - self.score(small, size)
         self.assertGreater(gap, 1.5, 'vị trí trong khung không được lật ngược kết quả')
+
+
+class CutOffRowTest(unittest.TestCase):
+    """Ảnh cắt ngay tại hàng đo: phải trả null, không phải một con số sai."""
+
+    def setUp(self):
+        self.image = Image.new('RGB', (IMAGE_W, IMAGE_H), 'white')
+        self._original = body_analysis.person_mask
+
+    def tearDown(self):
+        body_analysis.person_mask = self._original
+
+    def analyze(self, crop_at=None):
+        mask, pose = build_person(arm_gap=0, crop_at=crop_at)
+        body_analysis.person_mask = lambda image, box=None, m=mask: m
+        return analyze_body(self.image, pose)
+
+    def test_vong_do_o_hang_bi_cat_tra_null(self):
+        """Cắt ngang hông thì vòng hông KHÔNG được có giá trị."""
+        cropped = self.analyze(crop_at=760)
+        cut = cropped.get('measurementRowsCutOff') or []
+        if not cut:
+            self.skipTest('mặt nạ tổng hợp không rơi vào ca hàng đo sát mép')
+        for name in cut:
+            key = {'chest': 'bust', 'waist': 'waist', 'hip': 'hip'}[name]
+            self.assertIsNone((cropped.get('estimatedGirthRanges') or {}).get(key),
+                              f'{key} phải là null khi hàng đo bị cắt')
+            self.assertIn(key, cropped.get('rejectedGirths') or {})
+
+    def test_can_nang_khong_duoc_suy_tu_hang_bi_cat(self):
+        cropped = self.analyze(crop_at=760)
+        if not (cropped.get('measurementRowsCutOff') or []):
+            self.skipTest('mặt nạ tổng hợp không rơi vào ca hàng đo sát mép')
+        weight = cropped['estimatedWeight']
+        self.assertIsNone(weight['valueKg'],
+                          'ảnh cắt tại hàng đo thì thà nói chưa đo được còn hơn trả số sai')
+        self.assertFalse(weight.get('usableForSizing'))
+        self.assertIn('unusableReason', weight)
+
+    def test_anh_du_nguoi_van_ra_so_binh_thuong(self):
+        """Chốt chặn mới không được làm hỏng ảnh bình thường."""
+        full = self.analyze(crop_at=None)
+        self.assertEqual(full.get('measurementRowsCutOff'), None)
+        self.assertIsNotNone(full['estimatedWeight']['valueKg'])

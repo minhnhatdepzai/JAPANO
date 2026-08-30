@@ -252,7 +252,21 @@ function viewDashboard(){
   const catColors={'ao-truyen-thong':'#A33A2F','haori':'#243244','trang-phuc':'#6B7255','phu-kien':'#B08D3C','cosplay':'#6D28D9'};
   const topC=Object.entries(catMap).map(([c,v])=>({label:catName(c),value:v,color:catColors[c]||'#999'})).sort((a,b)=>b.value-a.value);
   const recent=[...dOrders].sort((a,b)=>orderTime(b)-orderTime(a)).slice(0,6),forecast=forecastData(),todayCmp=compareRevenue(today,yesterday),monthCmp=compareRevenue(month,prevMonth);
+  const todayLabel=new Intl.DateTimeFormat('vi-VN',{weekday:'long',day:'2-digit',month:'long'}).format(new Date());
   return `
+  <section class="dash-intro">
+    <div class="dash-intro-copy">
+      <div class="dash-eyebrow"><span></span> TRUNG TÂM ĐIỀU HÀNH JAPANO · ${esc(todayLabel.toUpperCase())}</div>
+      <h2>Điều hành cửa hàng<br>trong một nhịp nhìn.</h2>
+      <p>${statusCount('pending')?'Có <b>'+statusCount('pending')+' đơn đang chờ</b> bạn xử lý hôm nay.':'Không có đơn tồn đọng cần xử lý.'} Dữ liệu thương mại và tín hiệu AI đang được đồng bộ vào cùng một bảng điều khiển.</p>
+      <div class="dash-intro-actions"><button class="btn p" onclick="A.go('orders')">${icon('receipt-outline')} Xử lý đơn hàng</button><button class="btn dash-quiet" onclick="A.go('tryon')">${icon('sparkles-outline')} Chẩn đoán AI</button></div>
+    </div>
+    <div class="dash-intro-state">
+      <div class="dash-monogram">N</div>
+      <div class="dash-state-row"><span class="dot g"></span><div><b>Hệ thống sẵn sàng</b><small>Dữ liệu · hình ảnh · cổng trí tuệ nhân tạo</small></div></div>
+      <div class="dash-state-metrics"><span><b>${totalOrders}</b>đơn hàng</span><i></i><span><b>${DB.products.length}</b>sản phẩm</span><i></i><span><b>${DB.users.length}</b>người dùng</span></div>
+    </div>
+  </section>
   <div class="filters" style="margin-bottom:14px"><div class="tabs"><button class="${state.dataScope==='live'?'on':''}" onclick="A.dataScope('live')">Dữ liệu thực <span class="c">${Number(ANALYTICS?.sourceCounts?.liveOrders??dOrders.length)}</span></button><button class="${state.dataScope==='all'?'on':''}" onclick="A.dataScope('all')">Tất cả, gồm dữ liệu mẫu <span class="c">${DB.orders.length}</span></button></div><span class="faint" style="font-size:11.5px">${state.dataScope==='live'?'Đã loại đơn mẫu và đơn kiểm thử khỏi báo cáo.':'Đang hiển thị cả dữ liệu mẫu để kiểm thử mô hình.'}</span></div>
   <div class="grid kpis">
     ${kpi('Doanh thu hôm nay',money(today),icon('cash-outline'),'tint-brand',todayCmp,"A.rev('day')")}

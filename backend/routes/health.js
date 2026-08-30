@@ -80,11 +80,70 @@ module.exports = function registerHealthRoutes(api, ctx) {
     return { ...shop, logo: raw.startsWith('data:image/') ? `/api/shop/logo?v=${Number(shop.updatedAt || 0)}` : raw };
   }
 
+  const DEFAULT_STORE_LOCATION = Object.freeze({
+    id: 'japano-qtsc9',
+    name: 'JAPANO Store — QTSC9',
+    address: 'Tòa nhà QTSC9 (tòa T), đường Tô Ký, phường Trung Mỹ Tây, TP Hồ Chí Minh',
+    latitude: 10.8537915,
+    longitude: 106.6260636,
+    phone: '',
+    openingHours: 'Liên hệ trước khi đến',
+    services: ['Tư vấn sản phẩm', 'Hỗ trợ đặt hàng', 'Hướng dẫn thử đồ AI'],
+    active: true,
+  });
+
+  function normalizeLocations(value, hotline) {
+    if (!Array.isArray(value)) throw httpError(400, 'Danh sách địa điểm phải là một mảng.');
+    if (value.length > 12) throw httpError(400, 'Chỉ hỗ trợ tối đa 12 địa điểm trong cấu hình cửa hàng.');
+    const seen = new Set();
+    return value.map((raw, index) => {
+      const item = raw && typeof raw === 'object' ? raw : {};
+      const id = String(item.id || `japano-location-${index + 1}`).trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '');
+      const name = String(item.name || '').trim();
+      const address = String(item.address || '').trim();
+      const latitude = Number(item.latitude);
+      const longitude = Number(item.longitude);
+      if (!id || seen.has(id)) throw httpError(400, 'Mỗi địa điểm cần mã riêng, không được trùng.');
+      if (!name || name.length > 120) throw httpError(400, 'Tên địa điểm không hợp lệ.');
+      if (!address || address.length > 280) throw httpError(400, 'Địa chỉ địa điểm không hợp lệ.');
+      if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) throw httpError(400, 'Vĩ độ phải nằm trong khoảng -90 đến 90.');
+      if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) throw httpError(400, 'Kinh độ phải nằm trong khoảng -180 đến 180.');
+      seen.add(id);
+      return {
+        id,
+        name,
+        address,
+        latitude,
+        longitude,
+        phone: String(item.phone || hotline || '').trim().slice(0, 40),
+        openingHours: String(item.openingHours || 'Liên hệ trước khi đến').trim().slice(0, 160),
+        services: Array.isArray(item.services)
+          ? [...new Set(item.services.map((entry) => String(entry || '').trim()).filter(Boolean))].slice(0, 12)
+          : [],
+        active: item.active !== false,
+      };
+    });
+  }
+
+  // Bổ sung đúng một địa điểm mặc định vào document shop hiện có. Đây là cấu
+  // hình nhỏ, không tạo collection stores và không nhân bản dữ liệu.
+  if (!Array.isArray(read().shop?.locations) || read().shop.locations.length === 0) {
+    update((state) => {
+      state.shop ||= {};
+      state.shop.locations = normalizeLocations([{ ...DEFAULT_STORE_LOCATION, phone: state.shop.hotline }], state.shop.hotline);
+      state.shop.updatedAt = Date.now();
+      return state;
+    });
+  }
+
   api.put('/shop', requireAdmin, async (req, res) => {
     try {
       const incoming = req.body && typeof req.body === 'object' ? req.body : {};
-      const allowed = ['name', 'hotline', 'email', 'address', 'shipFee', 'cod', 'stripe', 'vnpay', 'logo'];
+      const allowed = ['name', 'hotline', 'email', 'address', 'shipFee', 'cod', 'stripe', 'vnpay', 'logo', 'locations'];
       const patch = Object.fromEntries(allowed.filter((key) => Object.prototype.hasOwnProperty.call(incoming, key)).map((key) => [key, incoming[key]]));
+      if (Object.prototype.hasOwnProperty.call(patch, 'locations')) {
+        patch.locations = normalizeLocations(patch.locations, patch.hotline || read().shop?.hotline);
+      }
       if (patch.logo && !/^data:image\/(?:png|jpe?g|webp|svg\+xml);base64,/i.test(String(patch.logo))) {
         throw httpError(400, 'Logo phải là ảnh PNG, JPG, WebP hoặc SVG hợp lệ.');
       }

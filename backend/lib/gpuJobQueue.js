@@ -3,6 +3,7 @@ const { EventEmitter } = require('events');
 const DEFAULT_PRIORITIES = Object.freeze({
   motion: 300,
   tryon: 200,
+  swimwear: 200,
   vision: 120,
   recommendation: 100,
 });
@@ -73,10 +74,21 @@ class GpuJobQueue extends EventEmitter {
   cancel(types, reason = 'Người dùng đã chuyển khỏi màn hình sử dụng GPU.', owner = '') {
     const selected = new Set((Array.isArray(types) ? types : [types]).map(String));
     const scope = String(owner || '').trim();
+    // Chỉ huỷ job của CHÍNH máy đã yêu cầu đổi màn hình.
+    //
+    // Hai lỗ hổng của bản trước, cả hai đều đã làm chết một lượt thử đồ thật:
+    //   · `if (!scope) return true` — lệnh đổi focus không kèm danh tính huỷ
+    //     sạch mọi job, kể cả của máy khác.
+    //   · `return !jobOwner || ...` — job không kèm danh tính bị BẤT KỲ máy nào
+    //     huỷ. Đo được: app trên điện thoại mở màn hình chủ, gửi focus="home",
+    //     và cắt ngang lượt /api/tryon đang chạy dở của một client khác.
+    //
+    // Quy tắc mới: chỉ huỷ khi hai bên khớp danh tính, hoặc khi CẢ HAI đều
+    // không có danh tính (cùng một bối cảnh ẩn danh, ví dụ script nội bộ).
     const mine = (item) => {
-      if (!scope) return true;
       const jobOwner = String(item.metadata?.owner || '').trim();
-      return !jobOwner || jobOwner === scope;
+      if (!scope && !jobOwner) return true;
+      return Boolean(scope) && jobOwner === scope;
     };
     const error = new GpuJobCancelledError(reason);
     const cancelled = [];

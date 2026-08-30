@@ -82,6 +82,7 @@ const INTENT_PROTOTYPES = {
   trend: ['sản phẩm đang thịnh hành', 'món hot bán chạy', 'xu hướng thời trang'],
   outfit: ['gợi ý phối đồ', 'mặc gì cùng sản phẩm này', 'tạo set trang phục'],
   price: ['sản phẩm giá bao nhiêu', 'hỏi giá tiền', 'ngân sách mua đồ'],
+  shopping: ['shop có quần áo gì', 'tìm đồ thời trang để mua', 'gợi ý sản phẩm trong cửa hàng'],
 };
 
 const PROTOTYPE_VECTORS = new Map(Object.entries(INTENT_PROTOTYPES).map(([intent, phrases]) => {

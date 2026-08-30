@@ -2,165 +2,165 @@
   "dataset": "BodyM (Amazon), CC-BY-NC-4.0",
   "split": "testB",
   "identityDisjoint": true,
-  "subjects": 400,
-  "photosScored": 400,
+  "subjects": 120,
+  "photosScored": 120,
   "note": "Silhouette của BodyM dùng trực tiếp làm mặt nạ (không chạy rembg), nên đây là sai số của bước SUY LUẬN hình học + hồi quy, chưa gồm sai số tách nền.",
   "targets": {
     "height": {
       "unit": "cm",
       "baseline": {
-        "n": 326,
-        "mae": 20.01,
-        "median": 17.46,
-        "p75": 31.83,
-        "p90": 39.35,
-        "bias": 16.57,
-        "mape": 11.89,
-        "within5": 0.181,
-        "within10": 0.2945
+        "n": 92,
+        "mae": 19.35,
+        "median": 18.02,
+        "p75": 30.36,
+        "p90": 38.35,
+        "bias": 15.41,
+        "mape": 11.52,
+        "within5": 0.1957,
+        "within10": 0.2935
       },
       "new": {
-        "n": 381,
-        "mae": 6.44,
-        "median": 5.47,
-        "p75": 9.57,
-        "p90": 13.53,
-        "bias": -1.94,
-        "mape": 3.81,
-        "within5": 0.4672,
-        "within10": 0.769
+        "n": 114,
+        "mae": 6.56,
+        "median": 5.35,
+        "p75": 9.39,
+        "p90": 14.48,
+        "bias": -1.93,
+        "mape": 3.88,
+        "within5": 0.4825,
+        "within10": 0.7632
       }
     },
     "weight": {
       "unit": "kg",
       "baseline": {
-        "n": 326,
-        "mae": 15.99,
-        "median": 13.14,
-        "p75": 23.57,
-        "p90": 32.09,
-        "bias": 0.74,
-        "mape": 24.13,
-        "within5": 0.1933,
-        "within10": 0.3957
+        "n": 92,
+        "mae": 16.95,
+        "median": 14.97,
+        "p75": 23.71,
+        "p90": 32.03,
+        "bias": -1.37,
+        "mape": 25.32,
+        "within5": 0.1413,
+        "within10": 0.3587
       },
       "new": {
-        "n": 372,
-        "mae": 9.0,
-        "median": 6.6,
-        "p75": 11.0,
-        "p90": 19.19,
-        "bias": -0.35,
-        "mape": 12.57,
-        "within5": 0.3548,
-        "within10": 0.7016
+        "n": 114,
+        "mae": 9.59,
+        "median": 6.9,
+        "p75": 11.77,
+        "p90": 22.18,
+        "bias": -1.67,
+        "mape": 12.92,
+        "within5": 0.3246,
+        "within10": 0.6754
       }
     },
     "chest": {
       "unit": "cm",
       "baseline": {
-        "n": 326,
-        "mae": 12.91,
-        "median": 9.75,
-        "p75": 15.76,
-        "p90": 25.0,
-        "bias": -2.17,
-        "mape": 13.36,
-        "within5": 0.2699,
-        "within10": 0.5031
+        "n": 92,
+        "mae": 12.88,
+        "median": 9.86,
+        "p75": 15.67,
+        "p90": 23.32,
+        "bias": -3.22,
+        "mape": 12.82,
+        "within5": 0.2717,
+        "within10": 0.5
       },
       "new": {
-        "n": 381,
-        "mae": 6.11,
-        "median": 4.63,
-        "p75": 8.02,
-        "p90": 13.42,
-        "bias": -0.89,
-        "mape": 5.98,
-        "within5": 0.5249,
-        "within10": 0.8241
+        "n": 114,
+        "mae": 6.49,
+        "median": 4.8,
+        "p75": 8.35,
+        "p90": 15.39,
+        "bias": -2.26,
+        "mape": 6.16,
+        "within5": 0.5263,
+        "within10": 0.8246
       }
     },
     "waist": {
       "unit": "cm",
       "baseline": {
-        "n": 326,
-        "mae": 9.96,
-        "median": 8.44,
-        "p75": 13.99,
-        "p90": 20.6,
-        "bias": 5.26,
-        "mape": 11.64,
-        "within5": 0.319,
-        "within10": 0.5859
+        "n": 92,
+        "mae": 9.9,
+        "median": 8.27,
+        "p75": 13.79,
+        "p90": 20.29,
+        "bias": 4.26,
+        "mape": 11.26,
+        "within5": 0.3152,
+        "within10": 0.5435
       },
       "new": {
-        "n": 381,
-        "mae": 6.5,
-        "median": 4.8,
-        "p75": 9.28,
-        "p90": 14.31,
-        "bias": -0.77,
-        "mape": 7.25,
-        "within5": 0.5249,
-        "within10": 0.7822
+        "n": 114,
+        "mae": 6.45,
+        "median": 4.46,
+        "p75": 9.15,
+        "p90": 13.17,
+        "bias": -1.72,
+        "mape": 7.0,
+        "within5": 0.5526,
+        "within10": 0.7895
       }
     },
     "hip": {
       "unit": "cm",
       "baseline": {
-        "n": 326,
-        "mae": 12.24,
-        "median": 9.99,
-        "p75": 17.11,
-        "p90": 24.22,
-        "bias": 6.19,
-        "mape": 12.11,
-        "within5": 0.2638,
-        "within10": 0.5031
+        "n": 92,
+        "mae": 11.55,
+        "median": 10.69,
+        "p75": 16.56,
+        "p90": 22.49,
+        "bias": 6.13,
+        "mape": 11.24,
+        "within5": 0.2935,
+        "within10": 0.4674
       },
       "new": {
-        "n": 381,
-        "mae": 5.57,
-        "median": 4.0,
-        "p75": 7.38,
-        "p90": 11.94,
-        "bias": -0.36,
-        "mape": 5.32,
-        "within5": 0.5801,
-        "within10": 0.8478
+        "n": 114,
+        "mae": 5.7,
+        "median": 4.16,
+        "p75": 7.32,
+        "p90": 12.31,
+        "bias": -1.27,
+        "mape": 5.36,
+        "within5": 0.614,
+        "within10": 0.8421
       }
     }
   },
   "displayBinCoverage": {
-    "height": 0.4462,
-    "weight": 0.3844,
-    "chest": 0.4803,
-    "waist": 0.4803,
-    "hip": 0.5249
+    "height": 0.4561,
+    "weight": 0.4035,
+    "chest": 0.4123,
+    "waist": 0.4649,
+    "hip": 0.5614
   },
   "perGenderNewMae": {
     "male": {
-      "height": 6.9,
-      "weight": 9.55,
-      "chest": 6.25,
-      "waist": 7.68,
-      "hip": 5.13
+      "height": 6.68,
+      "weight": 10.11,
+      "chest": 6.78,
+      "waist": 7.59,
+      "hip": 5.42
     },
     "female": {
-      "height": 6.15,
-      "weight": 8.66,
-      "chest": 6.02,
-      "waist": 5.76,
-      "hip": 5.84
+      "height": 6.48,
+      "weight": 9.21,
+      "chest": 6.28,
+      "waist": 5.62,
+      "hip": 5.91
     }
   },
   "implausibleCount": {
-    "baseline": 104,
-    "new": 20
+    "baseline": 21,
+    "new": 8
   },
   "latencySeconds": {
-    "p50": 0.041,
-    "p90": 0.045
+    "p50": 0.039,
+    "p90": 0.044
   }
 }

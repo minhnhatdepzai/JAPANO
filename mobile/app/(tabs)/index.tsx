@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { C, F, money } from '../../theme/tokens';
 import { RisingSun } from '../../components/art';
-import { SectionHeader, Price, Streak } from '../../components/ui';
+import { SectionHeader, Price, Streak, PressScale } from '../../components/ui';
 import { ProductCard, Heart } from '../../components/ProductCard';
 import { PRODUCTS, CATEGORIES } from '../../lib/catalog';
 import { useStore } from '../../lib/store';
@@ -21,6 +21,16 @@ import { useGpuFocus } from '../../lib/useGpuFocus';
 
 const refKey=(ref:ApiProductRef)=>typeof ref==='string'?ref:String(ref.slug||ref.productId||ref.id||ref._id||'');
 const todayKey=()=>new Date().toISOString().slice(0,10);
+
+function StudioAction({icon,label,caption,onPress}:{icon:any;label:string;caption:string;onPress:()=>void}){
+  return <View style={st.studioActionSlot}>
+    <PressScale style={st.studioAction} scaleTo={.965} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}. ${caption}`}>
+      <View style={st.studioIcon}><Ionicons name={icon} size={18} color="#fff" /></View>
+      <Text style={st.studioLabel} numberOfLines={1}>{label}</Text>
+      <Text style={st.studioCaption} numberOfLines={1}>{caption}</Text>
+    </PressScale>
+  </View>;
+}
 
 function Shimmer({ style }:{ style:any }) {
   const pulse = useRef(new Animated.Value(0.4)).current;
@@ -78,6 +88,7 @@ export default function Home() {
   const featured = ['furina','yukata-xanh','cardigan-dai','giay-dep'].map(bySlug);
   const heroImg = bySlug('kimono-hong').images[0];
   const setThumbs = ['haori-dang-dai','so-mi-trang','balo-vai'].map(s=>bySlug(s).images[0]);
+  const recommendationCardWidth=Math.min(160,Math.floor(screenWidth*.41));
   const featuredCardWidth=Math.floor((screenWidth-36-12)/2);
 
   return (
@@ -86,17 +97,17 @@ export default function Home() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* greeting */}
         <View style={st.greet}>
-          <View style={{flexDirection:'row',alignItems:'center',gap:10}}><BrandLogo size={44}/><View><Text style={{ fontFamily:F.body, fontSize:12, color:C.muted }}>Xin chào,</Text><Text style={{ fontFamily:F.display, fontSize:17, color:C.sumi }}>{user?.name||'Khách'}</Text></View></View>
+          <View style={{flexDirection:'row',alignItems:'center',gap:10}}><BrandLogo size={44}/><View><Text style={st.greetEyebrow}>JAPANO · 日本</Text><Text style={st.greetName}>{user?.name||'Xin chào'}</Text></View></View>
           <View style={{ flexDirection:'row', gap:10 }}>
-            <Pressable style={st.icBtn} onPress={()=>router.push('/(tabs)/products')}><Ionicons name="search" size={18} color={C.ink} /></Pressable>
-            <Pressable style={st.icBtn} onPress={()=>{if(requireAuth('/cart'))router.push('/cart');}}>
+            <PressScale style={st.icBtn} scaleTo={.92} onPress={()=>router.push('/(tabs)/products')} accessibilityLabel="Tìm sản phẩm"><Ionicons name="search" size={18} color={C.ink} /></PressScale>
+            <PressScale style={st.icBtn} scaleTo={.92} onPress={()=>{if(requireAuth('/cart'))router.push('/cart');}} accessibilityLabel="Mở giỏ hàng">
               <Ionicons name="bag-outline" size={18} color={C.ink} />
               {isAuthenticated&&cartCount>0 && <View style={st.countBadge}><Text style={st.countT}>{cartCount}</Text></View>}
-            </Pressable>
-            <Pressable style={st.icBtn} onPress={()=>{if(requireAuth('/notifications'))router.push('/notifications');}}>
+            </PressScale>
+            <PressScale style={st.icBtn} scaleTo={.92} onPress={()=>{if(requireAuth('/notifications'))router.push('/notifications');}} accessibilityLabel="Mở thông báo">
               <Ionicons name="notifications-outline" size={18} color={C.ink} />
               {unread>0 && <View style={st.badge} />}
-            </Pressable>
+            </PressScale>
           </View>
         </View>
 
@@ -114,22 +125,38 @@ export default function Home() {
         {/* hero */}
         <View style={st.hero}>
           <SmartImage source={heroImg} style={StyleSheet.absoluteFill as any} recyclingKey="home-hero" />
-          <LinearGradient colors={['rgba(26,20,16,0)','rgba(26,20,16,0.75)']} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['rgba(12,10,8,0.04)','rgba(12,10,8,0.16)','rgba(12,10,8,0.88)']} locations={[0,.42,1]} style={StyleSheet.absoluteFill} />
+          <View style={st.heroTopline}>
+            <View style={st.heroEdition}><View style={st.heroDot}/><Text style={st.heroEditionT}>JAPANO JOURNEY · 25 ĐỊA ĐIỂM</Text></View>
+            <Text style={st.heroKanji}>旅</Text>
+          </View>
           <View style={{ position:'absolute', left:18, bottom:16, right:18 }}>
-            <Text style={{ fontFamily:F.displaySb, letterSpacing:3, fontSize:10, color:'rgba(255,255,255,0.70)' }}>KHÁM PHÁ NHẬT BẢN</Text>
-            <Text style={{ fontFamily:F.displayX, fontSize:26, color:'#fff', marginTop:4, marginBottom:8 }}>Từ Hokkaido đến{'\n'}Okinawa, đi cùng JAPANO</Text>
-            <Text style={{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.washi2, marginBottom:10 }} numberOfLines={2}>Địa điểm nổi tiếng, gợi ý chụp ảnh đẹp và câu chuyện từng vùng — có thật, có nguồn kiểm chứng.</Text>
+            <Text style={st.heroEyebrow}>THỜI TRANG · VĂN HOÁ · HÀNH TRÌNH</Text>
+            <Text style={st.heroTitle}>Mặc đẹp ở Nhật,{'\n'}thấy trước chính mình</Text>
+            <Text style={st.heroBody} numberOfLines={2}>Thử trang phục JAPANO trên ảnh của bạn, rồi đặt mình vào những khung cảnh đẹp nhất Nhật Bản.</Text>
             <Pressable style={st.heroBtn} onPress={()=>router.push('/explore-japan')}>
-              <Text style={{ color:'#fff', fontFamily:F.bodyB, fontSize:13 }}>Khám phá →</Text>
+              <Text style={st.heroBtnT}>Bắt đầu hành trình</Text><Ionicons name="arrow-forward" size={16} color={C.ink}/>
             </Pressable>
           </View>
         </View>
 
         <View style={{ paddingHorizontal:18 }}>
+          <View style={st.studio}>
+            <View style={st.studioHead}>
+              <View><Text style={st.studioEyebrow}>JAPANO AI STUDIO</Text><Text style={st.studioTitle}>Một ảnh, ba trải nghiệm</Text></View>
+              <View style={st.studioSpark}><Ionicons name="sparkles" size={18} color={C.shu}/></View>
+            </View>
+            <View style={st.studioRow}>
+              <StudioAction icon="shirt-outline" label="Thử đồ AI" caption="Tự chọn size" onPress={()=>{if(requireAuth('/tryon?productId=kimono-hong'))router.push('/tryon?productId=kimono-hong');}} />
+              <StudioAction icon="image-outline" label="Ảnh tại Nhật" caption="25 phong cảnh" onPress={()=>router.push('/explore-japan')} />
+              <StudioAction icon="chatbubble-ellipses-outline" label="Trợ lý Ori" caption="Phối đồ riêng" onPress={()=>{if(requireAuth('/chat'))router.push('/chat');}} />
+            </View>
+          </View>
+
           {/* category chips */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop:14 }} contentContainerStyle={{ gap:8 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop:14 }} contentContainerStyle={{ gap:8, paddingRight:18 }}>
             {CATEGORIES.map((c,i)=>(
-              <Pressable key={c.key} style={[st.chip, i===0&&st.chipOn]} onPress={()=> c.key==='all'?router.push('/(tabs)/products'):router.push(`/category/${c.key}`)}>
+              <Pressable key={c.key} accessibilityRole="button" accessibilityLabel={`Xem danh mục ${c.label}`} style={[st.chip, i===0&&st.chipOn]} onPress={()=> c.key==='all'?router.push('/(tabs)/products'):router.push(`/category/${c.key}`)}>
                 <Text style={{ color:i===0?'#fff':C.ink, fontFamily:F.bodyM, fontSize:12.5 }}>{c.label}</Text>
               </Pressable>
             ))}
@@ -137,16 +164,20 @@ export default function Home() {
 
           {/* recommendations */}
           <SectionHeader kanji="推" label="Gợi ý cho bạn" action="Tất cả" onAction={()=>router.push('/(tabs)/products')} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap:12 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap:12, paddingBottom:3 }}>
             {recsLoading
               ? [0,1,2].map(i=>(
-                  <View key={i} style={{ width:150 }}>
-                    <Shimmer style={{ height:180, borderRadius:14 }} />
-                    <Shimmer style={{ height:12, borderRadius:6, marginTop:8, width:'80%' }} />
-                    <Shimmer style={{ height:12, borderRadius:6, marginTop:6, width:'50%' }} />
+                  <View key={i} style={[st.productSkeleton,{ width:recommendationCardWidth }]}>
+                    <Shimmer style={{ height:180, borderTopLeftRadius:17, borderTopRightRadius:17 }} />
+                    <View style={st.productSkeletonMeta}>
+                      <Shimmer style={{ height:11, borderRadius:6, width:'88%' }} />
+                      <Shimmer style={{ height:11, borderRadius:6, marginTop:6, width:'62%' }} />
+                      <Shimmer style={{ height:12, borderRadius:6, marginTop:8, width:'58%' }} />
+                      <Shimmer style={{ height:20, borderRadius:99, marginTop:7, width:'90%' }} />
+                    </View>
                   </View>
                 ))
-              : recs.map((p,i)=><ProductCard key={p.slug} p={p} index={i} reason={reasons[p.slug]||['phong cách Nhật cổ','vì bạn thích sự tối giản','hợp gu của bạn'][i]} />)}
+              : recs.map((p,i)=><ProductCard key={p.slug} p={p} width={recommendationCardWidth} index={i} reason={reasons[p.slug]||['Phong cách Nhật cổ','Tối giản, dễ phối','Hợp gu của bạn'][i]} />)}
           </ScrollView>
 
           {/* culture strip */}
@@ -181,25 +212,17 @@ export default function Home() {
           </Pressable>
 
           {/* featured grid */}
-          <SectionHeader kanji="選" label="Sản phẩm nổi bật" action="Tất cả" onAction={()=>router.push('/(tabs)/products')} />
+        <SectionHeader kanji="選" label="Sản phẩm bán chạy" action="Tất cả" onAction={()=>router.push('/(tabs)/products')} />
           <View style={st.grid}>
             {featured.map((p,i)=><ProductCard key={p.slug} p={p} index={i} width={featuredCardWidth} imgH={Math.round(featuredCardWidth*1.2)} />)}
           </View>
 
-          {/* quick actions */}
-          <View style={[st.grid,{ marginTop:16, marginBottom:24 }]}>
-            <Pressable style={st.quick} onPress={()=>{if(requireAuth('/camera'))router.push('/camera');}}>
-              <Ionicons name="camera-outline" size={26} color={C.ink} />
-              <Text style={st.quickT}>Ống kính JAPANO</Text><Text style={st.quickS}>chụp → gợi ý đồ</Text>
-            </Pressable>
-            <Pressable style={st.quick} onPress={()=>{if(requireAuth('/goals'))router.push('/goals');}}>
-              <Ionicons name="flag-outline" size={26} color={C.ink} />
-              <Text style={st.quickT}>Mục tiêu</Text><Text style={st.quickS}>mua sắm · sức khoẻ · Nhật Bản</Text>
-            </Pressable>
-            <Pressable style={st.quick} onPress={()=>router.push('/explore-japan')}>
-              <Ionicons name="compass-outline" size={26} color={C.ink} />
-              <Text style={st.quickT}>Khám phá Nhật Bản</Text><Text style={st.quickS}>địa điểm · chụp ảnh đẹp</Text>
-            </Pressable>
+          <View style={st.promiseBar}>
+            <View style={st.promise}><Ionicons name="person-circle-outline" size={18} color={C.ink}/><Text style={st.promiseT}>Giữ nguyên gương mặt</Text></View>
+            <View style={st.promiseLine}/>
+            <View style={st.promise}><Ionicons name="resize-outline" size={18} color={C.ink}/><Text style={st.promiseT}>Tự gợi ý size</Text></View>
+            <View style={st.promiseLine}/>
+            <View style={st.promise}><Ionicons name="shield-checkmark-outline" size={18} color={C.ink}/><Text style={st.promiseT}>Không lưu ảnh</Text></View>
           </View>
         </View>
       </ScrollView>
@@ -207,14 +230,36 @@ export default function Home() {
   );
 }
 const st = StyleSheet.create({
-  greet:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:18, paddingTop:6, paddingBottom:10 },
-  icBtn:{ width:38, height:38, borderRadius:11, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, alignItems:'center', justifyContent:'center' },
+  greet:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:18, paddingTop:6, paddingBottom:12 },
+  greetEyebrow:{ fontFamily:F.bodyM, fontSize:9.5, letterSpacing:1.6, color:C.muted },
+  greetName:{ fontFamily:F.display, fontSize:17, color:C.sumi, marginTop:2 },
+  icBtn:{ width:38, height:38, borderRadius:12, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, alignItems:'center', justifyContent:'center' },
   badge:{ position:'absolute', top:8, right:9, width:7, height:7, borderRadius:4, backgroundColor:C.shu },
   dailyBanner:{ flexDirection:'row', alignItems:'center', marginHorizontal:18, marginBottom:6, padding:12, borderRadius:14, backgroundColor:C.sumi },
   countBadge:{ position:'absolute', top:-4, right:-4, minWidth:18, height:18, borderRadius:9, backgroundColor:C.shu, alignItems:'center', justifyContent:'center', paddingHorizontal:4, borderWidth:1.5, borderColor:C.washi },
   countT:{ color:'#fff', fontFamily:F.bodyX, fontSize:10 },
-  hero:{ height:222, overflow:'hidden', borderBottomLeftRadius:26, borderBottomRightRadius:26 },
-  heroBtn:{ backgroundColor:C.primary, alignSelf:'flex-start', paddingVertical:8, paddingHorizontal:14, borderRadius:11 },
+  hero:{ height:276, overflow:'hidden', borderRadius:26, marginHorizontal:12, borderWidth:1, borderColor:'rgba(17,17,17,.08)' },
+  heroTopline:{ position:'absolute', left:16, top:14, right:16, flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
+  heroEdition:{ flexDirection:'row', alignItems:'center', gap:6, backgroundColor:'rgba(17,17,17,.58)', borderRadius:999, paddingVertical:5, paddingHorizontal:9 },
+  heroDot:{ width:6, height:6, borderRadius:3, backgroundColor:C.shu },
+  heroEditionT:{ color:'rgba(255,255,255,.9)', fontFamily:F.bodyM, fontSize:8.5, letterSpacing:.8 },
+  heroKanji:{ color:'rgba(255,255,255,.72)', fontFamily:F.display, fontSize:23 },
+  heroEyebrow:{ fontFamily:F.displaySb, letterSpacing:2.6, fontSize:9, color:'rgba(255,255,255,.72)' },
+  heroTitle:{ fontFamily:F.displayX, fontSize:27, lineHeight:31, color:'#fff', marginTop:5, marginBottom:7, letterSpacing:-.4 },
+  heroBody:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'rgba(255,255,255,.82)', marginBottom:11, maxWidth:330 },
+  heroBtn:{ backgroundColor:'#fff', alignSelf:'flex-start', paddingVertical:9, paddingLeft:13, paddingRight:10, borderRadius:12, flexDirection:'row', alignItems:'center', gap:8 },
+  heroBtnT:{ color:C.ink, fontFamily:F.bodyB, fontSize:12 },
+  studio:{ marginTop:14, borderRadius:20, backgroundColor:C.sumi, padding:14, overflow:'hidden' },
+  studioHead:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:12 },
+  studioEyebrow:{ color:'rgba(255,255,255,.54)', fontFamily:F.bodyM, fontSize:8.5, letterSpacing:1.7 },
+  studioTitle:{ color:'#fff', fontFamily:F.displaySb, fontSize:16, marginTop:2 },
+  studioSpark:{ width:34, height:34, borderRadius:12, backgroundColor:'rgba(255,255,255,.08)', alignItems:'center', justifyContent:'center' },
+  studioRow:{ flexDirection:'row', gap:8 },
+  studioActionSlot:{ flex:1, minWidth:0 },
+  studioAction:{ backgroundColor:'rgba(255,255,255,.075)', borderWidth:1, borderColor:'rgba(255,255,255,.1)', borderRadius:14, padding:9 },
+  studioIcon:{ width:30, height:30, borderRadius:10, backgroundColor:'rgba(255,255,255,.12)', alignItems:'center', justifyContent:'center', marginBottom:8 },
+  studioLabel:{ color:'#fff', fontFamily:F.bodyB, fontSize:10.5 },
+  studioCaption:{ color:'rgba(255,255,255,.48)', fontFamily:F.body, fontSize:8.5, marginTop:2 },
   chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
   chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
   culture:{ borderRadius:18, overflow:'hidden', borderWidth:1, borderColor:C.line, marginTop:18 },
@@ -223,7 +268,10 @@ const st = StyleSheet.create({
   lookThumb:{ width:46, height:56, borderRadius:9, borderWidth:2, borderColor:'#fff' },
   addSet:{ backgroundColor:C.sumi, paddingVertical:8, paddingHorizontal:11, borderRadius:10 },
   grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'center', columnGap:12, rowGap:12, width:'100%', alignSelf:'center' },
-  quick:{ width:'48%', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:16, padding:14, alignItems:'center' },
-  quickT:{ fontFamily:F.bodyX, fontSize:13, color:C.ink, marginTop:4 },
-  quickS:{ fontFamily:F.body, fontSize:10.5, color:C.muted },
+  productSkeleton:{ height:281, borderRadius:18, overflow:'hidden', borderWidth:1, borderColor:C.line, backgroundColor:C.card },
+  productSkeletonMeta:{ height:101, paddingHorizontal:10, paddingTop:9, paddingBottom:10 },
+  promiseBar:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginTop:18, marginBottom:28, borderTopWidth:1, borderBottomWidth:1, borderColor:C.line, paddingVertical:13 },
+  promise:{ flex:1, alignItems:'center', gap:5 },
+  promiseT:{ textAlign:'center', color:C.muted, fontFamily:F.bodyM, fontSize:8.5 },
+  promiseLine:{ width:1, height:24, backgroundColor:C.line },
 });

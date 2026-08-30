@@ -1,0 +1,34 @@
+{
+  "surveyedAt": "2026-08-29",
+  "fineTuneCompleted": false,
+  "sources": [
+    {
+      "name": "U-NEED",
+      "url": "https://github.com/LeeeeoLiu/U-NEED",
+      "licenseObserved": "MIT repository license; dataset access conditions require separate review",
+      "status": "hold-for-schema-and-offline-evaluation"
+    },
+    {
+      "name": "Fashion Product Images Small",
+      "url": "https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small",
+      "licenseObserved": "MIT",
+      "status": "approved-for-offline-vocabulary-and-retrieval-experiments"
+    },
+    {
+      "name": "Fashion-MNIST Product Descriptions",
+      "url": "https://www.kaggle.com/datasets/aguado/fashion-mnist-product-descriptions",
+      "licenseObserved": "CC0",
+      "status": "optional-synthetic-lexical-augmentation"
+    },
+    {
+      "name": "WHO physical activity guidelines",
+      "url": "https://www.who.int/publications/i/item/9789240015128",
+      "status": "approved-rule-provenance"
+    },
+    {
+      "name": "CDC Steps for Losing Weight",
+      "url": "https://www.cdc.gov/healthy-weight-growth/losing-weight/index.html",
+      "status": "approved-rule-provenance"
+    }
+  ]
+}

@@ -44,14 +44,14 @@
       "new": {
         "algorithm": "arm-carve+skeleton-gate",
         "n": 1026,
-        "maePx": 17.44,
-        "medianAbsPx": 10.19,
-        "p90AbsPx": 34.15,
-        "biasPx": -3.36,
-        "mapePct": 10.32,
-        "within10pct": 0.847,
-        "within20pct": 0.9552,
-        "over30pctRate": 0.0312
+        "maePx": 16.37,
+        "medianAbsPx": 9.61,
+        "p90AbsPx": 31.98,
+        "biasPx": -2.54,
+        "mapePct": 9.64,
+        "within10pct": 0.8606,
+        "within20pct": 0.961,
+        "over30pctRate": 0.0302
       }
     },
     "hip": {
@@ -70,14 +70,14 @@
       "new": {
         "algorithm": "arm-carve+skeleton-gate",
         "n": 857,
-        "maePx": 20.5,
-        "medianAbsPx": 12.21,
-        "p90AbsPx": 48.26,
-        "biasPx": -2.72,
-        "mapePct": 9.96,
-        "within10pct": 0.8086,
-        "within20pct": 0.9265,
-        "over30pctRate": 0.0432
+        "maePx": 20.63,
+        "medianAbsPx": 13.45,
+        "p90AbsPx": 45.81,
+        "biasPx": -3.36,
+        "mapePct": 9.99,
+        "within10pct": 0.8098,
+        "within20pct": 0.9382,
+        "over30pctRate": 0.0408
       }
     }
   },
@@ -90,12 +90,12 @@
     "waist": {
       "n": 620,
       "baselineMaePx": 109.18,
-      "newMaePx": 20.39
+      "newMaePx": 18.68
     },
     "hip": {
       "n": 610,
       "baselineMaePx": 97.02,
-      "newMaePx": 22.05
+      "newMaePx": 22.08
     }
   },
   "groundTruth": "VITON-HD image-parse-v3, thân = silhouette − nhãn 14/15, chỉ hàng có nhãn cả hai tay",

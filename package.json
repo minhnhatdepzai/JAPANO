@@ -16,6 +16,7 @@
     "media:cloudinary:sync": "node backend/scripts/syncProductsToCloud.js",
     "db:mongo:migrate": "node backend/scripts/migrateToMongoCollections.js",
     "db:mongo:sync": "node backend/scripts/syncMongoViews.js",
+    "db:japan-spots:sync": "node scripts/sync_japan_spots.js",
     "db:erd:drawio": "node backend/scripts/generateMongoErdDrawio.js",
     "verify": "node scripts/verify.mjs",
     "verify:ai": "node scripts/verify.mjs --ai",

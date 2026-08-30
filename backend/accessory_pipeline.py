@@ -1302,45 +1302,100 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
     coverage = coverage or {}
     allowed = set(coverage.get('allowedExposedZones') or [])
     required = set(coverage.get('requiredCoveredZones') or ['chest', 'pelvis', 'buttocks'])
+    coverage_style = str(coverage.get('coverageStyle') or 'standard')
 
     clean = clean_image.convert('RGB')
     result = result_image.convert('RGB')
     if result.size != clean.size:
         result = result.resize(clean.size, Image.Resampling.LANCZOS)
-    # Khung từng vùng cơ thể phải đo trên CHÍNH ảnh đang so sánh.
-    #
-    # `pose` do Node truyền xuống được tính trên ảnh GỐC của người dùng, còn
-    # `clean` là ảnh đã chuẩn hoá/chỉnh tư thế — khác kích thước, khác vị trí
-    # người trong khung. Dùng lẫn hai hệ quy chiếu thì ô "ngực" có thể rơi vào
-    # mặt hoặc nền, và cổng an toàn báo hở cả ba vùng bắt buộc trên một tấm ảnh
-    # hoàn toàn kín đáo — đúng lỗi đã bắt được khi test trên máy thật.
-    do_pose = analyze(clean, source_coordinates=True)
-    if do_pose.get('box') and not do_pose.get('fallback'):
-        active_pose = do_pose
+    # Ảnh gốc và ảnh do FLUX trả về có thể cùng kích thước canvas nhưng người
+    # đã được đặt lại vị trí/phóng lớn. Mỗi ảnh vì vậy BẮT BUỘC có pose riêng.
+    # Dùng box của ảnh gốc để crop ảnh kết quả là nguyên nhân khiến một bikini
+    # kín đáo bị báo hở ngực/chậu/mông trên máy thật: ba ô thực tế đã rơi xuống
+    # bụng và đùi của output.
+    clean_detected_pose = analyze(clean, source_coordinates=True)
+    if clean_detected_pose.get('box') and not clean_detected_pose.get('fallback'):
+        clean_pose = clean_detected_pose
     elif pose and pose.get('box'):
-        active_pose = pose
+        clean_pose = pose
     else:
-        active_pose = analyze(result, source_coordinates=True)
+        clean_pose = clean_detected_pose
+
+    result_detected_pose = analyze(result, source_coordinates=True)
+    if result_detected_pose.get('box') and not result_detected_pose.get('fallback'):
+        result_pose = result_detected_pose
+    else:
+        # Chỉ rơi về pose ảnh gốc khi detector thực sự mất người. Hai ảnh đã
+        # được resize cùng canvas nên đây là fallback bảo thủ, không nới gate.
+        result_pose = clean_pose
 
     # Một mẫu da duy nhất, lấy từ ảnh SẠCH, dùng cho cả trước lẫn sau — có vậy
     # hai con số mới so sánh được với nhau.
-    skin_reference = face_skin_reference(clean, active_pose)
+    skin_reference = face_skin_reference(clean, clean_pose)
+
+    def protected_core(box, zone):
+        """Lõi phải có vải đối với đồ bơi tối giản.
+
+        Bikini hợp lệ vẫn để lộ cleavage, hông và phần chân nằm trong chính ô
+        chữ nhật lớn của ngực/chậu/mông. Chấm toàn bộ ô sẽ luôn báo hở. Ba lõi
+        dưới bám vào phần vải thực sự bắt buộc: nửa trên của top và dải trước
+        của brief. Nếu model sinh ảnh khoả thân, các lõi này vẫn là da và gate
+        vẫn chặn như cũ.
+        """
+        if not box:
+            return None
+        x1, y1, x2, y2 = box
+        width, height = x2 - x1, y2 - y1
+        if width <= 1 or height <= 1:
+            return None
+        if zone == 'chest':
+            fractions = (.15, .00, .85, .58)
+        elif zone in {'pelvis', 'buttocks'}:
+            fractions = (.15, .00, .85, .58)
+        else:
+            fractions = (.15, .15, .85, .85)
+        fx1, fy1, fx2, fy2 = fractions
+        return (
+            int(x1 + width * fx1), int(y1 + height * fy1),
+            int(x1 + width * fx2), int(y1 + height * fy2),
+        )
 
     reasons = []
     warnings = []
     zones = {}
     for zone in BODY_ZONE_BOXES:
-        box = zone_box(active_pose, clean.size, zone)
-        if not box or box[2] <= box[0] or box[3] <= box[1]:
+        clean_box = zone_box(clean_pose, clean.size, zone)
+        result_box = zone_box(result_pose, result.size, zone)
+        if (not clean_box or not result_box
+                or clean_box[2] <= clean_box[0] or clean_box[3] <= clean_box[1]
+                or result_box[2] <= result_box[0] or result_box[3] <= result_box[1]):
             continue
-        before = _skin_ratio(clean.crop(box), skin_reference)
-        after = _skin_ratio(result.crop(box), skin_reference)
+        before = _skin_ratio(clean.crop(clean_box), skin_reference)
+        after = _skin_ratio(result.crop(result_box), skin_reference)
         gain = after - before
-        zones[zone] = {'before': round(before, 4), 'after': round(after, 4), 'gain': round(gain, 4)}
+        zone_info = {'before': round(before, 4), 'after': round(after, 4), 'gain': round(gain, 4)}
+        zones[zone] = zone_info
         if zone in required:
-            # Vùng cấm: xét cả mức tuyệt đối lẫn mức tăng. Ảnh gốc có thể vốn đã
-            # hở (người mặc áo hai dây) nên chỉ mức tuyệt đối là chưa đủ.
-            if after > 0.34 and gain > 0.10:
+            if coverage_style == 'minimal-swimwear':
+                clean_core = protected_core(clean_box, zone)
+                result_core = protected_core(result_box, zone)
+                before_core = _skin_ratio(clean.crop(clean_core), skin_reference) if clean_core else before
+                after_core = _skin_ratio(result.crop(result_core), skin_reference) if result_core else after
+                core_gain = after_core - before_core
+                zone_info.update({
+                    'protectedBefore': round(before_core, 4),
+                    'protectedAfter': round(after_core, 4),
+                    'protectedGain': round(core_gain, 4),
+                })
+                # Đây vẫn là fail-closed: lõi nhạy cảm chủ yếu là da thì huỷ.
+                # Ngưỡng cao hơn full-box vì bikini có dây/đường viền nhỏ và
+                # khoảng hở thiết kế, nhưng ảnh khoả thân (>~90% da) vẫn bị bắt.
+                required_exposed = after_core > 0.72 and core_gain > 0.10
+            else:
+                # Vùng cấm của đồ thường: xét cả mức tuyệt đối lẫn mức tăng.
+                # Ảnh gốc có thể vốn đã hở nên chỉ mức tuyệt đối là chưa đủ.
+                required_exposed = after > 0.34 and gain > 0.10
+            if required_exposed:
                 reasons.append(f'required_zone_exposed:{zone}')
         elif zone in allowed:
             # Chiều ngược lại cũng là lỗi: sản phẩm thiết kế để HỞ vùng này mà
@@ -1356,16 +1411,16 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
                 reasons.append(f'unexpected_skin:{zone}')
 
     # Nhất quán màu da: so tông da vùng mặt với các vùng hở theo thiết kế.
-    face_box = zone_box(active_pose, clean.size, 'shoulders')
-    if face_box and active_pose.get('box'):
-        x1, y1, x2, y2 = [float(v) for v in active_pose['box']]
+    face_box = zone_box(result_pose, result.size, 'shoulders')
+    if face_box and result_pose.get('box'):
+        x1, y1, x2, y2 = [float(v) for v in result_pose['box']]
         head_height = max(1.0, (y2 - y1) * 0.13)
         face_box = (int(x1 + (x2 - x1) * .35), int(y1), int(x1 + (x2 - x1) * .65), int(y1 + head_height))
     face_tone = _mean_skin_color(result.crop(face_box)) if face_box else None
     tone_deltas = {}
     if face_tone is not None:
         for zone in allowed:
-            box = zone_box(active_pose, clean.size, zone)
+            box = zone_box(result_pose, result.size, zone)
             if not box:
                 continue
             tone = _mean_skin_color(result.crop(box))
@@ -1386,6 +1441,7 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
         'skinToneDeltas': tone_deltas,
         'allowedExposedZones': sorted(allowed),
         'requiredCoveredZones': sorted(required),
+        'coverageStyle': coverage_style,
     }
 
 

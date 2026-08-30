@@ -50,8 +50,27 @@ CANCEL_REQUESTED = threading.Event()
 ACTIVE_PROCESS: subprocess.Popen | None = None
 WARMED = False
 CUDA_RUNTIME_OK: bool | None = None
+LAST_RUN: dict | None = None
+LAST_RUN_LOCK = threading.Lock()
 GIB = 1024 * 1024 * 1024
 ENGINE = "one-to-all-animation-1.3b-v1" if CHECKPOINT_NAME.endswith("_1") else "one-to-all-animation-1.3b-v2"
+
+MOTION_PROFILES = {
+    # Keep the upstream-quality baseline available for A/B checks and difficult
+    # images. The fast profile is selected only after passing the same gate.
+    "quality": {"frames": 49, "fps": 12.0, "steps": 30, "imageGuidance": 2.5, "poseGuidance": 1.5},
+    # Single-pass guidance is substantially faster than the three transformer
+    # passes used by quality CFG. It stays opt-in until its A/B gate is green.
+    "fast": {"frames": 49, "fps": 12.0, "steps": 16, "imageGuidance": 1.0, "poseGuidance": 1.0},
+    "turbo": {"frames": 49, "fps": 12.0, "steps": 12, "imageGuidance": 1.0, "poseGuidance": 1.0},
+    "balanced": {"frames": 49, "fps": 12.0, "steps": 12, "imageGuidance": 1.5, "poseGuidance": 1.0},
+    "turn_fast": {"frames": 33, "fps": 10.0, "steps": 12, "imageGuidance": 1.5, "poseGuidance": 1.0},
+}
+DEFAULT_PROFILE_BY_MOTION = {
+    "walk_natural": "turbo",
+    "turn_show": "turn_fast",
+    "pose_sway": "turbo",
+}
 
 # Đi bộ đứng đầu vì đó là chuyển động khách hỏi nhiều nhất: muốn xem bộ đồ rủ và
 # bay thế nào khi mình bước đi bình thường. Trước đây chỉ mở mỗi 'pose_sway' —
@@ -68,6 +87,7 @@ class MotionRequest(BaseModel):
     imageBase64: str
     motion: str
     seed: int = 42
+    profile: str | None = None
 
 
 class MotionQualityError(RuntimeError):
@@ -263,6 +283,51 @@ def decode_image(value: str) -> bytes:
     return data
 
 
+def motion_profile(requested: str | None = None) -> tuple[str, dict]:
+    name = str(requested or os.getenv("JAPANO_MOTION_PROFILE", "quality")).strip().lower()
+    if name not in MOTION_PROFILES:
+        raise ValueError(f"Profile chuyển động không hợp lệ: {name}.")
+    defaults = MOTION_PROFILES[name]
+    settings = {
+        "frames": int(os.getenv("JAPANO_MOTION_FRAMES", str(defaults["frames"]))),
+        "fps": float(os.getenv("JAPANO_MOTION_FPS", str(defaults["fps"]))),
+        "steps": int(os.getenv("JAPANO_MOTION_STEPS", str(defaults["steps"]))),
+        "imageGuidance": float(
+            os.getenv("JAPANO_MOTION_IMAGE_GUIDANCE", str(defaults["imageGuidance"]))
+        ),
+        "poseGuidance": float(
+            os.getenv("JAPANO_MOTION_POSE_GUIDANCE", str(defaults["poseGuidance"]))
+        ),
+    }
+    if settings["frames"] < 17 or (settings["frames"] - 1) % 4:
+        raise ValueError("JAPANO_MOTION_FRAMES phải >= 17 và có dạng 4n+1.")
+    if (
+        settings["steps"] < 4
+        or settings["fps"] <= 0
+        or settings["imageGuidance"] < 1.0
+        or settings["poseGuidance"] < 1.0
+    ):
+        raise ValueError("JAPANO_MOTION_STEPS/FPS không hợp lệ.")
+    return name, settings
+
+
+def last_json_object(output: str) -> dict:
+    for line in reversed(str(output or "").splitlines()):
+        try:
+            value = json.loads(line)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def save_last_run(report: dict) -> None:
+    global LAST_RUN
+    with LAST_RUN_LOCK:
+        LAST_RUN = report.copy()
+
+
 def scoped_command(memory_high: str, memory_max: str, swap_max: str, command: list[str]) -> list[str]:
     return [
         "systemd-run",
@@ -350,7 +415,11 @@ def cancel_motion_process() -> bool:
     return True
 
 
-def generate_motion(image_bytes: bytes, motion: str, seed: int) -> Path:
+def generate_motion(image_bytes: bytes, motion: str, seed: int, requested_profile: str | None = None) -> tuple[Path, dict]:
+    total_started = time.monotonic()
+    configured_profile = os.getenv("JAPANO_MOTION_PROFILE", "").strip().lower()
+    effective_profile = requested_profile or configured_profile or DEFAULT_PROFILE_BY_MOTION.get(motion, "balanced")
+    profile_name, settings = motion_profile(effective_profile)
     if motion not in MOTIONS:
         raise ValueError("Chuyển động mẫu không hợp lệ.")
     if not model_files_ready() or not cuda_runtime_ready():
@@ -361,7 +430,9 @@ def generate_motion(image_bytes: bytes, motion: str, seed: int) -> Path:
         raise RuntimeError(
             f"Máy hiện chỉ còn {available:.1f} GiB RAM khả dụng; cần {minimum_available:.0f} GiB để tạo video an toàn."
         )
+    gpu_wait_started = time.monotonic()
     wait_for_gpu()
+    gpu_wait_seconds = round(time.monotonic() - gpu_wait_started, 3)
 
     job_id = f"motion-{int(time.time() * 1000)}-{os.getpid()}"
     job_dir = RUNTIME / job_id
@@ -401,19 +472,25 @@ def generate_motion(image_bytes: bytes, motion: str, seed: int) -> Path:
             "--checkpoint",
             CHECKPOINT_NAME,
             "--frames",
-            os.getenv("JAPANO_MOTION_FRAMES", "49"),
+            str(settings["frames"]),
             "--fps",
-            os.getenv("JAPANO_MOTION_FPS", "12"),
+            str(settings["fps"]),
             "--steps",
-            os.getenv("JAPANO_MOTION_STEPS", "30"),
+            str(settings["steps"]),
+            "--image-guidance",
+            str(settings["imageGuidance"]),
+            "--pose-guidance",
+            str(settings["poseGuidance"]),
             "--seed",
             str(max(0, min(int(seed), 2_147_483_647))),
         ],
     )
+    runner_started = time.monotonic()
     result = run_scoped_process(
         runner_command,
         timeout=int(os.getenv("JAPANO_MOTION_TIMEOUT_SEC", "1200")),
     )
+    runner_seconds = round(time.monotonic() - runner_started, 3)
     if result.returncode != 0 or not output.is_file() or output.stat().st_size < 10_000:
         detail = (result.stderr or result.stdout or "One-to-All không tạo được MP4.")[-3000:]
         if result.returncode in {137, -9}:
@@ -437,10 +514,12 @@ def generate_motion(image_bytes: bytes, motion: str, seed: int) -> Path:
             str(MODEL_HOME),
         ],
     )
+    quality_started = time.monotonic()
     quality = run_scoped_process(
         quality_command,
         timeout=int(os.getenv("JAPANO_MOTION_QUALITY_TIMEOUT_SEC", "180")),
     )
+    quality_seconds = round(time.monotonic() - quality_started, 3)
     if quality.returncode != 0:
         detail = (quality.stderr or quality.stdout or "Clip không qua kiểm tra chất lượng.")[-2400:]
         if quality.returncode == 3:
@@ -449,7 +528,22 @@ def generate_motion(image_bytes: bytes, motion: str, seed: int) -> Path:
                 f"Chi tiết: {detail}"
             )
         raise RuntimeError(detail)
-    return output
+    runner_report = last_json_object(result.stdout)
+    quality_report = last_json_object(quality.stdout)
+    report = {
+        "ok": True,
+        "profile": profile_name,
+        **settings,
+        "motion": motion,
+        "gpuWaitSeconds": gpu_wait_seconds,
+        "runnerSeconds": runner_seconds,
+        "qualitySeconds": quality_seconds,
+        "totalSeconds": round(time.monotonic() - total_started, 3),
+        "runnerTimings": runner_report.get("timings", {}),
+        "quality": quality_report,
+    }
+    save_last_run(report)
+    return output, report
 
 
 @api.get("/health")
@@ -457,6 +551,12 @@ def health():
     total_vram, used_vram = gpu_memory()
     files_ready = model_files_ready()
     cuda_ready = cuda_runtime_ready() if files_ready else False
+    try:
+        active_profile, active_settings = motion_profile()
+    except ValueError as exc:
+        active_profile, active_settings = "invalid", {"error": str(exc)}
+    with LAST_RUN_LOCK:
+        last_run = LAST_RUN.copy() if LAST_RUN else None
     return {
         "ok": files_ready and cuda_ready,
         "service": "JAPANO local fashion motion",
@@ -470,6 +570,11 @@ def health():
         "legacyFallback": False,
         "warmed": WARMED,
         "busy": LOCK.locked(),
+        "profile": active_profile,
+        "profileSettings": active_settings,
+        "availableProfiles": MOTION_PROFILES,
+        "defaultProfilesByMotion": DEFAULT_PROFILE_BY_MOTION,
+        "lastRun": last_run,
         "motions": [{"id": key, "label": label} for key, label in MOTIONS.items()],
         "qualityGate": "optical-flow+temporal-continuity+action-pose",
         "resources": {
@@ -499,10 +604,10 @@ def cancel_motion():
     return {"ok": True, "cancelled": cancelled, "busy": LOCK.locked()}
 
 
-def generate_motion_locked(image_bytes: bytes, motion: str, seed: int) -> Path:
+def generate_motion_locked(image_bytes: bytes, motion: str, seed: int, profile: str | None) -> tuple[Path, dict]:
     with LOCK:
         CANCEL_REQUESTED.clear()
-        return generate_motion(image_bytes, motion, seed)
+        return generate_motion(image_bytes, motion, seed, profile)
 
 
 @api.post("/animate")
@@ -517,14 +622,30 @@ async def animate(request: MotionRequest):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     try:
         # Request gọi trực tiếp service cũng xếp hàng thay vì trả 409.
-        output = await run_in_threadpool(generate_motion_locked, image_bytes, request.motion, request.seed)
-        return FileResponse(output, media_type="video/mp4", filename=f"japano-{request.motion}.mp4")
+        output, report = await run_in_threadpool(
+            generate_motion_locked,
+            image_bytes,
+            request.motion,
+            request.seed,
+            request.profile,
+        )
+        return FileResponse(
+            output,
+            media_type="video/mp4",
+            filename=f"japano-{request.motion}.mp4",
+            headers={
+                "X-JAPANO-Motion-Profile": report["profile"],
+                "X-JAPANO-Motion-Ms": str(round(report["totalSeconds"] * 1000)),
+            },
+        )
     except subprocess.TimeoutExpired as exc:
         raise HTTPException(status_code=504, detail="Tạo chuyển động quá thời gian an toàn.") from exc
     except MotionQualityError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except MotionCancelledError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

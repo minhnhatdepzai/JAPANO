@@ -4,6 +4,7 @@ const { successfulLiveOrder } = require('../lib/orderStatus');
 const { resolveGarmentImage } = require('../lib/garmentImages');
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 const { runGpuJob, GpuJobCancelledError } = require('../lib/gpuArbiter');
+const { FULFILLMENT_POLICY } = require('../lib/fulfillmentPolicy');
 
 module.exports = function registerCatalogRoutes(api, ctx) {
   const {
@@ -76,6 +77,71 @@ module.exports = function registerCatalogRoutes(api, ctx) {
     const state = read();
     const visible = (state.products || []).filter((product) => !product.status || ['published', 'active'].includes(String(product.status)));
     res.json(visible.map((product) => publicProduct(product, state)));
+  });
+
+  // Storefront web đọc đúng cùng catalog với ứng dụng di động. Endpoint này
+  // trả một sản phẩm public đầy đủ theo slug/id; không tạo bản sao catalog.
+  api.get('/products/:slug', (req, res, next) => {
+    // Giữ các route con /videos, /related, /reviews, /ai-description cho đúng
+    // handler chuyên biệt được đăng ký ở những phần tiếp theo.
+    if (req.path.split('/').filter(Boolean).length > 2) return next();
+    ensureCloudProductImagesFresh();
+    const state = read();
+    const product = (state.products || []).find((item) => (
+      (item.slug === String(req.params.slug) || item.id === String(req.params.slug))
+      && (!item.status || ['published', 'active'].includes(String(item.status)))
+    ));
+    if (!product) return res.status(404).json({ ok: false, message: 'Không tìm thấy sản phẩm.' });
+    return res.json({ ok: true, product: publicProduct(product, state) });
+  });
+
+  // Một round-trip cho trang chủ, nhưng mọi rail đều được suy ra tại thời điểm
+  // đọc từ products/orders/reviews/shop đang dùng chung với app và Admin.
+  api.get('/storefront/home', (req, res) => {
+    ensureCloudProductImagesFresh();
+    const state = read();
+    const visible = (state.products || [])
+      .filter((product) => !product.status || ['published', 'active'].includes(String(product.status)))
+      .map((product, sourceIndex) => ({ ...publicProduct(product, state), sourceIndex }));
+    const byPublishedDate = [...visible].sort((left, right) => (
+      Number(right.publishedAt || right.createdAt || right.updatedAt || 0)
+      - Number(left.publishedAt || left.createdAt || left.updatedAt || 0)
+      || left.sourceIndex - right.sourceIndex
+    ));
+    const bySold = [...visible].sort((left, right) => (
+      Number(right.sold || 0) - Number(left.sold || 0)
+      || Number(right.rating || 0) - Number(left.rating || 0)
+      || left.sourceIndex - right.sourceIndex
+    ));
+    const stripSourceIndex = (product) => {
+      const { sourceIndex, ...publicValue } = product;
+      return publicValue;
+    };
+    const shop = { ...(state.shop || {}) };
+    const rawLogo = String(shop.logo || '');
+    if (rawLogo.startsWith('data:image/')) shop.logo = `/api/shop/logo?v=${Number(shop.updatedAt || 0)}`;
+    const spots = (state.japanSpots || [])
+      .filter((spot) => spot.active !== false)
+      .sort((left, right) => Number(left.position || 999) - Number(right.position || 999))
+      .slice(0, 6);
+    const featured = visible.filter((product) => product.featured === true || product.tags?.includes('featured'));
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+    res.json({
+      ok: true,
+      shop,
+      banners: (state.banners || []).filter((banner) => banner.active !== false).sort((a, b) => Number(a.order || 0) - Number(b.order || 0)),
+      categories: state.categories || [],
+      newArrivals: byPublishedDate.slice(0, 10).map(stripSourceIndex),
+      newArrivalsMeta: {
+        source: 'publishedAt || createdAt || updatedAt',
+        stableFallback: 'catalog-order',
+      },
+      bestSellers: bySold.filter((product) => Number(product.sold || 0) > 0).slice(0, 10).map(stripSourceIndex),
+      featuredProducts: (featured.length ? featured : visible).slice(0, 10).map(stripSourceIndex),
+      featuredJapanSpots: spots,
+      fulfillmentPolicies: FULFILLMENT_POLICY,
+      generatedAt: Date.now(),
+    });
   });
   api.get('/products/:slug/videos/:index', (req, res) => {
     const state = read();

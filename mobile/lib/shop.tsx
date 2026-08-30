@@ -1,9 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Image, StyleProp, ImageStyle, View, Text } from 'react-native';
+import { AppState, Image, StyleProp, View, ViewStyle } from 'react-native';
 import { getShop, ShopInfo } from './api';
 import { C, F } from '../theme/tokens';
 
 const FALLBACK:ShopInfo={name:'JAPANO Store',hotline:'',email:'',address:'',shipFee:30000,cod:true,stripe:true,logo:null};
+const BUNDLED_LOGO=require('../assets/brand/japano-monogram.png');
 const ShopContext=createContext<{shop:ShopInfo;refresh:()=>Promise<void>}>({shop:FALLBACK,refresh:async()=>{}});
 export const useShop=()=>useContext(ShopContext);
 
@@ -47,8 +48,19 @@ export function ShopProvider({children}:{children:React.ReactNode}){
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;
 }
 
-export function BrandLogo({size=44,style}:{size?:number;style?:StyleProp<ImageStyle>}){
+export function BrandLogo({size=44,style}:{size?:number;style?:StyleProp<ViewStyle>}){
   const {shop}=useShop();
-  if(shop.logo)return <Image source={{uri:shop.logo}} resizeMode="contain" style={[{width:size,height:size,borderRadius:12,backgroundColor:'#fff'},style]} />;
-  return <View style={{width:size,height:size,borderRadius:12,backgroundColor:C.shu,alignItems:'center',justifyContent:'center'}}><Text style={{color:'#fff',fontFamily:F.display,fontSize:size*.48}}>ジ</Text></View>;
+  // Logo ở cạnh lời chào phải có ngay cả khi API chưa cấu hình `shop.logo` hoặc
+  // điện thoại đang mất mạng. Trước đây fallback là ô đỏ chữ ジ nên nhìn giống
+  // placeholder; dùng monogram đóng gói trong APK làm nguồn chắc chắn.
+  const source=shop.logo?{uri:shop.logo}:BUNDLED_LOGO;
+  return (
+    <View style={[{
+      width:size,height:size,borderRadius:size*.27,backgroundColor:'#fffaf2',
+      borderWidth:1,borderColor:C.line,alignItems:'center',justifyContent:'center',
+      overflow:'hidden',
+    },style]}>
+      <Image source={source} resizeMode="contain" style={{width:size*.88,height:size*.88}} />
+    </View>
+  );
 }

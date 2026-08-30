@@ -15,6 +15,7 @@ import json
 import math
 import os
 import sys
+import time
 from pathlib import Path
 
 import imageio.v2 as imageio
@@ -44,14 +45,11 @@ MOTIONS = {
 # action.  A real detected motion preserves joint timing and foreshortening;
 # the procedural fallback below is kept only for presets that still need a
 # licensed, curated driving clip.
-DRIVING_MOTIONS = {
-    # This section stays upright and cycles through restrained catalogue poses.
-    # Other sections include high-knee dance moves unsuitable for customers.
-    # Slow this 1.8-second source segment to the 4-second output. Both wrists
-    # remain below the shoulders, feet stay grounded, and the hips move enough
-    # to read as a natural catalogue pose rather than a frozen photograph.
-    "pose_sway": ("examples/vid.mp4", 2.5, 4.3),
-}
+# The bundled `examples/vid.mp4` segment bends and steps like a dance on real
+# try-on images, despite passing the coarse pose metric. Keep customer presets
+# on the deterministic, restrained pose curves below until a licensed and
+# visually accepted driving clip is added.
+DRIVING_MOTIONS = {}
 
 NEGATIVE = (
     "different person, changed face, changed outfit, changed clothing, extra person, "
@@ -107,12 +105,14 @@ def body_motion(base: np.ndarray, motion: str, t: float) -> np.ndarray:
         sway = math.sin(2.0 * math.pi * t)
         upper = [0, 1, 2, 3, 4, 5, 6, 7, 14, 15, 16, 17]
         lower = [8, 9, 10, 11, 12, 13]
-        pose[upper, 0] += 0.055 * sway
-        pose[lower, 0] += 0.025 * sway
-        pose[4, 0] += 0.07 * sway
-        pose[7, 0] -= 0.07 * sway
-        pose[4, 1] -= 0.035 * abs(sway)
-        pose[7, 1] -= 0.035 * abs(sway)
+        # One slow weight shift over the clip: enough displacement for Wan to
+        # animate cloth drape, but no knee lift or dance pose from demo videos.
+        pose[upper, 0] += 0.08 * sway
+        pose[lower, 0] += 0.04 * sway
+        pose[4, 0] += 0.10 * sway
+        pose[7, 0] -= 0.10 * sway
+        pose[4, 1] -= 0.045 * abs(sway)
+        pose[7, 1] -= 0.045 * abs(sway)
         return np.clip(pose, 0.01, 0.99)
 
     if motion == "sit_stand":
@@ -357,8 +357,26 @@ def main() -> int:
     parser.add_argument("--frames", type=int, default=49)
     parser.add_argument("--fps", type=float, default=12.0)
     parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument("--image-guidance", type=float, default=2.5)
+    parser.add_argument("--pose-guidance", type=float, default=1.5)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
+    if args.frames < 17 or (args.frames - 1) % 4:
+        parser.error("--frames must be at least 17 and follow Wan's 4n+1 temporal shape")
+    if args.steps < 4:
+        parser.error("--steps must be at least 4")
+    if args.image_guidance < 1.0 or args.pose_guidance < 1.0:
+        parser.error("--image-guidance and --pose-guidance must be at least 1.0")
+
+    started_at = time.perf_counter()
+    previous_stage_at = started_at
+    timings: dict[str, float] = {}
+
+    def finish_stage(name: str) -> None:
+        nonlocal previous_stage_at
+        now = time.perf_counter()
+        timings[name] = round(now - previous_stage_at, 3)
+        previous_stage_at = now
 
     repo = Path(args.repo).resolve()
     video_generation = repo / "video-generation"
@@ -430,11 +448,14 @@ def main() -> int:
     image_pose = torch.from_numpy(pose_image).float().permute(2, 0, 1).unsqueeze(0).unsqueeze(2) / 255.0 * 2.0 - 1.0
     mask = torch.zeros((1, 1, 1, height, width), dtype=torch.float32)
 
+    finish_stage("poseSeconds")
     print(json.dumps({"stage": "pose", "status": "ready", "frames": args.frames}), flush=True)
     prompt_embeds, negative_embeds = load_prompt_embeddings(model_root, checkpoint_root, args.motion, dtype)
+    finish_stage("promptSeconds")
     torch.cuda.empty_cache()
     print(json.dumps({"stage": "video-model", "status": "loading", "device": str(device)}), flush=True)
     pipeline = build_pipeline(repo, model_root, checkpoint_root, device, dtype)
+    finish_stage("modelLoadSeconds")
     generator = torch.Generator(device=device).manual_seed(max(0, args.seed))
     print(json.dumps({"stage": "denoise", "status": "running", "steps": args.steps}), flush=True)
     with torch.inference_mode(), torch.autocast("cuda", dtype=dtype):
@@ -450,8 +471,8 @@ def main() -> int:
             height=height,
             width=width,
             num_frames=args.frames,
-            image_guidance_scale=2.5,
-            pose_guidance_scale=1.5,
+            image_guidance_scale=args.image_guidance,
+            pose_guidance_scale=args.pose_guidance,
             num_inference_steps=args.steps,
             generator=generator,
             black_image_cfg=True,
@@ -460,10 +481,33 @@ def main() -> int:
             return_tensor=True,
             case1=False,
         ).frames
+    finish_stage("denoiseSeconds")
     frames = (result[0].detach().float().cpu() / 2.0 + 0.5).clamp(0, 1).permute(1, 2, 3, 0).numpy()
     frames = (frames * 255.0).round().astype(np.uint8)
+    finish_stage("tensorToCpuSeconds")
     imageio.mimwrite(str(output), list(frames), fps=args.fps, quality=7, codec="libx264")
-    print(json.dumps({"ok": True, "output": str(output), "frames": len(frames), "width": width, "height": height}))
+    finish_stage("encodeSeconds")
+    timings["totalSeconds"] = round(time.perf_counter() - started_at, 3)
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "output": str(output),
+                "frames": len(frames),
+                "fps": args.fps,
+                "steps": args.steps,
+                "imageGuidance": args.image_guidance,
+                "poseGuidance": args.pose_guidance,
+                "seed": max(0, args.seed),
+                "width": width,
+                "height": height,
+                "dtype": str(dtype).removeprefix("torch."),
+                "device": str(device),
+                "timings": timings,
+            }
+        ),
+        flush=True,
+    )
     return 0
 
 

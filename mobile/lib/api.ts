@@ -63,6 +63,18 @@ export type SizeFit = {
   visualEffect?: { tension:number; looseness:number; seamStress:number; tearAllowed:boolean };
   allowedEffects?: string[];
   message: string;
+  /** Cỡ cơ thể lý tưởng — có thể VƯỢT mọi size shop đang bán. */
+  idealSize?: string|null;
+  /** Size sản phẩm thật sự đang bán, đã sắp theo thứ tự. */
+  availableSizes?: string[];
+  /** `standard` | `one_size` | `no_size` — `no_size` nghĩa là sản phẩm chưa có bảng size. */
+  sizingMode?: string;
+  /** true khi cơ thể vượt MỌI size đang bán. Khác "chật": đổi size không giải quyết được. */
+  outsideAvailableRange?: boolean;
+  /** Cảnh báo riêng về CHIỀU DÀI tay/gấu, tách khỏi lời khuyên về vòng. */
+  lengthNote?: string|null;
+  /** true khi vết bục là bắt buộc vì không còn size nào đủ lớn. */
+  tearBecauseNoSizeFits?: boolean;
 };
 /** Ước lượng luôn là KHOẢNG + độ tin cậy, không bao giờ là một con số "chính xác". */
 export type BodyEstimate = {
@@ -95,6 +107,17 @@ export type BodyAnalysis = {
   sizeAdvice?: string;
   poseCache?: Record<string,unknown>;
   imageFingerprint?: string;
+  measurementStatus?: 'estimated'|'partial'|'insufficient_evidence';
+  measurementMessage?: string;
+  tryOnEligible?: boolean;
+  /** Prior fit chọn ngầm từ 5 mẫu; không phải số đo trực tiếp của khách. */
+  referenceProfile?: {
+    generation:number; bodyProfile:string; confidence:number; featureCount:number;
+    heightCm:[number,number]; weightKg:[number,number];
+    bustCm:[number,number]; waistCm:[number,number]; hipCm:[number,number];
+    source:'hidden-reference-anchor'; usableForSizing:boolean;
+  }|null;
+  usedAnchor?: boolean;
 };
 /** Loại trang phục — khớp lib/garmentCoverage.js ở backend. */
 export type GarmentType =
@@ -115,6 +138,11 @@ export type TryOnSafety = {
   requiredCoveredZones: string[];
   tearAllowed: boolean;
   coverageCheck?: { ok:boolean; reasons:string[] }|null;
+  adultVerification?: {
+    verdict?: 'yes'|'no'|'unsure'|null;
+    attestationFallback?: boolean;
+    warning?: string;
+  }|null;
 };
 
 export type FitEffect = {
@@ -175,11 +203,12 @@ export type GoalFundConfig = { rewardPercent:number; rewardValidityDays:number; 
 export type ApiGoal = {
   id:string; userId:string; productId:string;
   product:{ slug:string; name:string; price:number; image?:string };
-  input:Record<string,number|undefined>;
+  input:Record<string,number|string|undefined>;
   plan:GoalPlan; fund:GoalFund|null; createdAt:number; updatedAt:number;
 };
 
 export type GoalPlan = {
+  goalType?: 'shopping'|'health';
   saving: {
     productId: string; productName: string; targetPrice: number; currentSavings: number;
     gap: number; progressPercent: number; monthlySaving: number; weeklySaving: number;
@@ -188,6 +217,7 @@ export type GoalPlan = {
   };
   wellness: {
     status:string; currentBmi:number|null; targetBmi:number|null; lossKg:number;
+    gainKg?:number; healthGoal?:string; activityLevel?:string;
     weeklyRateKg:number|null; estimatedWeeks:number|null; activityMinutesPerWeek:number;
     strengthDaysPerWeek:number; safetyMessage:string; habits:string[]; sources:string[];
   };
@@ -277,27 +307,30 @@ export function apiBaseCandidates() {
   const lan = trim(process.env.EXPO_PUBLIC_API_LAN_URL || apiExtra.lanUrl || DEPLOYED_API_LAN_URL);
   const tailnet = trim(process.env.EXPO_PUBLIC_API_TAILSCALE_URL || apiExtra.tailscaleUrl || DEPLOYED_API_TAILSCALE_URL);
   const dev = expoDevHost();
-  // Thứ tự dò ưu tiên địa chỉ có thể dùng NGAY trên bản release:
+
+  // Thứ tự dò KHÁC HẲN giữa dev và release.
   //
-  //   1. Dev build     -> host Metro phát hiện được.
-  //   2. Release thật  -> IP LAN đã triển khai.
-  //   3. Cắm dây USB   -> 127.0.0.1 chỉ hoạt động nếu đã chạy `adb reverse`.
-  //   4. Máy ảo        -> 10.0.2.2.
-  //   5. Ở xa          -> Tailscale.
+  // RELEASE (máy thật của người dùng): Tailscale đứng ĐẦU. Máy chạy qua tailnet
+  // nên LAN 192.168.x, 127.0.0.1 và 10.0.2.2 đều không thể tới được server —
+  // thử chúng trước chỉ khiến mỗi request phải chờ hết timeout rồi mới sang địa
+  // chỉ đúng. Với /api/tryon (timeout dài để model xử lý) người dùng phải nhìn
+  // màn hình quay vài phút trước khi có gì xảy ra.
   //
-  // Không được đặt 127.0.0.1 trước LAN ở APK release: request body-analysis có
-  // timeout dài để model xử lý ảnh, nên một localhost không có `adb reverse`
-  // sẽ giữ màn hình quay tới vài phút trước khi client thử địa chỉ kế tiếp.
-  const list = [
-    env,
+  // DEV: giữ nguyên ưu tiên cũ — host Metro, LAN, rồi adb reverse — vì lúc phát
+  // triển đó mới là những địa chỉ tới được nhanh nhất.
+  const localFirst = [
     dev && `http://${dev}:${port}`,
     lan,
     `http://127.0.0.1:${port}`,
-    // Máy ảo Android ánh xạ máy chủ qua 10.0.2.2; máy thật dùng IP LAN ở `dev`.
     Platform.OS === 'android' ? `http://10.0.2.2:${port}` : `http://localhost:${port}`,
-    tailnet,
-  ].filter(Boolean) as string[];
-  return [...new Set(list.map(trim))];
+  ];
+  const list = __DEV__
+    ? [env, ...localFirst, tailnet]
+    // Release: env (nếu build có đặt) -> Tailscale -> mới tới các địa chỉ cục bộ
+    // làm phương án cuối, phòng khi ai đó cài APK ngay trên máy chạy server.
+    : [env, tailnet, ...localFirst];
+  const filtered = list.filter(Boolean) as string[];
+  return [...new Set(filtered.map(trim))];
 }
 
 export const API_BASE = apiBaseCandidates()[0] || 'http://localhost:4100';
@@ -403,7 +436,7 @@ const refKey = (ref: ApiProductRef) => typeof ref === 'string'
 // Báo cho backend biết người dùng đang ở màn hình nào để nó ưu tiên GPU cho
 // đúng tính năng đó và nhả VRAM của các tính năng còn lại. Gọi "bắn rồi quên":
 // lỗi mạng ở đây không được phép ảnh hưởng tới màn hình đang mở.
-export type GpuFocus = 'tryon' | 'motion' | 'chat' | 'home' | 'browse';
+export type GpuFocus = 'tryon' | 'swimwear' | 'motion' | 'chat' | 'home' | 'browse';
 
 /**
  * Danh tính của MÁY này, không phải của người dùng.
@@ -570,6 +603,13 @@ export async function analyzeBodyFromPhoto(payload: {
     sizeAdvice: data?.sizeAdvice ? String(data.sizeAdvice) : undefined,
     poseCache: data?.poseCache,
     imageFingerprint: data?.imageFingerprint ? String(data.imageFingerprint) : undefined,
+    measurementStatus: ['estimated','partial','insufficient_evidence'].includes(String(data?.measurementStatus))
+      ? data.measurementStatus
+      : undefined,
+    measurementMessage: data?.measurementMessage ? String(data.measurementMessage) : undefined,
+    tryOnEligible: data?.tryOnEligible !== false,
+    referenceProfile: data?.referenceProfile || undefined,
+    usedAnchor: Boolean(data?.usedAnchor),
   };
 }
 
@@ -620,11 +660,186 @@ export async function generateTryOn(payload: Record<string, unknown>): Promise<T
     fitEffect: data?.fitEffect,
     safety: data?.safety,
     durationMs: Number(data?.durationMs) || undefined,
-    warning: String(data?.accessoryWarning || (data?.qualityWarning ? data?.message : '') || ''),
+    warning: String(data?.accessoryWarning || data?.identityWarning || (data?.qualityWarning ? data?.message : '') || ''),
     garments: Array.isArray(data?.garments) ? data.garments as TryOnGarment[] : [],
     skippedGarments: Array.isArray(data?.skippedGarments) ? data.skippedGarments.map(String) : [],
     appliedAccessories: Array.isArray(data?.appliedAccessories) ? data.appliedAccessories.map((item:any)=>String(item?.name||item?.id||'')).filter(Boolean) : [],
     skippedAccessories: Array.isArray(data?.skippedAccessories) ? data.skippedAccessories.map(String) : [],
+  };
+}
+
+/**
+ * Người mẫu dựng sẵn để thử nhanh một món đồ mà không cần tự chụp ảnh.
+ *
+ * App KHÔNG gửi ảnh của preset lên. Nó chỉ gửi `presetId`; backend tự nạp ảnh
+ * đã duyệt của mình và tự đối chiếu SHA-256. Vì vậy `imageUrl` ở đây chỉ dùng
+ * để hiển thị thumbnail.
+ */
+export type TryOnPreset = {
+  id: string;
+  label: string;
+  imageUrl: string;
+  gender: 'female' | 'male';
+  bodyProfile: string;
+  heightCm: [number, number];
+  weightKg: [number, number];
+  bustCm: [number, number];
+  waistCm: [number, number];
+  hipCm: [number, number];
+  preferredCategories: string[];
+};
+
+export async function getTryOnPresets(): Promise<TryOnPreset[]> {
+  const data: any = await requestJson('/api/tryon/presets', { timeoutMs: 8000 });
+  if (!Array.isArray(data?.presets)) return [];
+  return data.presets.map((preset: any): TryOnPreset => ({
+    id: String(preset?.id || ''),
+    label: String(preset?.label || ''),
+    imageUrl: resolveApiMediaUrl(String(preset?.imageUrl || '')),
+    gender: preset?.gender === 'male' ? 'male' : 'female',
+    bodyProfile: String(preset?.bodyProfile || ''),
+    heightCm: preset?.heightCm, weightKg: preset?.weightKg,
+    bustCm: preset?.bustCm, waistCm: preset?.waistCm, hipCm: preset?.hipCm,
+    preferredCategories: Array.isArray(preset?.preferredCategories) ? preset.preferredCategories.map(String) : [],
+  })).filter((preset: TryOnPreset) => preset.id && preset.imageUrl);
+}
+
+/**
+ * Ghép ảnh của khách vào phong cảnh Nhật Bản.
+ *
+ * App gửi TÊN địa điểm, không gửi địa chỉ ảnh nền — máy chủ tự tra bảng của
+ * mình. Đường mặc định là tách nền rồi ghép hình học, không đi qua model sinh
+ * ảnh, nên khuôn mặt và cơ thể giữ nguyên từng pixel.
+ */
+export type ScenePhotoResult = {
+  imageUrl: string;
+  place: string;
+  prefecture: string;
+  attribution: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  sceneId?: string;
+  sceneName?: string;
+  durationMs?: number;
+};
+
+export async function composeScenePhoto(payload: {
+  place: string;
+  prefecture: string;
+  personImageBase64?: string;
+  presetId?: string;
+  /** Góc chụp đã duyệt. Bỏ trống thì máy chủ lấy góc đầu tiên của địa điểm. */
+  sceneId?: string;
+  /** Vị trí đứng — chỉ nhận id có trong personSlots của chính góc chụp đó. */
+  slotId?: string;
+  heightRatio?: number;
+}): Promise<ScenePhotoResult> {
+  const data: any = await jsonPost('/api/japan-spots/scene-photo', { userId: USER_ID, ...payload }, 120000);
+  const image = imageFrom(data);
+  if (!image) throw new Error(String(data?.message || 'Máy chủ chưa trả ảnh ghép.'));
+  return {
+    imageUrl: image,
+    place: String(data?.place || payload.place),
+    prefecture: String(data?.prefecture || payload.prefecture),
+    attribution: String(data?.attribution || ''),
+    sourceLabel: String(data?.sourceLabel || ''),
+    sourceUrl: String(data?.sourceUrl || ''),
+    sceneId: data?.sceneId ? String(data.sceneId) : undefined,
+    sceneName: data?.sceneName ? String(data.sceneName) : undefined,
+    durationMs: Number(data?.durationMs) || undefined,
+  };
+}
+
+/** Góc chụp đã duyệt của một địa điểm. Rỗng nghĩa là địa điểm chưa curate. */
+export type JapanScene = {
+  id: string;
+  spotPlace: string;
+  spotPrefecture: string;
+  name: string;
+  mood: string;
+  timeOfDay: string;
+  thumbnailUrl: string;
+  attribution: string;
+  license: string;
+  sourceUrl: string;
+  groundType: string;
+  wardrobeNote: string;
+  footAnchor: { x: number; y: number };
+  personHeightRatio: { min: number; preferred: number; max: number };
+  personSlots: { id: string; label: string; x: number }[];
+};
+
+export type SpotRecommendation = {
+  product: {
+    id: string; slug: string; name: string; price: number; oldPrice: number | null;
+    category: string; garmentType: string | null; colorHex: string | null;
+    image: string | null; tags: string[]; sizes: string[];
+  };
+  score: number;
+  recommendedSize: string | null;
+  fitConfidence: 'high' | 'medium' | 'low';
+  reasons: string[];
+  seasonMatch: boolean;
+  weatherMatch: boolean;
+  colorHarmony: string;
+  culturalNote: string | null;
+  photoTip: string | null;
+};
+
+export async function getSpotScenes(place: string, prefecture: string): Promise<JapanScene[]> {
+  const query = `place=${encodeURIComponent(place)}&prefecture=${encodeURIComponent(prefecture)}`;
+  const data: any = await requestJson(`/api/japan-spots/scenes?${query}`, { timeoutMs: 8000 });
+  return Array.isArray(data?.scenes)
+    ? data.scenes.map((s: any) => ({ ...s, thumbnailUrl: resolveApiMediaUrl(String(s.thumbnailUrl || '')) }))
+    : [];
+}
+
+/**
+ * Trang phục JAPANO hợp với địa điểm này.
+ *
+ * Gọi được song song với ảnh và hồ sơ cơ thể: nó chỉ đọc catalog nên trả về
+ * trong vài chục mili-giây, không cần chờ bước tạo ảnh nào.
+ */
+export async function getSpotRecommendations(params: {
+  place: string;
+  prefecture: string;
+  height?: number;
+  weight?: number;
+  preferredSize?: string;
+  season?: string;
+  limit?: number;
+  adultConsent?: boolean;
+  signal?: AbortSignal;
+}): Promise<{ scenes: JapanScene[]; recommendations: SpotRecommendation[]; season: string; spot: any }> {
+  const query = new URLSearchParams();
+  query.set('place', params.place);
+  query.set('prefecture', params.prefecture);
+  if (params.height) query.set('height', String(params.height));
+  if (params.weight) query.set('weight', String(params.weight));
+  if (params.preferredSize) query.set('preferredSize', params.preferredSize);
+  if (params.season) query.set('season', params.season);
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.adultConsent) query.set('adultConsent', 'true');
+
+  const data: any = await requestJson(`/api/japan-spots/recommendations?${query.toString()}`, {
+    timeoutMs: 12000, signal: params.signal,
+  });
+  return {
+    spot: data?.spot || {},
+    season: String(data?.season || ''),
+    scenes: Array.isArray(data?.scenes)
+      ? data.scenes.map((s: any) => ({ ...s, thumbnailUrl: resolveApiMediaUrl(String(s.thumbnailUrl || '')) }))
+      : [],
+    // Ảnh sản phẩm phải đi qua resolveApiMediaUrl. Catalog trộn hai kiểu: sản
+    // phẩm cũ dùng URL Cloudinary tuyệt đối, còn bộ Nhật Bản dùng đường dẫn
+    // tương đối `/assets/products/...`. Trả thẳng đường tương đối cho <Image>
+    // thì thẻ ảnh rỗng trắng, không báo lỗi gì cả.
+    recommendations: Array.isArray(data?.recommendations)
+      ? data.recommendations.map((item: any) => ({
+        ...item,
+        product: { ...item.product, image: resolveApiMediaUrl(String(item.product?.image || '')) },
+      }))
+      : [],
   };
 }
 
@@ -633,9 +848,14 @@ export async function getTryOnMotionPresets():Promise<{ready:boolean;engine:stri
   return {ready:Boolean(data?.ready),engine:String(data?.engine||''),presets:Array.isArray(data?.presets)?data.presets:[]};
 }
 
-export async function generateTryOnMotion(imageBase64:string,motion:string):Promise<{videoUrl:string;engine:string}> {
+export async function generateTryOnMotion(imageBase64:string,motion:string):Promise<{videoUrl:string;engine:string;profile?:string;generationMs?:number}> {
   const data:any=await jsonPost('/api/tryon/motion',{userId:USER_ID,imageBase64,motion},750000);
-  return {videoUrl:resolveApiMediaUrl(String(data?.videoUrl||'')),engine:String(data?.engine||'one-to-all-animation-1.3b-v2')};
+  return {
+    videoUrl:resolveApiMediaUrl(String(data?.videoUrl||'')),
+    engine:String(data?.engine||'one-to-all-animation-1.3b-v1'),
+    profile:String(data?.profile||'')||undefined,
+    generationMs:Number(data?.generationMs)||undefined,
+  };
 }
 
 export async function getProductAiDescription(slug:string):Promise<ProductAiDescription>{

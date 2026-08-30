@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app">
+<div class="app" id="appShell">
 
   <!-- ══════════════ THANH ĐIỀU HƯỚNG ══════════════
        Nhóm menu xếp theo luồng công việc thật của người trực: xem tổng quan →
@@ -19,7 +19,7 @@
        các thẻ <a> của nhóm đó" để ẩn cả nhóm khi tài khoản không có quyền. -->
   <aside class="sidebar">
     <div class="brand">
-      <div class="mark">ジ</div>
+      <div class="mark" aria-hidden="true">N</div>
       <div class="btext"><b>JAPANO</b><small>CỔNG QUẢN TRỊ</small></div>
       <button class="navtoggle" id="navToggle" title="Thu gọn thanh điều hướng" aria-label="Thu gọn thanh điều hướng"><i class="ion">&#xed53;</i></button>
     </div>
@@ -101,7 +101,7 @@
 
     <div class="content">
       <div id="banner"></div>
-      <div id="content"></div>
+      <div id="content" aria-live="polite" aria-busy="false"></div>
     </div>
   </div>
 </div>
@@ -110,18 +110,56 @@
 
 <!-- ══════════════ CỔNG ĐĂNG NHẬP ══════════════ -->
 <div class="authgate" id="authGate">
-  <form class="authgate-card" id="authGateForm">
-    <div class="authgate-mark">ジ</div>
-    <h2>Đăng nhập quản trị</h2>
-    <p class="authgate-sub">Chỉ tài khoản có quyền quản trị mới vào được trang này.</p>
-    <div class="field"><label for="authGateEmail">Email</label><input class="inp" type="email" id="authGateEmail" autocomplete="username" required></div>
-    <div class="field"><label for="authGatePassword">Mật khẩu</label><input class="inp" type="password" id="authGatePassword" autocomplete="current-password" required></div>
-    <div class="authgate-error" id="authGateError"></div>
-    <button type="submit" class="btn p blk lg" id="authGateSubmit">Đăng nhập</button>
-  </form>
+  <div class="authgate-stage">
+    <section class="authgate-story" aria-label="Giới thiệu JAPANO Admin">
+      <div class="authgate-sun" aria-hidden="true"></div>
+      <div class="authgate-petal p1" aria-hidden="true"></div>
+      <div class="authgate-petal p2" aria-hidden="true"></div>
+      <div class="authgate-story-top">
+        <div class="authgate-brandmark" aria-hidden="true">N</div>
+        <div><b>JAPANO</b><span>TRUNG TÂM ĐIỀU HÀNH</span></div>
+      </div>
+      <div class="authgate-copy">
+        <div class="authgate-kicker">運営 · VẬN HÀNH THÔNG MINH</div>
+        <h1>Mọi chuyển động của cửa hàng,<br>trong một tầm nhìn.</h1>
+        <p>Theo dõi bán hàng, khách hàng và trải nghiệm AI của JAPANO trên cùng một trung tâm điều hành.</p>
+      </div>
+      <div class="authgate-capabilities">
+        <span><i></i>Bán hàng theo thời gian thực</span>
+        <span><i></i>Chẩn đoán thử đồ AI</span>
+        <span><i></i>Dữ liệu và hình ảnh tập trung</span>
+      </div>
+      <div class="authgate-jp" aria-hidden="true">日本の美学</div>
+    </section>
+
+    <form class="authgate-card" id="authGateForm" aria-labelledby="authGateTitle">
+      <div class="authgate-formhead">
+        <div class="authgate-mobilemark" aria-hidden="true">N</div>
+        <div class="authgate-overline">CỔNG QUẢN TRỊ BẢO MẬT</div>
+        <h2 id="authGateTitle">Chào mừng trở lại</h2>
+        <p class="authgate-sub">Đăng nhập bằng tài khoản được phân quyền để tiếp tục vận hành JAPANO.</p>
+      </div>
+      <div class="field"><label for="authGateEmail">Email quản trị</label><input class="inp" type="email" id="authGateEmail" autocomplete="username" placeholder="admin@japano.vn" required></div>
+      <div class="field"><label for="authGatePassword">Mật khẩu</label><div class="password-field"><input class="inp" type="password" id="authGatePassword" autocomplete="current-password" placeholder="Nhập mật khẩu" required><button type="button" class="password-toggle" id="authGatePasswordToggle" aria-label="Hiện mật khẩu" aria-pressed="false">Hiện</button></div></div>
+      <div class="authgate-help"><button type="button" id="authGateForgot" aria-expanded="false" aria-controls="authGateRecovery">Quên mật khẩu?</button></div>
+      <section class="authgate-recovery" id="authGateRecovery" aria-labelledby="authGateRecoveryTitle" hidden>
+        <div class="authgate-recovery-head"><div><b id="authGateRecoveryTitle">Khôi phục tài khoản</b><span>Mã xác nhận sẽ được gửi tới email quản trị ở trên.</span></div><button type="button" id="authGateRecoveryClose" aria-label="Đóng phần khôi phục mật khẩu">Đóng</button></div>
+        <button type="button" class="btn sec authgate-code" id="authGateSendCode">Gửi mã xác nhận</button>
+        <div class="authgate-reset-fields" id="authGateResetFields" hidden>
+          <div class="field"><label for="authGateResetCode">Mã xác nhận</label><input class="inp" id="authGateResetCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 chữ số"></div>
+          <div class="field"><label for="authGateNewPassword">Mật khẩu mới</label><input class="inp" type="password" id="authGateNewPassword" autocomplete="new-password" minlength="8" placeholder="Từ 8 ký tự, kết hợp chữ và số"></div>
+          <button type="button" class="btn p blk authgate-code" id="authGateResetPassword">Đặt mật khẩu mới</button>
+        </div>
+        <div class="authgate-recovery-status" id="authGateRecoveryStatus" role="status" aria-live="polite"></div>
+      </section>
+      <div class="authgate-error" id="authGateError" role="alert" aria-live="polite"></div>
+      <button type="submit" class="btn p blk lg authgate-submit" id="authGateSubmit"><span>Đăng nhập vào hệ thống</span><i class="ion">&#xeb3c;</i></button>
+      <div class="authgate-security"><i class="ion">&#xee73;</i><span>Phiên đăng nhập được bảo vệ bằng JWT và phân quyền vai trò.</span></div>
+    </form>
+  </div>
 </div>
 
-<div class="toasts" id="toasts"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script src="js/icons.js"></script>
 <script src="js/core.js"></script>

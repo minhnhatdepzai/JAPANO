@@ -11,6 +11,12 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 > [!IMPORTANT]
 > JAPANO hiện là **full-stack demo/research prototype**.
 
+> [!TIP]
+> Coding agent nên đọc [`docs/CODEX_PROJECT_MEMORY.md`](docs/CODEX_PROJECT_MEMORY.md)
+> trước khi quét toàn bộ repo. File này ghi runtime, bằng chứng AI, giới hạn và
+> điểm đang làm dở; skill `japano-project-memory` yêu cầu cập nhật lại nó sau mỗi
+> thay đổi quan trọng.
+
 ## Mục lục
 
 - [Tổng quan](#tổng-quan)
@@ -26,8 +32,146 @@ Nền tảng thương mại điện tử thời trang Nhật Bản gồm ứng d
 - [Scripts](#scripts)
 - [API chính](#api-chính)
 - [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Website storefront](#website-storefront)
 - [Kiểm thử](#kiểm-thử)
 - [Giới hạn hiện tại](#giới-hạn-hiện-tại)
+
+## Trạng thái xác minh gần nhất
+
+- **Phong cảnh "Đưa tôi đến đây" đã sửa (2026-08-29).** Ảnh Naoshima cũ chụp từ
+  ngoài biển — 45% dưới khung là nước — nên người bị ghép đứng giữa mặt biển. Nay
+  mỗi góc chụp mang metadata riêng (`footAnchor`, `groundPolygon`,
+  `personHeightRatio`, hướng sáng, bóng đổ) trong `backend/lib/japanScenes.js`, và
+  compositor cắt nền **bám theo điểm đặt chân** thay vì cắt giữa. Ba góc đã duyệt:
+  Miyanoura (CC BY 2.5), Honmura (CC BY-SA 4.0), Senbon Torii (CC BY-SA 4.0).
+  Ảnh trước/sau: `test-results/japan-scenes/naoshima-contact-sheet.jpg`.
+  Kiểm bằng `node scripts/validate_japan_scenes.js`.
+- **Gợi ý trang phục theo địa điểm.** `GET /api/japan-spots/recommendations` chấm
+  điểm 100 bằng quy tắc trên metadata thật của catalog (25 phong cách · 20 mùa ·
+  20 màu · 15 loại đồ · 15 size còn hàng · 5 chất lượng dữ liệu). **Không gọi
+  LLM**, đo được 8 ms khi tính mới và 25 ms khi trúng cache RAM. Đền/chùa không
+  bao giờ gợi ý đồ bơi; địa điểm biển chỉ gợi ý khi lượt đó đã qua cổng 18+.
+  Scene, gợi ý và ảnh kết quả không tạo collection; chỉ danh mục nguồn 25 địa
+  điểm được lưu trong `japan_spots`.
+
+- **Database rút từ 34 xuống 29 collection, sau đó có 30 collection khi thêm
+  danh mục địa điểm thật (2026-08-29).** `product_details`
+  nhúng vào `products`; `banners` và `discount_rules` nhúng vào `settings`;
+  `vip_memberships` suy ra từ `orders`; `ai_descriptions` chuyển thành cache RAM.
+  `voucher_redemptions` và `flagcard_collections` được giữ lại vì là sổ chứng từ
+  và có thể chứa quà quản trị viên cấp tay. `dataSize` 838 KB → 623 KB,
+  `totalIndexSize` 3,23 MB → 2,90 MB. Collection thứ 30 là `japan_spots` gồm 25
+  địa điểm người dùng nhìn thấy; nó chỉ lưu URL ảnh và metadata, không lưu blob.
+  ERD tổng quát là tập con 19 bảng và gate đối chiếu Atlas **ĐẠT**. Xem
+  [`MONGODB_STORAGE_AUDIT_2026-08-29.md`](docs/database/MONGODB_STORAGE_AUDIT_2026-08-29.md).
+- **Ba lỗi thật đã sửa trong lúc migration**, tất cả đều có test hồi quy:
+  banner biến mất khỏi ứng dụng (`/api/banners` trả `[]`); backend treo lúc khởi
+  động vì `replaceCollection` upsert trước khi xoá; và boot nhận nhầm database đã
+  có dữ liệu là database trống rồi ghi đè bằng `db.json`.
+- **Migration này đã làm mất 263 document chỉ tồn tại trên Atlas** (4 đơn hàng,
+  4 thanh toán, 227 bản ghi hành vi và một số khác). Sản phẩm, biến thể và ảnh đã
+  khôi phục đủ. Nguyên nhân và phạm vi ghi trong báo cáo audit ở trên.
+
+- **Thử đồ một chạm với 5 hồ sơ tham chiếu chạy ngầm (2026-08-29).** Khách chỉ
+  chọn/chụp ảnh của mình; app không còn hiện dải người mẫu và không yêu cầu nhập
+  chiều cao, cân nặng hay số đo trước khi thử. Backend so hình học dáng người với
+  năm hồ sơ đã đo sẵn để bổ sung prior chọn size khi ảnh không đủ căn cứ tuyệt
+  đối. Prior chỉ là khoảng tham chiếu nội bộ, không phải số đo thật và không được
+  ghi vào hồ sơ khách. Nếu ảnh đủ tốt, ước lượng từ chính ảnh luôn được ưu tiên.
+  Phân tích warm kiểm tra thực tế trả sau **415 ms**, các khoảng hiển thị rộng
+  đúng 10 đơn vị (`160–170 cm`, `50–60 kg`, `90–100/70–80/90–100 cm`) và size M.
+  Client dùng chung promise phân tích nên bấm tạo ảnh trong lúc đang phân tích
+  không chạy pose/body hai lần. Xem
+  [`HIDDEN_BODY_ANCHORS_BALANCED_2026-08-29.md`](docs/project_evidence/ai_benchmarks/HIDDEN_BODY_ANCHORS_BALANCED_2026-08-29.md).
+- **Ghép ảnh vào phong cảnh Nhật Bản (2026-08-29).** `POST /api/japan-spots/scene-photo`
+  tách người bằng U2Net rồi đặt lên ảnh thật của địa điểm — **không** dùng GPU và
+  **không** dùng model sinh ảnh, nên khuôn mặt và cơ thể giữ nguyên từng pixel.
+  Đo thật: **912 ms** cho mẫu dựng sẵn, **1 195 ms** cho ảnh vừa thử đồ xong.
+  App chỉ gửi tên địa điểm; địa chỉ ảnh nền do máy chủ tự tra và chỉ tải từ đúng
+  một host đã duyệt.
+- **Khám phá Nhật Bản mở rộng lên 25 địa điểm.** Năm nơi mới — đảo nghệ thuật
+  Naoshima, núi thiêng Koyasan, hẻm núi Takachiho, phố cổ Kurashiki Bikan và suối
+  nước nóng Ginzan — đều đối chiếu với trang du lịch chính thức của tỉnh hoặc
+  JNTO. Trang sản phẩm có thêm mục "Mặc bộ này ở đâu trên đất Nhật" lấy từ đúng
+  bảng dữ liệu đó. `npm run db:japan-spots:sync -- --apply` materialize đúng
+  danh mục đóng gói của app vào Atlas và `GET /api/japan-spots/catalog` đọc lại
+  25 bản ghi; ảnh thật vẫn ở nguồn ngoài, MongoDB chỉ giữ URL và ghi công.
+- Ngày 2026-08-29: Backend/Admin và các worker body-analysis, FASHN, motion đang
+  có cấu hình service cục bộ; cần chạy `./scripts/japano-services.sh status` để
+  xác minh lại trạng thái tại thời điểm dùng.
+- Motion hiện là **tối ưu suy luận**, chưa phải fine-tune: walk khoảng 58 giây
+  trực tiếp / 65 giây qua backend, turn khoảng 71 giây và pose khoảng 66 giây
+  trên RTX 5060 Ti 16 GB. Xem
+  [`MOTION_INFERENCE_2026-08-29.md`](docs/project_evidence/ai_benchmarks/MOTION_INFERENCE_2026-08-29.md).
+- Splash JAPANO mới dùng logo thương hiệu, cảnh người phụ nữ cầm dù, hoa anh đào
+  và chữ xuất hiện tuần tự. Launcher icon dùng đúng monogram JAPANO; logo cạnh
+  lời chào có fallback asset nội bộ khi Admin chưa cấu hình logo. Danh sách sản
+  phẩm có poster reveal, vignette, light sweep và scroll scale/fade, đồng thời
+  tôn trọng Reduce Motion.
+- **UI premium 2026-08-29.** Trang chủ mobile có hero hành trình Nhật Bản, cụm
+  JAPANO AI Studio ngay màn đầu, thẻ sản phẩm trung tính hơn, lý do gợi ý AI gọn
+  và tab thử đồ nổi rõ. Web Admin có màn đăng nhập hai cột responsive cùng phần
+  command center cho dashboard. Đã kiểm tra trực quan mobile thật trên Redmi và
+  trang Admin ở desktop/390x844; dashboard sau đăng nhập chưa được kiểm tra trực
+  quan vì phiên này không có thông tin đăng nhập admin còn hiệu lực. Khôi phục
+  phiên mobile dùng hồ sơ cache để hiện UI trước rồi xác thực token ở nền, đưa
+  cold launch từ khoảng 15 giây xuống còn khoảng 3–4 giây trên video Redmi. Đợt
+  hoàn thiện 9.5 tiếp tục rút splash, giữ nền thương hiệu thay cho màn trắng,
+  cố định skeleton đúng chiều cao thẻ thật, cho tên sản phẩm hai dòng và đổi lý
+  do kỹ thuật thành câu dễ hiểu. Admin có thêm điều hướng bàn phím, trạng thái
+  `aria-live`/`aria-busy` và skeleton đúng hình command center.
+- **Hoàn thiện App và Web Admin 2026-08-30.** Tab Sản phẩm giữ số lượng và sắp
+  xếp trên màn đầu, còn bộ lọc nâng cao được thu gọn để sản phẩm xuất hiện sớm.
+  Trang chi tiết có chia sẻ thật, nội dung AI hướng tới khách hàng và chỉ còn hai
+  CTA cố định `Thử trên ảnh`/`Thêm vào giỏ`. Màn thử đồ có hành trình 3 bước,
+  vùng xem trước gọn hơn và coi số đo thật là tùy chọn. Các màn này đã được kiểm
+  tra trực quan trong app native đang chạy trên Redmi Note 8 Pro. Admin bổ sung
+  tương phản màu tốt hơn, nhãn bàn phím/trình đọc màn hình, bảng có thể cuộn bằng
+  bàn phím, tiêu đề mobile không bị cắt và luồng quên/đặt lại mật khẩu dùng API
+  sẵn có. Login, dashboard và 16 route Admin đã được kiểm tra ở desktop/mobile;
+  axe không phát hiện lỗi WCAG 2/2.1 A/AA khi bật Reduce Motion. Phần dashboard
+  đăng nhập dùng phiên QA ngắn hạn để kiểm tra giao diện; mật khẩu Admin trong
+  cấu hình hiện trả 401 và không bị tự ý thay đổi. Lượt UI này không chạy lại tác
+  vụ sinh ảnh/video GPU.
+- APK Redmi hiện tại là `1.0.12` (`versionCode 13`). Cài đè bằng `adb install -r`
+  hoặc mở link APK qua Tailscale để giữ dữ liệu; không gỡ bản cũ trước khi cập nhật.
+  Link tailnet: <https://rd-system.tail6502ce.ts.net:4101/api/apk/JAPANO-redmi-v1.0.12.apk>
+  (hostname MagicDNS trỏ tới `100.69.188.16`; dùng hostname chứ không dùng IP trần
+  vì Tailscale Serve chỉ cấp chứng chỉ TLS cho hostname).
+  SHA-256: `9c7792dda8a1d59cd50eb8da7c6dfe56d67a5d26dd1811b9cbb1c84d70137959`
+  (123 393 960 byte). Chứng chỉ ký SHA-1 `5e8f16062ea3cd2c4a0d547876baa6f38cabf625`
+  **không đổi**, nên cài đè giữ nguyên dữ liệu ứng dụng. Package `vn.japano.app`,
+  targetSdk 34. Đã xác minh: metadata gói, chữ ký, tải qua tailnet với đúng
+  `Content-Type`, `Content-Length` và SHA-256 khớp bản build.
+  Đã cài đè và kiểm tra giao diện trên Redmi Note 8 Pro: app giữ dữ liệu, cold
+  launch bằng video, trang chủ/AI Studio, thẻ gợi ý, tab Sản phẩm, cuộn lưới và
+  tab bar đều hiển thị đúng. Theo yêu cầu lượt này, chỉ kiểm tra Redmi, không
+  thực hiện kiểm tra OPPO.
+  Các thay đổi UI ngày 2026-08-30 đã được đóng gói lại bằng JDK 17 và cài đè
+  thành công lên Redmi; `firstInstallTime` được giữ nguyên, còn `lastUpdateTime`
+  chuyển sang 2026-08-30. Link Tailscale trả HTTP 200, đúng MIME, kích thước và
+  hash mới. Sau lần mở release, thiết bị tự khóa màn hình; log đã tới
+  `Running "main"` và không có crash JS/native, nhưng giao diện sau cài chưa thể
+  chụp lại. Ba màn nguồn tương ứng đã được kiểm tra trực quan qua phiên native
+  Metro ngay trước khi build.
+  Build phải dùng JDK 17: JDK 21 trên máy này thiếu `jlink` và Gradle sẽ dừng ở
+  bước `androidJdkImage`.
+  `cd mobile/android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew assembleRelease`
+- Ảnh công khai từng trả 503 sau khi GPU đã sinh ảnh nay trả ảnh thật trong
+  37,9 giây; ca bắt buộc chuyển pose trả trong 61,9 giây kèm cảnh báo danh tính.
+  Ảnh ngoài miền đo vẫn trả `insufficient_evidence`, không bịa cm/kg.
+- Bikini hai mảnh dùng hai flat-lay sạch và một lượt FLUX.2 đa tham chiếu thay
+  vì gửi nhầm category one-pieces cho FASHN. Smoke test thật trả ảnh 1152×1536
+  trong 58,1 giây sau khi cache kiểm tra 18+ từ lượt body-analysis; quality và
+  coverage gate đều qua, không warning. Lỗi lượt OPPO bị backend chặn sau khi
+  FLUX đã sinh ảnh được sửa bằng pose riêng cho input/output và protected-core
+  gate cho đồ bơi; smoke cold-cache sau sửa trả HTTP 200 trong khoảng 73 giây,
+  vẫn chặn ảnh hở lõi nhạy cảm. Đây là thay đổi backend nên không cần cài lại
+  APK; chưa xác nhận bằng lần bấm lại trực tiếp trên OPPO. Xem
+  [`BRAND_CINEMATIC_SWIMWEAR_2026-08-29.md`](docs/project_evidence/ai_benchmarks/BRAND_CINEMATIC_SWIMWEAR_2026-08-29.md).
+- Chatbot đã qua test câu mua đồ có/không dấu, lọc màu–dịp–ngân sách, size còn
+  hàng và câu nối tiếp. Mục tiêu sức khỏe đã tách khỏi sản phẩm/quỹ mua sắm.
+  Xem [`TRYON_CHAT_GOALS_2026-08-29.md`](docs/project_evidence/ai_benchmarks/TRYON_CHAT_GOALS_2026-08-29.md).
 
 ## Tổng quan
 
@@ -46,14 +190,17 @@ Backend phục vụ đồng thời API và Web Admin:
 - Health: <http://localhost:4100/api/health>
 - AI health: <http://localhost:4100/api/ai/health>
 
-Khi có `MONGODB_URI`, MongoDB là nguồn dữ liệu chính; lần chạy đầu backend dùng `backend/data/db.json` làm seed rồi tạo `app_state` và các collection theo thực thể trong MongoDB. Cloudinary chỉ giữ media, MongoDB chỉ lưu URL media.
+Khi có `MONGODB_URI`, MongoDB là nguồn dữ liệu chính; lần chạy đầu backend dùng
+`backend/data/db.json` làm seed rồi ghi theo mô hình collection-first. Atlas
+hiện có 30 collection; `app_state` là legacy và không phải nguồn runtime hiện
+hành. Cloudinary giữ file media, MongoDB chỉ lưu URL/metadata media.
 
 ## Điểm nổi bật
 
 - Recommendation hybrid theo hành vi thật: Selective SSM, graph propagation, next-item transition, pairwise ranker và các retrieval expert.
 - Botchat Ori có memory nhiều lượt, semantic routing, catalog-grounded response và Ollama rewrite tùy chọn.
 - Đo cơ thể từ MỘT ảnh: chiều cao, cân nặng, vòng 1/2/3, body shape và size — có sai số đo trên tập test tách theo danh tính, không phải con số tự khai.
-- Virtual try-on bằng FASHN VTON 1.5, adaptive FLUX.2 pose transfer, accessory refinement và quality gate.
+- Virtual try-on bằng FASHN VTON 1.5, FLUX.2 đa tham chiếu riêng cho bikini hai mảnh, adaptive pose transfer, accessory refinement và quality gate.
 - Hiệu ứng vừa vặn thật: vải căng, đường may bục khi quá chật, form rủ khi quá rộng — có chốt an toàn theo từng loại trang phục.
 - Tạo “Ảnh sống” bằng One-to-All Animation 1.3B-v2 trên nền Wan2.1, chỉ nạp CUDA khi người dùng yêu cầu.
 - Dashboard quản trị có dự báo doanh thu, nhu cầu/tồn kho, phân khúc, churn heuristic, market basket và model telemetry.
@@ -70,7 +217,7 @@ flowchart LR
     Mobile["Expo / React Native"] --> API["Express API"]
     Admin["Web Admin"] --> API
 
-    API --> Store["MongoDB<br/>app_state + collections"]
+    API --> Store["MongoDB Atlas<br/>collection-first"]
     API --> Reco["Recommendation + Analytics<br/>Node.js / CPU"]
     API --> Payment["Stripe Test / VNPay Sandbox"]
 
@@ -126,11 +273,11 @@ view · search · wishlist · cart · try-on · chat · purchase
 | Mua sắm | Wishlist, giỏ hàng đa biến thể, voucher, địa chỉ, checkout và lịch sử đơn |
 | Thanh toán | COD, Stripe Card/Checkout Test Mode, VNPay Sandbox trong WebView |
 | Hậu mãi | Theo dõi timeline đơn, yêu cầu trả hàng và trạng thái hoàn tiền |
-| Trợ lý Ori | Botchat nổi và màn chat đầy đủ; hỏi giá, voucher, đơn hàng, size, phối đồ và xu hướng |
+| Trợ lý Ori | Botchat nổi và màn chat đầy đủ; hỏi giá, voucher, đơn hàng, size còn kho, phối đồ và xu hướng; câu hỏi mua đồ có/không dấu và tham chiếu “cái đó” được grounded vào catalog |
 | Stylist AI | Phân tích màu chủ đạo, hồ sơ phong cách, tư vấn size và gợi ý outfit |
 | Đo cơ thể | Từ một ảnh ra chiều cao, cân nặng, vòng 1/2/3 dạng khoảng 10 đơn vị, kèm độ tin cậy và cảnh báo khi ảnh cắt cụt hoặc đồ rộng; số đo tự nhập luôn được ưu tiên |
 | Thử đồ AI | Virtual try-on, phụ kiện theo pose, hiệu ứng chật/vừa/rộng theo size, quality gate và video “Ảnh sống” tùy chọn |
-| Mục tiêu | Kế hoạch tiết kiệm mua sản phẩm, SMART goals và wellness guardrails |
+| Mục tiêu | Kế hoạch tiết kiệm mua sản phẩm; lộ trình sức khỏe tách riêng theo trọng tâm/mức vận động, SMART goals và wellness guardrails |
 | Nhật Bản | Địa danh, review cộng đồng, gợi ý trải nghiệm, văn hóa và nội dung hằng ngày |
 | Loyalty | JAPANO VIP, Flagcard, voucher cá nhân và thông báo trong ứng dụng |
 
@@ -150,7 +297,8 @@ view · search · wishlist · cart · try-on · chat · purchase
 ### Backend
 
 - REST API chia theo domain trong [`backend/routes`](backend/routes).
-- MongoDB là nguồn dữ liệu chính khi có `MONGODB_URI`; `app_state` phục vụ runtime và các collection theo thực thể phục vụ Compass/reporting.
+- MongoDB là nguồn dữ liệu chính khi có `MONGODB_URI`; runtime đọc/ghi trực tiếp
+  30 collection theo thực thể. `app_state` chỉ là legacy đã được migration bỏ.
 - Cloudinary giữ file media; MongoDB chỉ lưu URL và metadata media.
 - Đăng ký/đăng nhập dùng bcrypt + JWT; mobile lưu token trong SecureStore, Admin kiểm tra phiên và role trước khi gọi API.
 - Role gồm `customer < staff < admin < super_admin`; các endpoint nhạy cảm như state, analytics, payment/refund và moderation có middleware kiểm tra quyền.
@@ -896,16 +1044,64 @@ ERD và schema tham khảo:
 
 | File | Nội dung |
 |---|---|
-| [`JAPANO_ERD_MongoDB.drawio`](JAPANO_ERD_MongoDB.drawio) | ERD MongoDB hiện hành, 7 trang, 34 collection |
-| [`ERD_JAPANO_MONGODB_PNG/`](ERD_JAPANO_MONGODB_PNG/) | Bản PNG từng cụm, xem nhanh không cần draw.io |
-| [`scripts/erd_schema.json`](scripts/erd_schema.json) | Schema nguồn để sinh lại ERD |
+| [`JAPANO_ERD.drawio`](JAPANO_ERD.drawio) | **ERD duy nhất của dự án:** đúng 1 trang với 19 bảng logic chính của app, gồm `Địa điểm Nhật Bản`. Dây nối bám đúng ô FK nguồn → ô PK logic `id` đích; MongoDB vẫn dùng `_id` vật lý. `Phiếu giảm giá` là bảng nhỏ riêng, đơn hàng tham chiếu bằng `voucherId`. Toàn bộ tên hiển thị bằng tiếng Việt |
+| [`docs/database/ERD_STORAGE_AUDIT_2026-08-29.md`](docs/database/ERD_STORAGE_AUDIT_2026-08-29.md) | Audit lịch sử trước migration: 2.455 document, 0,75 MB; quyết định giảm 34 → 29 collection |
+| [`docs/architecture/erd/preview/JAPANO_ERD.png`](docs/architecture/erd/preview/JAPANO_ERD.png) | PNG xem nhanh trang tổng quát của file ERD duy nhất |
+| [`docs/database/atlas-snapshot.json`](docs/database/atlas-snapshot.json) | Snapshot chỉ đọc từ Atlas dùng để sinh và kiểm chứng file ERD trên |
+
+Các bản trùng/cũ đã được dọn ngày 2026-08-29. Không tạo thêm file `core`,
+`physical`, `final`, `v2` hoặc bản sao song song; chỉ cập nhật
+`JAPANO_ERD.drawio`.
 
 Sinh lại ERD từ dữ liệu thật thay vì sửa tay file `.drawio`:
 
 ```bash
-python3 scripts/build_erd_mongo.py     # dựng lại ERD MongoDB
-npm run db:erd:drawio                  # bản sinh từ backend
+node scripts/atlas_audit.js --out docs/database/atlas-snapshot.json
+python3 scripts/build_erd.py
+python3 scripts/validate_drawio.py JAPANO_ERD.drawio
+python3 scripts/validate_erd_against_atlas.py
 ```
+
+Tên collection/field kỹ thuật vẫn được giữ trong thuộc tính XML ẩn để validator
+đối chiếu Atlas, nhưng không trộn tiếng Anh vào phần sơ đồ nhìn thấy. Từ điển
+224 tên trường nằm ở `scripts/erd_i18n_vi.py`. ERD dùng đúng một trang và
+nối trực tiếp từng hàng FK tới bảng đích bằng các hành lang riêng, không gom dây
+thành chùm ở bảng trung tâm.
+
+## Website storefront
+
+Website bán hàng nằm ở `web/` và là **một dự án độc lập** với ứng dụng di động:
+React 19 + App Router riêng, dependency riêng, không nằm trong npm workspaces
+của repo này và không import mã React Native. Nó dùng chung backend JAPANO và
+MongoDB Atlas `japano` qua một lớp BFF same-origin.
+
+```bash
+npm --prefix web install
+npm --prefix web run dev      # http://localhost:4200
+```
+
+Runtime kiểm tra ngày 2026-08-30:
+
+- Trên máy chủ: <http://localhost:4200>
+- Trong cùng tailnet: <http://100.69.188.16:4200>
+- Dev server trả 200 cho trang chủ, `/san-pham` và `/thu-do`; desktop 1440 px và
+  mobile 390 px render đúng, không có console error hoặc response lỗi. ESLint,
+  TypeScript, 7/7 unit test và production build đều pass; Playwright đạt 31
+  pass, 1 skip có chủ đích cho case Three.js desktop trong project mobile.
+- Hero desktop dùng Three.js tải trễ; GSAP tạo phản hồi click, chuyển route, ảnh
+  bay vào giỏ và xác nhận đơn COD sau phản hồi thành công của backend. Mobile,
+  Data Saver, thiết bị RAM thấp và reduced-motion tự dùng artwork tĩnh. Bản
+  production mới đo Lighthouse 94/100 Performance, 100 Accessibility, 100 Best
+  Practices, 100 SEO; LCP 1,5 s, CLS 0,003 và TBT 10 ms.
+- URL tailnet hiện dùng forward tạm của user service
+  `japano-storefront-tailnet`; nó không thay đổi cấu hình Tailscale Serve đang có
+  và có thể dừng khi user session kết thúc hoặc máy khởi động lại. Để có HTTPS
+  bền vững cần chạy một lần với quyền quản trị:
+  `sudo tailscale serve --bg --yes --https=4200 http://127.0.0.1:4200`.
+
+Hướng dẫn đầy đủ — biến môi trường, kiến trúc BFF, hàng đợi AI bất đồng bộ,
+kiểm thử, yêu cầu cùng tailnet Tailscale và giới hạn Cloudflare — nằm trong
+[`web/README.md`](web/README.md).
 
 ## Kiểm thử
 
@@ -927,8 +1123,8 @@ Kiểm tra cả AI stack:
 npm run verify:ai
 ```
 
-`npm run check` chạy ba thứ: **263 test backend** (`node:test`), **89 test Python**
-(`unittest`) và TypeScript typecheck của mobile.
+`npm run check` chạy ba thứ: **342 test backend** (`node:test`), **102 test Python**
+(`unittest`, hiện có 2 skip theo cấu hình) và TypeScript typecheck của mobile.
 
 | Nhóm | Bao phủ |
 |---|---|
@@ -938,6 +1134,7 @@ npm run verify:ai
 | Chính sách vết bục | 95 kg mặc S/M phải bục (cả khi shop còn size lớn), người 55/70 kg không bục nhầm, đồ bơi và crop top không bao giờ bục, kimono hết size thì được bục, quần/váy không bao giờ bục |
 | Chọn chủ thể | người to thắng người nhỏ đứng giữa khung, người gần máy bị cắt chân vẫn thắng, chỉ một người được thay đồ |
 | Worker | worker lỗi/timeout/JSON hỏng đều phải rơi về đường spawn, không làm sập request |
+| Chatbot/mục tiêu | catalog query có/không dấu, ngữ cảnh nhiều lượt, giá/size thật, chống Ollama từ chối, tách coaching sức khỏe khỏi mua sắm và chốt dữ liệu sức khỏe bất hợp lệ |
 
 ## Giới hạn hiện tại
 
@@ -951,6 +1148,13 @@ npm run verify:ai
 - Recommendation SSM/GNN/mLSTM là lightweight inspired implementations; chưa có offline NDCG/Recall benchmark.
 - Full try-on/motion phụ thuộc CUDA, VRAM, RAM và external model licenses.
 - Đo cơ thể: chiều cao chủ yếu là prior dân số khi ảnh không có vật chuẩn, bin 10 đơn vị chỉ chứa giá trị thật 38–52% số lần, và chế độ áo phom rộng chưa có dataset để đo. Chi tiết ở [Đo cơ thể từ ảnh](#đo-cơ-thể-từ-ảnh).
+- Người có tỉ lệ cơ thể nằm ngoài miền hiệu chuẩn (ví dụ chiều cao cực hiếm),
+  ảnh cắt cụt hoặc không có thang đo có thể nhận `insufficient_evidence`. Đây là
+  chốt chống bịa số; try-on trang phục thường vẫn chạy bằng pipeline riêng.
+- Khảo sát GitHub/Kaggle cho chatbot nằm tại
+  [`DATASET_SURVEY.md`](backend/ai_training/chatbot_dataset/provenance/DATASET_SURVEY.md).
+  Chưa có checkpoint chatbot/wellness fine-tune; hiện là catalog grounding,
+  intent/eval và luật an toàn dựa trên WHO/CDC.
 - Hằng số hiệu chuẩn hình học và lớp hiệu chuẩn dân số fit trên VITON-HD/BodyM nên **phi thương mại**; bản thương mại phải thay bằng dữ liệu có license phù hợp.
 - Chưa mở rộng dataset fine-tune LoRA thử đồ: acceptance gate hiện chỉ dựa trên 8 mẫu/2 danh tính, quá nhỏ để kết luận chắc chắn.
 - Trước production cần hoàn tất audit authorization cho từng route, request validation, secret management, MongoDB transaction/migration, audit log, observability và CI/CD.
