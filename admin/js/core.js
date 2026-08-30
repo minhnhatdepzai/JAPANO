@@ -748,6 +748,18 @@ function renderView(){
   }
   if(state.route==='dashboard')drawDashCharts&&drawDashCharts();
 }
+
+/* React Bits SpotlightCard, chuyển sang event delegation vì #content được dựng
+   lại theo route. Chỉ KPI có thể bấm mới nhận spotlight; bảng, biểu mẫu và nút
+   nghiệp vụ giữ nguyên để người vận hành không bị phân tâm. */
+$('#content')?.addEventListener('pointermove',(event)=>{
+  if(event.pointerType==='touch'||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const card=event.target.closest?.('.reactbits-spotlight');
+  if(!card)return;
+  const rect=card.getBoundingClientRect();
+  card.style.setProperty('--rb-spot-x',(event.clientX-rect.left)+'px');
+  card.style.setProperty('--rb-spot-y',(event.clientY-rect.top)+'px');
+});
 function errState(){return `<div class="panel"><div class="empty"><div class="art tint-red">${icon('cloud-offline-outline',28)}</div><h3>Mất kết nối máy chủ</h3><p>Không gọi được API backend. Kiểm tra server Node/Express &amp; MongoDB đã chạy chưa, rồi thử lại.</p><div class="acts"><button class="btn p" onclick="A.toggleApi()">Thử kết nối lại</button><button class="btn" onclick="A.openSettings()">Mở cài đặt</button></div></div></div>`;}
 
 /* ---------- skeletons ---------- */

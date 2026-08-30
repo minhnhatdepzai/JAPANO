@@ -72,8 +72,9 @@ JAPANO_API_ORIGIN=https://rd-system.tail6502ce.ts.net:4101
 | `NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID` | không | Bật nút Google Sign-In; để trống thì nút không hiển thị |
 | `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` | không | Chỉ dùng nếu backend nằm sau Cloudflare Access. Đặt bằng `wrangler secret put`, **không** để giá trị thật trong repo và không bao giờ lộ ra bundle client |
 
-Bản đồ trang `/cua-hang` dùng Google Maps Embed được tải sau khi người dùng
-bấm mở, không cần API key hoặc biến môi trường bản đồ riêng.
+Bản đồ trang chủ dùng trực tiếp Google Maps Embed do chủ cửa hàng cung cấp;
+trang `/cua-hang` chỉ tải iframe sau khi người dùng bấm mở. Cả hai không cần API
+key hoặc biến môi trường bản đồ riêng.
 
 ## Kiến trúc BFF
 
@@ -125,26 +126,29 @@ một request đồng bộ qua BFF. Backend có thêm hàng đợi bất đồng
 Phía website, `runAiJob()` trong `web/lib/client-api.ts` là nơi duy nhất chạy
 vòng tạo → poll → huỷ.
 
-## Cinematic motion (Three.js + GSAP)
+## Cinematic footage, GSAP và React Bits
 
-Storefront dùng `three@0.185.1` và `gsap@3.15.0`, nhưng animation không nằm trên
+Storefront dùng footage cục bộ và `gsap@3.15.0`, nhưng animation không nằm trên
 đường bắt buộc của mua hàng:
 
-- `HeroThreeScene` dựng mặt trời 3D, vòng mực, vòng đồng và cánh hoa bằng một
-  canvas trong hero desktop. Module Three.js chỉ dynamic-import khi trình duyệt
-  rảnh; renderer giới hạn 30 fps, DPR tối đa 1,5 và khoảng 1,65 triệu pixel,
-  dừng khi hero ra khỏi viewport/tab bị ẩn, rồi dispose toàn bộ geometry,
-  material và WebGL context khi rời trang.
-- Mobile dưới 768 px, thiết bị có tối đa 4 GB RAM, Data Saver hoặc
-  `prefers-reduced-motion` giữ nguyên artwork CSS tĩnh — không tải WebGL.
+- Hero phát video thật cánh sakura rơi; AI split phát timelapse Fuji ghép đàn
+  chim thật. Bốn derivative MP4/WebP nằm trong `public/media/cinematic/`, tổng
+  khoảng 4,72 MB; bản tải gốc không nằm trong repo. Nguồn Pexels và giấy phép
+  được ghi tại `../THIRD_PARTY_NOTICES.md`.
+- `CinematicBackgroundVideo` chỉ phát khi phần tử ở trong viewport và tab đang
+  hiện. Data Saver, `prefers-reduced-motion` hoặc lỗi phát video giữ poster WebP.
+- FadeContent được áp dụng cho các section biên tập; SpotlightCard chỉ dùng cho
+  ba thẻ chính sách. Đây là adaptation từ React Bits bằng Web Animations API và
+  CSS, không kéo thêm runtime package. Sản phẩm, giỏ, đăng nhập và thanh toán
+  không nhận hiệu ứng React Bits.
 - `CinematicMotion` dùng GSAP cho ink ripple khi click, brush wipe khi đổi route,
   thumbnail sản phẩm bay về giỏ và badge phản hồi. Drawer chỉ chờ tối đa 460 ms;
   nếu animation không khả dụng thì mở ngay.
 - Lớp xác nhận đơn chỉ chạy **sau** khi `POST /api/orders` tạo đơn COD thành
   công. Stripe/VNPay không hiển thị thành công giả trước callback của cổng
   thanh toán.
-- Tất cả lớp trang trí có `pointer-events: none`; reduced motion tắt hoàn toàn
-  canvas, ripple, cart-flight, route-brush và order overlay.
+- Tất cả lớp trang trí có `pointer-events: none`; reduced motion tắt video,
+  Fade/Spotlight, ripple, cart-flight, route-brush và order overlay.
 
 Lighthouse desktop trên build production sau thay đổi: Performance **94**,
 Accessibility **100**, Best Practices **100**, SEO **100**; FCP 0,8 s, LCP
@@ -173,14 +177,18 @@ npm --prefix web run build
 npm --prefix web run e2e
 ```
 
-Bộ Playwright hiện có **31 test pass và 1 skip có chủ đích** (case Three.js
-desktop bị bỏ qua trong project mobile), chạy hai project (`mobile-390`,
-`desktop-1440`) và phủ: catalog
+Bộ Playwright tập trung vào footage, React Bits, bản đồ và Reduce Motion đạt
+**5 pass và 1 mobile skip có chủ đích**. Full dev suite hiện đạt **29 pass, 2
+fail và 1 skip**; hai fail là cùng cảnh báo preload `as` của Vinext dev trên PDP.
+Full workerd production còn lộ hydration React/Vinext #418 ở các trang client
+sau điều hướng, nên chưa được ghi là toàn bộ pass. Suite chạy hai project
+(`mobile-390`, `desktop-1440`) và phủ: catalog
 thật ở trang chủ, hàng mới, bán chạy không gắn nhãn giả, search/filter/sort trên
 URL, PDP màu–size–tồn kho, quick-add và số lượng giỏ, wishlist, hợp nhất giỏ
 khách sau đăng nhập thật, voucher do backend quyết định, store locator QTSC9
 (10.8537915, 106.6260636), 360/390 không tràn ngang, điều hướng bàn phím,
-`prefers-reduced-motion`, hero Three.js, GSAP cart/order/route motion và hợp đồng
+`prefers-reduced-motion`, footage Sakura/Fuji, React Bits adaptations, GSAP
+cart/order/route motion và hợp đồng
 job try-on bằng stub. Mọi test đều fail nếu console có error/warning, có ảnh vỡ,
 hoặc có nút nhỏ hơn 44×44.
 

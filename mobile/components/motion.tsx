@@ -74,6 +74,52 @@ export function FadeSlideIn({ children, delay = 0, offset = 14, duration = 320, 
   );
 }
 
+type ReactBitsFadeContentProps = FadeSlideProps & {
+  /** Thu nhẹ khối trước khi hiện để thay cảm giác soft-focus của bản web. */
+  initialScale?: number;
+};
+
+/**
+ * Bản React Native của hiệu ứng FadeContent từ React Bits. React Native 0.74
+ * không có blur filter ổn định cho View, nên dùng opacity + dịch chuyển + scale
+ * rất nhẹ; toàn bộ chạy native driver và tắt theo Reduce Motion của hệ điều hành.
+ */
+export function ReactBitsFadeContent({
+  children,
+  delay = 0,
+  duration = 380,
+  initialScale = 0.985,
+  offset = 12,
+  style,
+}: ReactBitsFadeContentProps) {
+  const reduced = useReduceMotion();
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduced) { progress.setValue(1); return; }
+    const animation = Animated.timing(progress, {
+      toValue: 1,
+      delay,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [delay, duration, progress, reduced]);
+
+  return <Animated.View style={[
+    style,
+    {
+      opacity: progress,
+      transform: [
+        { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [offset, 0] }) },
+        { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [initialScale, 1] }) },
+      ],
+    },
+  ]}>{children}</Animated.View>;
+}
+
 type PressScaleProps = PressableProps & {
   children: React.ReactNode;
   /** Mức thu nhỏ khi nhấn. 0.96 hợp cho thẻ lớn, 0.93 cho nút nhỏ. */

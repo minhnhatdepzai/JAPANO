@@ -5,6 +5,7 @@ const { resolveGarmentImage } = require('../lib/garmentImages');
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 const { runGpuJob, GpuJobCancelledError } = require('../lib/gpuArbiter');
 const { FULFILLMENT_POLICY } = require('../lib/fulfillmentPolicy');
+const { hideProduct } = require('../lib/productLifecycle');
 
 module.exports = function registerCatalogRoutes(api, ctx) {
   const {
@@ -224,15 +225,16 @@ module.exports = function registerCatalogRoutes(api, ctx) {
   });
 
   api.delete('/products/:id', requireAdmin, (req, res) => {
-    let removed = null;
+    let hidden = null;
     update((state) => {
-      const id = String(req.params.id);
-      const index = state.products.findIndex((product) => String(product.id) === id || String(product.slug) === id);
-      if (index >= 0) [removed] = state.products.splice(index, 1);
+      // Giữ route DELETE để các bản Admin cũ không làm mất dữ liệu. Đây là
+      // thao tác soft-delete: sản phẩm vẫn còn nguyên để xem lịch sử đơn hàng,
+      // báo cáo, yêu thích và có thể bật bán lại sau này.
+      hidden = hideProduct(state, req.params.id);
       return state;
     });
-    if (!removed) return res.status(404).json({ ok: false, message: 'Không tìm thấy sản phẩm.' });
-    res.json({ ok: true, product: removed });
+    if (!hidden) return res.status(404).json({ ok: false, message: 'Không tìm thấy sản phẩm.' });
+    res.json({ ok: true, action: 'hidden', product: hidden });
   });
 
   const normalizeSearch = (value) => String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();

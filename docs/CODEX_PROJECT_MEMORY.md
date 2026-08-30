@@ -174,6 +174,15 @@ ownership. Preserve Android app data; use update installs, not uninstall.
   `/auth/me` identity only; the configured admin password still returns 401 and
   was deliberately not reset. The recovery contract was browser-tested with a
   mocked response; no email or password mutation was performed.
+- Product management in Web Admin no longer exposes permanent deletion. The
+  row action only toggles `published`/`hidden`, explains that hidden products
+  can be restored, and keeps the row in Admin. For defense in depth, legacy
+  `DELETE /api/products/:id` now performs the same soft-hide instead of removing
+  the database record, preserving orders, analytics and wishlist references.
+  Product lifecycle tests pass 3/3; the related catalog set passes 12/12 and the
+  full backend suite passes 345/345. A mocked authenticated browser check
+  confirmed 0 delete buttons, one hide PUT, no DELETE request, the row retained
+  and the status changed to `Đã ẩn`.
 - Storefront `web/` is a separate React 19/vinext project, not Expo Web or Web
   Admin. On 2026-08-30 its existing dev process was verified at
   `http://127.0.0.1:4200`: home, `/san-pham` and `/thu-do` returned 200; desktop
@@ -193,6 +202,19 @@ ownership. Preserve Android app data; use update installs, not uninstall.
   unconfigured MapLibre runtime path. Chromium received HTTP 200 from the embed
   and rendered it without console/page errors; list filtering and the existing
   coordinate-based directions link remain unchanged.
+- Storefront hero and AI split now use locally hosted, realistic Pexels footage:
+  falling sakura petals (3.42 MB MP4) and a Fuji timelapse composited with a
+  real flying flock (1.11 MB MP4), each with a WebP poster. Videos pause outside
+  the viewport or in a hidden tab; Reduce Motion, Data Saver and playback errors
+  keep the static poster. The home store section renders the exact supplied
+  Google Maps Embed instead of the old coordinate artwork.
+- React Bits adaptations are intentionally scoped: storefront uses FadeContent
+  for four editorial sections and SpotlightCard for three trust cards; mobile
+  uses a native-driver FadeContent only for the home hero and AI Studio; Admin
+  uses SpotlightCard only on actionable KPI cards and ShinyText on the ready
+  status. All three honor Reduce Motion, and cart, checkout, payment, login and
+  try-on result flows were left unchanged. Source/license notices are in
+  `THIRD_PARTY_NOTICES.md`.
 - Body/try-on false rejection is fixed for pose-transfer cases: strict pixel
   identity becomes an explicit warning only when pose transfer is required;
   ordinary poses stay strict. Missing measurements no longer imply try-on
@@ -232,28 +254,19 @@ ownership. Preserve Android app data; use update installs, not uninstall.
   remains the physical key and references are application-enforced. A read-only
   Atlas integrity audit found three stale `mobile/tryon` interactions whose
   `userId` no longer resolves; no live data was changed.
-- Current Android release `1.0.12` uses `versionCode 13`. It must be installed over the
-  prior APK with update semantics (`adb install -r` or normal Android update),
-  never uninstall-first, so app data is preserved. The served artifact must be
-  rebuilt after mobile source changes before sharing its Tailscale URL.
-  Target artifact is `JAPANO-redmi-v1.0.12.apk` at
-  `https://rd-system.tail6502ce.ts.net:4101/api/apk/JAPANO-redmi-v1.0.12.apk`.
-  Current SHA-256 is
-  `9c7792dda8a1d59cd50eb8da7c6dfe56d67a5d26dd1811b9cbb1c84d70137959`
-  (123,393,960 bytes). Signing certificate SHA-1
-  `5e8f16062ea3cd2c4a0d547876baa6f38cabf625` is unchanged from 1.0.4, so the
-  update install keeps app data. Package `vn.japano.app`, version metadata,
-  signature and local/tailnet HTTP download with matching SHA-256 were verified.
-  Update-install, recorded cold launch, the redesigned home/AI Studio, product
-  cards, Products tab/grid scroll and tab bar were visually verified on the
-  attached Redmi Note 8 Pro. Per the current request, no OPPO validation was run.
-  The 2026-08-30 release rebuild completed successfully and was update-installed
-  over the Redmi copy: `firstInstallTime` stayed 2026-08-27 while
-  `lastUpdateTime` advanced to 2026-08-30. The local download hash and the
-  tailnet response metadata matched. The device locked immediately after launch,
-  so the bundled release reached `Running "main"` without a JS/native crash but
-  its post-install screens were not visually rechecked; the same source screens
-  were visually checked through the native Metro session before the build.
+- Current Android release `1.0.13` uses `versionCode 14` and contains the new
+  React Bits-inspired home hero/AI Studio FadeContent. Install it over the prior
+  APK (`adb install -r` or normal Android update), never uninstall-first, so app
+  data is preserved. It is served at
+  `https://rd-system.tail6502ce.ts.net:4101/api/apk/app-release.apk`; SHA-256 is
+  `56bfdea5f4f5b84b8aa689417e5998e805c2a89c4eadf4614d351b69b5633445`
+  (123,394,198 bytes). Package `vn.japano.app`, version metadata, targetSdk 34,
+  signing certificate SHA-1
+  `5e8f16062ea3cd2c4a0d547876baa6f38cabf625`, APK MIME/length and full tailnet
+  download hash were verified. The signing certificate matches prior APKs.
+  Build and mobile typecheck pass, but `adb devices` was empty, so v1.0.13 has
+  not been update-installed or visually verified on a phone. The previous
+  v1.0.12 release was visually verified on Redmi Note 8 Pro.
 - Release builds need JDK 17. The JDK 21 install on this machine has no `jlink`,
   so Gradle fails in `androidJdkImage`. Use
   `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew assembleRelease`.
@@ -262,7 +275,7 @@ ownership. Preserve Android app data; use update installs, not uninstall.
 
 - `web/` là **website độc lập**, không phải Expo Web. React 19 + App Router qua
   `vinext`, TypeScript strict, TanStack Query, Zod, React Hook Form, Motion for
-  React, MapLibre. Nó **không** nằm trong npm workspaces gốc và có
+  React và Google Maps Embed. Nó **không** nằm trong npm workspaces gốc và có
   `package.json`/`package-lock.json`/`node_modules` riêng. Chạy bằng
   `npm --prefix web run <script>`. Không import bất kỳ tệp nào của `mobile/`.
 - Backend mặc định là `https://rd-system.tail6502ce.ts.net:4101` ở
@@ -309,15 +322,21 @@ ownership. Preserve Android app data; use update installs, not uninstall.
   399 KB JPEG kèm attribution Wikimedia, và DELETE huỷ được job đang chạy.
 - Motion storefront 2026-08-30: `web/components/cinematic-motion.tsx` dùng
   GSAP 3.15 cho click ink, route brush, cart flight/badge và order-success;
-  `web/components/hero-three-scene.tsx` dùng Three.js 0.185.1 cho hero desktop.
-  Canvas dynamic-import, 30 fps, DPR ≤ 1,5, pixel budget 1,65 M, pause ngoài
-  viewport và dispose GPU đầy đủ. Mobile <768 px, RAM ≤4 GB, Data Saver và
-  reduced-motion dùng fallback CSS. Cart drawer chờ tối đa 460 ms; xác nhận đơn
-  chỉ chạy sau khi backend tạo COD thành công.
-- Validation sau motion: ESLint sạch (flat config mới), TypeScript sạch, Vitest
-  7/7, production build pass, Playwright 31 pass + 1 skip có chủ đích. Browser
-  desktop xác nhận WebGL canvas, cart-flight, drawer/count, order overlay và
-  route brush; mobile xác nhận fallback; không console error/request lỗi.
+  hero dùng video sakura cục bộ và AI split dùng video Fuji + chim cục bộ qua
+  `cinematic-background-video.tsx`. Wrapper giới hạn autoplay ở phần đang nhìn,
+  dừng khi tab ẩn và chuyển sang poster khi Reduce Motion/Data Saver hoặc lỗi.
+  Three.js và `@types/three` đã được gỡ khỏi dependency. Cart drawer chờ tối đa
+  460 ms; xác nhận đơn chỉ chạy sau khi backend tạo COD thành công.
+- Validation sau footage/React Bits: Admin JavaScript syntax sạch; mobile
+  TypeScript sạch nhưng không có thiết bị trong `adb devices`, nên chưa có xác
+  minh app trực quan. Storefront ESLint/TypeScript/Vitest 7/7/build pass; bộ E2E
+  tập trung footage, React Bits, bản đồ và Reduce Motion đạt 5 pass + 1 mobile
+  skip có chủ đích. Full dev E2E đạt 29 pass + 1 skip; hai PDP case dừng vì cảnh
+  báo preload `as` của Vinext dev. Full workerd production còn lộ hydration
+  React #418 ở các trang client sau điều hướng; đây là giới hạn chưa xử lý, còn
+  các case motion/map/reduced-motion vẫn pass. Browser desktop xác nhận hai MP4
+  thực sự tăng `currentTime`, ba SpotlightCard phản hồi con trỏ, cart-flight,
+  drawer/count, order overlay và route brush.
   Lighthouse production `/`: Performance 94, Accessibility/Best Practices/SEO
   100, FCP 0,8 s, LCP 1,5 s, TBT 10 ms, CLS 0,003. Điểm tối ưu tiếp theo là
   thumbnail AVIF/WebP: audit ước tính image-delivery còn tiết kiệm được ~1,8 MB.

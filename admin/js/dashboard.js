@@ -241,7 +241,7 @@ function viewDashboard(){
   const newUsers=DB.users.filter(u=>Number(u.joinedAt||new Date(u.createdAt||0).getTime())>=Date.now()-30*86400000).length;
   const activeVip=DB.users.filter(u=>userVip(u).isVip).length;
   const notBuyable=DB.products.filter(p=>!buyable(p)).length;
-  const kpi=(lb,val,ic,tint,detail,action='')=>`<div class="kpi" ${action?`onclick="${action}" style="cursor:pointer"`:''}><div class="top"><span class="lb">${lb}</span><span class="ic ${tint}">${ic}</span></div><div class="v">${val}</div>${detail?`<div class="dl ${detail.tone==='up'?'up':detail.tone==='down'?'dn':''}" style="${detail.tone?'':'color:var(--faint)'}">${detail.tone==='up'?icon('arrow-up',11)+' ':detail.tone==='down'?icon('arrow-down',11)+' ':''}${detail.text}</div>`:''}</div>`;
+  const kpi=(lb,val,ic,tint,detail,action='')=>`<div class="kpi${action?' reactbits-spotlight':''}" ${action?`onclick="${action}" style="cursor:pointer"`:''}><div class="top"><span class="lb">${lb}</span><span class="ic ${tint}">${ic}</span></div><div class="v">${val}</div>${detail?`<div class="dl ${detail.tone==='up'?'up':detail.tone==='down'?'dn':''}" style="${detail.tone?'':'color:var(--faint)'}">${detail.tone==='up'?icon('arrow-up',11)+' ':detail.tone==='down'?icon('arrow-down',11)+' ':''}${detail.text}</div>`:''}</div>`;
   const ms=(ic,tint,v,lb)=>`<div class="ministat"><span class="ic ${tint}">${ic}</span><div><div class="v">${v}</div><div class="lb">${lb}</div></div></div>`;
   // segments
   const segs=[{label:'Chờ xử lý',status:'pending',value:statusCount('pending'),color:'#B45309'},{label:'Đang giao',status:'shipping',value:statusCount('shipping')+statusCount('confirmed'),color:'#1D4ED8'},{label:'Hoàn tất',status:'completed',value:completed,color:'#15803D'},{label:'Đã huỷ',status:'cancelled',value:statusCount('cancelled'),color:'#B91C1C'}];
@@ -263,7 +263,7 @@ function viewDashboard(){
     </div>
     <div class="dash-intro-state">
       <div class="dash-monogram">N</div>
-      <div class="dash-state-row"><span class="dot g"></span><div><b>Hệ thống sẵn sàng</b><small>Dữ liệu · hình ảnh · cổng trí tuệ nhân tạo</small></div></div>
+      <div class="dash-state-row"><span class="dot g"></span><div><b class="reactbits-shiny-text">Hệ thống sẵn sàng</b><small>Dữ liệu · hình ảnh · cổng trí tuệ nhân tạo</small></div></div>
       <div class="dash-state-metrics"><span><b>${totalOrders}</b>đơn hàng</span><i></i><span><b>${DB.products.length}</b>sản phẩm</span><i></i><span><b>${DB.users.length}</b>người dùng</span></div>
     </div>
   </section>

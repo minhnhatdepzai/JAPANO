@@ -45,15 +45,44 @@ test("home renders the live JAPANO catalog", async ({ page }) => {
 });
 
 // Motion có chất lượng nhưng không được trở thành điều kiện để mua hàng.
-// Kiểm tra riêng desktop: Three.js tải trễ, GSAP phản hồi giỏ/đơn và lớp
-// chuyển trang thực sự xuất hiện; mobile/reduced-motion đã có test riêng.
+// Kiểm tra riêng desktop: footage cục bộ thực sự phát, GSAP phản hồi giỏ/đơn
+// và lớp chuyển trang xuất hiện; mobile/reduced-motion đã có test riêng.
 test("cinematic motion enhances hero, cart, order and route transitions", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-1440", "Three.js chỉ chạy trên desktop đủ ngân sách.");
+  test.skip(testInfo.project.name !== "desktop-1440", "Footage cinematic được kiểm tra chuyển động ở desktop.");
   const console_ = watchConsole(page, [/GL Driver Message.*GPU stall due to ReadPixels/i]);
   await page.goto("/");
   await page.waitForFunction(() => document.documentElement.dataset.cinematicMotion === "ready");
   await expect(page.locator(".hero-three")).toHaveAttribute("data-three-status", "ready", { timeout: 8_000 });
-  await expect(page.locator(".hero-three canvas")).toHaveCount(1);
+  const sakuraVideo = page.locator(".sakura-scene-video");
+  await expect(sakuraVideo).toBeVisible();
+  await expect(sakuraVideo).toHaveAttribute("src", /sakura-petal-rain\.mp4$/);
+  const sakuraTime = await sakuraVideo.evaluate((video: HTMLVideoElement) => video.currentTime);
+  await page.waitForTimeout(320);
+  expect(await sakuraVideo.evaluate((video: HTMLVideoElement) => video.currentTime)).toBeGreaterThan(sakuraTime);
+
+  const fuji = page.locator(".fuji-cinematic");
+  await fuji.scrollIntoViewIfNeeded();
+  await expect(fuji).toHaveAttribute("data-fuji-status", "ready", { timeout: 8_000 });
+  const fujiVideo = fuji.locator(".fuji-scene-video");
+  await expect(fujiVideo).toBeVisible();
+  await expect(fujiVideo).toHaveAttribute("src", /fuji-birds-lake\.mp4$/);
+  const fujiTime = await fujiVideo.evaluate((video: HTMLVideoElement) => video.currentTime);
+  await page.waitForTimeout(320);
+  expect(await fujiVideo.evaluate((video: HTMLVideoElement) => video.currentTime)).toBeGreaterThan(fujiTime);
+  await expect(page.locator(".experience-split")).toHaveAttribute("data-fade-state", "visible");
+
+  const spotlights = page.locator(".react-bits-spotlight");
+  await expect(spotlights).toHaveCount(3);
+  await spotlights.first().scrollIntoViewIfNeeded();
+  const spotlightBox = await spotlights.first().boundingBox();
+  expect(spotlightBox).not.toBeNull();
+  await page.mouse.move(spotlightBox!.x + spotlightBox!.width * 0.7, spotlightBox!.y + spotlightBox!.height * 0.45);
+  await expect.poll(() => spotlights.first().evaluate((element) => getComputedStyle(element).getPropertyValue("--spotlight-x").trim())).not.toBe("");
+
+  const homeMap = page.locator(".store-map-live iframe");
+  await homeMap.scrollIntoViewIfNeeded();
+  await expect(homeMap).toBeVisible();
+  await expect(homeMap).toHaveAttribute("src", /^https:\/\/www\.google\.com\/maps\/embed\?pb=/);
 
   const card = page.locator(".product-card").first();
   await card.hover();
@@ -350,6 +379,8 @@ test("reduced motion neutralises decorative animation", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await page.goto("/");
+  await expect(page.locator(".hero-three")).toHaveAttribute("data-three-status", "fallback");
+  await expect(page.locator(".fuji-cinematic")).toHaveAttribute("data-fuji-status", "fallback");
 
   const durations = await page.evaluate(() => {
     const read = (selector: string) => {
@@ -358,14 +389,23 @@ test("reduced motion neutralises decorative animation", async ({ browser }) => {
       const style = getComputedStyle(element);
       return { animation: style.animationDuration, transition: style.transitionDuration };
     };
-    return { sun: read(".sun"), cue: read(".scroll-cue svg"), button: read(".button.primary") };
+    const sakura = document.querySelector<HTMLVideoElement>(".sakura-scene-video");
+    const fuji = document.querySelector<HTMLVideoElement>(".fuji-scene-video");
+    return {
+      sakura: read(".sakura-scene-video"),
+      fuji: read(".fuji-scene-video"),
+      cue: read(".scroll-cue svg"),
+      button: read(".button.primary"),
+      videosPaused: Boolean(sakura?.paused && fuji?.paused),
+    };
   });
   const seconds = (value: string) => value.split(",").map((part) => (part.trim().endsWith("ms") ? Number.parseFloat(part) / 1000 : Number.parseFloat(part)));
-  for (const entry of [durations.sun, durations.cue, durations.button]) {
+  for (const entry of [durations.sakura, durations.fuji, durations.cue, durations.button]) {
     expect(entry).not.toBeNull();
     for (const value of seconds(entry!.animation)) expect(value).toBeLessThanOrEqual(0.001);
     for (const value of seconds(entry!.transition)) expect(value).toBeLessThanOrEqual(0.001);
   }
+  expect(durations.videosPaused).toBeTruthy();
   await context.close();
 });
 

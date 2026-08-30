@@ -18,6 +18,7 @@ import { SmartImage } from '../../components/SmartImage';
 import { useAuth } from '../../lib/auth';
 import { BrandLogo } from '../../lib/shop';
 import { useGpuFocus } from '../../lib/useGpuFocus';
+import { ReactBitsFadeContent } from '../../components/motion';
 
 const refKey=(ref:ApiProductRef)=>typeof ref==='string'?ref:String(ref.slug||ref.productId||ref.id||ref._id||'');
 const todayKey=()=>new Date().toISOString().slice(0,10);
@@ -123,6 +124,7 @@ export default function Home() {
         )}
 
         {/* hero */}
+        <ReactBitsFadeContent delay={60} duration={430} offset={10}>
         <View style={st.hero}>
           <SmartImage source={heroImg} style={StyleSheet.absoluteFill as any} recyclingKey="home-hero" />
           <LinearGradient colors={['rgba(12,10,8,0.04)','rgba(12,10,8,0.16)','rgba(12,10,8,0.88)']} locations={[0,.42,1]} style={StyleSheet.absoluteFill} />
@@ -139,8 +141,10 @@ export default function Home() {
             </Pressable>
           </View>
         </View>
+        </ReactBitsFadeContent>
 
         <View style={{ paddingHorizontal:18 }}>
+          <ReactBitsFadeContent delay={140} duration={420} offset={8}>
           <View style={st.studio}>
             <View style={st.studioHead}>
               <View><Text style={st.studioEyebrow}>JAPANO AI STUDIO</Text><Text style={st.studioTitle}>Một ảnh, ba trải nghiệm</Text></View>
@@ -152,6 +156,7 @@ export default function Home() {
               <StudioAction icon="chatbubble-ellipses-outline" label="Trợ lý Ori" caption="Phối đồ riêng" onPress={()=>{if(requireAuth('/chat'))router.push('/chat');}} />
             </View>
           </View>
+          </ReactBitsFadeContent>
 
           {/* category chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop:14 }} contentContainerStyle={{ gap:8, paddingRight:18 }}>

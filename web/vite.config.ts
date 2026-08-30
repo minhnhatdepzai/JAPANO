@@ -4,6 +4,9 @@ import { defineConfig } from "vite";
 import vinext from "vinext";
 
 export default defineConfig({
+  server: {
+    watch: { ignored: ["**/.wrangler/**"] },
+  },
   plugins: [
     vinext({ cache: { cdn: cdnAdapter() } }),
     cloudflare({

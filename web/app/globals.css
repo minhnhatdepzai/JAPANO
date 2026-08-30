@@ -105,17 +105,18 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .drawer-total p { margin: 0; color: var(--muted); font-size: 12px; }
 
 .hero { position: relative; min-height: calc(100svh - 106px); padding: clamp(60px, 8vw, 128px) max(28px, calc((100vw - 1440px) / 2)); display: grid; grid-template-columns: minmax(420px, 0.88fr) 1.12fr; align-items: center; overflow: hidden; border-bottom: 1px solid var(--line); }
-.hero-paper { position: absolute; z-index: 0; inset: 0 0 0 45%; background: linear-gradient(135deg, #eee6d8 0%, #f7f0e6 54%, #e9decf 100%); overflow: hidden; }
-.hero-paper::after { content: ""; position: absolute; inset: 0; opacity: 0.22; background-image: radial-gradient(rgba(20,19,16,.22) .5px, transparent .6px); background-size: 4px 4px; mix-blend-mode: multiply; }
-.hero-three { position: absolute; z-index: 1; inset: 0; opacity: 0; pointer-events: auto; transition: opacity 520ms ease; }
-.hero-three[data-three-status="ready"] { opacity: 1; }
-.hero-three-canvas { width: 100%; height: 100%; display: block; }
-.sun { position: absolute; z-index: 0; width: clamp(300px, 36vw, 620px); aspect-ratio: 1; top: 50%; left: 52%; border-radius: 50%; background: var(--vermilion); transform: translate(-50%, -50%); box-shadow: 0 0 0 28px rgba(183, 49, 44, 0.05), 0 0 0 66px rgba(183, 49, 44, 0.025); animation: sun-breathe 9s ease-in-out infinite; transition: opacity 520ms ease; }
-.hero-paper:has(.hero-three[data-three-status="ready"]) .sun { opacity: .18; }
-.ink-stroke { position: absolute; z-index: 2; width: 120%; height: 24%; left: -10%; border: solid var(--sumi); opacity: .94; transform: rotate(-18deg); }
-.ink-stroke.one { top: 37%; border-width: 34px 0 0; border-radius: 50%; }
-.ink-stroke.two { top: 59%; left: 9%; border-width: 0 0 10px; border-radius: 50%; transform: rotate(12deg); opacity: .4; }
-.seal { position: absolute; z-index: 3; right: 8%; bottom: 8%; width: 68px; height: 68px; display: grid; place-items: center; color: var(--vermilion); border: 2px solid var(--vermilion); font: 600 32px var(--font-display); }
+.hero-paper { position: absolute; z-index: 0; inset: 0 0 0 45%; overflow: hidden; background: #342c2a; }
+.hero-paper::before { content: ""; position: absolute; z-index: 4; inset: 0; background: linear-gradient(90deg, rgba(20,19,16,.52), transparent 28% 72%, rgba(20,19,16,.14)), linear-gradient(0deg, rgba(20,19,16,.34), transparent 38%); pointer-events: none; }
+.hero-paper::after { content: ""; position: absolute; z-index: 5; inset: 0; opacity: .15; background-image: radial-gradient(rgba(255,255,255,.62) .5px, transparent .7px); background-size: 4px 4px; mix-blend-mode: soft-light; pointer-events: none; }
+.hero-three { position: absolute; z-index: 1; inset: 0; overflow: hidden; background: #342c2a; }
+.sakura-video-poster, .sakura-scene-video { position: absolute; inset: -2%; width: 104%; height: 104%; object-fit: cover; object-position: center; }
+.sakura-video-poster { z-index: 1; }
+.sakura-scene-video { z-index: 2; opacity: 0; filter: saturate(1.04) contrast(1.03); transition: opacity 900ms ease; animation: cinematic-camera-drift 22s ease-in-out infinite alternate; }
+.hero-three[data-three-status="ready"] .sakura-scene-video { opacity: 1; }
+.cinematic-scene-shade { position: absolute; z-index: 3; inset: 0; background: radial-gradient(circle at 58% 40%, transparent 18%, rgba(18,14,13,.18) 100%); pointer-events: none; }
+.sakura-scene-mark { position: absolute; z-index: 6; right: 7%; bottom: 7%; width: 66px; height: 66px; display: grid; place-items: center; color: #fff; border: 1px solid rgba(255,255,255,.72); background: rgba(88,24,28,.5); box-shadow: 0 12px 42px rgba(0,0,0,.18); backdrop-filter: blur(8px); font: 600 31px var(--font-display); }
+.scene-footage-label { position: absolute; z-index: 6; left: 5%; bottom: 5%; color: rgba(255,255,255,.84); text-shadow: 0 1px 10px rgba(0,0,0,.55); font-size: 9px; font-weight: 700; letter-spacing: .22em; }
+@keyframes cinematic-camera-drift { from { transform: scale(1.015) translate3d(-.25%,.15%,0); } to { transform: scale(1.055) translate3d(.65%,-.45%,0); } }
 .hero-copy { position: relative; z-index: 4; max-width: 760px; }
 .hero-copy h1 { margin: 22px 0 30px; font: 500 clamp(54px, 7vw, 108px)/0.98 var(--font-display); letter-spacing: -0.055em; }
 .hero-copy h1 em { color: var(--vermilion); font-style: normal; }
@@ -216,12 +217,15 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .tryon-editorial ul { margin: 34px 0; padding: 0; display: grid; gap: 14px; list-style: none; }
 .tryon-editorial li { display: flex; align-items: center; gap: 10px; font-size: 12px; }
 .tryon-editorial li svg { width: 18px; }
-.tryon-art { position: relative; overflow: hidden; background: var(--sakura); }
-.tryon-art::before { content: ""; position: absolute; width: 520px; height: 520px; left: 50%; top: 48%; border-radius: 50%; background: var(--washi); transform: translate(-50%, -50%); }
-.frame { position: absolute; width: 42%; aspect-ratio: .72; border: 2px solid var(--sumi); background: linear-gradient(150deg, transparent 0 47%, var(--sumi) 48% 51%, transparent 52%); }
-.frame-one { left: 17%; top: 12%; transform: rotate(-7deg); }
-.frame-two { right: 14%; bottom: 10%; border-color: var(--vermilion); transform: rotate(8deg); }
-.vertical-type { position: absolute; right: 8%; top: 8%; writing-mode: vertical-rl; font: 600 28px/1.2 var(--font-display); letter-spacing: .3em; }
+.fuji-cinematic { position: relative; min-width: 0; min-height: 780px; overflow: hidden; background: #8297a4; isolation: isolate; }
+.fuji-cinematic::after { content: ""; position: absolute; z-index: 4; inset: 0; background: linear-gradient(90deg, rgba(20,30,42,.17), transparent 25% 72%, rgba(20,30,42,.18)), linear-gradient(0deg, rgba(13,27,42,.32), transparent 38%); pointer-events: none; }
+.fuji-video-poster, .fuji-scene-video { position: absolute; inset: -2%; width: 104%; height: 104%; object-fit: cover; object-position: 45% center; }
+.fuji-video-poster { z-index: 1; }
+.fuji-scene-video { z-index: 2; opacity: 0; transition: opacity 900ms ease; animation: cinematic-camera-drift 24s ease-in-out infinite alternate-reverse; }
+.fuji-cinematic[data-fuji-status="ready"] .fuji-scene-video { opacity: 1; }
+.fuji-vertical-type { position: absolute; z-index: 6; right: 5%; top: 7%; padding: 14px 10px; writing-mode: vertical-rl; color: #fff; background: rgba(20,31,47,.58); backdrop-filter: blur(9px); font: 600 22px/1.2 var(--font-display); letter-spacing: .25em; }
+.fuji-caption { position: absolute; z-index: 6; left: 5%; bottom: 5%; color: rgba(255,255,255,.9); text-shadow: 0 1px 10px rgba(0,0,0,.66); font-size: 10px; font-weight: 700; letter-spacing: .24em; }
+.fuji-film-grain { position: absolute; z-index: 5; inset: 0; opacity: .2; background-image: radial-gradient(rgba(255,255,255,.45) .55px, transparent .65px); background-size: 4px 4px; mix-blend-mode: soft-light; pointer-events: none; }
 
 .travel-home .spot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .spot-card { position: relative; min-height: 540px; overflow: hidden; color: white; background: var(--sumi); }
@@ -246,13 +250,15 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .store-preview { display: grid; grid-template-columns: .85fr 1.15fr; gap: 60px; align-items: center; }
 .store-preview h2 { margin: 16px 0; font: 500 clamp(42px, 5vw, 72px)/1.08 var(--font-display); }
 .store-preview p { color: var(--muted); line-height: 1.7; }
-.store-map-art { position: relative; min-height: 430px; overflow: hidden; border: 1px solid var(--line); background-color: var(--washi-deep); background-image: linear-gradient(rgba(20,19,16,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(20,19,16,.08) 1px, transparent 1px); background-size: 52px 52px; }
-.route-line { position: absolute; width: 72%; height: 52%; left: 10%; top: 25%; border: 4px solid var(--vermilion); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(-12deg); }
-.map-pin { position: absolute; left: 62%; top: 40%; width: 62px; height: 62px; display: grid; place-items: center; color: white; border-radius: 50% 50% 50% 0; background: var(--vermilion); font: 600 26px var(--font-display); transform: rotate(-45deg); }
-.map-pin::first-letter { transform: rotate(45deg); }
-.store-map-art small { position: absolute; left: 28px; bottom: 24px; font-size: 12px; line-height: 1.5; }
+.store-map-live { position: relative; min-height: 430px; overflow: hidden; border: 1px solid var(--line); background: var(--washi-deep); box-shadow: 0 24px 65px rgba(42,34,22,.12); }
+.store-map-live::after { content: ""; position: absolute; inset: 0; border: 10px solid rgba(255,253,248,.34); box-shadow: inset 0 0 70px rgba(32,37,45,.11); pointer-events: none; }
+.store-map-live iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; filter: saturate(.82) contrast(.96); transition: filter 420ms ease, transform 700ms cubic-bezier(.22,1,.36,1); }
+.store-map-live:hover iframe { filter: saturate(1) contrast(1); transform: scale(1.006); }
 .service-row { padding: 42px max(28px, calc((100vw - 1440px) / 2)); display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper); }
 .service-row > div { display: grid; grid-template-columns: 42px 1fr; column-gap: 10px; }
+.react-bits-spotlight { position: relative; isolation: isolate; overflow: hidden; --spotlight-x: 50%; --spotlight-y: 50%; --spotlight-color: rgba(196,53,48,.14); }
+.react-bits-spotlight::before { content: ""; position: absolute; z-index: -1; inset: -1px; opacity: 0; background: radial-gradient(circle 130px at var(--spotlight-x) var(--spotlight-y), var(--spotlight-color), transparent 78%); transition: opacity 420ms ease; pointer-events: none; }
+.react-bits-spotlight:hover::before, .react-bits-spotlight:focus-within::before { opacity: 1; }
 .service-row svg { grid-row: span 2; width: 25px; }
 .service-row strong { font: 600 16px var(--font-display); }
 .service-row span { color: var(--muted); font-size: 12px; }
@@ -645,7 +651,7 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
   .hero-note { width: 50%; }
   .product-grid { grid-template-columns: repeat(2, 1fr); }
   .experience-split, .editorial-strip { grid-template-columns: 1fr; }
-  .tryon-art { min-height: 620px; }
+  .fuji-cinematic { min-height: 620px; }
   .travel-home .spot-grid { grid-template-columns: 1fr 1fr; }
   .spot-card:last-child { display: none; }
   .store-preview { grid-template-columns: 1fr; }
@@ -687,7 +693,7 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
   .hero-copy h1 { font-size: 51px; }
   .hero-copy p { font-size: 12px; }
   .hero-paper { inset: 54% 0 0 0; }
-  .sun { width: 280px; }
+  .sakura-scene-mark { display: none; }
   /* Dưới 640px, ghi chú "Ma", gợi ý cuộn và nút trợ lý tranh nhau cùng một
      dải 60px cuối màn hình. Giữ lại gợi ý cuộn — thứ duy nhất có chức năng. */
   .hero-note { display: none; }
@@ -711,7 +717,8 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
   .experience-split { min-height: 0; }
   .tryon-editorial { padding: 70px 20px; }
   .tryon-editorial h2 { font-size: 49px; }
-  .tryon-art { min-height: 500px; }
+  .fuji-cinematic { min-height: 500px; }
+  .store-map-live { min-height: 420px; }
   .travel-home .spot-grid { grid-template-columns: 1fr; }
   .spot-card { min-height: 520px; }
   .spot-card:nth-child(n+3) { display: none; }
@@ -778,5 +785,7 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
   ::view-transition-old(*), ::view-transition-new(*), ::view-transition-group(*) { animation-duration: 0s !important; animation-delay: 0s !important; }
   .product-card:hover .primary-image, .product-card:hover .hover-image, .category-tile:hover img, .spot-card:hover img, .destination-card:hover img { transform: none; }
-  .hero-three, .cinematic-click-ink, .cinematic-cart-flight, .cinematic-route-brush, .order-success-overlay { display: none !important; }
+  .sakura-scene-video, .fuji-scene-video, .cinematic-click-ink, .cinematic-cart-flight, .cinematic-route-brush, .order-success-overlay { display: none !important; }
+  .sakura-video-poster, .fuji-video-poster { transform: none !important; }
+  .react-bits-spotlight::before { display: none; }
 }

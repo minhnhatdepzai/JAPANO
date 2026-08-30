@@ -4,7 +4,7 @@ import { HeroThreeScene } from "@/components/hero-three-scene";
 
 export function Hero() {
   return <section className="hero">
-    <div className="hero-paper" aria-hidden="true"><HeroThreeScene /><span className="sun" /><span className="ink-stroke one" /><span className="ink-stroke two" /><span className="seal">日</span></div>
+    <div className="hero-paper" aria-hidden="true"><HeroThreeScene /></div>
     <div className="hero-copy">
       <span className="eyebrow">Tokyo hiện đại · Kyoto thủ công</span>
       <h1>Mặc một khoảng<br /><em>lặng của Nhật.</em></h1>

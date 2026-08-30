@@ -455,6 +455,13 @@ body.nav-collapsed .nav a:hover::after{
 .dash-monogram{position:absolute;right:14px;top:8px;color:rgba(255,255,255,.08);font:700 72px/1 Georgia,serif}
 .dash-state-row{display:flex;align-items:center;gap:10px}.dash-state-row .dot{box-shadow:0 0 0 5px rgba(46,125,79,.15)}
 .dash-state-row b{display:block;font-size:12px}.dash-state-row small{display:block;color:rgba(255,255,255,.42);font-size:9.5px;margin-top:2px}
+.reactbits-shiny-text{
+  color:rgba(255,255,255,.72);
+  background:linear-gradient(110deg,rgba(255,255,255,.72) 38%,#fff 50%,rgba(255,255,255,.72) 62%);
+  background-size:220% 100%;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:reactbitsShine 5.8s linear infinite;
+}
+@keyframes reactbitsShine{from{background-position:115% center}to{background-position:-115% center}}
 .dash-state-metrics{display:flex;align-items:flex-end;gap:12px}.dash-state-metrics span{color:rgba(255,255,255,.46);font-size:9.5px;line-height:1.25}.dash-state-metrics b{display:block;color:#fff;font-size:19px;letter-spacing:-.4px}.dash-state-metrics i{width:1px;height:28px;background:rgba(255,255,255,.11)}
 .dash-intro-loading{min-height:250px}
 .dash-intro-loading .sk{background:linear-gradient(90deg,rgba(255,255,255,.075) 25%,rgba(255,255,255,.14) 37%,rgba(255,255,255,.075) 63%);background-size:400% 100%}
@@ -515,6 +522,14 @@ body.nav-collapsed .nav a:hover::after{
 .kpi .dl.up{color:var(--success)}
 .kpi .dl.dn{color:var(--danger)}
 .kpi .spark{position:absolute;right:12px;bottom:10px;opacity:.85}
+.kpi.reactbits-spotlight{--rb-spot-x:50%;--rb-spot-y:50%;isolation:isolate}
+.kpi.reactbits-spotlight::after{
+  content:"";position:absolute;z-index:0;inset:-1px;opacity:0;pointer-events:none;
+  background:radial-gradient(circle 150px at var(--rb-spot-x) var(--rb-spot-y),rgba(196,58,48,.11),transparent 76%);
+  transition:opacity var(--motion-base) var(--ease);
+}
+.kpi.reactbits-spotlight:hover::after,.kpi.reactbits-spotlight:focus-within::after{opacity:1}
+.kpi.reactbits-spotlight>*{position:relative;z-index:1}
 
 .ministat{
   background:var(--surface);border:1px solid var(--border-c);border-radius:var(--radius-lg);
@@ -970,6 +985,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
    =========================================================================== */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .reactbits-shiny-text{color:#fff;background:none;-webkit-text-fill-color:currentColor}
+  .kpi.reactbits-spotlight::after{display:none}
 }
 @keyframes riseIn{from{transform:translateY(6px)}to{transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}

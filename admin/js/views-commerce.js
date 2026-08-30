@@ -286,8 +286,7 @@ function prodRow(p){
     <td>${badge(PST,effStatus(p))}</td>
     <td class="right"><div class="rowact">
       <button class="iconbtn" title="Sửa" onclick="A.editProduct('${escJs(p.id)}')">${icon('create-outline')}</button>
-      <button class="iconbtn" title="${p.status==='hidden'?'Hiện':'Ẩn'}" onclick="A.toggleHide('${escJs(p.id)}')">${p.status==='hidden'?icon('eye-outline'):icon('ban-outline')}</button>
-      ${STAFF_ONLY?'':`<button class="iconbtn d" title="Xoá" onclick="A.delProduct('${escJs(p.id)}')">${icon('trash-outline')}</button>`}
+      <button class="iconbtn" title="${p.status==='hidden'?'Hiện sản phẩm':'Ẩn sản phẩm'}" aria-label="${p.status==='hidden'?'Hiện lại':'Ẩn'} sản phẩm ${esc(p.name)}" onclick="A.toggleHide('${escJs(p.id)}')">${p.status==='hidden'?icon('eye-outline'):icon('ban-outline')}</button>
     </div></td>
   </tr>`;
 }
@@ -307,6 +306,7 @@ function viewProducts(){
     <button class="btn p" onclick="A.addProduct()">${icon('add')}Thêm sản phẩm</button>
   </div>
   ${STAFF_ONLY?'<div class="hint" style="margin:-4px 0 12px">Bạn chỉ thấy và quản lý được sản phẩm do chính mình thêm vào.</div>':''}
+  <div class="hint" style="margin:-4px 0 12px">Sản phẩm không bị xoá vĩnh viễn. Hãy ẩn sản phẩm để gỡ khỏi app và storefront; có thể hiện lại bất cứ lúc nào.</div>
   <div class="panel"><div class="tablewrap"><table class="tbl acts">
     <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th class="center">Biến thể</th><th>Trạng thái</th><th></th></tr></thead>
     <tbody id="prodBody">${list.length?list.map(prodRow).join(''):emptyTR(7,'Không có sản phẩm phù hợp.')}</tbody>
