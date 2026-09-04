@@ -23,12 +23,21 @@ import { useFocusEffect } from 'expo-router';
 // xuống, nhận cuộc gọi — hook lại bắn 'browse' và giết luôn tác vụ thử đồ đang
 // chạy dở 45–90 giây, kèm thông báo sai "bạn chuyển sang tính năng khác".
 //
-// Trong lúc còn tác vụ đang chạy thì KHÔNG bắn tín hiệu focus nền nữa. Rời hẳn
-// màn hình vẫn nhả GPU như cũ (cleanup bên dưới) — chính sách ưu tiên theo màn
-// hình của backend giữ nguyên, chỉ bỏ đúng cú huỷ oan này.
+// Trong lúc còn tác vụ đang chạy thì KHÔNG bắn tín hiệu focus khác nữa. Tín
+// hiệu cuối cùng (về nền hoặc sang màn khác) được nhớ lại và gửi ngay khi job
+// kết thúc. Nhờ vậy người dùng có thể bấm Home/mở app khác, hoặc lướt sang màn
+// khác trong JAPANO, mà request vẫn chạy; GPU cũng không bị giữ sai sau đó.
 let gpuJobsInFlight = 0;
+let deferredFocus: GpuFocus | null = null;
 export function beginGpuJob() { gpuJobsInFlight += 1; }
-export function endGpuJob() { gpuJobsInFlight = Math.max(0, gpuJobsInFlight - 1); }
+export function endGpuJob() {
+  gpuJobsInFlight = Math.max(0, gpuJobsInFlight - 1);
+  if (gpuJobsInFlight === 0 && deferredFocus) {
+    const nextFocus = deferredFocus;
+    deferredFocus = null;
+    void reportGpuFocus(nextFocus);
+  }
+}
 
 export function useGpuFocus(focus: GpuFocus, fallback: GpuFocus = 'browse') {
   const activeRef = useRef(false);
@@ -37,7 +46,11 @@ export function useGpuFocus(focus: GpuFocus, fallback: GpuFocus = 'browse') {
       const reportForState = (state: string) => {
         const active = state === 'active';
         activeRef.current = active;
-        if (gpuJobsInFlight > 0) return;
+        if (gpuJobsInFlight > 0) {
+          deferredFocus = active ? focus : fallback;
+          return;
+        }
+        deferredFocus = null;
         void reportGpuFocus(active ? focus : fallback);
       };
       reportForState(AppState.currentState);
@@ -45,7 +58,8 @@ export function useGpuFocus(focus: GpuFocus, fallback: GpuFocus = 'browse') {
       return () => {
         activeRef.current = false;
         subscription.remove();
-        void reportGpuFocus(fallback);
+        if (gpuJobsInFlight > 0) deferredFocus = fallback;
+        else void reportGpuFocus(fallback);
       };
     }, [fallback, focus]),
   );

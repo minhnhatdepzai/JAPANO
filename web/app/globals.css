@@ -284,6 +284,9 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .message { max-width: 88%; padding: 11px 13px; font-size: 12px; line-height: 1.6; }
 .message.assistant { align-self: flex-start; background: var(--washi-deep); }
 .message.user { align-self: flex-end; color: white; background: var(--indigo); }
+.stylist-actions { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+.stylist-actions button { min-height: 32px; padding: 6px 10px; border: 0; border-radius: 999px; color: white; background: var(--indigo); font: 650 11px var(--font-body); cursor: pointer; }
+.stylist-actions button:hover { background: var(--vermilion); }
 .loading-dots span { margin-left: 5px; letter-spacing: .12em; animation: cue 1.2s infinite; }
 .stylist-panel form { padding: 12px; display: grid; grid-template-columns: 1fr 44px; gap: 7px; border-top: 1px solid var(--line); }
 .stylist-panel input { min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--line); background: white; }
@@ -304,6 +307,13 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .catalog-toolbar > label > span { color: var(--muted); font-size: 12px; }
 .catalog-toolbar svg { width: 16px; }
 .catalog-toolbar select, .catalog-toolbar input { min-width: 0; min-height: 44px; border: 0; outline: 0; color: var(--sumi); background: transparent; font-size: 12px; }
+/* `outline: 0` above kills the global :focus-visible ring for these two controls
+   (higher specificity), so a keyboard user tabbing into the search box or the
+   category/sort selects saw no indicator at all — WCAG 2.4.7. The ring is drawn
+   on the wrapping label instead of the bare control so it traces the visible
+   pill rather than the inner text box. */
+.catalog-toolbar > label:has(:focus-visible) { outline: 3px solid var(--vermilion); outline-offset: 3px; }
+.catalog-toolbar select:focus-visible { outline: 3px solid var(--vermilion); outline-offset: 3px; }
 .catalog-toolbar select { min-width: 130px; }
 .search-field input { flex: 1; }
 .search-field > button { width: 44px; height: 44px; border: 0; display: grid; place-items: center; background: transparent; }
@@ -481,6 +491,9 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .store-list { padding-right: 20px; }
 .store-list > .search-field { min-height: 48px; padding: 0 12px; border: 1px solid var(--line); display: flex; align-items: center; gap: 8px; background: var(--paper); }
 .store-list > .search-field input { flex: 1; border: 0; outline: 0; background: transparent; }
+/* Same reason as .catalog-toolbar: the `outline: 0` here beats :focus-visible,
+   so the store search lost its keyboard indicator. Ring the field, not the input. */
+.store-list > .search-field:has(:focus-visible) { outline: 3px solid var(--vermilion); outline-offset: 3px; }
 .store-card { padding: 26px 0; display: grid; grid-template-columns: 46px 1fr; gap: 14px; border-bottom: 1px solid var(--line); }
 .store-index { width: 40px; height: 40px; display: grid; place-items: center; color: white; background: var(--vermilion); }
 .store-index svg { width: 18px; }
@@ -534,7 +547,17 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
 .auth-art > div:last-child { position: relative; z-index: 2; max-width: 650px; }
 .auth-art .eyebrow { color: white; }
 .auth-art h1 { margin: 18px 0; font: 500 clamp(60px, 7vw, 105px)/.98 var(--font-display); }
-.auth-art p { color: rgba(255,255,255,.72); }
+/* .72 over --vermilion measured 3.82:1 — under the 4.5:1 AA floor for body text.
+   .88 lands at ~5.0:1 and still reads as secondary against the pure-white h1. */
+.auth-art p { color: rgba(255,255,255,.88); }
+/* Decorative vertical kanji in the auth art panel. This class had NO rule at all,
+   so the span rendered inline and ran straight into the paragraph below it
+   ("再 会Giỏ hàng khách sẽ…"). Mirrors .fuji-vertical-type, minus the chrome. */
+/* Watermark trang trí, nhưng vẫn là chữ thật nên vẫn phải đạt tương phản. Ở 34px
+   đây là "large scale text" nên ngưỡng AA là 3:1 (không phải 4,5:1); alpha .62
+   trên nền --vermilion đo được 3,20:1 — đạt, mà vẫn chìm dưới tiêu đề trắng. */
+.vertical-type { position: absolute; z-index: 2; right: 48px; top: 64px; writing-mode: vertical-rl; color: rgba(255,255,255,.62); font: 500 34px/1 var(--font-display); letter-spacing: .3em; pointer-events: none; }
+@media (max-width: 900px) { .vertical-type { right: 20px; top: 28px; font-size: 26px; } }
 .auth-sun { position: absolute; width: 520px; height: 520px; right: -100px; top: -90px; border-radius: 50%; border: 80px solid rgba(255,255,255,.08); }
 .auth-panel { width: min(500px, calc(100% - 56px)); margin: auto; padding: 60px 0; }
 .auth-panel h2 { margin: 10px 0; font: 600 44px var(--font-display); }
@@ -789,3 +812,23 @@ strong, b, .price-line, .hero-count, .product-meta { font-variant-numeric: tabul
   .sakura-video-poster, .fuji-video-poster { transform: none !important; }
   .react-bits-spotlight::before { display: none; }
 }
+
+/* Chọn nhiều món cho một lượt thử đồ, và chỗ còn khuyết của bộ đồ.
+   `required` dùng tông vermilion vì đó không phải gợi ý cho vui: chọn mỗi áo
+   khoác ngoài mà không có áo lớp trong là đầu vào sinh ra ảnh hở ngực, và cổng
+   an toàn sẽ chặn ảnh đó sau 40-80 giây GPU. Nói trước rẻ hơn nhiều. */
+.outfit-picker { margin-top: 18px; padding: 0; border: 0; }
+/* Catalog có 70 sản phẩm; đổ hết ra thành chip làm trang thử đồ dài hơn 10.000px
+   trên điện thoại. Giữ vùng chọn ở chiều cao cố định và cho cuộn — gợi ý theo chỗ
+   còn thiếu ở dưới mới là đường đi chính, danh sách đầy đủ chỉ để tra cứu. */
+.outfit-picker > div { max-height: 148px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.outfit-picker legend { padding: 0; color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.outfit-picker > button, .outfit-gap button { margin: 8px 8px 0 0; }
+.chip { min-height: 40px; padding: 0 14px; border: 1px solid var(--line); background: var(--paper); color: var(--sumi); font-size: 12px; }
+.chip[aria-pressed="true"], .chip.active { border-color: var(--sumi); color: white; background: var(--sumi); }
+.chip:disabled { opacity: .38; cursor: not-allowed; }
+.outfit-gap { margin-top: 16px; padding: 14px; border: 1px solid var(--line); background: var(--paper); }
+.outfit-gap.required { border-color: var(--vermilion); }
+.outfit-gap p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.outfit-gap strong { color: var(--sumi); }
+.outfit-conflicts { margin: 14px 0 0; padding: 12px 14px 12px 30px; border: 1px solid var(--vermilion); color: #7b2522; background: #fff0ef; font-size: 12px; line-height: 1.7; }

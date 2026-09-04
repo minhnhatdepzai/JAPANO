@@ -113,9 +113,9 @@ export { money };
 
 const s = StyleSheet.create({
   header:{ flexDirection:'row', alignItems:'center', gap:12, paddingHorizontal:16, paddingVertical:8 },
-  backBtn:{ width:44, height:44, borderRadius:14, borderWidth:2, borderColor:'#fff', backgroundColor:C.sumi, alignItems:'center', justifyContent:'center', elevation:5, shadowColor:'#000', shadowOpacity:.2, shadowRadius:7, shadowOffset:{width:0,height:3} },
+  backBtn:{ width:44, height:44, borderRadius:14, borderWidth:2, borderColor:C.inverseText, backgroundColor:C.inverseSurface, alignItems:'center', justifyContent:'center', elevation:5, shadowColor:'#000', shadowOpacity:.2, shadowRadius:7, shadowOffset:{width:0,height:3} },
   headerTitle:{ flex:1, fontFamily:F.display, fontSize:18, color:C.sumi },
   btn:{ height:50, borderRadius:14, alignItems:'center', justifyContent:'center', flexDirection:'row' },
-  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
+  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:C.card },
   chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
 });

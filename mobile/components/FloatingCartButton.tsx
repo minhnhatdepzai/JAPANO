@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
   iconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', right: -4, top: -5, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 4, backgroundColor: C.shu, borderWidth: 1.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontFamily: F.bodyB, fontSize: 9 },
-  closeButton: { position:'absolute', right:-6, top:-7, width:23, height:23, borderRadius:12, backgroundColor:C.sumi, borderWidth:2, borderColor:'#fff', alignItems:'center', justifyContent:'center', elevation:18 },
+  closeButton: { position:'absolute', right:-6, top:-7, width:23, height:23, borderRadius:12, backgroundColor:C.inverseSurface, borderWidth:2, borderColor:'#fff', alignItems:'center', justifyContent:'center', elevation:18 },
 });

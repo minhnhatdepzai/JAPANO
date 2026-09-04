@@ -43,6 +43,24 @@ def render(*, chest=FABRIC, abdomen=FABRIC, pelvis=FABRIC, legs=FABRIC,
     return image
 
 
+def render_partial_chest(fraction):
+    """Ảnh có ô ngực phần lớn là vải, chỉ một DẢI DỌC GIỮA là da.
+
+    Mô phỏng áo khoác mở trước: `fraction` là bề rộng dải da so với bề rộng ô
+    ngực. Trung bình da của cả ô vì thế thấp hơn nhiều so với ảnh cởi trần, đúng
+    như ảnh thật đo được trên máy.
+    """
+    image = render()
+    draw = ImageDraw.Draw(image)
+    box = zone_box(POSE, SIZE, 'chest')
+    x1, y1, x2, y2 = box
+    width = x2 - x1
+    strip = max(1, int(width * fraction))
+    center = (x1 + x2) // 2
+    draw.rectangle((center - strip // 2, y1, center + strip // 2, y2), fill=SKIN)
+    return image
+
+
 class CoverageQualityTest(unittest.TestCase):
     def test_khung_vung_co_the_nam_trong_box_nguoi(self):
         for zone in BODY_ZONE_BOXES:
@@ -98,6 +116,57 @@ class CoverageQualityTest(unittest.TestCase):
         self.assertFalse(quality['ok'])
         self.assertTrue(any(r.startswith('required_zone_exposed:chest') for r in quality['reasons']),
                         quality['reasons'])
+
+    def test_ao_khoac_mo_truoc_ho_mot_dai_nguc_duoc_CANH_BAO(self):
+        """Hở ngực KHÔNG phải lúc nào cũng là cả ô ngực chuyển thành da.
+
+        Áo khoác mở phía trước (haori, cardigan) chỉ hở một dải giữa; vải hai bên
+        kéo trung bình cả ô xuống thấp. Đo trên máy 2026-09-02: thử haori lên
+        người đang mặc áo dài tay kín, ngực đi từ 0.0014 lên 0.1422 mà cổng vẫn
+        trả ok=True vì chỉ chặn khi vượt 0.34 — ảnh trả về là người cởi trần dưới
+        lớp haori.
+
+        Tín hiệu này hiện chỉ là CẢNH BÁO. Bản đầu tiên chặn thật, nhưng ngưỡng
+        được hiệu chỉnh trên đúng một mẫu và đã đánh rớt hàng loạt ảnh hợp lệ
+        (cổ kimono chữ V rơi trúng lõi ngực). Chặn thật chỉ bật lại qua
+        JAPANO_COVERAGE_UNDRESS_BLOCK=1 sau khi hiệu chỉnh trên đủ mẫu.
+        """
+        clean = render()
+        result = render_partial_chest(0.22)
+        quality = coverage_quality(clean, result, POSE, {
+            'allowedExposedZones': [], 'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+        })
+        after = quality['zones']['chest']['after']
+        self.assertLess(after, 0.34, 'ca kiểm thử phải nằm DƯỚI ngưỡng tuyệt đối cũ mới có ý nghĩa')
+        # Không chặn ảnh...
+        self.assertTrue(quality['ok'], quality['reasons'])
+        # ...nhưng phải để lại dấu vết để lỗ hổng không bị quên.
+        self.assertTrue(any(w.startswith('undressed_suspected:chest') for w in quality['warnings']),
+                        quality['warnings'])
+        self.assertTrue(quality['zones']['chest'].get('undressed'))
+
+    def test_co_ao_ho_rat_it_khong_bi_chan_oan(self):
+        """Đối chứng cho ca trên: cổ tròn/cổ tim thường chỉ hở vài phần trăm.
+
+        Nhánh "đang mặc thành không mặc" phải đứng trên mức nhiễu này, nếu không
+        mọi chiếc áo cổ tim trong catalog đều bị cổng an toàn chặn oan.
+        """
+        clean = render()
+        result = render_partial_chest(0.05)
+        quality = coverage_quality(clean, result, POSE, {
+            'allowedExposedZones': [], 'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+        })
+        self.assertTrue(quality['ok'], quality['zones']['chest'])
+
+    def test_co_chu_v_rong_chi_canh_bao_khong_huy_anh(self):
+        """Tín hiệu da mức vừa có thể là cổ áo/vải nude, không đủ để chặn."""
+        clean = render()
+        result = render_partial_chest(0.42)
+        quality = coverage_quality(clean, result, POSE, {
+            'allowedExposedZones': [], 'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+        })
+        self.assertTrue(quality['ok'], quality)
+        self.assertTrue(any(w.startswith('coverage_review:chest') for w in quality['warnings']), quality)
 
     def test_ho_vung_chau_la_loi_nghiem_trong(self):
         clean = render()

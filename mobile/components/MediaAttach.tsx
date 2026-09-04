@@ -37,7 +37,7 @@ export function MediaAttachPicker({ value, onChange }:{ value:ReviewMediaPick|nu
 }
 const mst = StyleSheet.create({
   wrap:{ marginTop:10, marginBottom:4 },
-  btn:{ flexDirection:'row', alignItems:'center', gap:6, paddingVertical:8, paddingHorizontal:12, borderRadius:999, borderWidth:1, borderColor:C.line, backgroundColor:'#fff' },
+  btn:{ flexDirection:'row', alignItems:'center', gap:6, paddingVertical:8, paddingHorizontal:12, borderRadius:999, borderWidth:1, borderColor:C.line, backgroundColor:C.card },
   btnT:{ fontFamily:F.bodyM, fontSize:12, color:C.ink },
   chip:{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:8, paddingHorizontal:12, borderRadius:12, backgroundColor:C.washi2, borderWidth:1, borderColor:C.line },
   chipT:{ flex:1, fontFamily:F.bodyM, fontSize:12, color:C.ink },

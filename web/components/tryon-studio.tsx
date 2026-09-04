@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api, postJson, runAiJob } from "@/lib/client-api";
 import { formatCurrency, productImage } from "@/lib/format";
 import { sellableVariants, uniqueSizes } from "@/lib/product";
-import type { Product } from "@/lib/types";
+import type { Product, OutfitCompleteness} from "@/lib/types";
 
 type BodyResult = {
   ok: boolean;
@@ -74,6 +74,13 @@ export function TryOnStudio({ products }: { products: Product[] }) {
   const [motion, setMotion] = useState("");
   const [video, setVideo] = useState("");
   const [jobStage, setJobStage] = useState("");
+  // Thử NHIỀU món trong một ảnh. App đã gửi productIds/accessoryIds từ lâu, chỉ
+  // storefront còn kẹt ở một món — nên cùng một tài khoản, cùng một catalog mà
+  // web không thử được nguyên bộ. Giới hạn giữ đúng như backend: tối đa 3 món
+  // mặc trên người, phụ kiện đi đường riêng.
+  const [extraSlugs, setExtraSlugs] = useState<string[]>([]);
+  const [accessorySlugs, setAccessorySlugs] = useState<string[]>([]);
+  const [completeness, setCompleteness] = useState<OutfitCompleteness | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const isAdultGarment = useMemo(() => /bikini|swim|đồ bơi/i.test([product?.slug, product?.name, ...(product?.tags || [])].join(" ")), [product]);
 
@@ -81,6 +88,29 @@ export function TryOnStudio({ products }: { products: Product[] }) {
     setSize(defaultSize);
     setResult(""); setVideo(""); setBody(null); setError("");
   }, [product?.slug, defaultSize]);
+
+  const isAccessory = (item: Product) => (item.cat || item.category) === "phu-kien";
+  const garmentChoices = useMemo(() => products.filter((item) => !isAccessory(item)), [products]);
+  const accessoryChoices = useMemo(() => products.filter(isAccessory), [products]);
+  const chosenGarmentSlugs = useMemo(
+    () => [product?.slug, ...extraSlugs].filter(Boolean) as string[],
+    [product?.slug, extraSlugs],
+  );
+
+  // Bộ đồ đang chọn còn khuyết chỗ nào. Gọi trước khi tạo ảnh chứ không phải sau:
+  // một lượt thử đồ tốn 40-80 giây GPU, mà "chọn mỗi áo khoác ngoài" thì gần như
+  // chắc chắn bị cổng an toàn chặn vì không có lớp trong nào để giữ.
+  // Khoá phụ thuộc là chuỗi slug đã nối, không phải mảng: mảng đổi tham chiếu ở
+  // mỗi lần render nên effect sẽ chạy vô hạn.
+  const outfitKey = [...chosenGarmentSlugs, ...accessorySlugs].join(",");
+  useEffect(() => {
+    if (!outfitKey) { setCompleteness(null); return; }
+    let alive = true;
+    api<OutfitCompleteness>(`/api/outfits/completeness?productIds=${encodeURIComponent(outfitKey)}&perSlot=3`, { timeoutMs: 8_000 })
+      .then((data) => { if (alive) setCompleteness(data?.ok ? data : null); })
+      .catch(() => { if (alive) setCompleteness(null); });
+    return () => { alive = false; };
+  }, [outfitKey]);
 
   useEffect(() => {
     api<{ presets?: MotionPreset[] }>("/api/tryon/motion/presets", { timeoutMs: 8_000 }).then((data) => {
@@ -124,13 +154,15 @@ export function TryOnStudio({ products }: { products: Product[] }) {
         clientId: "japano-web",
         personImageBase64: photo,
         productId: product.slug,
+        productIds: chosenGarmentSlugs,
+        accessoryIds: accessorySlugs,
         size,
         adultConsent: isAdultGarment ? adultConsent : undefined,
         qualityMode: "balanced",
         bodyAnalysisCache: analysis?.imageFingerprint ? { ...analysis, imageFingerprint: analysis.imageFingerprint, poseCache: analysis.poseCache } : undefined,
       }, { timeoutMs: 15 * 60_000, onStage: setJobStage });
       const image = imageValue(response);
-      if (!image) throw new Error(response.message || "Backend chưa trả ảnh thử đồ thật.");
+      if (!image) throw new Error(response.message || "Chưa tạo được ảnh thử đồ. Bạn thử lại giúp nhé.");
       setResult(image); setResultMeta(response); setVideo("");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không tạo được ảnh thử đồ. Hãy thử lại.");
@@ -143,7 +175,7 @@ export function TryOnStudio({ products }: { products: Product[] }) {
     try {
       await postJson("/api/gpu/focus", { focus: "motion", clientId: "japano-web" }, 8_000).catch(() => undefined);
       const response = await runAiJob<{ videoUrl?: string; message?: string }>("/api/tryon/motion/jobs", { imageBase64: result, motion, profile: "fast", clientId: "japano-web" }, { timeoutMs: 15 * 60_000, onStage: setJobStage });
-      if (!response.videoUrl) throw new Error(response.message || "Backend chưa trả video.");
+      if (!response.videoUrl) throw new Error(response.message || "Chưa tạo được video. Bạn thử lại giúp nhé.");
       setVideo(response.videoUrl);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Không tạo được chuyển động."); }
     finally { setStage("idle"); }
@@ -157,11 +189,42 @@ export function TryOnStudio({ products }: { products: Product[] }) {
       {product && <div className="selected-product"><img src={productImage(product)} width="72" height="90" alt="" /><div><strong>{product.name}</strong><span>{product.kanji}</span></div></div>}
       <fieldset className="compact-sizes"><legend>Size muốn thử</legend>{uniqueSizes(variants).map((value) => <button key={value} aria-pressed={size === value} className={size === value ? "active" : ""} onClick={() => setSize(value)}>{value}</button>)}</fieldset>
 
+      <fieldset className="outfit-picker"><legend>Mặc thêm (tối đa 2 món)</legend><div>
+        {garmentChoices.filter((item) => item.slug !== product?.slug).slice(0, 40).map((item) => {
+          const on = extraSlugs.includes(item.slug);
+          const full = extraSlugs.length >= 2 && !on;
+          return <button key={item.slug} type="button" aria-pressed={on} disabled={full} className={on ? "chip active" : "chip"}
+            onClick={() => setExtraSlugs((prev) => on ? prev.filter((value) => value !== item.slug) : [...prev, item.slug])}>{item.name}</button>;
+        })}
+      </div></fieldset>
+      <fieldset className="outfit-picker"><legend>Giày dép & phụ kiện</legend><div>
+        {accessoryChoices.slice(0, 40).map((item) => {
+          const on = accessorySlugs.includes(item.slug);
+          const full = accessorySlugs.length >= 2 && !on;
+          return <button key={item.slug} type="button" aria-pressed={on} disabled={full} className={on ? "chip active" : "chip"}
+            onClick={() => setAccessorySlugs((prev) => on ? prev.filter((value) => value !== item.slug) : [...prev, item.slug])}>{item.name}</button>;
+        })}
+      </div></fieldset>
+      {completeness?.conflicts?.length ? <ul className="outfit-conflicts">{completeness.conflicts.map((item) => <li key={item.slot + item.reason}>{item.message}</li>)}</ul> : null}
+      {completeness?.missing?.filter((item) => item.level === "required" || item.slot === "feet").map((item) => (
+        <div className={item.level === "required" ? "outfit-gap required" : "outfit-gap"} key={item.slot}>
+          <p><strong>{item.label}</strong> — {item.message}</p>
+          <div>{(item.suggestions || []).map((pick) => (
+            <button key={pick.slug} type="button" className="chip"
+              onClick={() => {
+                const target = products.find((entry) => entry.slug === pick.slug);
+                if (target && isAccessory(target)) setAccessorySlugs((prev) => prev.includes(pick.slug) || prev.length >= 2 ? prev : [...prev, pick.slug]);
+                else setExtraSlugs((prev) => prev.includes(pick.slug) || prev.length >= 2 ? prev : [...prev, pick.slug]);
+              }}>+ {pick.name}</button>
+          ))}</div>
+        </div>
+      ))}
+
       <div className="step"><span>02</span><div><h2>Ảnh của bạn</h2><p>Đứng rõ người, đủ sáng; không cần nhập số đo để thử đồ.</p></div></div>
       <input ref={fileRef} className="sr-only" type="file" aria-label="Chọn ảnh của bạn để thử đồ" accept="image/jpeg,image/png,image/webp" onChange={(event) => loadPhoto(event.target.files?.[0])} />
       <button className="upload-zone" onClick={() => fileRef.current?.click()}><ImagePlus aria-hidden="true" /><strong>{photo ? "Đổi ảnh" : "Chọn ảnh từ máy"}</strong><span>{photoName || "JPG, PNG, WebP · tối đa 12 MB"}</span></button>
       <label className="consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span><strong>Tôi có quyền sử dụng ảnh này.</strong> Ảnh chỉ dùng để tạo kết quả trong phiên hiện tại.</span></label>
-      {isAdultGarment && <label className="consent adult"><input type="checkbox" checked={adultConsent} onChange={(event) => setAdultConsent(event.target.checked)} /><span><strong>Tôi xác nhận người trong ảnh từ 18 tuổi.</strong> Backend vẫn kiểm tra độ tuổi và độ che phủ; xác nhận này không tắt safety.</span></label>}
+      {isAdultGarment && <label className="consent adult"><input type="checkbox" checked={adultConsent} onChange={(event) => setAdultConsent(event.target.checked)} /><span><strong>Tôi xác nhận người trong ảnh từ 18 tuổi.</strong> JAPANO vẫn kiểm tra độ tuổi và độ che phủ; xác nhận này không tắt các lớp bảo vệ.</span></label>}
       <button className="button primary full" disabled={busy || !photo || !consent} onClick={generate}>{busy ? <><LoaderCircle className="spin" aria-hidden="true" />{stage === "analyzing" ? "Đang phân tích bằng chứng…" : stage === "generating" ? "AI đang mặc sản phẩm…" : "Đang tạo chuyển động…"}</> : <><Sparkles aria-hidden="true" />Phân tích & thử ngay</>}</button>
       <p className="timing-note">Ảnh thử đồ thường mất khoảng 40–80 giây. Chúng tôi chỉ hiển thị bước đang chạy thật, không chạy thanh phần trăm giả.</p>
     </aside>
@@ -169,7 +232,7 @@ export function TryOnStudio({ products }: { products: Product[] }) {
     <section className="tryon-workspace" aria-live="polite">
       <div className="tryon-canvas">{result ? <img src={result} width="1024" height="1365" alt={`Kết quả thử ${product?.name}`} /> : photo ? <img src={photo} width="1024" height="1365" alt="Ảnh bạn đã chọn" /> : <div className="tryon-placeholder"><Camera aria-hidden="true" /><span>Ảnh của bạn sẽ xuất hiện tại đây</span><small>Chỉ ảnh bạn chọn được dùng, trong đúng phiên này</small></div>}{busy && <div className="processing-overlay"><LoaderCircle className="spin" aria-hidden="true" /><strong>{jobStage || (stage === "analyzing" ? "Đang đánh giá ảnh & bằng chứng" : stage === "generating" ? "Đang tạo ảnh thử đồ thật" : "Đang tạo MP4 H.264")}</strong><span>Đừng đóng trang trong khi GPU đang xử lý.</span></div>}</div>
       {body && <div className="body-evidence"><header><div><span className="eyebrow">Phân tích bằng chứng</span><h2>{body.measurementStatus === "insufficient_evidence" ? "Chưa đủ dữ liệu để đo" : "Khoảng ước lượng từ ảnh"}</h2></div><span className={`evidence-status ${body.measurementStatus || "partial"}`}>{body.measurementStatus === "estimated" ? "Ước lượng" : body.measurementStatus === "partial" ? "Một phần" : "Thiếu bằng chứng"}</span></header><div className="measure-grid"><div><span>Chiều cao</span><strong>{rangeText(body.estimatedHeight)}</strong></div><div><span>Cân nặng</span><strong>{weightText(body.estimatedWeight)}</strong></div><div><span>Vòng ngực</span><strong>{rangeText(body.estimatedGirthRanges?.bust || body.estimatedGirthRanges?.chest)}</strong></div><div><span>Vòng eo</span><strong>{rangeText(body.estimatedGirthRanges?.waist)}</strong></div><div><span>Vòng hông</span><strong>{rangeText(body.estimatedGirthRanges?.hip)}</strong></div><div><span>Size gợi ý</span><strong>{body.recommendedSize || "Chưa đủ dữ liệu"}</strong></div></div><p>{body.measurementMessage || body.sizeAdvice || "Số đo người dùng nhập thủ công luôn được ưu tiên hơn ước lượng ảnh."}</p></div>}
-      {result && <div className="result-actions"><div><span className="eyebrow"><Check aria-hidden="true" /> Kết quả AI thật</span><h2>{resultMeta?.message || "Đã tạo ảnh thử đồ"}</h2>{resultMeta?.durationMs && <p>Backend xử lý trong {(resultMeta.durationMs / 1000).toFixed(1)} giây · {resultMeta.engine}</p>}{(resultMeta?.identityWarning || resultMeta?.accessoryWarning) && <p className="warning">{resultMeta.identityWarning || resultMeta.accessoryWarning}</p>}</div><div className="button-row"><a className="button secondary" href={result} download={`japano-${product?.slug || "tryon"}.png`}><Download aria-hidden="true" />Lưu ảnh</a><button className="button secondary" onClick={() => { setResult(""); setVideo(""); }}><RefreshCw aria-hidden="true" />Thử lại</button></div></div>}
+      {result && <div className="result-actions"><div><span className="eyebrow"><Check aria-hidden="true" /> Kết quả AI thật</span><h2>{resultMeta?.message || "Đã tạo ảnh thử đồ"}</h2>{resultMeta?.durationMs && <p>Xử lý trong {(resultMeta.durationMs / 1000).toFixed(1)} giây</p>}{(resultMeta?.identityWarning || resultMeta?.accessoryWarning) && <p className="warning">{resultMeta.identityWarning || resultMeta.accessoryWarning}</p>}</div><div className="button-row"><a className="button secondary" href={result} download={`japano-${product?.slug || "tryon"}.png`}><Download aria-hidden="true" />Lưu ảnh</a><button className="button secondary" onClick={() => { setResult(""); setVideo(""); }}><RefreshCw aria-hidden="true" />Thử lại</button></div></div>}
       {result && <div className="motion-maker"><div><Film aria-hidden="true" /><div><span className="eyebrow">Motion Studio</span><h2>Cho kết quả chuyển động</h2><p>Profile nhanh vẫn giữ cổng chất lượng và MP4 tương thích Android.</p></div></div><label>Chuyển động<select value={motion} onChange={(event) => setMotion(event.target.value)}>{motionPresets.map((preset, index) => <option key={preset.id || preset.action || index} value={preset.id || preset.action}>{preset.label || preset.name || preset.action || `Chuyển động ${index + 1}`}</option>)}</select></label><button className="button primary" disabled={!motion || busy} onClick={createMotion}><Play aria-hidden="true" />Tạo video</button>{video && <video controls playsInline muted preload="metadata" src={video} aria-label="Video chuyển động không âm thanh từ kết quả thử đồ" />}</div>}
       {error && <div className="error-banner"><X aria-hidden="true" /><div><strong>Chưa hoàn tất được lượt thử</strong><p>{error}</p></div></div>}
       <div className="privacy-note"><ShieldCheck aria-hidden="true" /><p><strong>Ranh giới riêng tư.</strong> Ảnh của bạn không được lưu vào cơ sở dữ liệu, nhật ký hệ thống hay bộ nhớ đệm. Trang phục 18+ vẫn phải qua kiểm tra độ tuổi và độ che phủ trước khi có kết quả.</p></div>

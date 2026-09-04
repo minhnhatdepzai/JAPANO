@@ -22,7 +22,7 @@ const TTL_MS = Number(process.env.JAPANO_TRYON_CACHE_TTL_MS || 30 * 24 * 60 * 60
 // Đổi số này khi pipeline dựng ảnh thay đổi (model, tham số, thứ tự mặc đồ).
 // Nếu không, cache cũ sẽ tiếp tục trả ảnh dựng bằng pipeline đời trước và mọi
 // cải tiến đều "không thấy tác dụng".
-const PIPELINE_VERSION = 'v1-2026-08-29';
+const PIPELINE_VERSION = 'v3-2026-09-02';
 
 /**
  * Khoá cache. Mọi thứ ẢNH HƯỞNG tới ảnh đầu ra đều phải nằm trong khoá; thiếu

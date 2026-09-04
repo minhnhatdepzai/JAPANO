@@ -7,7 +7,7 @@ import { PRODUCTS } from '../../lib/catalog';
 import {
   getOrderDetail, createProductReview, createReturnRequest, createCancelRequest, getProductReviews,
   getReturnableItems, confirmOrderReceived, shipBackReturn, withdrawReturnRequest,
-  ApiOrder, ReturnRequest, ReturnableItem, ReturnWindow, StripePaymentRecord,
+  ApiOrder, ProductReviews, ReturnRequest, ReturnableItem, ReturnWindow, StripePaymentRecord,
 } from '../../lib/api';
 import { C, F } from '../../theme/tokens';
 import { SmartImage } from '../../components/SmartImage';
@@ -76,7 +76,7 @@ export default function OrderDetail() {
   const [cancelNote,setCancelNote]=useState('');
   const [cancelSending,setCancelSending]=useState(false);
   const [cancelError,setCancelError]=useState('');
-  const [reviewEligibility,setReviewEligibility]=useState<Record<string,{canReview:boolean;alreadyReviewed:boolean}>>({});
+  const [reviewEligibility,setReviewEligibility]=useState<Record<string,ProductReviews['eligibility']>>({});
   const [reviewProduct,setReviewProduct]=useState<ApiOrder['items'][number]|null>(null);
   const [reviewRating,setReviewRating]=useState(5);
   const [reviewComment,setReviewComment]=useState('');
@@ -223,7 +223,19 @@ export default function OrderDetail() {
   const submitReview=async()=>{
     if(!reviewProduct||!user||reviewSending)return;setReviewSending(true);setReviewError('');
     const slug=String(reviewProduct.slug||reviewProduct.productId);
-    try{const result=await createProductReview(slug,{userId:user.id,userName:user.name,rating:reviewRating,comment:reviewComment,media:reviewMedia?.dataUri,mediaKind:reviewMedia?.kind});setReviewEligibility(current=>({...current,[slug]:{canReview:false,alreadyReviewed:true}}));setReviewMessage(result.message);setReviewProduct(null);setReviewComment('');setReviewRating(5);setReviewMedia(null);toast(result.message||'Đã gửi đánh giá của bạn ✓');}
+    try{
+      const result=await createProductReview(slug,{userId:user.id,userName:user.name,orderId:order.id,rating:reviewRating,comment:reviewComment,media:reviewMedia?.dataUri,mediaKind:reviewMedia?.kind});
+      setReviewEligibility(current=>{const previous=current[slug];return {...current,[slug]:{
+        canReview:(previous?.eligibleOrderIds||[]).some(orderId=>orderId!==order.id),
+        purchased:true,
+        alreadyReviewed:true,
+        orderIds:previous?.orderIds||[order.id],
+        eligibleOrderIds:(previous?.eligibleOrderIds||[]).filter(orderId=>orderId!==order.id),
+        reviewedOrderIds:[...new Set([...(previous?.reviewedOrderIds||[]),order.id])],
+        reviewCount:Number(previous?.reviewCount||0)+1,
+      }}});
+      setReviewMessage(result.message);setReviewProduct(null);setReviewComment('');setReviewRating(5);setReviewMedia(null);toast(result.message||'Đã gửi đánh giá của bạn ✓');
+    }
     catch(e:any){const message=e?.message||'Không gửi được đánh giá.';setReviewError(message);toast({message,kind:'error'});}
     finally{setReviewSending(false);}
   };
@@ -273,7 +285,7 @@ export default function OrderDetail() {
           )}
         </View>
         <Text style={st.grp}>SẢN PHẨM</Text>
-        {order.items.map((it,i)=>{const slug=String(it.slug||it.productId),eligibility=reviewEligibility[slug],vipOn=order.vipPromotion&&slug===order.vipPromotion.productId&&(!order.vipPromotion.colorName||it.colorName===order.vipPromotion.colorName)&&(!order.vipPromotion.size||it.size===order.vipPromotion.size);return <FadeSlideIn key={i} delay={Math.min(i,6)*45} offset={8}><Item it={it} vipDiscount={vipOn?order.vipDiscount:0} canReview={order.status==='completed'&&eligibility?.canReview} reviewed={eligibility?.alreadyReviewed} onReview={()=>{setReviewProduct(it);setReviewError('');setReviewMessage('');setReviewMedia(null);}}/></FadeSlideIn>;})}
+        {order.items.map((it,i)=>{const slug=String(it.slug||it.productId),eligibility=reviewEligibility[slug],reviewedThisOrder=eligibility?.reviewedOrderIds?.includes(order.id),canReviewThisOrder=eligibility?.eligibleOrderIds?.includes(order.id),vipOn=order.vipPromotion&&slug===order.vipPromotion.productId&&(!order.vipPromotion.colorName||it.colorName===order.vipPromotion.colorName)&&(!order.vipPromotion.size||it.size===order.vipPromotion.size);return <FadeSlideIn key={i} delay={Math.min(i,6)*45} offset={8}><Item it={it} vipDiscount={vipOn?order.vipDiscount:0} canReview={order.status==='completed'&&canReviewThisOrder} reviewed={reviewedThisOrder} onReview={()=>{setReviewProduct(it);setReviewError('');setReviewMessage('');setReviewMedia(null);}}/></FadeSlideIn>;})}
         {!!reviewMessage&&<View style={st.reviewNotice}><Ionicons name="checkmark-circle" size={19} color={C.ok}/><Text style={st.reviewNoticeT}>{reviewMessage}</Text></View>}
         <Text style={st.grp}>GIAO TỚI</Text>
         <View style={st.addr}>
@@ -425,7 +437,7 @@ export default function OrderDetail() {
           </ScrollView>
         </View></View>
       </Modal>
-      <Modal visible={Boolean(reviewProduct)} transparent animationType="fade" onRequestClose={()=>setReviewProduct(null)}><View style={st.modalShade}><View style={st.modalBox}><View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}><Text style={st.modalTitle}>Đánh giá sản phẩm</Text><Pressable hitSlop={10} onPress={()=>setReviewProduct(null)}><Ionicons name="close" size={23} color={C.ink}/></Pressable></View><Text style={st.modalSub}>{reviewProduct?.name} · Mỗi sản phẩm chỉ được đánh giá một lần.</Text><View style={st.stars}>{[1,2,3,4,5].map(value=><Pressable key={value} onPress={()=>setReviewRating(value)} hitSlop={6}><Ionicons name={value<=reviewRating?'star':'star-outline'} size={34} color={C.kin}/></Pressable>)}</View><TextInput value={reviewComment} onChangeText={setReviewComment} multiline maxLength={2000} placeholder="Chia sẻ trải nghiệm thực tế về sản phẩm…" placeholderTextColor={C.muted} style={st.note}/><Text style={st.moderationHint}>Bình luận được AI kiểm tra công kích, phân biệt, từ nhạy cảm và cách viết lách luật. Phê bình sản phẩm trung thực vẫn được chấp nhận.</Text><MediaAttachPicker value={reviewMedia} onChange={setReviewMedia} />{!!reviewError&&<Text style={st.returnError}>{reviewError}</Text>}<Btn label={reviewSending?'Đang gửi…':'Gửi đánh giá'} onPress={()=>void submitReview()}/></View></View></Modal>
+      <Modal visible={Boolean(reviewProduct)} transparent animationType="fade" onRequestClose={()=>setReviewProduct(null)}><View style={st.modalShade}><View style={st.modalBox}><View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}><Text style={st.modalTitle}>Đánh giá sản phẩm</Text><Pressable hitSlop={10} onPress={()=>setReviewProduct(null)}><Ionicons name="close" size={23} color={C.ink}/></Pressable></View><Text style={st.modalSub}>{reviewProduct?.name} · Mỗi đơn đã nhận hàng được đánh giá một lần; mua lại sẽ được đánh giá tiếp.</Text><View style={st.stars}>{[1,2,3,4,5].map(value=><Pressable key={value} onPress={()=>setReviewRating(value)} hitSlop={6}><Ionicons name={value<=reviewRating?'star':'star-outline'} size={34} color={C.kin}/></Pressable>)}</View><TextInput value={reviewComment} onChangeText={setReviewComment} multiline maxLength={2000} placeholder="Chia sẻ trải nghiệm thực tế về sản phẩm…" placeholderTextColor={C.muted} style={st.note}/><Text style={st.moderationHint}>Bình luận được AI kiểm tra công kích, phân biệt, từ nhạy cảm và cách viết lách luật. Phê bình sản phẩm trung thực vẫn được chấp nhận.</Text><MediaAttachPicker value={reviewMedia} onChange={setReviewMedia} />{!!reviewError&&<Text style={st.returnError}>{reviewError}</Text>}<Btn label={reviewSending?'Đang gửi…':'Gửi đánh giá'} onPress={()=>void submitReview()}/></View></View></Modal>
     </Screen>
   );
 }
@@ -471,7 +483,7 @@ const st = StyleSheet.create({
   track:{ backgroundColor:C.ai, borderRadius:14, padding:14, marginTop:4 },
   policyLink:{ flexDirection:'row', alignItems:'center', gap:5, marginTop:9 },
   policyLinkT:{ fontFamily:F.bodyB, fontSize:10.5, color:'rgba(255,255,255,0.72)', textDecorationLine:'underline' },
-  confirmCard:{ backgroundColor:'#F0F7F0', borderWidth:1, borderColor:'#CBE3CC', borderRadius:14, padding:13, marginTop:12 },
+  confirmCard:{ backgroundColor:C.okSoft, borderWidth:1, borderColor:'#CBE3CC', borderRadius:14, padding:13, marginTop:12 },
   confirmTitle:{ fontFamily:F.bodyB, fontSize:13, color:'#1F6B44' },
   returnItems:{ marginTop:8, gap:2 },
   returnItemT:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.ink },
@@ -479,10 +491,10 @@ const st = StyleSheet.create({
   returnExhausted:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.muted, textAlign:'center', marginTop:12 },
   withdrawBtn:{ alignSelf:'flex-start', marginTop:9, borderWidth:1, borderColor:C.line, borderRadius:9, paddingVertical:6, paddingHorizontal:11 },
   withdrawBtnT:{ fontFamily:F.bodyB, fontSize:10.5, color:C.ink },
-  shipBackCard:{ backgroundColor:'#fff', borderWidth:1.5, borderColor:C.line, borderRadius:14, padding:13, marginTop:12 },
-  shipInput:{ borderWidth:1, borderColor:C.line, borderRadius:11, paddingHorizontal:11, paddingVertical:10, marginTop:9, fontFamily:F.bodyM, fontSize:12.5, color:C.ink, backgroundColor:'#fff' },
-  pickRow:{ flexDirection:'row', alignItems:'center', gap:8, borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:8, backgroundColor:'#fff' },
-  pickRowOn:{ borderColor:C.ink, backgroundColor:C.washi2 },
+  shipBackCard:{ backgroundColor:C.card, borderWidth:1.5, borderColor:C.line, borderRadius:14, padding:13, marginTop:12 },
+  shipInput:{ borderWidth:1, borderColor:C.line, borderRadius:11, paddingHorizontal:11, paddingVertical:10, marginTop:9, fontFamily:F.bodyM, fontSize:12.5, color:C.ink, backgroundColor:C.card },
+  pickRow:{ flexDirection:'row', alignItems:'center', gap:8, borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:8, backgroundColor:C.card },
+  pickRowOn:{ borderColor:C.inverseSurface, backgroundColor:C.washi2 },
   pickName:{ fontFamily:F.bodyB, fontSize:12, color:C.ink },
   pickMeta:{ fontFamily:F.body, fontSize:10.5, lineHeight:15, color:C.muted, marginTop:2 },
   stepper:{ flexDirection:'row', alignItems:'center', gap:4, borderWidth:1, borderColor:C.line, borderRadius:9, paddingHorizontal:4, paddingVertical:2 },
@@ -496,26 +508,26 @@ const st = StyleSheet.create({
   feeNote:{ fontFamily:F.bodyM, fontSize:10.5, lineHeight:16, color:C.muted, marginTop:2, marginBottom:4 },
   policyMore:{ fontFamily:F.bodyB, fontSize:10.5, color:C.ink, marginTop:7 },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:16, marginBottom:8 },
-  item:{ flexDirection:'row', alignItems:'center', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:10 },
+  item:{ flexDirection:'row', alignItems:'center', backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:12, padding:10, marginBottom:10 },
   itemFallback:{ width:56, height:68, borderRadius:9 },
   vipItemBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:4,backgroundColor:C.primary,borderRadius:999,paddingHorizontal:7,paddingVertical:3,marginTop:5},vipItemBadgeT:{fontFamily:F.bodyB,fontSize:9,color:C.ink},
-  addr:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:12 },
-  summary:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:12, padding:12, marginTop:12 },
+  addr:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:12, padding:12 },
+  summary:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:12, padding:12, marginTop:12 },
   returnCard:{backgroundColor:C.washi2,borderWidth:1,borderColor:C.line,borderRadius:14,padding:13,marginTop:12},
-  returnOffer:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:14,padding:13,marginTop:12},
+  returnOffer:{flexDirection:'row',alignItems:'center',gap:10,backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:14,padding:13,marginTop:12},
   returnTitle:{fontFamily:F.bodyB,fontSize:13,color:C.ink},returnStatus:{fontFamily:F.bodyB,fontSize:11,color:C.ink,marginTop:2},
   returnMeta:{fontFamily:F.body,fontSize:11.5,lineHeight:16,color:C.muted,marginTop:6},returnCode:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink,marginTop:6},
-  returnBtn:{backgroundColor:C.ink,borderRadius:10,paddingVertical:9,paddingHorizontal:11},returnBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11},
+  returnBtn:{backgroundColor:C.inverseSurface,borderRadius:10,paddingVertical:9,paddingHorizontal:11},returnBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11},
   modalShade:{flex:1,backgroundColor:'rgba(26,20,16,.48)',alignItems:'center',justifyContent:'center',padding:22},modalBox:{width:'100%',maxWidth:430,backgroundColor:C.paper,borderRadius:20,padding:17},
   modalTitle:{fontFamily:F.display,fontSize:18,color:C.sumi},modalSub:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginVertical:10},
-  reason:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginBottom:7,backgroundColor:'#fff'},reasonOn:{borderColor:C.ink,backgroundColor:'#F5F2FF'},
-  radio:{width:17,height:17,borderRadius:9,borderWidth:1.5,borderColor:C.line},radioOn:{borderWidth:5,borderColor:C.ink},reasonT:{flex:1,fontFamily:F.bodyM,fontSize:12,color:C.ink},
-  note:{minHeight:70,textAlignVertical:'top',borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,fontFamily:F.body,fontSize:12,color:C.ink,backgroundColor:'#fff',marginVertical:4},returnError:{fontFamily:F.bodyM,fontSize:11,color:C.danger,marginBottom:7},
-  reviewBtn:{backgroundColor:C.primary,borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewBtnT:{fontFamily:F.bodyB,fontSize:10,color:'#fff'},reviewedBtn:{backgroundColor:'#E8F6EC',borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewedBtnT:{fontFamily:F.bodyB,fontSize:10,color:C.ok},
-  reviewNotice:{flexDirection:'row',alignItems:'center',gap:8,backgroundColor:'#E8F6EC',borderRadius:11,padding:10},reviewNoticeT:{flex:1,fontFamily:F.bodyM,fontSize:11.5,color:C.ok},stars:{flexDirection:'row',justifyContent:'center',gap:8,marginBottom:10},moderationHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginVertical:8},
+  reason:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginBottom:7,backgroundColor:C.card},reasonOn:{borderColor:C.inverseSurface,backgroundColor:'#F5F2FF'},
+  radio:{width:17,height:17,borderRadius:9,borderWidth:1.5,borderColor:C.line},radioOn:{borderWidth:5,borderColor:C.inverseSurface},reasonT:{flex:1,fontFamily:F.bodyM,fontSize:12,color:C.ink},
+  note:{minHeight:70,textAlignVertical:'top',borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,fontFamily:F.body,fontSize:12,color:C.ink,backgroundColor:C.card,marginVertical:4},returnError:{fontFamily:F.bodyM,fontSize:11,color:C.danger,marginBottom:7},
+  reviewBtn:{backgroundColor:C.primary,borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewBtnT:{fontFamily:F.bodyB,fontSize:10,color:'#fff'},reviewedBtn:{backgroundColor:C.okSoft,borderRadius:8,paddingVertical:6,paddingHorizontal:9},reviewedBtnT:{fontFamily:F.bodyB,fontSize:10,color:C.ok},
+  reviewNotice:{flexDirection:'row',alignItems:'center',gap:8,backgroundColor:C.okSoft,borderRadius:11,padding:10},reviewNoticeT:{flex:1,fontFamily:F.bodyM,fontSize:11.5,color:C.ok},stars:{flexDirection:'row',justifyContent:'center',gap:8,marginBottom:10},moderationHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginVertical:8},
   photoLabel:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginTop:6,marginBottom:8},
   photoThumbWrap:{width:64,height:64,borderRadius:10,overflow:'visible'},photoThumb:{width:64,height:64,borderRadius:10,backgroundColor:C.washi2},
   photoRemove:{position:'absolute',top:-6,right:-6,width:20,height:20,borderRadius:10,backgroundColor:'#C24444',alignItems:'center',justifyContent:'center'},
-  photoAdd:{width:64,height:64,borderRadius:10,borderWidth:1.5,borderColor:C.line,borderStyle:'dashed',alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},
+  photoAdd:{width:64,height:64,borderRadius:10,borderWidth:1.5,borderColor:C.line,borderStyle:'dashed',alignItems:'center',justifyContent:'center',backgroundColor:C.card},
   policyBox:{backgroundColor:C.washi2,borderRadius:11,padding:11,marginTop:12,marginBottom:4},policyTitle:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink,marginBottom:5},policyText:{fontFamily:F.body,fontSize:10.5,lineHeight:16,color:C.muted},
 });

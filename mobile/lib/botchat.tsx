@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import {
   ActivityIndicator,
   Animated,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   PanResponder,
@@ -22,7 +23,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SmartImage } from '../components/SmartImage';
 import { useCatalog } from './data';
 import { Product } from './catalog';
-import { getHomeRecommendations, sendStylistMessage, trackInteraction } from './api';
+import {
+  getHomeRecommendations, reportGpuFocus, sendStylistMessage, StylistAction,
+  trackInteraction, warmStylistChat,
+} from './api';
 import { loadStyleProfile } from './profile';
 import { useStore } from './store';
 import { BotCartItem, subscribeBotEvents } from './botEvents';
@@ -33,7 +37,7 @@ const POSITION_KEY = '@japano/bot/position/v1';
 const BUBBLE_SIZE = 62;
 const MARGIN = 12;
 
-type BotMessage = { id: string; role: 'ai' | 'me'; text: string; productIds?: string[] };
+type BotMessage = { id: string; role: 'ai' | 'me'; text: string; productIds?: string[]; actions?: StylistAction[] };
 type BotMode = 'mood' | 'removed' | 'checkout';
 type BotContextValue = {
   enabled: boolean;
@@ -208,6 +212,27 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [loading, messages, open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const event = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const subscription = Keyboard.addListener(event, () => {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+    });
+    return () => subscription.remove();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    void reportGpuFocus('chat')
+      .then(() => live ? warmStylistChat() : null)
+      .catch(() => null);
+    return () => {
+      live = false;
+      void reportGpuFocus('browse');
+    };
+  }, [open]);
+
   const setEnabled = useCallback((value: boolean) => {
     enabledRef.current = value;
     setEnabledState(value);
@@ -280,6 +305,19 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => router.push(target as any), 100);
   }, [router]);
 
+  const runAction = useCallback((action: StylistAction) => {
+    switch (action.id) {
+      case 'open_shop': navigate('/(tabs)/products'); break;
+      case 'open_checkout': navigate('/checkout'); break;
+      case 'open_cart': navigate('/cart'); break;
+      case 'open_wishlist': navigate('/(tabs)/wishlist'); break;
+      case 'open_orders': navigate('/orders'); break;
+      case 'open_explore_japan': navigate('/explore-japan'); break;
+      case 'open_tryon': navigate(action.productId ? { pathname:'/tryon', params:{ productId:action.productId } } : '/tryon'); break;
+      case 'open_product': if (action.productId) navigate(`/product/${action.productId}`); break;
+    }
+  }, [navigate]);
+
   const addMessage = useCallback((message: BotMessage) => setMessages(current => [...current, message]), []);
 
   const send = useCallback(async (raw: string) => {
@@ -300,6 +338,7 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
         history: history.slice(-8).map(message => ({
           role: message.role === 'me' ? 'user' : 'assistant',
           content: message.text,
+          productIds: message.productIds,
         })),
       });
       addMessage({
@@ -307,7 +346,10 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
         role: 'ai',
         text: result.message,
         productIds: result.products,
+        actions: result.actions,
       });
+      const automatic = result.actions.find(action => action.auto);
+      if (automatic) setTimeout(() => runAction(automatic), 280);
     } catch {
       addMessage({
         id: messageId(),
@@ -318,7 +360,7 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [addMessage, initialProducts, loading, messages, user?.id]);
+  }, [addMessage, initialProducts, loading, messages, runAction, user?.id]);
 
   const answerQuick = useCallback((label: string) => {
     if (mode === 'removed' && removedItem) {
@@ -428,14 +470,18 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
         )}
 
         <Modal visible={isAuthenticated && open && enabled} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setOpen(false)}>
-          <KeyboardAvoidingView style={styles.modalRoot} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAvoidingView
+            style={styles.modalRoot}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+          >
             <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
             <View style={[styles.panel, { paddingBottom: Math.max(12, insets.bottom) }]}>
               <View style={styles.panelHeader}>
                 <View style={styles.oriAvatar}><Text style={styles.oriLetter}>織</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.panelTitle}>Ori · Botchat mua sắm</Text>
-                  <Text style={styles.panelStatus}>● mLSTM memory · MoE · catalog-grounded</Text>
+                  <Text style={styles.panelStatus}>● Qwen3-VL tools · catalog-grounded</Text>
                 </View>
                 <Pressable accessibilityLabel="Mở chat toàn màn hình" style={styles.headerIcon} onPress={() => navigate('/chat')}>
                   <Ionicons name="expand-outline" size={19} color={C.ink} />
@@ -445,7 +491,14 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
                 </Pressable>
               </View>
 
-              <ScrollView ref={listRef} style={styles.messageList} contentContainerStyle={{ padding: 12, gap: 9 }} keyboardShouldPersistTaps="handled">
+              <ScrollView
+                ref={listRef}
+                style={styles.messageList}
+                contentContainerStyle={{ padding: 12, gap: 9 }}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+              >
                 {messages.map(message => (
                   <View key={message.id} style={[styles.message, message.role === 'ai' ? styles.aiMessage : styles.meMessage]}>
                     <Text style={message.role === 'ai' ? styles.aiText : styles.meText}>{message.text}</Text>
@@ -473,6 +526,22 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
                           );
                         })}
                       </ScrollView>
+                    )}
+                    {!!message.actions?.length && (
+                      <View style={styles.navActionWrap}>
+                        {message.actions.filter(action => !action.auto).map(action => (
+                          <Pressable
+                            key={`${message.id}-${action.id}-${action.productId || ''}`}
+                            accessibilityRole="button"
+                            accessibilityLabel={action.label}
+                            style={styles.navActionButton}
+                            onPress={() => runAction(action)}
+                          >
+                            <Ionicons name="arrow-forward-circle-outline" size={15} color="#fff" />
+                            <Text style={styles.navActionText}>{action.label}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
                     )}
                   </View>
                 ))}
@@ -527,8 +596,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.26, shadowRadius: 9, shadowOffset: { width: 0, height: 5 }, elevation: 14,
   },
   onlineDot: { position: 'absolute', right: 4, bottom: 4, width: 13, height: 13, borderRadius: 8, backgroundColor: C.ok, borderWidth: 2, borderColor: '#fff' },
-  closeBubble: { position: 'absolute', right: -5, top: -6, width: 23, height: 23, borderRadius: 12, backgroundColor: C.sumi, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', elevation: 16 },
-  teaser: { position: 'absolute', top: 5, width: 190, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingVertical: 9, paddingHorizontal: 12, elevation: 13, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 7, shadowOffset: { width: 0, height: 3 } },
+  closeBubble: { position: 'absolute', right: -5, top: -6, width: 23, height: 23, borderRadius: 12, backgroundColor:C.inverseSurface, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#fff', elevation: 16 },
+  teaser: { position: 'absolute', top: 5, width: 190, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingVertical: 9, paddingHorizontal: 12, elevation: 13, shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 7, shadowOffset: { width: 0, height: 3 } },
   teaserTitle: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink },
   teaserText: { fontFamily: F.body, fontSize: 10.5, color: C.muted, marginTop: 2 },
   modalRoot: { flex: 1, justifyContent: 'flex-end' },
@@ -539,10 +608,10 @@ const styles = StyleSheet.create({
   oriLetter: { color: '#fff', fontFamily: F.display, fontSize: 19 },
   panelTitle: { fontFamily: F.display, fontSize: 15, color: C.sumi },
   panelStatus: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ok, marginTop: 2 },
-  headerIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
+  headerIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   messageList: { flex: 1 },
   message: { maxWidth: '94%', padding: 10, borderRadius: 15 },
-  aiMessage: { alignSelf: 'flex-start', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderTopLeftRadius: 4 },
+  aiMessage: { alignSelf: 'flex-start', backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderTopLeftRadius: 4 },
   meMessage: { alignSelf: 'flex-end', backgroundColor: C.shu, borderTopRightRadius: 4 },
   aiText: { fontFamily: F.body, fontSize: 12.5, lineHeight: 18, color: C.ink },
   meText: { fontFamily: F.body, fontSize: 12.5, lineHeight: 18, color: '#fff' },
@@ -553,16 +622,19 @@ const styles = StyleSheet.create({
   productPrice: { fontFamily: F.bodyX, fontSize: 12.5, color: C.shu, marginTop: 3 },
   productReason: { fontFamily: F.body, fontSize: 9.5, color: C.muted, marginTop: 3 },
   productActions: { flexDirection: 'row', gap: 6, marginTop: 8 },
-  iconAction: { width: 34, height: 31, borderRadius: 9, backgroundColor: '#fff', borderWidth: 1, borderColor: C.shu, alignItems: 'center', justifyContent: 'center' },
+  iconAction: { width: 34, height: 31, borderRadius: 9, backgroundColor:C.card, borderWidth: 1, borderColor: C.shu, alignItems: 'center', justifyContent: 'center' },
   wishedAction: { backgroundColor: C.shu },
-  cartAction: { flex: 1, height: 31, borderRadius: 9, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, flexDirection: 'row', gap: 4, alignItems: 'center', justifyContent: 'center' },
+  cartAction: { flex: 1, height: 31, borderRadius: 9, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, flexDirection: 'row', gap: 4, alignItems: 'center', justifyContent: 'center' },
   buyAction: { flex: 1, height: 31, borderRadius: 9, backgroundColor: C.ai, alignItems: 'center', justifyContent: 'center' },
   actionText: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
+  navActionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 9 },
+  navActionButton: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, backgroundColor: C.ai, paddingVertical: 7, paddingHorizontal: 10 },
+  navActionText: { fontFamily: F.bodyB, fontSize: 10.5, color: '#fff' },
   quickWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, paddingTop: 2 },
   quickChip: { borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, paddingVertical: 7, paddingHorizontal: 10 },
   quickText: { fontFamily: F.bodyM, fontSize: 10.5, color: C.ink },
   inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', paddingHorizontal: 12, paddingTop: 9, borderTopWidth: 1, borderTopColor: C.hair },
-  inputBox: { flex: 1, height: 42, borderRadius: 22, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, justifyContent: 'center', paddingHorizontal: 14 },
+  inputBox: { flex: 1, height: 42, borderRadius: 22, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, justifyContent: 'center', paddingHorizontal: 14 },
   textInput: { fontFamily: F.body, fontSize: 13, color: C.ink, paddingVertical: 0 },
   sendButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.shu, alignItems: 'center', justifyContent: 'center' },
   disableRow: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8 },

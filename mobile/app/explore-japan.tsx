@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Easing, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -8,12 +8,12 @@ import { SmartImage } from '../components/SmartImage';
 import { JapanMap } from '../components/JapanMap';
 import { useCatalog } from '../lib/data';
 import { JapanSpot, PHOTO_ATTRIBUTION, PREFECTURE_VIDEO, prefecturesInRegion, regionsList, spotsInPrefecture } from '../lib/japanSpots';
-import { composeScenePhoto, generateTryOn, getJapanSpotReviews, getJapanSpotSuggestions, getSpotRecommendations, JapanScene, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion, SpotRecommendation, SpotRewardConfig, TryOnSafetyError } from '../lib/api';
+import { composeScenePhoto, generateTryOn, reportGpuFocus, getJapanSpotReviews, getJapanSpotSuggestions, getSpotRecommendations, JapanScene, JapanSpotReview, JapanSpotSuggestion, postJapanSpotReview, postJapanSpotSuggestion, SpotRecommendation, SpotRewardConfig, TryOnSafetyError } from '../lib/api';
 import * as ImagePicker from 'expo-image-picker';
 import { saveMediaToLibrary, shareMedia } from '../lib/media';
 import { loadStyleProfile } from '../lib/profile';
 import { useStore } from '../lib/store';
-import { beginGpuJob, endGpuJob } from '../lib/useGpuFocus';
+import { beginGpuJob, endGpuJob, useGpuFocus } from '../lib/useGpuFocus';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../lib/toast';
 import { MediaAttachPicker, ReviewMediaPlayer } from '../components/MediaAttach';
@@ -184,13 +184,6 @@ function SpotDetail({ spot }: { spot: JapanSpot }) {
 type TravelPhoto = { uri: string; base64: string; label: string };
 type TravelStep = 'idle' | 'tryon' | 'fit' | 'scene' | 'finishing';
 
-const TRAVEL_STEP: Record<Exclude<TravelStep, 'idle'>, (product: string, place: string) => string> = {
-  tryon: (product) => `Đang mặc thử ${product}…`,
-  fit: () => 'Đang kiểm tra độ vừa…',
-  scene: (_p, place) => `Đang đưa bạn đến ${place}…`,
-  finishing: () => 'Đang hoàn thiện ảnh…',
-};
-
 const TRAVEL_FILTERS: { id: string; label: string; match: (r: SpotRecommendation) => boolean }[] = [
   { id: 'all', label: 'Tất cả', match: () => true },
   { id: 'kimono', label: 'Kimono/Yukata', match: (r) => /kimono|yukata|haori|hakama/i.test(`${r.product.name} ${r.product.garmentType || ''}`) },
@@ -216,15 +209,23 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
   const [filter, setFilter] = useState('all');
 
   const [activeScene, setActiveScene] = useState<JapanScene | null>(null);
+  const [slotId, setSlotId] = useState('');
+  const [travelPoseId, setTravelPoseId] = useState('');
   const [selected, setSelected] = useState<SpotRecommendation | null>(null);
   const [size, setSize] = useState('');
   const [step, setStep] = useState<TravelStep>('idle');
+  // Đồng hồ chờ giống hệt màn "Thử đồ thông minh": năm giây đầu là kiểm tra
+  // ảnh đầu vào, sau đó mới đếm thời gian AI. Trước đây màn này chỉ có một
+  // vòng xoay nhỏ nên người dùng không biết còn bao lâu và tưởng máy treo.
+  const [waitSeconds, setWaitSeconds] = useState(0);
+  const waitPulse = useRef(new Animated.Value(0)).current;
+  // Giữ quyền ưu tiên GPU cho màn này, đồng thời làm nóng FASHN sẵn.
+  const gpuScreenActive = useGpuFocus('tryon', 'browse');
   const [tryonImage, setTryonImage] = useState('');
   const [sceneImage, setSceneImage] = useState('');
   const [tab, setTab] = useState<'before' | 'tryon' | 'scene'>('scene');
   const [error, setError] = useState('');
   const [sceneRetry, setSceneRetry] = useState(false);
-  const [timings, setTimings] = useState<{ tryon?: number; scene?: number }>({});
 
   // Gợi ý tải ngay khi mở địa điểm, song song với mọi thứ khác. Huỷ khi đổi
   // địa điểm để một phản hồi đến muộn không ghi đè danh sách mới.
@@ -245,7 +246,19 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
         setScenes(result.scenes);
         setSpotInfo(result.spot);
         setSeason(result.season);
-        setActiveScene(result.scenes[0] || null);
+        const firstScene = result.scenes[0] || null;
+        setActiveScene(firstScene);
+        setSlotId(firstScene?.personSlots?.[0]?.id || '');
+        // Mặc định GIỮ NGUYÊN dáng trong ảnh của khách.
+        //
+        // Mỗi dáng AI bắt backend chạy FLUX.2 để đổi tư thế TRƯỚC khi FASHN mặc
+        // đồ — đo thật trên máy này: có dáng AI 52–53 giây, không dáng 20 giây.
+        // Đó là toàn bộ chênh lệch giữa màn này và màn "Thử đồ thông minh",
+        // không phải do qualityMode hay phân tích cơ thể.
+        setTravelPoseId('');
+        setTryonImage('');
+        setSceneImage('');
+        setError('');
       } catch { /* để danh sách rỗng, phần dưới sẽ báo */ }
       finally { if (!controller.signal.aborted) setLoading(false); }
     })();
@@ -259,7 +272,24 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
     return recos.filter(active.match);
   }, [recos, filter]);
 
-  const clearResult = () => { setTryonImage(''); setSceneImage(''); setError(''); setSceneRetry(false); setTimings({}); };
+  useEffect(() => {
+    if (step === 'idle') { setWaitSeconds(0); waitPulse.stopAnimation(); waitPulse.setValue(0); return; }
+    // Dùng đồng hồ thật thay vì cộng 1 mỗi tick: Android tạm dừng JS timer khi
+    // app ở nền, quay lại phải nhảy đúng số giây đã trôi qua chứ không giả vờ
+    // job cũng đứng theo giao diện.
+    const startedAt = Date.now();
+    const tick = () => setWaitSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    tick();
+    const timer = setInterval(tick, 1000);
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(waitPulse, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(waitPulse, { toValue: 0, duration: 850, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => { clearInterval(timer); animation.stop(); };
+  }, [step, waitPulse]);
+
+  const clearResult = () => { setTryonImage(''); setSceneImage(''); setError(''); setSceneRetry(false); };
 
   const pickPhoto = async (camera: boolean) => {
     setError('');
@@ -279,35 +309,46 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
   const run = async (item: SpotRecommendation, chosenSize: string, sceneOnly = false) => {
     if (!photo) { Alert.alert('Chưa có ảnh', 'Hãy chụp ảnh hoặc chọn ảnh có sẵn.'); return; }
     setError(''); setSceneRetry(false);
+    // Làm nóng FASHN SONG SONG với phần chuẩn bị, thay vì để cold-start cộng
+    // nối tiếp vào thời gian chờ — đây là cách màn "Thử đồ thông minh" đang làm
+    // và là một trong hai lý do màn này chậm hơn hẳn.
+    const focusReady = reportGpuFocus('tryon');
+    setStep(sceneOnly ? 'scene' : 'tryon');
+    await focusReady;
     beginGpuJob();
     let worn = sceneOnly ? tryonImage : '';
     try {
       if (!worn) {
         setStep('tryon');
-        const t0 = Date.now();
         const output = await generateTryOn({
           personImageBase64: photo.base64,
           productId: item.product.slug,
           size: chosenSize,
-          qualityMode: 'balanced',
+          // 16 bước CUDA + upscale 1280 px, đúng hồ sơ màn thử đồ đang dùng.
+          // 'balanced' ở đây là lý do còn lại khiến ảnh lâu hơn bên kia.
+          qualityMode: 'fast',
+          // Phân tích cơ thể chạy ở backend cộng thêm 30–45 giây mà màn này
+          // không dùng tới kết quả (không hiện gợi ý size), nên bỏ hẳn.
+          skipBodyAnalysis: true,
+          // Không chọn dáng AI thì KHÔNG gửi trường này: backend chỉ chạy
+          // FLUX.2 đổi tư thế khi có travelPoseId (routes/tryon.js:1034).
+          ...(travelPoseId ? { travelPoseId } : {}),
         });
         if (!output.imageUrl) throw new Error(output.message || 'Chưa tạo được ảnh thử đồ.');
         setStep('fit');
         worn = output.imageUrl;
         setTryonImage(worn);
-        setTimings(t => ({ ...t, tryon: Date.now() - t0 }));
         setTab('tryon');
       }
       setStep('scene');
-      const t1 = Date.now();
       const composed = await composeScenePhoto({
         place: spot.place, prefecture: spot.prefecture,
         personImageBase64: worn,
         sceneId: activeScene?.id,
+        slotId,
       });
       setStep('finishing');
       setSceneImage(composed.imageUrl);
-      setTimings(t => ({ ...t, scene: Date.now() - t1 }));
       setTab('scene');
     } catch (err: any) {
       if (err instanceof TryOnSafetyError) setError(err.message);
@@ -315,13 +356,24 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
         // Thử đồ xong, chỉ ghép cảnh hỏng: giữ ảnh mặc đồ, cho ghép lại, KHÔNG
         // bắt chạy lại try-on.
         setSceneRetry(true);
-        setError(`Ảnh mặc thử đã tạo xong nhưng chưa ghép được vào ${spot.place}. Bạn có thể thử ghép cảnh lại mà không cần thử đồ lại.`);
+        const detail = String(err?.message || '').trim();
+        setError(detail
+          ? `Ảnh mặc thử đã tạo xong nhưng chưa ghép được vào ${spot.place}: ${detail}`
+          : `Ảnh mặc thử đã tạo xong nhưng chưa ghép được vào ${spot.place}. Bạn có thể thử ghép cảnh lại mà không cần thử đồ lại.`);
         setTab('tryon');
       } else setError(String(err?.message || 'Chưa tạo được ảnh. Hãy thử lại.'));
-    } finally { endGpuJob(); setStep('idle'); }
+    } finally {
+      endGpuJob();
+      setStep('idle');
+      if (gpuScreenActive.current) void reportGpuFocus('tryon');
+    }
   };
 
   const tryProduct = (item: SpotRecommendation) => {
+    if (!activeScene || !slotId) {
+      Alert.alert('Chưa có vị trí an toàn', 'Địa điểm này chưa có đủ góc chụp, vị trí đứng và dáng AI đã kiểm duyệt.');
+      return;
+    }
     const chosen = item.recommendedSize || item.product.sizes[0] || 'M';
     setSelected(item); setSize(chosen); clearResult();
     void run(item, chosen);
@@ -352,11 +404,18 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
 
       {scenes.length > 1 && (
         <>
-          <Text style={st.tvLabel}>Góc chụp</Text>
+          <Text style={st.tvLabel}>2. Góc chụp đã kiểm duyệt</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tvRow}>
             {scenes.map(scene => (
               <Pressable key={scene.id} style={[st.tvScene, activeScene?.id === scene.id && st.tvOn]}
-                onPress={() => { setActiveScene(scene); if (selected && tryonImage) void run(selected, size, true); }}>
+                accessibilityRole="button"
+                accessibilityState={{ selected: activeScene?.id === scene.id }}
+                onPress={() => {
+                  setActiveScene(scene);
+                  setSlotId(scene.personSlots?.[0]?.id || '');
+                  setTravelPoseId('');
+                  clearResult();
+                }}>
                 <SmartImage source={{ uri: scene.thumbnailUrl }} style={st.tvSceneImg} recyclingKey={`tv-s-${scene.id}`} />
                 <Text style={st.tvPresetT} numberOfLines={1}>{scene.name}</Text>
               </Pressable>
@@ -365,7 +424,71 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
         </>
       )}
 
-      <Text style={st.tvLabel}>2. Chọn trang phục</Text>
+      {!!activeScene && (
+        <>
+          <Text style={st.tvLabel}>{scenes.length > 1 ? '3' : '2'}. Vị trí đứng an toàn</Text>
+          <Text style={st.tvMeta}>Chỉ các vùng nền phẳng đã được kiểm tra mới được phép ghép ảnh.</Text>
+          <View style={st.tvChoiceWrap}>
+            {activeScene.personSlots.map(slot => (
+              <Pressable
+                key={slot.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: slotId === slot.id }}
+                style={[st.tvChip, slotId === slot.id && st.tvChipOn]}
+                onPress={() => {
+                  setSlotId(slot.id);
+                  setSceneImage('');
+                  setSceneRetry(Boolean(tryonImage));
+                  if (tryonImage) {
+                    setError('Đã đổi vị trí đứng. Ảnh mặc thử được giữ nguyên; hãy ghép lại cảnh để dùng vị trí mới.');
+                    setTab('tryon');
+                  }
+                }}>
+                <Text style={[st.tvChipT, slotId === slot.id && st.tvChipTOn]}>{slot.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={st.tvLabel}>{scenes.length > 1 ? '4' : '3'}. Dáng đứng</Text>
+          <View style={st.tvPoseGrid}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: !travelPoseId }}
+              style={[st.tvPose, !travelPoseId && st.tvPoseOn]}
+              onPress={() => { setTravelPoseId(''); clearResult(); }}>
+              <Text style={[st.tvPoseTitle, !travelPoseId && st.tvPoseTitleOn]}>
+                Giữ dáng của tôi · nhanh nhất
+              </Text>
+              <Text style={[st.tvPoseBody, !travelPoseId && st.tvPoseBodyOn]}>
+                Dùng đúng tư thế trong ảnh bạn đưa vào. Nhanh hơn khoảng 30 giây vì
+                không phải dựng lại tư thế. Hợp khi ảnh gốc đã đứng thẳng, thấy cả người.
+              </Text>
+            </Pressable>
+            {activeScene.poseOptions.map(pose => (
+              <Pressable
+                key={pose.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: travelPoseId === pose.id }}
+                style={[st.tvPose, travelPoseId === pose.id && st.tvPoseOn]}
+                onPress={() => {
+                  setTravelPoseId(pose.id);
+                  clearResult();
+                }}>
+                <Text style={[st.tvPoseTitle, travelPoseId === pose.id && st.tvPoseTitleOn]}>
+                  {pose.label}{pose.recommended ? ' · hợp cảnh' : ''} · chậm hơn ~30 giây
+                </Text>
+                <Text style={[st.tvPoseBody, travelPoseId === pose.id && st.tvPoseBodyOn]}>{pose.description}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+
+      {!loading && !activeScene && (
+        <Text style={st.tvSceneBlocked}>Địa điểm này chưa có vùng mặt đất được kiểm duyệt nên hệ thống sẽ không ghép người vào cảnh tùy tiện.</Text>
+      )}
+
+      <Text style={st.tvLabel}>{scenes.length > 1 ? '5' : '4'}. Chọn trang phục</Text>
       {visibleFilters.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.tvRow}>
           {visibleFilters.map(f => (
@@ -389,19 +512,50 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
             <Text style={st.tvCardPrice}>{money(item.product.price)}</Text>
             {!!item.recommendedSize && <Text style={st.tvMeta}>Size gợi ý {item.recommendedSize}</Text>}
             {!!item.reasons[0] && <Text style={st.tvReason} numberOfLines={3}>{item.reasons[0]}</Text>}
-            <Pressable style={[st.tvTry, busy && st.tvTryOff]} disabled={busy} onPress={() => tryProduct(item)}>
+            <Pressable style={[st.tvTry, (busy || !activeScene) && st.tvTryOff]} disabled={busy || !activeScene} onPress={() => tryProduct(item)}>
               <Text style={st.tvTryT}>Thử ngay</Text>
             </Pressable>
           </View>
         ))}
       </ScrollView>
 
-      {busy && (
-        <View style={st.tvProgress}>
-          <ActivityIndicator size="small" color={C.ink} />
-          <Text style={st.tvProgressT}>{TRAVEL_STEP[step as Exclude<TravelStep, 'idle'>](selected?.product.name || 'trang phục', spot.place)}</Text>
-        </View>
-      )}
+      {busy && (() => {
+        // Cùng giao diện chờ với màn "Thử đồ thông minh": năm giây đầu là kiểm
+        // tra ảnh, sau đó mới đếm thời gian AI. Người dùng biết đang ở bước nào
+        // và còn bao lâu, thay vì nhìn một vòng xoay không nói gì.
+        const checkingInput = waitSeconds < 5;
+        const aiSeconds = Math.max(0, waitSeconds - 5);
+        const stage = checkingInput
+          ? 'Đang kiểm tra ảnh đầu vào'
+          : step === 'scene' || step === 'finishing'
+            ? `Đang đưa bạn đến ${spot.place}`
+            : aiSeconds < 11 ? 'Đang chuẩn bị trang phục và giữ khuôn mặt'
+            : aiSeconds < 30 ? 'AI đang mặc trang phục lên ảnh'
+            : 'Đang kiểm tra độ nét, cơ thể và vùng an toàn';
+        const clock = checkingInput
+          ? `Kiểm tra ảnh · còn ${Math.max(1, 5 - waitSeconds)} giây`
+          : `Thời gian xử lý AI · ${aiSeconds} giây`;
+        const title = checkingInput ? 'ĐANG KIỂM TRA ẢNH'
+          : step === 'scene' || step === 'finishing' ? 'ĐANG GHÉP VÀO ĐỊA ĐIỂM'
+          : 'ĐANG TẠO ẢNH THỬ ĐỒ';
+        const scale = waitPulse.interpolate({ inputRange: [0, 1], outputRange: [.9, 1.08] });
+        const opacity = waitPulse.interpolate({ inputRange: [0, 1], outputRange: [.55, 1] });
+        return (
+          <View style={st.tvWait} accessibilityLiveRegion="polite" accessibilityLabel={`${stage}, ${clock}`}>
+            <Animated.View style={[st.tvWaitOrb, { opacity, transform: [{ scale }] }]}>
+              <Ionicons name={step === 'scene' || step === 'finishing' ? 'image-outline' : 'shirt-outline'} size={28} color="#fff" />
+            </Animated.View>
+            <Text style={st.tvWaitTitle}>{title}</Text>
+            <Text style={st.tvWaitStage}>{stage}</Text>
+            <View style={st.tvWaitDots}>
+              {[0, 1, 2, 3].map(index => (
+                <View key={index} style={[st.tvWaitDot, waitSeconds % 4 >= index && st.tvWaitDotOn]} />
+              ))}
+            </View>
+            <Text style={st.tvWaitTime}>{clock} · có thể chuyển sang ứng dụng khác</Text>
+          </View>
+        );
+      })()}
       {!!error && (
         <View style={st.tvErr}>
           <Text style={st.tvErrT}>{error}</Text>
@@ -427,13 +581,6 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
           </View>
           <SmartImage source={{ uri: shownImage }} style={st.tvResult} recyclingKey={`tv-out-${tab}`} />
           {!!activeScene && tab === 'scene' && <Text style={st.photoCredit}>{activeScene.attribution}</Text>}
-          {(timings.tryon || timings.scene) && (
-            <Text style={st.tvMeta}>
-              {timings.tryon ? `Thử đồ ${(timings.tryon / 1000).toFixed(1)}s` : ''}
-              {timings.tryon && timings.scene ? ' · ' : ''}
-              {timings.scene ? `ghép cảnh ${(timings.scene / 1000).toFixed(1)}s` : ''}
-            </Text>
-          )}
         </>
       )}
 
@@ -689,30 +836,30 @@ function SuggestionBox({ prefecture }: { prefecture: string }) {
 
 const st = StyleSheet.create({
   intro: { fontFamily: F.body, fontSize: 12.5, lineHeight: 19, color: C.muted, marginBottom: 14 },
-  notebook: { backgroundColor: C.sumi, borderRadius: 18, padding: 16, marginBottom: 14 },
+  notebook: { backgroundColor:C.inverseSurface, borderRadius: 18, padding: 16, marginBottom: 14 },
   notebookKicker: { fontFamily: F.bodyX, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.72)' },
   notebookText: { fontFamily: F.body, fontSize: 12, lineHeight: 19, color: 'rgba(255,255,255,0.70)', marginTop: 8 },
   mapHint: { fontFamily: F.body, fontSize: 11, color: C.muted, marginBottom: 6, textAlign: 'center' },
-  mapWrap: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 18, paddingVertical: 10, marginBottom: 16 },
+  mapWrap: { backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, paddingVertical: 10, marginBottom: 16 },
   videoBox: { marginBottom: 16 },
   videoTitle: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink, marginBottom: 8 },
-  regionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 10 },
-  regionKanji: { width: 46, height: 46, borderRadius: 13, backgroundColor: C.sumi, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  regionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 10 },
+  regionKanji: { width: 46, height: 46, borderRadius: 13, backgroundColor:C.inverseSurface, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   regionKanjiT: { fontFamily: F.display, fontSize: 19, color: C.card },
   regionName: { fontFamily: F.bodyB, fontSize: 14.5, color: C.ink },
   regionSub: { fontFamily: F.body, fontSize: 11.5, color: C.muted, marginTop: 2 },
-  prefCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
+  prefCard: { flexDirection: 'row', alignItems: 'center', backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
   prefImg: { width: 58, height: 68, borderRadius: 10 },
   prefName: { fontFamily: F.bodyB, fontSize: 13.5, color: C.ink },
   prefSub: { fontFamily: F.body, fontSize: 11.5, color: C.muted, marginTop: 2 },
-  spotCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
+  spotCard: { flexDirection: 'row', alignItems: 'center', backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 10, marginBottom: 10 },
   spotImg: { width: 58, height: 68, borderRadius: 10 },
   spotName: { fontFamily: F.bodyB, fontSize: 13.5, color: C.ink },
   spotTime: { fontFamily: F.bodyM, fontSize: 11, color: C.ink, marginTop: 2 },
   spotTip: { fontFamily: F.body, fontSize: 11, color: C.muted, marginTop: 2, lineHeight: 15.5 },
   heroImg: { width: '100%', height: 200, borderRadius: 16, marginBottom: 4 },
   photoCredit: { fontFamily: F.body, fontSize: 9.5, color: C.muted, marginBottom: 10, textAlign: 'right' },
-  travelCta: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: C.ink, borderRadius: 13, padding: 14, marginTop: 16 },
+  travelCta: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor:C.inverseSurface, borderRadius: 13, padding: 14, marginTop: 16 },
   travelCtaT: { fontFamily: F.bodyX, fontSize: 14, color: '#fff' },
   travelCtaSub: { fontFamily: F.body, fontSize: 11, lineHeight: 16, color: 'rgba(255,255,255,0.78)', marginTop: 2 },
   tvMeta: { fontFamily: F.body, fontSize: 10.5, color: C.muted, marginTop: 3 },
@@ -729,9 +876,18 @@ const st = StyleSheet.create({
   tvSceneImg: { width: '100%', height: 74, borderRadius: 5, backgroundColor: C.washi2 },
   tvNote: { fontFamily: F.body, fontSize: 10.5, color: C.muted, backgroundColor: C.washi2, borderRadius: 8, padding: 8 },
   tvChip: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.card },
-  tvChipOn: { backgroundColor: C.ink, borderColor: C.ink },
+  tvChipOn: { backgroundColor:C.inverseSurface, borderColor:C.inverseSurface },
   tvChipT: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   tvChipTOn: { color: '#fff' },
+  tvChoiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 8 },
+  tvPoseGrid: { gap: 7, marginTop: 8 },
+  tvPose: { borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, backgroundColor: C.card },
+  tvPoseOn: { borderColor:C.inverseSurface, backgroundColor:C.inverseSurface },
+  tvPoseTitle: { fontFamily: F.bodyB, fontSize: 11, color: C.ink },
+  tvPoseTitleOn: { color: '#fff' },
+  tvPoseBody: { fontFamily: F.body, fontSize: 9.5, lineHeight: 13.5, color: C.muted, marginTop: 2 },
+  tvPoseBodyOn: { color: '#E6E0D6' },
+  tvSceneBlocked: { fontFamily: F.body, fontSize: 10.5, lineHeight: 15, color: C.danger, backgroundColor:C.dangerSoft, borderRadius: 9, padding: 9, marginTop: 10 },
   tvSkeleton: { width: 150, height: 230, borderRadius: 11, backgroundColor: C.washi2 },
   tvCard: { width: 150, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.card, padding: 7 },
   tvCardImg: { width: '100%', aspectRatio: 3 / 4, borderRadius: 7, backgroundColor: C.washi2 },
@@ -740,18 +896,26 @@ const st = StyleSheet.create({
   tvCardName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, marginTop: 4 },
   tvCardPrice: { fontFamily: F.bodyX, fontSize: 12, color: C.shu, marginTop: 1 },
   tvReason: { fontFamily: F.body, fontSize: 9.5, lineHeight: 13.5, color: C.muted, marginTop: 4 },
-  tvTry: { marginTop: 7, backgroundColor: C.ink, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
+  tvTry: { marginTop: 7, backgroundColor:C.inverseSurface, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   tvTryOff: { opacity: .4 },
   tvTryT: { fontFamily: F.bodyB, fontSize: 11, color: '#fff' },
   tvProgress: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, backgroundColor: C.washi2, borderRadius: 10, padding: 10 },
+  tvWait: { alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 12, backgroundColor: 'rgba(26,20,16,.92)', borderRadius: 14, paddingVertical: 20, paddingHorizontal: 24 },
+  tvWaitOrb: { width: 66, height: 66, borderRadius: 33, borderWidth: 2, borderColor: 'rgba(255,255,255,.78)', backgroundColor: 'rgba(178,52,52,.72)', alignItems: 'center', justifyContent: 'center', marginBottom: 3 },
+  tvWaitTitle: { color: '#fff', fontFamily: F.bodyX, fontSize: 11, letterSpacing: 1.15, textAlign: 'center' },
+  tvWaitStage: { color: '#fff', fontFamily: F.bodyB, fontSize: 13, textAlign: 'center' },
+  tvWaitDots: { flexDirection: 'row', gap: 6, marginTop: 3 },
+  tvWaitDot: { width: 19, height: 4, borderRadius: 3, backgroundColor: 'rgba(255,255,255,.24)' },
+  tvWaitDotOn: { backgroundColor: '#fff' },
+  tvWaitTime: { color: 'rgba(255,255,255,.76)', fontFamily: F.body, fontSize: 10.5, textAlign: 'center', marginTop: 2 },
   tvProgressT: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, flex: 1 },
-  tvErr: { marginTop: 11, backgroundColor: '#FCE8E8', borderColor: '#EBC4C4', borderWidth: 1, borderRadius: 10, padding: 10 },
+  tvErr: { marginTop: 11, backgroundColor:C.dangerSoft, borderColor: '#EBC4C4', borderWidth: 1, borderRadius: 10, padding: 10 },
   tvErrT: { fontFamily: F.body, fontSize: 11, lineHeight: 16, color: C.ink },
-  tvErrBtn: { marginTop: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.ink, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 6 },
+  tvErrBtn: { marginTop: 8, alignSelf: 'flex-start', borderWidth: 1, borderColor:C.inverseSurface, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 6 },
   tvErrBtnT: { fontFamily: F.bodyB, fontSize: 11, color: C.ink },
   tvTabRow: { flexDirection: 'row', gap: 5, marginTop: 12 },
   tvTab: { flex: 1, borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 7, alignItems: 'center', backgroundColor: C.card },
-  tvTabOn: { backgroundColor: C.ink, borderColor: C.ink },
+  tvTabOn: { backgroundColor:C.inverseSurface, borderColor:C.inverseSurface },
   tvTabOff: { opacity: .4 },
   tvTabT: { fontFamily: F.bodyB, fontSize: 10, color: C.ink },
   tvTabTOn: { color: '#fff' },
@@ -775,14 +939,14 @@ const st = StyleSheet.create({
   time: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink }, tip: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.muted, marginTop: 2 },
   section: { marginTop: 16 }, sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 7 }, sectionIcon: { width: 26, height: 26, borderRadius: 8, backgroundColor: C.washi2, alignItems: 'center', justifyContent: 'center' }, sectionTitleText: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1.15, color: C.shuDeep },
   guideText: { fontFamily: F.body, fontSize: 11.5, lineHeight: 18, color: C.ink },
-  mapButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8C7BD', backgroundColor: '#FFF8F5', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7, marginTop: 9 }, mapButtonText: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
+  mapButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#E8C7BD', backgroundColor:C.shuSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7, marginTop: 9 }, mapButtonText: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 7 }, bullet: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.kin, marginTop: 7 }, bulletText: { flex: 1, fontFamily: F.body, fontSize: 11.5, lineHeight: 17.5, color: C.ink },
-  photoSpot: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: C.hair, borderRadius: 11, padding: 10, marginBottom: 7 }, photoIndex: { fontFamily: F.displayX, fontSize: 17, color: C.ink }, photoName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink }, photoTip: { fontFamily: F.body, fontSize: 10.5, lineHeight: 15.5, color: C.muted, marginTop: 2 },
+  photoSpot: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor:C.card, borderWidth: 1, borderColor: C.hair, borderRadius: 11, padding: 10, marginBottom: 7 }, photoIndex: { fontFamily: F.displayX, fontSize: 17, color: C.ink }, photoName: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink }, photoTip: { fontFamily: F.body, fontSize: 10.5, lineHeight: 15.5, color: C.muted, marginTop: 2 },
   source: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.washi2, borderRadius: 9, padding: 9, marginTop: 14 }, sourceText: { flex: 1, fontFamily: F.bodyM, fontSize: 9.5, lineHeight: 13, color: C.muted },
   outfitDivider: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 18 }, dividerLine: { height: 1, flex: 1, backgroundColor: C.line }, dividerText: { fontFamily: F.bodyX, fontSize: 8.5, letterSpacing: 1, color: C.muted },
-  outfit: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 9, marginTop: 11 }, thumb: { width: 58, height: 68, borderRadius: 9 },
+  outfit: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 13, padding: 9, marginTop: 11 }, thumb: { width: 58, height: 68, borderRadius: 9 },
   outfitLabel: { fontFamily: F.bodyX, fontSize: 8.5, letterSpacing: 1, color: C.kin }, product: { fontFamily: F.bodyB, fontSize: 12.5, color: C.ink, marginTop: 3 }, price: { fontFamily: F.bodyX, fontSize: 12, color: C.ink, marginTop: 3 },
-  reviewBox: { marginTop: 18, backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14 },
+  reviewBox: { marginTop: 18, backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14 },
   reviewHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   reviewTitle: { fontFamily: F.display, fontSize: 15, color: C.sumi },
   reviewAvg: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink },
@@ -792,14 +956,14 @@ const st = StyleSheet.create({
   reviewComment: { fontFamily: F.body, fontSize: 12, lineHeight: 18, color: C.ink, marginTop: 4 },
   reviewForm: { marginTop: 14, borderTopWidth: 1, borderTopColor: C.hair, paddingTop: 12 },
   reviewFormLabel: { fontFamily: F.bodyB, fontSize: 11.5, color: C.ink, marginBottom: 7 },
-  reviewInput: { minHeight: 70, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, marginTop: 9, textAlignVertical: 'top' },
+  reviewInput: { minHeight: 70, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor:C.card, padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, marginTop: 9, textAlignVertical: 'top' },
   suggestBox: { marginTop: 6, marginBottom: 16, backgroundColor: C.washi2, borderRadius: 16, padding: 14 },
   suggestTitle: { fontFamily: F.bodyB, fontSize: 13, color: C.ink },
   suggestSub: { fontFamily: F.body, fontSize: 11, color: C.muted, marginTop: 3, marginBottom: 10 },
-  suggestInput: { minHeight: 60, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, textAlignVertical: 'top' },
+  suggestInput: { minHeight: 60, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor:C.card, padding: 11, fontFamily: F.body, fontSize: 12.5, color: C.ink, textAlignVertical: 'top' },
   suggestListTitle: { fontFamily: F.bodyX, fontSize: 9.5, letterSpacing: 1, color: C.shuDeep, marginBottom: 6 },
-  suggestItem: { backgroundColor: '#fff', borderRadius: 10, padding: 9, marginBottom: 6 },
-  suggestItemOk: { borderWidth: 1, borderColor: '#CBE3CC', backgroundColor: '#F4FAF4' },
+  suggestItem: { backgroundColor:C.card, borderRadius: 10, padding: 9, marginBottom: 6 },
+  suggestItemOk: { borderWidth: 1, borderColor: '#CBE3CC', backgroundColor:C.okSoft },
   suggestItemName: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
   suggestItemText: { fontFamily: F.body, fontSize: 11.5, lineHeight: 17, color: C.ink, marginTop: 2 },
   suggestStatus: { fontFamily: F.bodyB, fontSize: 10.5, color: C.muted },

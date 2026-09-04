@@ -15,7 +15,7 @@ vào báo cáo — đọc file JSON đó.
 | Body analysis (vóc dáng, chiều cao, cân nặng) | **ĐANG CHẠY THẬT** | `body_analysis.py` |
 | Dataset fit từ VITON-HD | **ĐÃ CÓ** | xem `provenance/viton_hd.manifest.json` |
 | Môi trường train FLUX.2 Klein img2img | **ĐÃ DỰNG** | `/home/nhat/jp/ai/flux2-fit-train/.venv`, trainer `--help` chạy được |
-| LoRA fit-refinement | **ACCEPTED (checkpoint 400)** | train đủ 600 bước; mốc 500/600 bị acceptance gate loại |
+| LoRA fit-refinement | **ACCEPTED OFFLINE (checkpoint 400)** | train đủ 600 bước; mốc 500/600 bị acceptance gate loại; mặc định không nạp vào runtime |
 | Bộ hồi quy cân nặng (sklearn) | **MODEL_NOT_TRAINED** | chưa có dataset ảnh kèm chiều cao/cân nặng thật có license rõ |
 | Fine-tune chính FASHN VTON 1.5 | **KHÔNG KHẢ THI** | repo FASHN trong máy chỉ có mã inference |
 
@@ -35,8 +35,11 @@ thì gọi là **"fit-aware inference enhancement"**.
 - Checkpoint 400: pass 100%, failure 0%, artifact 0%, body drift 0,1145,
   structure change 19,0849 và latency P50 14,54 giây. Baseline tương ứng là
   100%, 0%, 0%, 0,1148, 16,7195 và 13,43 giây.
-- Production: service nạp `models/fit_lora/checkpoint-400`, chỉ cho `tops`.
-  `/health` phải báo `adapterLoaded=true` và checkpoint hash khác rỗng.
+- Runtime mặc định: adapter **không tự bật**. Chỉ cấu hình checkpoint cho một
+  phiên nghiên cứu/evaluation phi thương mại, giới hạn ở `tops`, rồi xác nhận
+  `/health` báo `adapterLoaded=true` và checkpoint hash đúng trước khi đo.
+- Không dùng checkpoint này làm bằng chứng rằng FASHN đã được fine-tune hoặc
+  thử đồ chân thật cho bottoms, dresses, kimono/haori và ảnh ngoài studio.
 
 Đây là proxy tự động từ quality gate, không phải manual evaluation. Báo cáo chi
 tiết và đường dẫn contact sheet nằm trong `models/fit_lora.status.json`.

@@ -106,3 +106,12 @@ graphify-out/
 
 # Cache ảnh thử đồ của người mẫu dựng sẵn — sinh ra lúc chạy, không commit.
 backend/data/tryon-cache/
+
+# Kết quả chạy test (Playwright/Vitest) — sinh lại được, rất nặng
+test-results/
+**/test-results/
+**/playwright-report/
+**/.playwright/
+
+# Video motion sinh ra lúc chạy thử — nặng, không phải mã nguồn
+backend/data/motion/*.mp4

@@ -6,7 +6,9 @@ const path = require('path');
 const {
   recommendForSpot, sizeFromBody, sizesInStock, inStock, currentSeason, WEIGHTS,
 } = require('../lib/japanSpotRecommendations');
-const { SCENES, scenesForSpot, findScene, sceneImagePath } = require('../lib/japanScenes');
+const { SCENES, SCENE_DIR, scenesForSpot, findScene, sceneImagePath } = require('../lib/japanScenes');
+const { SCENE_BACKGROUNDS } = require('../lib/japanSceneBackgrounds');
+const { TRAVEL_POSES, findTravelPose, recommendedTravelPose } = require('../lib/travelPoses');
 const { NORMALIZED_COLLECTIONS } = require('../lib/mongoCollections');
 
 // Catalog thật của shop. Gợi ý chỉ được lấy từ đây — không có sản phẩm dựng sẵn
@@ -163,12 +165,43 @@ test('12. mùa hiện tại luôn là một trong bốn mùa', () => {
 // ---- Góc chụp -------------------------------------------------------------
 
 test('scene: mỗi góc chụp có đủ giấy phép, nguồn và file ảnh', () => {
-  assert.ok(SCENES.length >= 3, `chỉ có ${SCENES.length} góc chụp`);
+  assert.ok(SCENES.length >= 13, `chỉ có ${SCENES.length} góc chụp`);
   for (const scene of SCENES) {
     for (const field of ['sourceUrl', 'author', 'license', 'licenseUrl', 'attribution', 'checkedAt']) {
       assert.ok(scene[field], `${scene.id} thiếu ${field}`);
     }
     assert.ok(fs.existsSync(sceneImagePath(scene)), `${scene.id} thiếu file ảnh`);
+    const thumbnailFile = path.join(SCENE_DIR, path.basename(scene.thumbnailUrl));
+    assert.ok(fs.existsSync(thumbnailFile), `${scene.id} thiếu thumbnail`);
+  }
+});
+
+test('scene: 10 địa điểm mới đều có góc chụp đã hiệu chỉnh', () => {
+  const expected = [
+    ['Lâu đài Himeji', 'Hyogo'],
+    ['Chùa Sensō-ji · Asakusa', 'Tokyo'],
+    ['Vườn Okayama Kōrakuen', 'Okayama'],
+    ['Vườn Sengan-en', 'Kagoshima'],
+    ['Phố samurai Kakunodate', 'Akita'],
+    ['Cánh đồng hoa Farm Tomita', 'Hokkaido'],
+    ['Phố trà Higashi Chaya', 'Ishikawa'],
+    ['Công viên Moerenuma', 'Hokkaido'],
+    ['Công viên hoa Ashikaga', 'Tochigi'],
+    ['Vườn Shinjuku Gyoen', 'Tokyo'],
+  ];
+  for (const [place, prefecture] of expected) {
+    assert.ok(scenesForSpot(place, prefecture).length >= 1, `${place} chưa có góc chụp`);
+  }
+});
+
+test('scene: hai địa điểm OPPO từng nhận 422 nay có lối đứng đã kiểm duyệt', () => {
+  for (const [place, prefecture] of [
+    ['Đền Itsukushima · Miyajima', 'Hiroshima'],
+    ['Suối nước nóng Ginzan', 'Yamagata'],
+  ]) {
+    const scenes = scenesForSpot(place, prefecture);
+    assert.ok(scenes.length >= 1, `${place} vẫn chưa có góc chụp`);
+    assert.ok(scenes[0].personSlots.length >= 1, `${place} chưa có vị trí đứng`);
   }
 });
 
@@ -192,6 +225,14 @@ test('scene: điểm đặt chân phải nằm trong vùng mặt đất', () => 
     for (const slot of personSlots) {
       assert.ok(inside([slot.x, footAnchor.y], groundPolygon),
         `${scene.id}: vị trí "${slot.id}" không đứng trên mặt đất`);
+      const halfFootprint = Math.max(0.025, scene.composition.personHeightRatio.preferred * 0.10);
+      for (const x of [slot.x - halfFootprint, slot.x + halfFootprint]) {
+        assert.ok(inside([x, footAnchor.y - 0.012], groundPolygon),
+          `${scene.id}: vị trí "${slot.id}" không đủ rộng cho hai chân/vạt áo`);
+      }
+      const zone = scene.composition.safeZone;
+      assert.ok(slot.x >= zone.x && slot.x <= zone.x + zone.width,
+        `${scene.id}: vị trí "${slot.id}" nằm ngoài safeZone`);
     }
   }
 });
@@ -215,8 +256,36 @@ test('scene: danh sách công khai không lộ đường dẫn đĩa', () => {
   }
 });
 
-test('scene: địa điểm chưa curate thì trả rỗng, không ghép bừa', () => {
-  assert.deepEqual(scenesForSpot('Kênh Otaru', 'Hokkaido'), []);
+test('scene: mọi địa điểm app/web đang hiển thị đều có góc chụp đã duyệt', () => {
+  // 35 địa điểm gốc + 2 bổ sung ngày 2026-09-02 (Đền Meiji Jingu, Cầu Kintai-kyō).
+  // Con số chốt cứng ở đây là cố ý: mất một địa điểm khỏi bảng phải làm đỏ test
+  // chứ không được lặng lẽ biến mất khỏi app.
+  assert.equal(SCENE_BACKGROUNDS.length, 37);
+  for (const spot of SCENE_BACKGROUNDS) {
+    const scenes = scenesForSpot(spot.place, spot.prefecture);
+    assert.ok(scenes.length >= 1, `${spot.place} (${spot.prefecture}) chưa có góc chụp`);
+    assert.ok(scenes.every((scene) => scene.personSlots.length >= 1), `${spot.place} thiếu vị trí đứng`);
+  }
+});
+
+test('scene: địa điểm không tồn tại vẫn trả rỗng, không ghép bừa', () => {
   assert.deepEqual(scenesForSpot('không tồn tại', 'không tồn tại'), []);
   assert.equal(findScene('khong-co'), null);
+});
+
+test('scene: có bốn dáng du lịch khác nhau và scene trả dáng đề xuất hợp ngữ cảnh', () => {
+  assert.deepEqual(TRAVEL_POSES.map((pose) => pose.id), [
+    'relaxed', 'stroll', 'three-quarter', 'greeting',
+  ]);
+  for (const pose of TRAVEL_POSES) {
+    assert.ok(pose.label.length >= 8, `${pose.id} thiếu nhãn rõ ràng`);
+    assert.ok(pose.description.length >= 40, `${pose.id} thiếu mô tả thực tế`);
+    assert.equal(findTravelPose(pose.id), pose);
+  }
+  assert.equal(findTravelPose('khong-co'), null);
+  assert.equal(recommendedTravelPose(findScene('fushimi-inari-senbon-torii')), 'greeting');
+  assert.equal(recommendedTravelPose(findScene('furano-farm-tomita-path')), 'stroll');
+  const publicScene = scenesForSpot('Đền Fushimi Inari', 'Kyoto')[0];
+  assert.equal(publicScene.poseOptions.length, 4);
+  assert.equal(publicScene.poseOptions.filter((pose) => pose.recommended).length, 1);
 });

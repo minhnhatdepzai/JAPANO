@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TextInput, Pressable, Alert, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,6 +132,16 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
   const [selectedVipLine,setSelectedVipLine]=useState('');
   const vipCartItem=cart.find(item=>cartLineKey(item)===selectedVipLine);
   const vipProduct=vipCartItem?PRODUCTS.find(product=>product.slug===vipCartItem.slug):null;
+  // Dòng hàng gửi cho máy chủ kiểm mã: voucher chỉ-đúng-một-sản-phẩm cần biết
+  // giỏ có gì. Tên sản phẩm chỉ dùng để hiển thị "mã này áp cho món nào".
+  const voucherLines = useMemo(
+    () => cart.map((it) => ({ slug: it.slug, colorName: it.color, size: it.size, qty: it.qty })),
+    [cart],
+  );
+  const voucherProductNames = useMemo(
+    () => Object.fromEntries(cart.map((it) => [it.slug, PRODUCTS.find((p) => p.slug === it.slug)?.name || it.slug])),
+    [cart],
+  );
   const voucherDisc = voucher ? voucherDiscountFor(cartSubtotal, voucher) : 0;
   const stripeDisc = pay === 'card' ? Math.round(cartSubtotal * 0.1) : 0;
   const vnpayDisc = pay === 'vnpay' ? Math.round(cartSubtotal * 0.05) : 0;
@@ -485,7 +495,7 @@ function CheckoutForm({stripeAvailable,confirmCardPayment,stripeSetupError='',vn
         </View>
 
         <Text style={st.grp}>MÃ GIẢM GIÁ</Text>
-        <VoucherField subtotal={cartSubtotal} voucher={voucher} onApply={setVoucher} onClear={clearVoucher} userId={user?.id} />
+        <VoucherField subtotal={cartSubtotal} items={voucherLines} productNames={voucherProductNames} voucher={voucher} onApply={setVoucher} onClear={clearVoucher} userId={user?.id} />
 
         <View style={st.sum}>
           <Row k="Tạm tính" v={money(cartSubtotal)} />
@@ -582,74 +592,74 @@ const st = StyleSheet.create({
   stepN:{ width:30, height:30, borderRadius:15, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:14, marginBottom:8 },
   lbl:{ fontFamily:F.bodyM, color:C.muted, fontSize:11, marginBottom:5 },
-  input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink, justifyContent:'center' },
-  dropdown:{ maxHeight:260, borderWidth:1, borderColor:C.primary, borderTopWidth:0, borderBottomLeftRadius:12, borderBottomRightRadius:12, overflow:'hidden', marginTop:-2, backgroundColor:'#fff' },
-  opt:{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:11, paddingHorizontal:12, borderTopWidth:1, borderTopColor:C.hair, backgroundColor:'#fff' },
+  input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:C.card, paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink, justifyContent:'center' },
+  dropdown:{ maxHeight:260, borderWidth:1, borderColor:C.primary, borderTopWidth:0, borderBottomLeftRadius:12, borderBottomRightRadius:12, overflow:'hidden', marginTop:-2, backgroundColor:C.card },
+  opt:{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:11, paddingHorizontal:12, borderTopWidth:1, borderTopColor:C.hair, backgroundColor:C.card },
   suggestInput:{flex:1,minHeight:46,fontFamily:F.body,fontSize:14,color:C.ink,paddingHorizontal:8},
   arrow:{width:42,height:42,alignItems:'center',justifyContent:'center'},
   countHint:{fontFamily:F.body,fontSize:9.5,color:C.muted},
   loadingText:{fontFamily:F.bodyM,fontSize:12,color:C.muted,textAlign:'center',padding:18},
   preview:{ backgroundColor:C.aiSoft, borderRadius:10, padding:10, marginTop:2 },
-  lockedAddr:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4, marginBottom:4 },
+  lockedAddr:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4, marginBottom:4 },
   changeAddr:{ fontFamily:F.bodyB, fontSize:11.5, color:C.ink },
   lockedName:{ fontFamily:F.bodyB, fontSize:13, color:C.ink, marginTop:6 },
   lockedLine:{ fontFamily:F.body, fontSize:12.5, color:C.muted, marginTop:2 },
-  pay:{ flexDirection:'row', alignItems:'center', gap:10, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, backgroundColor:'#fff', marginBottom:10 },
+  pay:{ flexDirection:'row', alignItems:'center', gap:10, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, backgroundColor:C.card, marginBottom:10 },
   radio:{ width:18, height:18, borderRadius:9, borderWidth:1.5, borderColor:C.line },
   radioOn:{ borderWidth:5, borderColor:C.primary },
-  vipBox:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:13,marginBottom:2},
-  vipBoxActive:{borderColor:C.ink,backgroundColor:C.washi2},
+  vipBox:{backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:16,padding:13,marginBottom:2},
+  vipBoxActive:{borderColor:C.inverseSurface,backgroundColor:C.washi2},
   vipLoading:{flexDirection:'row',alignItems:'center',gap:9,paddingVertical:5},
   vipHead:{flexDirection:'row',alignItems:'center',gap:10},
-  vipCrown:{width:38,height:38,borderRadius:12,backgroundColor:C.ink,alignItems:'center',justifyContent:'center'},
+  vipCrown:{width:38,height:38,borderRadius:12,backgroundColor:C.inverseSurface,alignItems:'center',justifyContent:'center'},
   vipTitle:{fontFamily:F.bodyB,fontSize:13.5,color:C.ink},
   vipHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
   vipExpiry:{fontFamily:F.bodyB,fontSize:9.5,color:C.onPrimary,backgroundColor:C.primary,borderRadius:999,paddingHorizontal:8,paddingVertical:5},
-  vipChoice:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginTop:9,backgroundColor:'#fff'},
-  vipChoiceOn:{borderColor:C.ink,backgroundColor:C.washi2},
+  vipChoice:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:10,marginTop:9,backgroundColor:C.card},
+  vipChoiceOn:{borderColor:C.inverseSurface,backgroundColor:C.washi2},
   vipProductName:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   vipSaving:{fontFamily:F.bodyB,fontSize:11.5,color:C.shu},
   vipSkip:{fontFamily:F.bodyM,fontSize:10.5,color:C.muted,textAlign:'center',marginTop:9},
   vipProgress:{height:8,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginTop:12},
-  vipProgressOn:{height:'100%',borderRadius:5,backgroundColor:C.ink},
+  vipProgressOn:{height:'100%',borderRadius:5,backgroundColor:C.inverseSurface},
   vipProgressText:{flexDirection:'row',justifyContent:'space-between',marginTop:5},
-  cardBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
+  cardBox:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
   paymentHeader:{ flexDirection:'row',alignItems:'center',gap:10,marginBottom:12 },
   paymentIcon:{ width:40,height:40,borderRadius:12,backgroundColor:C.primary,alignItems:'center',justifyContent:'center' },
   paymentHead:{ fontFamily:F.bodyB,fontSize:13.5,color:C.ink },
   paymentSub:{ fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2 },
-  securityBadge:{flexDirection:'row',alignItems:'center',gap:3,backgroundColor:'#E8F6EC',borderRadius:999,paddingHorizontal:7,paddingVertical:5},
+  securityBadge:{flexDirection:'row',alignItems:'center',gap:3,backgroundColor:C.okSoft,borderRadius:999,paddingHorizontal:7,paddingVertical:5},
   securityBadgeText:{fontFamily:F.bodyB,fontSize:8.5,color:'#166534'},
   stripeOffer:{ fontFamily:F.bodyB,fontSize:10.5,color:'#15803D',marginTop:2 },
   vnpayOffer:{ fontFamily:F.bodyB,fontSize:10.5,color:'#004993',marginTop:2 },
-  vnpayBox:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
+  vnpayBox:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:18, padding:14, marginBottom:14, shadowColor:'#000',shadowOffset:{width:0,height:5},shadowOpacity:.06,shadowRadius:12,elevation:2 },
   vnpayHint:{ fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:12 },
-  vnpayModal:{ flex:1, backgroundColor:'#fff', paddingTop:48 },
+  vnpayModal:{ flex:1, backgroundColor:C.card, paddingTop:48 },
   vnpayHeader:{ flexDirection:'row',alignItems:'center',gap:10,paddingHorizontal:16,paddingBottom:12,borderBottomWidth:1,borderBottomColor:C.line },
   vnpayHeaderT:{ fontFamily:F.bodyB,fontSize:15,color:C.ink },
   vnpayHeaderSub:{ fontFamily:F.body,fontSize:11,color:C.muted,marginTop:2 },
-  offerBox:{ flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginBottom:1 },
+  offerBox:{ flexDirection:'row',alignItems:'center',gap:7,backgroundColor:C.okSoft,borderRadius:10,padding:10,marginBottom:1 },
   offerText:{ flex:1,fontFamily:F.bodyB,fontSize:11.5,color:'#166534' },
   cardFieldLabel:{fontFamily:F.bodyX,fontSize:9,color:C.muted,letterSpacing:.9,marginTop:13,marginBottom:6},
   saveRow:{flexDirection:'row',alignItems:'flex-start',gap:10,backgroundColor:C.aiSoft,borderRadius:11,padding:12,marginTop:10},
-  saveBox:{width:20,height:20,borderRadius:5,borderWidth:1.5,borderColor:C.muted,alignItems:'center',justifyContent:'center',marginTop:1,backgroundColor:'#fff'},
+  saveBox:{width:20,height:20,borderRadius:5,borderWidth:1.5,borderColor:C.muted,alignItems:'center',justifyContent:'center',marginTop:1,backgroundColor:C.card},
   saveBoxOn:{backgroundColor:C.primary,borderColor:C.primary},
   saveTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},
   saveNote:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:3},
-  savedCard:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:11,marginBottom:8,backgroundColor:'#fff'},
+  savedCard:{flexDirection:'row',alignItems:'center',gap:9,borderWidth:1,borderColor:C.line,borderRadius:11,padding:11,marginBottom:8,backgroundColor:C.card},
   savedCardOn:{borderColor:C.primary,backgroundColor:C.washi2},
   savedCardT:{flex:1,fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
-  cardholderInput:{height:52,borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:'#fff',paddingHorizontal:14,fontFamily:F.bodyM,fontSize:14,color:C.ink,letterSpacing:.25},
-  cardFormShell:{height:200,borderWidth:1,borderColor:'transparent',borderRadius:13,backgroundColor:'#fff',overflow:'hidden'},
+  cardholderInput:{height:52,borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:C.card,paddingHorizontal:14,fontFamily:F.bodyM,fontSize:14,color:C.ink,letterSpacing:.25},
+  cardFormShell:{height:200,borderWidth:1,borderColor:'transparent',borderRadius:13,backgroundColor:C.card,overflow:'hidden'},
   cardFieldComplete:{borderColor:'#49A766'},
   cardForm:{width:'100%',height:200},
   secureHint:{flexDirection:'row',alignItems:'flex-start',gap:6,marginTop:8},
   secureHintText:{flex:1,fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted},
   voucherErr:{ fontFamily:F.body, fontSize:11.5, color:C.danger, marginTop:6 },
-  orderError:{ flexDirection:'row', gap:8, alignItems:'center', backgroundColor:'#FDEBEC', borderWidth:1, borderColor:'#E8B6BA', borderRadius:12, padding:11, marginTop:10 },
+  orderError:{ flexDirection:'row', gap:8, alignItems:'center', backgroundColor:C.dangerSoft, borderWidth:1, borderColor:'#E8B6BA', borderRadius:12, padding:11, marginTop:10 },
   orderErrorText:{ flex:1, fontFamily:F.bodyM, fontSize:11.5, lineHeight:16, color:C.danger },
-  stickyError:{flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#FDEBEC',borderWidth:1,borderColor:'#E8B6BA',borderRadius:10,paddingHorizontal:10,paddingVertical:8,marginBottom:8},
+  stickyError:{flexDirection:'row',alignItems:'center',gap:7,backgroundColor:C.dangerSoft,borderWidth:1,borderColor:'#E8B6BA',borderRadius:10,paddingHorizontal:10,paddingVertical:8,marginBottom:8},
   stickyErrorText:{flex:1,fontFamily:F.bodyB,fontSize:10.5,lineHeight:14,color:C.danger},
-  sum:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:6 },
+  sum:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:6 },
   sticky:{ position:'absolute', left:0, right:0, bottom:0, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
 });

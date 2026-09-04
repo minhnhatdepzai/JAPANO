@@ -327,6 +327,23 @@ test("store locator lists JAPANO QTSC9 and lazy-loads the supplied Google map", 
   console_.assertClean();
 });
 
+test("travel detail exposes curated ground slots and four AI poses", async ({ page }) => {
+  const console_ = watchConsole(page);
+  await gotoReady(page, "/du-lich-nhat-ban/jspot-kyoto-den-fushimi-inari");
+
+  await expect(page.getByText("Vị trí đứng an toàn")).toBeVisible();
+  await expect(page.getByText("Dáng chụp AI")).toBeVisible();
+  for (const label of ["Đứng thư giãn", "Bước dạo nhẹ", "Nghiêng 3/4"]) {
+    await expect(page.getByRole("button", { name: label })).toBeVisible();
+  }
+  const greeting = page.getByRole("button", { name: /Chào duyên dáng · hợp cảnh/ });
+  await expect(greeting).toBeVisible();
+  await expect(greeting).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Giữa lối" })).toHaveAttribute("aria-pressed", "true");
+  await expectNoHorizontalOverflow(page);
+  console_.assertClean();
+});
+
 // 11. 360 và 390 không tràn ngang và không có nút dưới 44x44.
 for (const width of [360, 390]) {
   test(`mobile ${width} has no horizontal overflow or tiny targets`, async ({ browser }) => {

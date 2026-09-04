@@ -282,29 +282,29 @@ const st = StyleSheet.create({
   errorText:{ fontFamily:F.body, fontSize:12.5, color:C.muted, textAlign:'center', marginTop:10, lineHeight:19 },
 
   overlay:{ position:'absolute', top:0, left:0, right:0, bottom:0, backgroundColor:'rgba(17,12,8,0.72)', alignItems:'center', justifyContent:'center', zIndex:50, paddingHorizontal:30 },
-  celebrateCard:{ backgroundColor:'#fff', borderRadius:22, padding:26, alignItems:'center', width:'100%', maxWidth:320 },
+  celebrateCard:{ backgroundColor:C.card, borderRadius:22, padding:26, alignItems:'center', width:'100%', maxWidth:320 },
   celebrateTitle:{ fontFamily:F.display, fontSize:20, color:C.sumi, marginTop:8, textAlign:'center' },
   celebrateSub:{ fontFamily:F.body, fontSize:12.5, lineHeight:19, color:C.muted, textAlign:'center', marginTop:8 },
   celebrateCode:{ fontFamily:F.displayX, fontSize:19, color:C.shu, letterSpacing:1.2, marginTop:14 },
   celebrateBtn:{ backgroundColor:C.primary, borderRadius:14, paddingVertical:12, paddingHorizontal:28, marginTop:18 },
 
-  newCardToast:{ position:'absolute', top:8, left:14, right:14, zIndex:40, flexDirection:'row', alignItems:'center', gap:11, backgroundColor:'#fff', borderRadius:16, padding:12, borderWidth:1, borderColor:C.primary,
+  newCardToast:{ position:'absolute', top:8, left:14, right:14, zIndex:40, flexDirection:'row', alignItems:'center', gap:11, backgroundColor:C.card, borderRadius:16, padding:12, borderWidth:1, borderColor:C.primary,
     shadowColor:'#000', shadowOpacity:0.18, shadowRadius:10, shadowOffset:{ width:0, height:5 }, elevation:8 },
   newCardLabel:{ fontFamily:F.bodyX, fontSize:10.5, color:C.ink },
   newCardTitle:{ fontFamily:F.bodyB, fontSize:13, color:C.ink, marginTop:1 },
-  hero:{ backgroundColor:C.sumi, borderRadius:18, padding:18, marginTop:6 },
+  hero:{ backgroundColor:C.inverseSurface, borderRadius:18, padding:18, marginTop:6 },
   eyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.2, color:'rgba(255,255,255,0.72)' },
   heroTitle:{ fontFamily:F.display, fontSize:20, lineHeight:28, color:'#fff', marginTop:6 },
   heroSub:{ fontFamily:F.body, fontSize:11.5, lineHeight:18, color:'rgba(255,255,255,0.70)', marginTop:9 },
 
-  progressCard:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:16, padding:16, marginTop:12 },
+  progressCard:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:16, padding:16, marginTop:12 },
   progressBig:{ fontFamily:F.displayX, fontSize:30, color:C.sumi },
   progressOf:{ fontFamily:F.display, fontSize:18, color:C.muted },
   progressLabel:{ fontFamily:F.bodyB, fontSize:12, color:C.ink, marginBottom:4 },
   track:{ height:9, borderRadius:5, backgroundColor:C.hair, overflow:'hidden', marginTop:10 },
   trackOn:{ height:'100%', borderRadius:5, backgroundColor:C.matcha },
 
-  voucherCard:{ backgroundColor:C.sumi, borderRadius:16, padding:16, marginTop:12 },
+  voucherCard:{ backgroundColor:C.inverseSurface, borderRadius:16, padding:16, marginTop:12 },
   voucherRow:{ flexDirection:'row', alignItems:'center', gap:8 },
   voucherTitle:{ fontFamily:F.bodyB, fontSize:13, color:'#fff', flex:1 },
   voucherCode:{ fontFamily:F.displayX, fontSize:22, color:C.card, letterSpacing:1.5, marginTop:10 },
@@ -312,7 +312,7 @@ const st = StyleSheet.create({
 
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:20, marginBottom:8 },
 
-  card:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:16, padding:14, marginBottom:10 },
+  card:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:16, padding:14, marginBottom:10 },
   cardLocked:{ backgroundColor:C.washi2, borderStyle:'dashed' },
   cardHead:{ flexDirection:'row', alignItems:'center', gap:11 },
   glyphWrap:{ width:42, height:42, borderRadius:12, alignItems:'center', justifyContent:'center' },

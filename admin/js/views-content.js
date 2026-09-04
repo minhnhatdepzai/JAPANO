@@ -217,9 +217,9 @@ function viewNotifications(){
 /* ================= CATEGORIES / VOUCHERS / BANNERS ================= */
 function viewCategories(){
   return `<div class="filters"><div class="hspace"></div><button class="btn p" onclick="A.addCategory()">${icon('add')}Thêm danh mục</button></div>
-  <div class="panel"><table class="tbl acts"><thead><tr><th>Danh mục</th><th>Kanji</th><th>Slug</th><th class="center">Sản phẩm</th><th></th></tr></thead>
+  <div class="panel"><div class="tablewrap"><table class="tbl acts"><thead><tr><th>Danh mục</th><th>Kanji</th><th>Slug</th><th class="center">Sản phẩm</th><th></th></tr></thead>
   <tbody>${DB.categories.map(c=>`<tr><td class="bold">${esc(c.name)}</td><td style="font-size:16px">${c.kanji||'—'}</td><td class="mono faint">${c.id}</td><td class="center">${DB.products.filter(p=>p.cat===c.id).length}</td>
-  <td class="right"><button class="iconbtn d" aria-label="Xoá danh mục ${esc(c.name)}" onclick="A.delCategory('${escJs(c.id)}')">${icon('trash-outline')}</button></td></tr>`).join('')}</tbody></table></div>`;}
+  <td class="right"><button class="iconbtn d" aria-label="Xoá danh mục ${esc(c.name)}" onclick="A.delCategory('${escJs(c.id)}')">${icon('trash-outline')}</button></td></tr>`).join('')}</tbody></table></div></div>`;}
 function voucherRow(v){
   const isFlag=v.source==='flagcard-collection';
   return `<tr><td class="bold mono">${v.code}</td><td class="bold">${v.type==='percent'?v.value+'%':money(v.value)}</td><td>${v.min?money(v.min):'—'}</td>

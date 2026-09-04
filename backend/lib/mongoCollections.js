@@ -494,6 +494,10 @@ function serializeState(stateInput) {
     { _id: 'flagcard_config', ...clone(state.flagcardConfig) },
     { _id: 'banners', items: clone(state.banners || []) },
     { _id: 'discount_rules', items: clone(state.discountRules || []) },
+    // Trọng số bộ xếp hạng gợi ý đã học được. Bốn con số + mốc thời gian, chỉ
+    // ghi tối đa 10 phút/lần — đây là dữ liệu cấu hình, không đáng một
+    // collection riêng (và thêm collection sẽ phá cổng ERD set(Atlas)==set(ERD)).
+    { _id: 'recsys_model', ...clone(state.recsysModel || {}) },
     // Dấu mốc lược đồ. Boot phải hỏi "database này đã chuẩn hoá chưa" bằng một
     // dấu mốc TƯỜNG MINH, chứ không bằng cách đếm một collection nào đó — xem
     // hasNormalizedStorage().
@@ -605,6 +609,7 @@ async function loadStateFromCollections(db) {
     // nhầm sẽ hồi sinh banner mà người vận hành vừa cố ý xoá.
     banners: embeddedList(settings, 'banners', reads.get('banners')),
     discountRules: embeddedList(settings, 'discount_rules', reads.get('discount_rules')),
+    recsysModel: settings.get('recsys_model') || null,
     products,
   };
   for (const [key, collection] of Object.entries(DIRECT_COLLECTIONS)) {

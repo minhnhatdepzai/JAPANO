@@ -4,8 +4,9 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
   const {
     read, update, ensureFlagcardState, reconcileFlagRewards, flagcardCollectionView,
     getOrCreateCollection, ensureRewardVoucher, validateVoucher, VIP_CONFIG, vipStatus,
-    requireSelfOrStaff, requireAdmin,
+    requireSelfOrStaff, requireAdmin, optionalAuth,
   } = ctx;
+  const { normalizedOrderItems } = require('./orders');
 
   // Bộ sưu tập Flagcard lịch sử + voucher cá nhân — voucher là tài sản có giá
   // trị thật nên chỉ chính chủ (hoặc nhân viên) mới được xem.
@@ -58,11 +59,25 @@ module.exports = function registerLoyaltyRoutes(api, ctx) {
     res.json({ ok: true, config: VIP_CONFIG, status: vipStatus(read(), userId) });
   });
 
-  api.post('/vouchers/validate', (req, res) => {
-    const result = validateVoucher(read(), {
+  /* Kiểm tra mã giảm giá trước khi đặt hàng.
+   *
+   * Ba thứ KHÔNG được tin từ client: chủ sở hữu voucher, giá sản phẩm và tạm
+   * tính. Danh tính lấy từ JWT (voucher cá nhân của người khác sẽ bị từ chối kể
+   * cả khi body ghi đúng userId của họ); giá được tính lại từ catalog máy chủ
+   * qua `normalizedOrderItems`.
+   *
+   * Guest vẫn dùng được mã công khai: `optionalAuth` không chặn, chỉ là voucher
+   * có `ownerUserId` sẽ không khớp.
+   */
+  api.post('/vouchers/validate', optionalAuth, (req, res) => {
+    const state = read();
+    const rawItems = Array.isArray(req.body?.items) ? req.body.items : null;
+    const items = rawItems ? normalizedOrderItems(state, rawItems) : null;
+    const result = validateVoucher(state, {
       code: req.body?.code,
-      userId: req.body?.userId,
-      subtotal: req.body?.subtotal,
+      userId: req.user?.id || '',
+      subtotal: items ? undefined : req.body?.subtotal,
+      items,
     });
     res.status(result.ok ? 200 : 400).json(result);
   });

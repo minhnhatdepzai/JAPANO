@@ -4,6 +4,7 @@ const { successfulLiveOrder } = require('../lib/orderStatus');
 const { resolveGarmentImage } = require('../lib/garmentImages');
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 const { runGpuJob, GpuJobCancelledError } = require('../lib/gpuArbiter');
+const { logger } = require('../lib/logger');
 const { FULFILLMENT_POLICY } = require('../lib/fulfillmentPolicy');
 const { hideProduct } = require('../lib/productLifecycle');
 
@@ -294,10 +295,30 @@ module.exports = function registerCatalogRoutes(api, ctx) {
     if (tryonGpuBusy()) {
       return res.json({ ok: true, cached: false, gpuBusy: true, ...fallbackProductDescription(product) });
     }
-    const imagePath = resolveGarmentImage(product.slug);
-    let description;
+
+    // KHÔNG bắt khách đợi vision model.
+    //
+    // Trước đây nhánh này `await` Qwen3-VL 8B với timeout 120 giây. Đo ngày
+    // 2026-09-02: 45/53 sản phẩm đang bán CHƯA có mô tả cache, nghĩa là 85% số
+    // lần mở trang sản phẩm đều rơi vào đường chờ đó — khối "GỢI Ý PHONG CÁCH
+    // JAPANO" quay vòng rất lâu, và còn phải xếp hàng sau job thử đồ trong GPU
+    // arbiter.
+    //
+    // Giờ trả ngay mô tả suy từ dữ liệu sản phẩm (tên, danh mục, tag, bảng màu —
+    // đây là nội dung thật, không phải chỗ giữ chỗ), rồi sinh bản vision ở nền.
+    // Lượt xem sau sẽ thấy bản vision từ cache.
+    void ensureVisionDescription(product);
+    res.json({ ok: true, cached: false, pending: true, ...fallbackProductDescription(product) });
+  });
+
+  // Sinh mô tả vision ở nền, mỗi sản phẩm chỉ một lượt tại một thời điểm.
+  const visionInFlight = new Set();
+  async function ensureVisionDescription(product) {
+    if (visionInFlight.has(product.slug)) return;
+    visionInFlight.add(product.slug);
     try {
-      description = await runGpuJob('vision', ({ signal }) => analyzeProductImage({
+      const imagePath = resolveGarmentImage(product.slug);
+      const description = await runGpuJob('vision', ({ signal }) => analyzeProductImage({
         product,
         imagePath,
         ollamaUrl: OLLAMA_URL,
@@ -305,25 +326,21 @@ module.exports = function registerCatalogRoutes(api, ctx) {
         timeoutMs: Number(process.env.JAPANO_VISION_TIMEOUT_MS || 120000),
         signal,
       }), { productId: product.slug });
+      update((next) => {
+        const row = { productId: product.slug, generatedAt: Date.now(), description };
+        const index = next.aiDescriptions.findIndex((item) => item.productId === product.slug);
+        if (index >= 0) next.aiDescriptions[index] = row; else next.aiDescriptions.push(row);
+        return next;
+      });
     } catch (error) {
-      if (error instanceof GpuJobCancelledError || error?.code === 'GPU_JOB_CANCELLED') {
-        return res.json({
-          ok: true,
-          cached: false,
-          gpuBusy: true,
-          ...fallbackProductDescription(product),
-        });
+      // Job bị huỷ vì người dùng bấm thử đồ là chuyện bình thường, không phải lỗi.
+      if (!(error instanceof GpuJobCancelledError) && error?.code !== 'GPU_JOB_CANCELLED') {
+        logger.warn(`[ai-description] nền thất bại cho ${product.slug}: ${error.message}`);
       }
-      throw error;
+    } finally {
+      visionInFlight.delete(product.slug);
     }
-    update((next) => {
-      const row = { productId: product.slug, generatedAt: Date.now(), description };
-      const index = next.aiDescriptions.findIndex((item) => item.productId === product.slug);
-      if (index >= 0) next.aiDescriptions[index] = row; else next.aiDescriptions.push(row);
-      return next;
-    });
-    res.json({ ok: true, cached: false, ...description });
-  });
+  }
 
   return { publicProduct, ensureCloudProductImagesFresh };
 };

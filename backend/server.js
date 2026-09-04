@@ -20,6 +20,7 @@ const {
   getRelatedProducts,
   getRecommendationDiagnostics,
   invalidateCache,
+  persistRankWeights,
 } = require('./lib/recommend');
 const { buildAnalytics } = require('./lib/analytics');
 const { composeOutfit, todaysOutfit, adviseSize, styleRecommendation } = require('./lib/outfit');
@@ -191,7 +192,7 @@ const ctx = {
   buildAnalytics,
   vietnamUnits, getRelatedProducts, getRecommendationDiagnostics, analyzeProductImage, fallbackProductDescription, ensureVietnameseProductDescription,
   moderateReview, REVIEW_MODERATION_MODEL,
-  getHomeRecommendations, runPillow, analyzePortrait, buildGoalPlan, enhanceCoaching,
+  getHomeRecommendations, persistRankWeights, runPillow, analyzePortrait, buildGoalPlan, enhanceCoaching,
   composeOutfit, todaysOutfit, adviseSize, styleRecommendation, chatbot,
   runAccessoryPipeline, accessoryKind,
   requireAuth, optionalAuth, requireAdmin, requireSuperAdmin, requireStaff, requireSelfOrStaff, roleAtLeast,

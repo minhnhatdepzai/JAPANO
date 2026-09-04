@@ -501,8 +501,26 @@ const badge=(m,k)=>`<span class="bdg ${m[k]?.c||'b-gray'}"><span class="d"></spa
 /* Ảnh sản phẩm có thể chết (URL cũ, tệp đã xoá trên Cloudinary). Không để
  * trình duyệt vẽ biểu tượng ảnh vỡ giữa bảng: bắt onerror rồi đổi sang ô màu
  * kèm kanji danh mục — đúng thứ vẫn hiện khi sản phẩm chưa có ảnh nào. */
-const thumbFallback=(p)=>`this.outerHTML='<div class=\'thumb\' style=\'background:${esc(p.colorHex||'#8A2F26')}\'>${esc(catKanji(p.cat))}</div>'`;
-const thumb=(p,cls='')=>{const src=(p.images||[])[0]||p.image;return src?`<img class="thumb ${cls}" src="${esc(src)}" alt="${esc(p.name||'Sản phẩm')}" loading="lazy" onerror="${thumbFallback(p)}">`:`<div class="thumb ${cls}" style="background:${p.colorHex||'#8A2F26'}">${esc(catKanji(p.cat))}</div>`;};
+/* .thumb đặt cứng color:#fff, nhưng nền là colorHex CỦA SẢN PHẨM — màu do người
+ * nhập hàng chọn. Trên các màu sáng (cam #F58220 đo được 2,59:1, vàng, be) chữ
+ * trắng gần như không đọc nổi và trượt chuẩn AA 4,5:1. Chọn mực theo độ sáng
+ * tương đối của nền, đúng công thức WCAG, thay vì luôn dùng trắng. */
+const readableInk=(hex)=>{
+  const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'').trim());
+  if(!m)return '#fff';
+  const n=parseInt(m[1],16);
+  const lin=(c)=>{c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4);};
+  const L=.2126*lin(n>>16&255)+.7152*lin(n>>8&255)+.0722*lin(n&255);
+  // Tương phản với trắng so với tương phản với mực đậm của trang; chọn bên cao hơn.
+  return (1.05/(L+.05)) >= ((L+.05)/.05) ? '#fff' : '#141310';
+};
+const thumbFallback=(p)=>`this.outerHTML='<div class=\'thumb\' style=\'background:${esc(p.colorHex||'#8A2F26')};color:${esc(readableInk(p.colorHex||'#8A2F26'))}\'>${esc(catKanji(p.cat))}</div>'`;
+/* width/height nội tại: .thumb luôn được CSS ép về 38x44 (hoặc 36x36 khi .sq),
+ * nhưng nếu thẻ <img> không khai báo kích thước thì trình duyệt không biết chỗ
+ * trống cần chừa trước lúc ảnh tải xong — 48 ảnh trong bảng đơn hàng đều thiếu,
+ * nên mỗi lần dựng lại bảng là một lần layout nhảy. Tỉ lệ do CSS quyết định,
+ * hai thuộc tính này chỉ để trình duyệt đặt chỗ trước. */
+const thumb=(p,cls='')=>{const src=(p.images||[])[0]||p.image;const sq=/\bsq\b/.test(cls);const w=sq?36:38,h=sq?36:44;return src?`<img class="thumb ${cls}" src="${esc(src)}" alt="${esc(p.name||'Sản phẩm')}" width="${w}" height="${h}" loading="lazy" onerror="${thumbFallback(p)}">`:`<div class="thumb ${cls}" style="background:${p.colorHex||'#8A2F26'};color:${readableInk(p.colorHex||'#8A2F26')}">${esc(catKanji(p.cat))}</div>`;};
 
 /* ---------- toast / modal ---------- */
 function toast(msg,type='ok'){const t=document.createElement('div');t.className='toast '+type;

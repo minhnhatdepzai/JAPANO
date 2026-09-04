@@ -174,14 +174,14 @@ const FieldRow = ({ label, value, onChangeText, placeholder, keyboardType }: { l
 );
 
 const st = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, marginBottom: 12 },
+  card: { backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, marginBottom: 12 },
   badge: { backgroundColor: C.primary, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
   action: { fontFamily: F.bodyB, fontSize: 12, color: C.ink },
   emptyText: { fontFamily: F.body, fontSize: 12.5, lineHeight: 19, color: C.muted, marginBottom: 14 },
   lbl: { fontFamily: F.bodyM, color: C.muted, fontSize: 11, marginBottom: 5 },
-  input: { minHeight: 48, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', paddingHorizontal: 13, fontFamily: F.body, fontSize: 14, color: C.ink, justifyContent: 'center' },
+  input: { minHeight: 48, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor:C.card, paddingHorizontal: 13, fontFamily: F.body, fontSize: 14, color: C.ink, justifyContent: 'center' },
   suggestInput: { flex: 1, minHeight: 46, fontFamily: F.body, fontSize: 14, color: C.ink, paddingHorizontal: 8 },
   arrow: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
-  dropdown: { maxHeight: 260, borderWidth: 1, borderColor: C.primary, borderTopWidth: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', marginTop: -2, backgroundColor: '#fff' },
-  opt: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 12, borderTopWidth: 1, borderTopColor: C.hair, backgroundColor: '#fff' },
+  dropdown: { maxHeight: 260, borderWidth: 1, borderColor: C.primary, borderTopWidth: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden', marginTop: -2, backgroundColor:C.card },
+  opt: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, paddingHorizontal: 12, borderTopWidth: 1, borderTopColor: C.hair, backgroundColor:C.card },
 });

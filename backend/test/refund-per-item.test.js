@@ -139,3 +139,76 @@ test('đơn chỉ được coi là "đã trả hàng" khi mọi sản phẩm đ�
   });
   assert.equal(allItemsRefunded(state, order(state)), true);
 });
+
+// ---------------------------------------------------------------------------
+// R8/R9/M3 — hoàn tiền phải tôn trọng phạm vi voucher.
+//
+// Voucher chỉ giảm đúng một món thì trả món KHÁC không được bị trừ, và trả
+// đúng món được giảm chỉ được hoàn số THỰC TRẢ sau giảm giá. Trước đây khoản
+// giảm luôn được chia đều theo giá trị dòng hàng nên cả hai trường hợp đều sai.
+function scopedState() {
+  return {
+    returnRequests: [],
+    orders: [{
+      id: 'o2',
+      code: 'JP002',
+      userId: 'u1',
+      items: [
+        { productId: 'ao-muc-tieu', slug: 'ao-muc-tieu', name: 'Áo mục tiêu', colorName: 'Sumi', size: 'M', qty: 1, price: 100000 },
+        { productId: 'quan-khac', slug: 'quan-khac', name: 'Quần khác', colorName: 'Đen', size: 'L', qty: 1, price: 900000 },
+      ],
+      subtotal: 1000000,
+      discount: 30000,
+      voucherDiscount: 30000,
+      vipDiscount: 0,
+      voucherScope: 'product',
+      voucherAllocations: [{ key: 'ao-muc-tieu|Sumi|M', qty: 1, lineValue: 100000, amount: 30000 }],
+      ship: 30000,
+      total: 1000000,
+      status: 'completed',
+    }],
+  };
+}
+
+test('R8 · trả món KHÔNG được voucher giảm thì không bị trừ khoản giảm nào', () => {
+  const state = scopedState();
+  const target = state.orders[0];
+  const selection = resolveSelection(state, target, [{ slug: 'quan-khac', colorName: 'Đen', size: 'L', qty: 1 }], httpError);
+  const refund = computeRefund(state, target, selection);
+  assert.equal(refund.breakdown.voucherDiscountAllocated, 0, 'món này chưa từng được giảm');
+  assert.equal(refund.breakdown.voucherAllocationSource, 'line-allocations');
+  assert.equal(refund.amount, 900000, 'hoàn đủ giá món, không bị chia đều khoản giảm');
+});
+
+test('R9 · trả món ĐƯỢC giảm chỉ hoàn đúng số thực trả sau giảm giá', () => {
+  const state = scopedState();
+  const target = state.orders[0];
+  const selection = resolveSelection(state, target, [{ slug: 'ao-muc-tieu', colorName: 'Sumi', size: 'M', qty: 1 }], httpError);
+  const refund = computeRefund(state, target, selection);
+  assert.equal(refund.breakdown.voucherDiscountAllocated, 30000);
+  assert.equal(refund.amount, 70000, '100.000₫ trừ 30.000₫ đã được giảm');
+});
+
+test('trả một phần số lượng của dòng chỉ có MỘT đơn vị được giảm', () => {
+  const state = scopedState();
+  const target = state.orders[0];
+  target.items[0].qty = 2;
+  target.subtotal = 1100000;
+  // Voucher vẫn chỉ giảm một đơn vị.
+  const selection = resolveSelection(state, target, [{ slug: 'ao-muc-tieu', colorName: 'Sumi', size: 'M', qty: 1 }], httpError);
+  const refund = computeRefund(state, target, selection);
+  assert.equal(refund.breakdown.voucherDiscountAllocated, 30000, 'trả 1/1 đơn vị được giảm thì trừ trọn khoản giảm');
+  assert.equal(refund.amount, 70000);
+  assert.ok(refund.amount <= 100000, 'không bao giờ hoàn quá số thực trả của dòng');
+});
+
+test('M3 · đơn cũ không có phân bổ vẫn hoàn tiền được bằng cách chia theo tỉ lệ', () => {
+  const state = scopedState();
+  const target = state.orders[0];
+  delete target.voucherAllocations;
+  const selection = resolveSelection(state, target, [{ slug: 'quan-khac', colorName: 'Đen', size: 'L', qty: 1 }], httpError);
+  const refund = computeRefund(state, target, selection);
+  assert.equal(refund.breakdown.voucherAllocationSource, 'pro-rata-fallback');
+  assert.equal(refund.breakdown.voucherDiscountAllocated, 27000, '30.000 × 900.000/1.000.000');
+  assert.equal(refund.amount, 873000, 'không crash, giữ nguyên hành vi cũ cho dữ liệu cũ');
+});

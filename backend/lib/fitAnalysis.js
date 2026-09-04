@@ -134,7 +134,9 @@ function messageFor({ verdict, chosen, recommended, severity }) {
     case 'tight':
       return `${pair} Ảnh đang mô phỏng độ căng của vải và đường may bị kéo.`.trim();
     case 'very_tight':
-      return `${pair} Vải được mô phỏng căng mạnh${severity >= 0.85 ? ' và có thể bục một đoạn đường may' : ''}.`.trim();
+      // Ngưỡng trong câu thông báo phải khớp ngưỡng thật của hiệu ứng, nếu không
+      // khách thấy đường may bục trên ảnh mà chữ lại không nói gì.
+      return `${pair} Vải được mô phỏng căng mạnh${severity >= envNumber('JAPANO_FIT_TEAR_MIN_SEVERITY', 0.60) ? ' và có bục một đoạn đường may vì cỡ này quá chật so với cơ thể' : ''}.`.trim();
     case 'slightly_loose':
       return `${pair} Ảnh mô phỏng form hơi rộng, có thêm nếp gấp.`.trim();
     case 'loose':
@@ -266,7 +268,15 @@ function analyzeFit(options = {}) {
   }
 
   const verdict = verdictFor(direction, severity);
-  const tearMinSeverity = envNumber('JAPANO_FIT_TEAR_MIN_SEVERITY', 0.85);
+  // 0.85 gần như không bao giờ chạm tới: đo trên đường cong severity thì 55kg
+  // chọn S mới 0.34 và 70kg chọn S là 0.66 — cả hai đều dưới ngưỡng, nên người
+  // mặc chật thật vẫn nhận về một tấm ảnh phẳng lì như vừa in. 0.60 cho đúng
+  // nhóm "chật rõ rệt" thấy được hệ quả, mà vẫn nằm trong `very_tight`.
+  //
+  // Ba tầng chặn phía dưới KHÔNG đổi: không rách ở thân dưới, không rách với đồ
+  // bơi/crop/short, và vết bục vẫn đi qua applySafeSeamSplit rồi mới tới cổng độ
+  // che phủ — tức là rách để thấy chật, không phải rách để hở vùng nhạy cảm.
+  const tearMinSeverity = envNumber('JAPANO_FIT_TEAR_MIN_SEVERITY', 0.60);
   const tearAllowed = verdict === 'very_tight' && severity >= tearMinSeverity && envFlag('JAPANO_FIT_TEAR_ENABLED');
   // Ba tầng chặn độc lập cho hiệu ứng bục đường may:
   //   1. Quần/váy — vùng đó rất dễ tạo ảnh phản cảm.
@@ -313,9 +323,16 @@ function analyzeFit(options = {}) {
  * tiết kiệm: ảnh vừa size thì không refine, lệch nhẹ chỉ refine khi severity
  * vượt ngưỡng cấu hình, lệch nhiều thì bắt buộc.
  */
-function fitRefinePlan(fit) {
+function fitRefinePlan(fit, options = {}) {
   const disabled = !envFlag('JAPANO_FIT_EFFECT_ENABLED');
   if (disabled) return { shouldRefine: false, mandatory: false, reason: 'disabled_by_env' };
+  // `qualityMode=fast` phải thật sự là một lượt VTON. Trước đây fast chỉ giảm
+  // số bước FASHN nhưng vẫn có thể nối thêm cả lượt FLUX 30–60 giây, khiến một
+  // ca hơi rộng trên Redmi lên 117 giây tổng. API vẫn có thể yêu cầu mô phỏng
+  // fit chi tiết bằng `fitEffect:true`; mặc định fast ưu tiên trả ảnh trước.
+  if (options.fast === true) {
+    return { shouldRefine: false, mandatory: false, reason: 'fast_preview_single_pass' };
+  }
   if (!fit || fit.verdict === 'unknown' || fit.verdict === 'good') {
     return { shouldRefine: false, mandatory: false, reason: 'fit_good' };
   }
@@ -323,8 +340,23 @@ function fitRefinePlan(fit) {
   if (fit.verdict === 'very_tight' || fit.verdict === 'very_loose') {
     return { shouldRefine: true, mandatory: true, reason: 'extreme_fit' };
   }
-  if (fit.verdict === 'tight' || fit.verdict === 'loose') {
-    return { shouldRefine: true, mandatory: false, reason: 'clear_fit_gap' };
+  if (['slightly_tight', 'tight', 'slightly_loose', 'loose'].includes(fit.verdict)) {
+    // Lượt fit-refine là MỘT LƯỢT FLUX ĐẦY ĐỦ. Đo qua storefront ngày
+    // 2026-09-02: lượt không refine mất 24,5-28,3 giây, lượt có refine lên
+    // 45,3-64,1 giây — tức là nó chiếm 20-35 giây, phần lớn thời gian chờ của
+    // khách. Trong khi ca kích hoạt điển hình lại rất nhẹ: log thật cho
+    // `looseness=0.39, tension=0`, tức chỉ hơi rủ.
+    //
+    // Chênh lệch nhẹ thì không đáng nửa phút chờ. Phải gồm cả
+    // `slightly_tight`/`slightly_loose`: đây chính là ca thực tế L so với M có
+    // severity=0.39 từng vô tình lọt xuống ngưỡng 0.35 và làm Redmi chờ 65s ở
+    // backend cho một lượt FLUX gần như không nhìn thấy khác biệt.
+    // `very_tight`/`very_loose` ở nhánh trên vẫn luôn được dựng vì đó mới là
+    // thứ khách cần thấy.
+    const clearGapMin = envNumber('JAPANO_FIT_REFINE_CLEAR_GAP_MIN_SEVERITY', 0.55);
+    return fit.severity >= clearGapMin
+      ? { shouldRefine: true, mandatory: false, reason: 'clear_fit_gap' }
+      : { shouldRefine: false, mandatory: false, reason: 'fit_gap_too_subtle_for_cost' };
   }
   return fit.severity >= minSeverity
     ? { shouldRefine: true, mandatory: false, reason: 'severity_above_threshold' }

@@ -56,6 +56,56 @@ function buildSavingPlan(input, product) {
   };
 }
 
+/* Sàng lọc an toàn tối thiểu trước khi đưa ra bất kỳ tốc độ giảm cân nào.
+ *
+ * Bốn câu, mỗi câu chỉ nhận 'yes' | 'no' | 'prefer_not_to_say'. Bất kỳ câu nào
+ * KHÔNG phải 'no' đều đưa người dùng sang hướng dẫn chung — không tốc độ giảm
+ * cân, không estimatedWeeks.
+ *
+ * Trạng thái do BACKEND tự suy ra. `safetyStatus` client gửi lên bị bỏ qua
+ * hoàn toàn: nó là kết luận, không phải dữ liệu đầu vào.
+ *
+ * Chỉ lưu trạng thái tổng hợp + thời điểm + phiên bản policy. Không lưu chi
+ * tiết bệnh lý, không lưu tài liệu y tế.
+ */
+const SAFETY_POLICY_VERSION = 'health-screening-1';
+const SAFETY_ANSWERS = ['yes', 'no', 'prefer_not_to_say'];
+const SAFETY_QUESTIONS = Object.freeze([
+  { id: 'pregnancy', label: 'Bạn đang mang thai hoặc trong giai đoạn hậu sản?' },
+  { id: 'conditionOrMedication', label: 'Bạn có bệnh nền hoặc đang dùng thuốc ảnh hưởng tới cân nặng?' },
+  { id: 'eatingDisorderHistory', label: 'Bạn từng có tiền sử rối loạn ăn uống?' },
+  { id: 'underCare', label: 'Bạn đang được bác sĩ hoặc chuyên gia dinh dưỡng điều trị?' },
+]);
+
+function normalizeSafetyAnswer(value) {
+  const raw = String(value ?? '').trim().toLowerCase();
+  return SAFETY_ANSWERS.includes(raw) ? raw : null;
+}
+
+function evaluateSafetyScreening(input, now = Date.now()) {
+  const source = input?.safetyScreening && typeof input.safetyScreening === 'object' ? input.safetyScreening : {};
+  const answers = {};
+  let answered = 0;
+  let flagged = 0;
+  for (const question of SAFETY_QUESTIONS) {
+    const answer = normalizeSafetyAnswer(source[question.id]);
+    answers[question.id] = answer;
+    if (answer) answered += 1;
+    if (answer && answer !== 'no') flagged += 1;
+  }
+  const complete = answered === SAFETY_QUESTIONS.length;
+  const cleared = complete && flagged === 0;
+  return {
+    policyVersion: SAFETY_POLICY_VERSION,
+    screenedAt: complete ? now : null,
+    complete,
+    cleared,
+    flaggedCount: flagged,
+    answers,
+    provenance: 'self-reported',
+  };
+}
+
 function buildWellnessPlan(input) {
   const age = Number(input.age) || 0;
   const heightCm = Number(input.heightCm) || 0;
@@ -74,11 +124,15 @@ function buildWellnessPlan(input) {
   const lossKg = Math.max(0, currentWeightKg - targetWeightKg);
   const gainKg = Math.max(0, targetWeightKg - currentWeightKg);
   const under18 = age > 0 && age < 18;
+  const screening = evaluateSafetyScreening(input);
+  // Chưa trả lời đủ, hoặc có bất kỳ câu nào là "có"/"không muốn nói", đều chặn
+  // lộ trình giảm cân. Đây là quyết định tất định của backend.
+  const screeningBlocks = !screening.cleared;
   const unsafe = under18 || (targetBmi > 0 && targetBmi < 18.5) || (currentBmi > 0 && currentBmi < 18.5);
   const weeklyRateKg = lossKg > 0 ? 0.5 : 0;
   let status = 'wellness-maintenance';
   if (!validInputs) status = under18 ? 'needs-professional-guidance' : 'insufficient-input';
-  else if (unsafe) status = 'needs-professional-guidance';
+  else if (unsafe || screeningBlocks) status = 'needs-professional-guidance';
   else if (healthGoal === 'gradual-loss' && lossKg >= 0.5) status = 'gradual-loss';
   else if (gainKg >= 0.5) status = 'gradual-gain';
 
@@ -96,21 +150,36 @@ function buildWellnessPlan(input) {
     status,
     healthGoal,
     activityLevel,
+    // Mọi số đo ở đây do người dùng tự khai, không phải kết quả đo hay xác minh.
+    provenance: 'self-reported',
+    verified: false,
+    safetyScreening: screening,
+    safetyQuestions: SAFETY_QUESTIONS.map((question) => ({ ...question, options: SAFETY_ANSWERS })),
     currentBmi: currentBmi ? rounded(currentBmi, 1) : null,
     targetBmi: targetBmi ? rounded(targetBmi, 1) : null,
     targetWeightKg: targetWeightKg || null,
     lossKg: rounded(lossKg, 1),
     gainKg: rounded(gainKg, 1),
-    weeklyRateKg: unsafe || status !== 'gradual-loss' ? null : weeklyRateKg,
-    estimatedWeeks: status === 'gradual-loss' ? Math.max(2, Math.ceil(lossKg / weeklyRateKg)) : null,
+    weeklyRateKg: unsafe || screeningBlocks || status !== 'gradual-loss' ? null : weeklyRateKg,
+    estimatedWeeks: status === 'gradual-loss' && !screeningBlocks ? Math.max(2, Math.ceil(lossKg / weeklyRateKg)) : null,
     activityMinutesPerWeek: 150,
     strengthDaysPerWeek: 2,
+    // Thứ tự thông điệp theo mức hành động được: số đo sai thì sửa số đo trước,
+    // vì không có câu trả lời sàng lọc nào cứu được chiều cao 80 cm.
     safetyMessage: !validInputs && !under18
       ? 'Hãy nhập tuổi 18–100, chiều cao 120–230 cm và cân nặng 25–300 kg. JAPANO chưa tạo kế hoạch khi dữ liệu thiếu hoặc ngoài phạm vi kiểm tra.'
+      : !screening.complete
+      ? 'Hãy trả lời đủ 4 câu sàng lọc an toàn trước khi JAPANO đưa ra lộ trình. Thông tin do bạn tự khai, không phải xác minh y tế.'
+      : screeningBlocks
+      ? 'Dựa trên phần bạn tự khai, JAPANO chỉ đưa hướng dẫn chung và không tạo tốc độ giảm cân. Hãy trao đổi với bác sĩ hoặc chuyên gia dinh dưỡng phù hợp.'
       : unsafe
       ? 'JAPANO không tạo lộ trình giảm cân cho người dưới 18 tuổi hoặc mục tiêu BMI dưới 18,5. Hãy trao đổi với bác sĩ/chuyên gia dinh dưỡng.'
       : 'Đây là lộ trình thói quen chung, không phải chẩn đoán hay đơn điều trị. Nếu có bệnh nền, mang thai, tiền sử rối loạn ăn uống hoặc đang dùng thuốc, hãy hỏi chuyên gia y tế.',
-    habits: !validInputs ? [
+    habits: screeningBlocks && screening.complete ? [
+      'Ưu tiên ngủ đủ, ăn uống đều đặn và vận động nhẹ theo khả năng.',
+      'Trao đổi với bác sĩ/chuyên gia trước khi đặt mục tiêu thay đổi cân nặng.',
+      'Không nhịn ăn, không dùng thuốc giảm cân không được kê đơn.',
+    ] : !validInputs ? [
       'Bổ sung đủ thông tin hợp lệ trước khi tạo lộ trình cá nhân.',
       'Trong lúc chờ, ưu tiên ngủ đủ, bữa ăn đều và vận động nhẹ theo khả năng.',
     ] : unsafe ? [
@@ -189,6 +258,9 @@ function sanitizeCoaching(raw, fallback) {
   if (!raw || typeof raw !== 'object') return fallback;
   const text = JSON.stringify(raw).toLowerCase();
   if (/(nhịn ăn|bỏ bữa|thuốc giảm cân|gây nôn|thuốc xổ|tự trừng phạt|xấu hổ|trang trí nhà|không gian sống)/i.test(text)) return fallback;
+  // Model không được tự đặt ra tốc độ giảm cân hay mốc thời gian: những con số
+  // đó là kết luận tất định của buildWellnessPlan.
+  if (/\d[\d.,]*\s*(kg\s*\/?\s*(tuần|tuan|week)|kg mỗi tuần|kg một tuần)/i.test(text)) return fallback;
   const arr = (value, fallbackValue) => {
     if (!Array.isArray(value)) return fallbackValue;
     const cleaned = value.map((item) => String(item || '').trim().slice(0, 260)).filter(Boolean).slice(0, 5);
@@ -207,6 +279,12 @@ function sanitizeCoaching(raw, fallback) {
 
 async function enhanceCoaching({ product, saving, wellness, goalType = 'shopping', ollamaUrl, model = 'qwen2.5:7b', timeoutMs = 45000 }) {
   const fallback = baseCoaching(product, wellness, goalType);
+  // LLM chỉ được viết lại lời động viên. Khi trạng thái an toàn tất định đã kết
+  // luận "cần chuyên gia", không gọi model nữa: một câu viết hay có thể vô tình
+  // gợi ý tốc độ giảm cân mà chính hệ thống vừa từ chối đưa ra.
+  if (goalType === 'health' && ['needs-professional-guidance', 'insufficient-input'].includes(String(wellness?.status))) {
+    return fallback;
+  }
   const prompt = [
     'Bạn là coach hành vi hỗ trợ người trưởng thành xây thói quen lành mạnh và tiết kiệm tiền.',
     'Dùng SMART goals, implementation intentions (nếu-thì), habit stacking và self-compassion.',
@@ -245,4 +323,14 @@ function buildGoalPlan(input, product) {
   };
 }
 
-module.exports = { buildSavingPlan, buildWellnessPlan, buildGoalPlan, enhanceCoaching, baseCoaching };
+module.exports = {
+  buildSavingPlan,
+  buildWellnessPlan,
+  buildGoalPlan,
+  enhanceCoaching,
+  baseCoaching,
+  evaluateSafetyScreening,
+  SAFETY_QUESTIONS,
+  SAFETY_ANSWERS,
+  SAFETY_POLICY_VERSION,
+};

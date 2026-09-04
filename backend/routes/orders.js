@@ -2,6 +2,7 @@
 // và routes/paymentsVnpay.js nhưng đều gọi chung createOrderInState ở đây) +
 // tra cứu đơn. Cũng export các helper cho 2 module thanh toán dùng lại.
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
+const { reserve: reserveVoucher, hasCapacity } = require('../lib/voucherLifecycle');
 const { findPayment, findReturnRequest } = require('../lib/paymentLookup');
 const { findVariant, unitPrice } = require('../lib/pricing');
 
@@ -160,7 +161,9 @@ function makeCreateOrderInState({ httpError, validateVoucher, vipDiscountForSele
     const method = String(options.paymentMethod || b.paymentMethod || 'COD');
     const provider = paymentProviderOf(method);
     const promo = PAYMENT_PROMOS[provider] || null;
-    const voucherResult = b.voucherCode ? validateVoucher(s, { code: b.voucherCode, userId, subtotal }) : null;
+    // Truyền cả DÒNG HÀNG đã chuẩn hoá từ catalog server, không chỉ subtotal:
+    // voucher phạm vi sản phẩm phải biết giỏ có gì mới tính đúng được.
+    const voucherResult = b.voucherCode ? validateVoucher(s, { code: b.voucherCode, userId, subtotal, items }) : null;
     if (b.voucherCode && !voucherResult?.ok) throw httpError(400, voucherResult?.message || 'Voucher không hợp lệ.');
     const voucherDiscount = Number(voucherResult?.discount || 0);
     const paymentDiscount = promo ? Math.round(subtotal * (promo.percent / 100)) : 0;
@@ -207,9 +210,22 @@ function makeCreateOrderInState({ httpError, validateVoucher, vipDiscountForSele
     };
     if (voucherResult?.voucher) {
       const voucher = s.vouchers.find((item) => item.code === voucherResult.voucher.code);
-      voucher.used = (Number(voucher.used) || 0) + 1;
-      const redemption = { id: `redeem-${order.id}`, code: voucher.code, userId, orderId: order.id, discount: voucherDiscount, redeemedAt: now };
-      s.voucherRedemptions.push(redemption);
+      // GIỮ CHỖ, chưa tiêu. `voucher.used` chỉ tăng khi tiền thực sự về
+      // (COD hoàn thành, hoặc callback thanh toán báo paid) — xem
+      // lib/voucherLifecycle.js. Trước đây cộng ngay ở đây nên thanh toán thất
+      // bại hay huỷ đơn đều làm khách mất trắng lượt dùng.
+      order.voucherAllocations = voucherResult.allocations || [];
+      order.voucherScope = voucherResult.scope || 'order';
+      order.voucherEligibleSubtotal = Number(voucherResult.eligibleSubtotal || 0);
+      const redemption = reserveVoucher(s, {
+        voucher,
+        userId,
+        orderId: order.id,
+        discount: voucherDiscount,
+        eligibleSubtotal: voucherResult.eligibleSubtotal,
+        allocations: voucherResult.allocations,
+        scope: voucherResult.scope,
+      }, now);
       order.voucherRedemption = redemption;
     }
     s.orders.push(order);

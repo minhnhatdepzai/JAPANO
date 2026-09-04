@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { ResizeMode, Video } from 'expo-av';
 import { Screen, Header, Btn } from '../components/ui';
 import { useCatalog } from '../lib/data';
-import { Product } from '../lib/catalog';
+import { getVariantStock, Product, variantPrice } from '../lib/catalog';
 import { analyzeBodyFromPhoto, BodyAnalysis, FitEffect, generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit, TryOnSafety, TryOnSafetyError } from '../lib/api';
 import { BODY_ESTIMATOR_GENERATION, DEFAULT_STYLE_PROFILE, loadStyleProfile, SavedStyleProfile, saveStyleProfile } from '../lib/profile';
 import { saveMediaToLibrary, shareMedia } from '../lib/media';
@@ -35,6 +35,13 @@ const MOTION_ICONS:Record<string, keyof typeof Ionicons.glyphMap>={
 const one=(value:string|string[]|undefined)=>Array.isArray(value)?value[0]:value;
 const dataUri=(asset:ImagePicker.ImagePickerAsset)=>`data:${asset.mimeType||'image/jpeg'};base64,${asset.base64||''}`;
 const DEFAULT_TRYON_MESSAGE='Chọn ảnh rõ và đủ sáng để hệ thống ghép trang phục tự nhiên hơn.';
+const DEFAULT_TRYON_COLORS=[
+  {name:'Mực',hex:'#24211F'},
+  {name:'Đỏ son',hex:'#A53A32'},
+  {name:'Chàm',hex:'#334C73'},
+  {name:'Xanh trà',hex:'#69856D'},
+  {name:'Vàng kim',hex:'#B89443'},
+];
 // Bảy mức vừa vặn — cùng từ vựng với backend (lib/fitAnalysis.js) để nhãn trên
 // ảnh, tiêu đề banner và hiệu ứng AI luôn nói cùng một chuyện.
 const FIT_UI:Record<string,{title:string;badge:string;tone:'good'|'tight'|'loose'}>={
@@ -93,9 +100,31 @@ export default function TryOn() {
   const product=products.find(p=>p.slug===productId||p.id===productId)||products[0];
   const tryonFocus=product?.garmentType==='bikini_two_piece'?'swimwear':'tryon';
   const gpuScreenActive=useGpuFocus(tryonFocus,'browse');
-  // Không tự bịa S–5XL cho sản phẩm thiếu size. Trường hợp đó vẫn được thử ảnh,
-  // nhưng backend trả fit=unknown thay vì giả định size M.
-  const tryonSizes=product.sizes?.filter(Boolean)||[];
+  const colorOptions=useMemo(()=>{
+    const seen=new Set<string>();
+    const options:{name:string;hex?:string;stock:number|null}[]=[];
+    if(product.variants?.length){
+      for(const variant of product.variants){
+        const name=String(variant.colorName||'Mặc định');
+        if(seen.has(name))continue;
+        seen.add(name);
+        const sameColor=product.variants.filter(item=>String(item.colorName||'Mặc định')===name);
+        options.push({
+          name,
+          hex:variant.colorHex,
+          stock:sameColor.reduce((sum,item)=>sum+Math.max(0,Number(item.stock)||0),0),
+        });
+      }
+      return options;
+    }
+    for(const item of product.colors||[]){
+      const name=typeof item==='string'?item:String(item.name||'Mặc định');
+      if(seen.has(name))continue;
+      seen.add(name);
+      options.push({name,hex:typeof item==='string'?undefined:item.hex,stock:null});
+    }
+    return options.length?options:DEFAULT_TRYON_COLORS.map(item=>({...item,stock:null}));
+  },[product.slug,product.colors,product.variants]);
   const accessories=useMemo(()=>products.filter(p=>p.cat==='phu-kien'),[products]);
   // Phải khớp accessoryKind() ở backend/lib/accessory.js — nhãn hiện ở đây
   // chính là điểm neo mà pipeline sẽ dùng, nên hai bên lệch nhau là nói dối
@@ -176,8 +205,26 @@ export default function TryOn() {
   },[chosenGarments]);
   const [photo,setPhoto]=useState<PickedImage|null>(null);
   const [profile,setProfile]=useState<SavedStyleProfile>(DEFAULT_STYLE_PROFILE);
-  const [size,setSize]=useState(one(params.size)||tryonSizes[0]||'');
-  const [color,setColor]=useState(one(params.color)||'Mực');
+  const [color,setColor]=useState(one(params.color)||colorOptions.find(item=>(item.stock??1)>0)?.name||colorOptions[0]?.name||'Mặc định');
+  const sizeOptions=useMemo(()=>{
+    if(product.variants?.length){
+      const bySize=new Map<string,number>();
+      for(const variant of product.variants){
+        if(String(variant.colorName||'Mặc định')!==color)continue;
+        const variantSize=String(variant.size||'M');
+        bySize.set(variantSize,(bySize.get(variantSize)||0)+Math.max(0,Number(variant.stock)||0));
+      }
+      return [...bySize.entries()].map(([value,stock])=>({value,stock}));
+    }
+    return (product.sizes?.filter(Boolean)||[]).map(value=>({value,stock:null as number|null}));
+  },[product.slug,product.sizes,product.variants,color]);
+  // Không tự bịa S–5XL cho sản phẩm thiếu size. Trường hợp đó vẫn được thử ảnh,
+  // nhưng backend trả fit=unknown thay vì giả định size M.
+  const tryonSizes=sizeOptions.map(item=>item.value);
+  const selectableSizes=sizeOptions.filter(item=>item.stock===null||item.stock>0).map(item=>item.value);
+  const [size,setSize]=useState(one(params.size)||selectableSizes[0]||tryonSizes[0]||'');
+  const currentStock=size?getVariantStock(product,color,size):null;
+  const selectedPrice=variantPrice(product,color,size||undefined);
   const [selectedAccessories,setSelectedAccessories]=useState<string[]>([]);
   const [showAccessories,setShowAccessories]=useState(false);
   const [result,setResult]=useState('');
@@ -197,6 +244,14 @@ export default function TryOn() {
   const [error,setError]=useState('');
   const [warning,setWarning]=useState('');
   const [loading,setLoading]=useState(false);
+  const [loadingSeconds,setLoadingSeconds]=useState(0);
+  const [loadingMode,setLoadingMode]=useState<'outfit'|'accessory'>('outfit');
+  const loadingPulse=useRef(new Animated.Value(0)).current;
+  const [resultRecipe,setResultRecipe]=useState('');
+  const [appliedAccessoryIds,setAppliedAccessoryIds]=useState<string[]>([]);
+  // Món quần áo ĐÃ có trong ảnh kết quả hiện tại. Thêm một món ở vùng cơ thể
+  // còn trống thì mặc tiếp lên chính ảnh này, không dựng lại từ ảnh gốc.
+  const [appliedGarmentIds,setAppliedGarmentIds]=useState<string[]>([]);
   const [sizeLoading,setSizeLoading]=useState(false);
   const [motionPresets,setMotionPresets]=useState<MotionPreset[]>(DEFAULT_MOTIONS);
   const [motionReady,setMotionReady]=useState(false);
@@ -211,9 +266,31 @@ export default function TryOn() {
   const [sharingVideo,setSharingVideo]=useState(false);
 
   useEffect(()=>{
-    if(tryonSizes.length&&!tryonSizes.includes(size))setSize(tryonSizes[0]);
-    if(!tryonSizes.length&&size)setSize('');
-  },[product.slug,tryonSizes.join('|')]);
+    if(!colorOptions.some(item=>item.name===color)){
+      setColor(colorOptions.find(item=>(item.stock??1)>0)?.name||colorOptions[0]?.name||'Mặc định');
+      return;
+    }
+    const selected=sizeOptions.find(item=>item.value===size);
+    if(sizeOptions.length&&(!selected||selected.stock===0))setSize(selectableSizes[0]||sizeOptions[0].value);
+    if(!sizeOptions.length&&size)setSize('');
+  },[product.slug,color,colorOptions.map(item=>`${item.name}:${item.stock}`).join('|'),sizeOptions.map(item=>`${item.value}:${item.stock}`).join('|')]);
+
+  useEffect(()=>{
+    if(!loading){setLoadingSeconds(0);loadingPulse.stopAnimation();loadingPulse.setValue(0);return;}
+    // Dùng đồng hồ thật thay vì cộng 1 mỗi tick: Android thường tạm dừng JS
+    // timer khi app ở nền. Lúc quay lại, con số phải nhảy tới đúng thời gian đã
+    // trôi qua, không được giả vờ job cũng bị đứng theo giao diện.
+    const startedAt=Date.now();
+    const updateClock=()=>setLoadingSeconds(Math.floor((Date.now()-startedAt)/1000));
+    updateClock();
+    const timer=setInterval(updateClock,1000);
+    const animation=Animated.loop(Animated.sequence([
+      Animated.timing(loadingPulse,{toValue:1,duration:850,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),
+      Animated.timing(loadingPulse,{toValue:0,duration:850,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),
+    ]));
+    animation.start();
+    return()=>{clearInterval(timer);animation.stop();};
+  },[loading,loadingPulse]);
 
   useEffect(()=>{void loadStyleProfile().then(saved=>{
     setProfile(saved);
@@ -232,6 +309,8 @@ export default function TryOn() {
     setExtraGarments([]);
     setShowGarments(false);
     setError('');
+    setResult('');setResultRecipe('');setAppliedAccessoryIds([]);setSelectedAccessories([]);
+    setMotionVideo('');setMotionPanel(false);setMotionError('');
   },[product.slug]);
   useEffect(()=>{
     let active=true;
@@ -259,7 +338,7 @@ export default function TryOn() {
     if(!asset)return;
     if(!asset.base64){setError('Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');return;}
     const picked={uri:asset.uri,base64:dataUri(asset)};
-    setPhoto(picked);setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);setWarning('');setMotionVideo('');setMotionPanel(false);setMotionError('');
+    setPhoto(picked);setResult('');setResultRecipe('');setAppliedAccessoryIds([]);setResultEngine('');setSizeFit(null);setFitEffect(null);setWarning('');setMotionVideo('');setMotionPanel(false);setMotionError('');
     // Mỗi ảnh mới có thể là một người khác. Mặc định đọc vóc dáng từ chính ảnh
     // này; số đo thật đã lưu chỉ dùng khi khách chủ động chuyển sang nhập tay.
     setBodyAnalysis(null);setBodyError('');setUsingEstimate(true);
@@ -311,7 +390,7 @@ export default function TryOn() {
           void saveStyleProfile(next);
           return next;
         });
-        if(analysis.recommendedSize&&tryonSizes.includes(analysis.recommendedSize)){
+        if(analysis.recommendedSize&&selectableSizes.includes(analysis.recommendedSize)){
           // Một chạm: ảnh mới tự đổi sang size backend vừa khuyến nghị. Khách vẫn
           // có thể bấm size khác để xem hiệu ứng chật/rộng sau đó.
           setSize(analysis.recommendedSize);
@@ -356,7 +435,7 @@ export default function TryOn() {
     setProfile(next);
     setUsingEstimate(true);
     await saveStyleProfile(next);
-    if(bodyAnalysis?.recommendedSize)setSize(bodyAnalysis.recommendedSize);
+    if(bodyAnalysis?.recommendedSize&&selectableSizes.includes(bodyAnalysis.recommendedSize))setSize(bodyAnalysis.recommendedSize);
     setMessage(`Đã dùng số liệu AI ước lượng${bodyAnalysis?.recommendedSize?` — gợi ý kích cỡ ${bodyAnalysis.recommendedSize}`:''}. Bạn có thể sửa lại bằng số đo thật bất cứ lúc nào.`);
   };
 
@@ -382,35 +461,80 @@ export default function TryOn() {
     setSizeLoading(true);setError('');
     const ideal=localSize(effectiveMeasurement('height'),effectiveMeasurement('weight'));
     const order=['S','M','L','XL','XXL','XXXL','4XL','5XL'];
-    const fallback=tryonSizes.length
-      ? [...tryonSizes].sort((a,b)=>Math.abs(order.indexOf(a)-order.indexOf(ideal))-Math.abs(order.indexOf(b)-order.indexOf(ideal)))[0]
+    const fallback=selectableSizes.length
+      ? [...selectableSizes].sort((a,b)=>Math.abs(order.indexOf(a)-order.indexOf(ideal))-Math.abs(order.indexOf(b)-order.indexOf(ideal)))[0]
       : '';
     try{
       const saved=await saveStyleProfile(profile);
       const advice=await getSizeAdvice({productId:product.slug,profile:saved,selectedSize:size});
-      const next=advice.size||fallback;setSize(next);setMessage(advice.advice||`Theo số đo đã nhập, kích cỡ ${next} là lựa chọn gần nhất.`);
+      const next=selectableSizes.includes(advice.size)?advice.size:fallback;setSize(next);setMessage(advice.advice||`Theo số đo đã nhập, kích cỡ ${next} là lựa chọn gần nhất còn hàng.`);
     }catch(e:any){setSize(fallback);setMessage(`Tạm tính theo chiều cao và cân nặng: kích cỡ ${fallback}. ${e?.message||''}`.trim());}
     finally{setSizeLoading(false);}
   };
 
   const clearGeneratedResult=(nextMessage='Đã thay đổi lựa chọn. Bấm Tạo ảnh thử đồ để tạo kết quả mới.')=>{
     setResult('');setResultEngine('');setWarning('');setSizeFit(null);setFitEffect(null);setSafety(null);setSafetyError(null);
+    setResultRecipe('');setAppliedAccessoryIds([]);setAppliedGarmentIds([]);
     setMotionVideo('');setMotionPanel(false);setMotionError('');
     setMessage(nextMessage);
+  };
+  /* "Công thức nền" của ảnh kết quả: sản phẩm gốc + màu + size.
+   *
+   * Món phối thêm KHÔNG nằm trong công thức này, vì thêm một món ở vùng cơ thể
+   * còn trống là việc mặc tiếp lên ảnh hiện có — giống hệt cách ghép phụ kiện.
+   * Đổi màu/size/sản phẩm gốc mới là đổi nền và bắt buộc dựng lại từ ảnh gốc.
+   */
+  const outfitRecipeFor=(chosenSize=size)=>JSON.stringify({
+    base:product.slug,color,size:chosenSize,
+  });
+  const resolveAppliedAccessoryIds=(requested:string[],reported:string[])=>{
+    const normalized=new Set(reported.map(value=>value.trim().toLocaleLowerCase('vi-VN')));
+    return requested.filter(slug=>{
+      const item=accessories.find(candidate=>candidate.slug===slug);
+      return normalized.has(slug.toLocaleLowerCase('vi-VN'))
+        ||Boolean(item&&normalized.has(item.name.toLocaleLowerCase('vi-VN')));
+    });
+  };
+  const selectSize=(value:string)=>{
+    const option=sizeOptions.find(item=>item.value===value);
+    if(option?.stock===0)return;
+    if(value===size)return;
+    setSize(value);
+    clearGeneratedResult(`Đã chọn cỡ ${value}. Bấm Tạo ảnh thử đồ để xem độ vừa vặn.`);
+  };
+  const selectColor=(value:string)=>{
+    const option=colorOptions.find(item=>item.name===value);
+    if(option?.stock===0||value===color)return;
+    const candidates=(product.variants||[]).filter(item=>String(item.colorName||'Mặc định')===value);
+    const currentSize=candidates.find(item=>String(item.size||'M')===size&&Math.max(0,Number(item.stock)||0)>0);
+    const firstAvailable=candidates.find(item=>Math.max(0,Number(item.stock)||0)>0);
+    setColor(value);
+    if(!currentSize&&firstAvailable)setSize(String(firstAvailable.size||'M'));
+    clearGeneratedResult(`Đã chọn màu ${value}. Bấm Tạo ảnh thử đồ để tạo kết quả mới.`);
   };
   const toggleAccessory=(slug:string)=>{
     if(loading)return;
     if(selectedAccessories.includes(slug)){
-      clearGeneratedResult();
       setSelectedAccessories(old=>old.filter(x=>x!==slug));
+      if(appliedAccessoryIds.includes(slug)){
+        clearGeneratedResult('Phụ kiện này đã nằm trong ảnh. Để bỏ món đó, hệ thống sẽ tạo lại từ ảnh gốc ở lượt kế tiếp.');
+      }else{
+        setMessage('Đã bỏ phụ kiện chưa ghép; ảnh hiện tại vẫn được giữ nguyên.');
+      }
       return;
     }
     if(selectedAccessories.length>=3){
       Alert.alert('Tối đa 3 phụ kiện','Hãy bỏ một món đang chọn trước. Giới hạn này giúp AI giữ đúng vị trí và không trả ảnh phụ kiện dán thô.');
       return;
     }
-    clearGeneratedResult();
     setSelectedAccessories(old=>[...old,slug]);
+    const item=accessories.find(candidate=>candidate.slug===slug);
+    if(result&&resultRecipe===outfitRecipeFor()){
+      setMotionVideo('');setMotionPanel(false);setMotionError('');
+      setMessage(`Đã chọn ${item?.name||'phụ kiện'}. Bấm tạo để ghép tiếp lên chính ảnh vừa tạo, không mặc lại quần áo từ đầu.`);
+    }else{
+      setMessage(`Đã chọn ${item?.name||'phụ kiện'}. Phụ kiện sẽ được ghép sau bước thử quần áo.`);
+    }
   };
   // Fast Refresh có thể giữ state 4 món từ phiên bản cũ. Tự thu về giới hạn
   // mới và xóa kết quả cũ để nút tạo luôn gửi payload hợp lệ.
@@ -446,6 +570,12 @@ export default function TryOn() {
     if(extraGarments.includes(slug)){
       setExtraGarments(old=>old.filter(x=>x!==slug));
       setError('');
+      if(appliedGarmentIds.includes(slug)){
+        // Không "cởi" được một món đã nằm trong ảnh ghép: phải dựng lại từ đầu.
+        clearGeneratedResult('Món này đã nằm trong ảnh. Để bỏ nó, hệ thống sẽ dựng lại từ ảnh gốc ở lượt kế tiếp.');
+      }else{
+        setMessage('Đã bỏ món chưa mặc; ảnh hiện tại vẫn được giữ nguyên.');
+      }
       return;
     }
     const next=[...extraGarments,slug].slice(-2);
@@ -457,6 +587,16 @@ export default function TryOn() {
     }
     setExtraGarments(next);
     setError('');
+    // Ảnh đang có vẫn đúng nền (cùng sản phẩm gốc, màu, size) thì GIỮ LẠI và
+    // mặc tiếp món mới lên chính nó. Trước đây bước này xoá ảnh và bắt chạy lại
+    // toàn bộ từ ảnh gốc, vừa mất kết quả cũ vừa tốn thêm cả lượt GPU.
+    if(result&&resultRecipe===outfitRecipeFor()){
+      setMotionVideo('');setMotionPanel(false);setMotionError('');
+      const item=products.find(candidate=>candidate.slug===slug);
+      setMessage(`Đã chọn ${item?.name||'món phối'}. Bấm tạo để mặc tiếp lên chính ảnh vừa tạo, không dựng lại từ ảnh gốc.`);
+      return;
+    }
+    clearGeneratedResult('Đã thêm một món phối. Bấm Tạo ảnh thử đồ để tạo cả bộ.');
   };
 
   const needsAdultConsent=useMemo(
@@ -466,6 +606,7 @@ export default function TryOn() {
 
   const run=async()=>{
     if(!photo){Alert.alert('Thiếu ảnh người','Hãy chụp ảnh hoặc chọn ảnh có sẵn để thử đồ.');return;}
+    if(currentStock===0){setError(`Màu ${color}, cỡ ${size} hiện đã hết hàng. Hãy chọn biến thể còn hàng trước khi tạo ảnh.`);return;}
     if(needsAdultConsent&&!adultConsent){
       // Không gửi ảnh đi khi chưa có xác nhận — ảnh không rời máy vô ích.
       setSafetyError({code:'ADULT_CONSENT_REQUIRED',
@@ -473,24 +614,66 @@ export default function TryOn() {
       return;
     }
     if(outfitConflict){setShowGarments(true);setError(`${outfitConflict} Hãy bỏ món bị trùng rồi tạo lại ảnh.`);return;}
-    const pickedNames=accessories.filter(item=>selectedAccessories.includes(item.slug)).map(item=>item.name);
-    setLoading(true);setError('');setWarning('');setMessage(`Đang tạo ảnh nét bằng GPU (thường 30–60 giây): nhận diện đúng người, mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, rồi ghép ${pickedNames.join(', ')}`:''} và kiểm tra lại mặt, cơ thể, độ nét…`);
-    // Nếu khách bấm tạo ngay khi CPU còn phân tích ảnh, chờ chính promise đó
-    // thay vì để /tryon chạy lại pose/body lần hai. Kết quả size vừa có được áp
-    // ngay cho request hiện tại, không phụ thuộc setState kịp render hay chưa.
-    const analysisForRequest=bodyAnalysisTask.current
-      ? await bodyAnalysisTask.current.catch(()=>null)
+    const pendingAccessories=selectedAccessories.filter(slug=>!appliedAccessoryIds.includes(slug));
+    const removedAccessories=appliedAccessoryIds.filter(slug=>!selectedAccessories.includes(slug));
+    // Món quần áo chưa nằm trong ảnh (bỏ qua sản phẩm gốc — nó luôn là nền).
+    const pendingGarments=chosenGarments
+      .filter(item=>item.slug!==product.slug&&!appliedGarmentIds.includes(item.slug))
+      .map(item=>item.slug);
+    const removedGarments=appliedGarmentIds.filter(slug=>!chosenGarments.some(item=>item.slug===slug));
+    // Nối tiếp khi: ảnh hiện có đúng NỀN (sản phẩm gốc + màu + size), còn món
+    // mới cần mặc/ghép, và không bỏ đi món nào đã nằm trong ảnh.
+    const continueFromResult=Boolean(
+      result
+      &&resultRecipe===outfitRecipeFor()
+      &&(pendingAccessories.length||pendingGarments.length)
+      &&!removedAccessories.length
+      &&!removedGarments.length,
+    );
+    const requestedAccessories=continueFromResult?pendingAccessories:selectedAccessories;
+    const pickedNames=accessories.filter(item=>requestedAccessories.includes(item.slug)).map(item=>item.name);
+    const pendingGarmentNames=chosenGarments.filter(item=>pendingGarments.includes(item.slug)).map(item=>item.name);
+    setLoadingMode(continueFromResult&&!pendingGarments.length?'accessory':'outfit');
+    // Reset ngay ở đúng thời điểm bấm tạo. Không chờ effect của lượt trước,
+    // nếu không thao tác "Tạo lại" thật nhanh có thể kế thừa số giây cũ.
+    setLoadingSeconds(0);setLoading(true);setError('');setWarning('');
+    setMessage(continueFromResult
+      ? `Đang ${pendingGarmentNames.length?`mặc tiếp ${pendingGarmentNames.join(', ')}`:''}${pendingGarmentNames.length&&pickedNames.length?' và ':''}${pickedNames.length?`ghép ${pickedNames.join(', ')}`:''} lên chính ảnh vừa tạo; không dựng lại từ ảnh gốc.`
+      : `Đang tạo ảnh nét bằng GPU (một món thường 20–40 giây): nhận diện đúng người, mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, rồi ghép ${pickedNames.join(', ')}`:''} và kiểm tra lại mặt, cơ thể, độ nét…`);
+    // Bắt đầu làm nóng FASHN song song với phân tích vóc dáng CPU.
+    // Cold-start vì thế không cộng nối tiếp vào thời gian người dùng chờ.
+    const focusReady=reportGpuFocus(tryonFocus);
+    // Phân tích cơ thể CPU trên Redmi có thể mất 30–45 giây. Nó hữu ích cho gợi
+    // ý size nhưng không được chặn cả lượt thử đồ: chờ tối đa đúng giai đoạn
+    // "kiểm tra ảnh" 4,5 giây, sau đó cho FASHN chạy và để phân tích hoàn tất
+    // nền. Lượt kế tiếp sẽ dùng cache vừa có; không bịa số đo khi chưa kịp có.
+    const analysisForRequest=continueFromResult
+      ? bodyAnalysis
+      : bodyAnalysisTask.current
+      ? await Promise.race([
+          bodyAnalysisTask.current.catch(()=>null),
+          new Promise<null>(resolve=>setTimeout(()=>resolve(null),4_500)),
+        ])
       : bodyAnalysis;
     const automaticSize=analysisForRequest?.recommendedSize;
-    const requestSize=automaticSize&&tryonSizes.includes(automaticSize)?automaticSize:size;
+    const requestSize=automaticSize&&selectableSizes.includes(automaticSize)?automaticSize:size;
     if(requestSize!==size)setSize(requestSize);
-    await reportGpuFocus(tryonFocus);
+    await focusReady;
     // Đánh dấu "đang chạy" để tín hiệu focus nền không huỷ mất tác vụ này khi
     // màn hình tự tắt hoặc người dùng kéo thanh thông báo (xem lib/useGpuFocus).
     beginGpuJob();
     try{
-      const saved=await saveStyleProfile(profile);
-      const output=await generateTryOn({
+      const saved=continueFromResult?profile:await saveStyleProfile(profile);
+      const output=await generateTryOn(continueFromResult?{
+        // Chỉ gửi món MỚI và dùng ảnh kết quả hiện tại làm ảnh người. Backend
+        // vì thế chỉ mặc/ghép phần còn thiếu thay vì dựng lại cả bộ từ đầu:
+        // với phụ kiện là đường accessory-only, với quần áo là đúng một lượt
+        // FASHN cho vùng cơ thể còn trống.
+        personImageBase64:result,
+        productId:pendingGarments[0]||requestedAccessories[0],
+        productIds:[...pendingGarments,...requestedAccessories],
+        color,size:requestSize,qualityMode:'fast',skipBodyAnalysis:true,
+      }:{
         personImageBase64:photo.base64,
         productId:product.slug,
         productIds:chosenGarments.map(item=>item.slug),
@@ -499,28 +682,51 @@ export default function TryOn() {
         // Backend mới là nơi quyết định; đây chỉ là xác nhận của người dùng.
         adultConsent,
         measurementMode:usingEstimate?'image':'user',
-        qualityMode:'balanced',
+        // 16 bước CUDA + upscale 1280 px: benchmark thật 22–23 giây/món
+        // khi model sẵn, trong khi preview trên điện thoại vẫn đủ nét.
+        qualityMode:'fast',
         bodyAnalysisCache:analysisForRequest||undefined,
-        skipBodyAnalysis:Boolean(analysisForRequest),
+        // Mobile đã chạy cùng worker ở nền. Nếu 4,5 giây chưa có kết quả thì
+        // backend không được chạy lại tuần tự và cộng thêm 30–45 giây; fit trả
+        // unknown cho lượt này, đúng hơn việc bịa số đo hoặc bắt khách chờ.
+        skipBodyAnalysis:true,
       });
       if(!output.imageUrl)throw new Error(output.message||'Backend chưa trả ảnh kết quả.');
       setResult(output.imageUrl);setResultEngine(output.engine||'ai-gateway');setMessage(output.message);
+      setResultRecipe(outfitRecipeFor(requestSize));
+      const appliedNow=resolveAppliedAccessoryIds(requestedAccessories,output.appliedAccessories);
+      setAppliedAccessoryIds(continueFromResult
+        ? [...new Set([...appliedAccessoryIds,...appliedNow])]
+        : appliedNow);
+      // Món quần áo coi như đã mặc khi backend không báo bỏ qua nó.
+      const skipped=new Set(output.skippedGarments.map(value=>value.trim().toLocaleLowerCase('vi-VN')));
+      const garmentsNowApplied=(continueFromResult?pendingGarments:chosenGarments.filter(item=>item.slug!==product.slug).map(item=>item.slug))
+        .filter(slug=>{
+          const item=products.find(candidate=>candidate.slug===slug);
+          return !skipped.has(slug.toLocaleLowerCase('vi-VN'))&&!(item&&skipped.has(item.name.toLocaleLowerCase('vi-VN')));
+        });
+      setAppliedGarmentIds(continueFromResult
+        ? [...new Set([...appliedGarmentIds,...garmentsNowApplied])]
+        : garmentsNowApplied);
       setWarning(output.warning
         || (output.skippedAccessories.length?`Chưa ghép tự nhiên được phụ kiện: ${output.skippedAccessories.join(', ')}. Ảnh quần áo sạch đã được giữ lại.`:'')
         || (output.skippedGarments.length?`Chưa ghép được: ${output.skippedGarments.join(', ')}.`:''));
-      setSizeFit(output.sizeFit&&output.sizeFit.verdict!=='unknown'?output.sizeFit:null);
-      setFitEffect(output.fitEffect||null);
-      setSafety(output.safety||null);
+      if(!continueFromResult){
+        setSizeFit(output.sizeFit&&output.sizeFit.verdict!=='unknown'?output.sizeFit:null);
+        setFitEffect(output.fitEffect||null);
+        setSafety(output.safety||null);
+      }
       setSafetyError(null);
       if(output.bodyAnalysis)setBodyAnalysis(current=>({...(current||{} as BodyAnalysis),...output.bodyAnalysis!}));
       setMotionVideo('');setMotionError('');
-      Alert.alert(
+      if(!continueFromResult)Alert.alert(
         '✦ Làm ảnh thử đồ sống động?',
         'Bạn có muốn dùng AI local để nhân vật đi, xoay, nhảy hoặc khoe dáng với bộ đồ vừa thử không?',
         [{text:'Để sau',style:'cancel'},{text:'Chọn chuyển động',onPress:()=>setMotionPanel(true)}],
       );
     }catch(e:any){
-      setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);
+      // Nối tiếp mà hỏng thì GIỮ NGUYÊN ảnh cũ — khách không mất kết quả đã có.
+      if(!continueFromResult){setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);setResultRecipe('');setAppliedAccessoryIds([]);setAppliedGarmentIds([]);}
       if(e instanceof TryOnSafetyError){
         // Lỗi an toàn hiển thị riêng, không lẫn vào lỗi kỹ thuật.
         setSafetyError({code:e.code,message:e.message});
@@ -585,13 +791,34 @@ export default function TryOn() {
 
   const display=result?{uri:result}:photo?{uri:photo.uri}:product.images[0];
   const flowStep=result?3:photo?2:1;
+  const pendingAccessoryCount=selectedAccessories.filter(slug=>!appliedAccessoryIds.includes(slug)).length;
+  const pendingGarmentCount=chosenGarments.filter(item=>item.slug!==product.slug&&!appliedGarmentIds.includes(item.slug)).length;
+  const willContinueResult=Boolean(result&&resultRecipe===outfitRecipeFor()&&(pendingAccessoryCount||pendingGarmentCount));
+  // Năm giây đầu là kiểm tra ảnh đầu vào, không tính nhập nhằng vào thời gian
+  // sinh ảnh. Khi qua mốc này bộ đếm AI mới bắt đầu từ 0 để khách biết chính
+  // xác phần model mất bao lâu, kể cả khi họ tạm chuyển sang ứng dụng khác.
+  const checkingInput=loadingSeconds<5;
+  const aiSeconds=Math.max(0,loadingSeconds-5);
+  const loadingStage=checkingInput
+    ? 'Đang kiểm tra ảnh đầu vào'
+    : loadingMode==='accessory'
+      ? aiSeconds<17?'Đang xác định vị trí và ghép phụ kiện'
+        :'Đang làm phụ kiện tự nhiên và kiểm tra ảnh'
+      : aiSeconds<11?'Đang chuẩn bị trang phục và giữ khuôn mặt'
+        :aiSeconds<30?'AI đang mặc trang phục lên ảnh'
+        :'Đang kiểm tra độ nét, cơ thể và vùng an toàn';
+  const loadingClock=checkingInput
+    ? `Kiểm tra ảnh · còn ${Math.max(1,5-loadingSeconds)} giây`
+    : `Thời gian xử lý AI · ${aiSeconds} giây`;
+  const loadingScale=loadingPulse.interpolate({inputRange:[0,1],outputRange:[.9,1.08]});
+  const loadingOpacity=loadingPulse.interpolate({inputRange:[0,1],outputRange:[.55,1]});
   return (
     <Screen>
       <Header title="Thử đồ thông minh" />
       <ScrollView contentContainerStyle={{paddingHorizontal:18,paddingBottom:28}} keyboardShouldPersistTaps="handled">
         <View style={st.chip}>
           <SmartImage source={product.images[0]} style={st.productThumb} recyclingKey={`${product.slug}-tryon-thumb`} />
-          <View style={{flex:1,marginLeft:9}}><Text style={st.productName}>{product.name}</Text><Text style={st.productMeta}>{product.price.toLocaleString('vi-VN')}₫ · {color} · {size||'Chưa có bảng size'}</Text></View>
+          <View style={{flex:1,marginLeft:9}}><Text style={st.productName}>{product.name}</Text><Text style={st.productMeta}>{selectedPrice.toLocaleString('vi-VN')}₫ · {color} · {size||'Chưa có bảng size'}{currentStock!==null?` · còn ${currentStock}`:''}</Text></View>
           <Pressable accessibilityRole="button" accessibilityLabel="Đổi sản phẩm" hitSlop={10} onPress={()=>router.push(`/product/${product.slug}`)}><Text style={st.change}>Đổi</Text></Pressable>
         </View>
 
@@ -622,7 +849,17 @@ export default function TryOn() {
               <Text style={st.fitBadgeT}>ĐỘ VỪA: {FIT_UI[sizeFit.verdict].badge}</Text>
             </View>
           )}
-          {loading&&<View style={st.loading}><ActivityIndicator color="#fff" size="large" /><Text style={st.loadingT}>Đang tạo ảnh…</Text></View>}
+          {loading&&(
+            <View style={st.loading} accessibilityLiveRegion="polite" accessibilityLabel={`${loadingStage}, ${loadingClock}`}>
+              <Animated.View style={[st.loadingOrb,{opacity:loadingOpacity,transform:[{scale:loadingScale}]}]}>
+                <Ionicons name={loadingMode==='accessory'?'sparkles':'shirt-outline'} size={30} color="#fff" />
+              </Animated.View>
+              <Text style={st.loadingTitle}>{checkingInput?'ĐANG KIỂM TRA ẢNH':loadingMode==='accessory'?'GHÉP TIẾP TRÊN ẢNH HIỆN TẠI':'ĐANG TẠO ẢNH THỬ ĐỒ'}</Text>
+              <Text style={st.loadingT}>{loadingStage}</Text>
+              <View style={st.loadingDots}>{[0,1,2,3].map(index=><View key={index} style={[st.loadingDot,loadingSeconds%4>=index&&st.loadingDotOn]}/>)}</View>
+              <Text style={st.loadingTime}>{loadingClock} · có thể chuyển sang ứng dụng khác</Text>
+            </View>
+          )}
         </View>
         {needsAdultConsent&&(
           <View style={st.consentCard}>
@@ -879,12 +1116,46 @@ export default function TryOn() {
           </View>
         )}
         {tryonSizes.length
-          ? <View style={st.sizeRow}>{tryonSizes.map(v=><Pressable key={v} style={[st.size,size===v&&st.sizeOn]} onPress={()=>setSize(v)}><Text style={[st.sizeT,size===v&&{color:'#fff'}]}>{v}</Text></Pressable>)}</View>
+          ? <View style={st.sizeRow}>{sizeOptions.map(option=>{
+              const selected=size===option.value;
+              const soldOut=option.stock===0;
+              return <Pressable
+                key={option.value}
+                disabled={soldOut||loading}
+                accessibilityRole="button"
+                accessibilityState={{selected,disabled:soldOut||loading}}
+                accessibilityLabel={`Cỡ ${option.value}${option.stock===null?'':soldOut?' hết hàng':` còn ${option.stock}`}`}
+                style={[st.size,selected&&st.sizeOn,soldOut&&st.optionSold]}
+                onPress={()=>selectSize(option.value)}
+              >
+                <Text style={[st.sizeT,selected&&{color:'#fff'}]}>{option.value}</Text>
+                {option.stock!==null&&<Text style={[st.stockTiny,selected&&{color:'rgba(255,255,255,.78)'}]}>{soldOut?'Hết':`còn ${option.stock}`}</Text>}
+              </Pressable>;
+            })}</View>
           : <Text style={st.estimateTag}>Sản phẩm không khai báo size: chỉ thử hình ảnh, không kết luận chật/rộng và không tự chọn size M.</Text>}
+        {currentStock!==null&&<Text style={[st.stockSummary,currentStock===0&&{color:C.shuDeep}]}>{currentStock>0?`Biến thể ${color} · ${size}: còn ${currentStock} sản phẩm`:`Biến thể ${color} · ${size} đã hết hàng`}</Text>}
         <Btn label={sizeLoading?'Đang tính kích cỡ…':'Gợi ý kích cỡ cho tôi'} variant="ghost" onPress={()=>{if(!sizeLoading)void adviseSize();}} />
 
         <Text style={st.section}>Màu trang phục</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>{['Mực','Đỏ son','Chàm','Xanh trà','Vàng kim'].map(v=><Pressable key={v} style={[st.pill,color===v&&st.pillOn]} onPress={()=>setColor(v)}><Text style={[st.pillT,color===v&&{color:'#fff'}]}>{v}</Text></Pressable>)}</ScrollView>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>{colorOptions.map(option=>{
+          const selected=color===option.name;
+          const soldOut=option.stock===0;
+          return <Pressable
+            key={option.name}
+            disabled={soldOut||loading}
+            accessibilityRole="button"
+            accessibilityState={{selected,disabled:soldOut||loading}}
+            accessibilityLabel={`Màu ${option.name}${option.stock===null?'':soldOut?' hết hàng':` còn tổng ${option.stock}`}`}
+            style={[st.pill,selected&&st.pillOn,soldOut&&st.optionSold]}
+            onPress={()=>selectColor(option.name)}
+          >
+            {!!option.hex&&<View style={[st.colorDot,{backgroundColor:option.hex},selected&&{borderColor:'#fff'}]}/>}
+            <View>
+              <Text style={[st.pillT,selected&&{color:'#fff'}]}>{option.name}</Text>
+              {option.stock!==null&&<Text style={[st.colorStock,selected&&{color:'rgba(255,255,255,.78)'}]}>{soldOut?'Hết hàng':`Tổng còn ${option.stock}`}</Text>}
+            </View>
+          </Pressable>;
+        })}</ScrollView>
 
         <Pressable style={st.accHeader} onPress={()=>setShowGarments(v=>!v)}>
           <View style={{flex:1}}>
@@ -959,7 +1230,24 @@ export default function TryOn() {
         )}
 
         {!!message&&<Text style={st.message}>{message}</Text>}
-        <Btn label={loading?'Đang tạo ảnh…':result?'Tạo lại ảnh thử đồ':'Tạo ảnh thử đồ'} style={{marginTop:12}} onPress={()=>{if(!loading)void run();}} />
+        {loading&&(
+          <View style={st.inlineLoading} accessibilityLiveRegion="polite">
+            <Animated.View style={[st.inlineLoadingIcon,{opacity:loadingOpacity,transform:[{scale:loadingScale}]}]}>
+              <Ionicons name={loadingMode==='accessory'?'sparkles':'shirt-outline'} size={20} color="#fff" />
+            </Animated.View>
+            <View style={{flex:1}}>
+              <Text style={st.inlineLoadingTitle}>{checkingInput?'Đang kiểm tra ảnh':loadingMode==='accessory'?'Đang ghép tiếp trên ảnh hiện tại':'Đang tạo ảnh thử đồ'}</Text>
+              <Text style={st.inlineLoadingText}>{loadingStage} · {loadingClock}</Text>
+            </View>
+            <ActivityIndicator size="small" color={C.primary}/>
+          </View>
+        )}
+        <Btn
+          label={loading?'Đang tạo ảnh…':willContinueResult?`Ghép tiếp ${pendingAccessoryCount} phụ kiện vào ảnh`:result?'Tạo lại ảnh thử đồ':'Tạo ảnh thử đồ'}
+          disabled={loading||currentStock===0}
+          style={{marginTop:12}}
+          onPress={()=>void run()}
+        />
         {result&&(
           <View style={st.resultActions}>
             <Pressable style={st.action} disabled={savingPhoto} onPress={()=>void savePhoto()}>
@@ -1021,47 +1309,41 @@ export default function TryOn() {
 
 const Measure=({label,value,onChange,unit}:{label:string;value:string;onChange:(v:string)=>void;unit:string})=><View style={{flex:1}}><Text style={st.measureLabel}>{label}</Text><View style={st.measure}><TextInput value={value} onChangeText={onChange} keyboardType="numeric" style={st.measureInput} placeholder="—" placeholderTextColor={C.muted}/><Text style={st.unit}>{unit}</Text></View></View>;
 const st=StyleSheet.create({
-  cutoffBox:{backgroundColor:'#FFF4E5',borderColor:'#E8912D',borderWidth:1,borderRadius:12,padding:12,marginTop:10,marginBottom:6},
+  cutoffBox:{backgroundColor:C.warningSoft,borderColor:'#E8912D',borderWidth:1,borderRadius:12,padding:12,marginTop:10,marginBottom:6},
   cutoffTitle:{fontWeight:'800',color:'#8A4B00',marginBottom:4,fontSize:13},
   cutoffMsg:{color:'#6B4A1B',fontSize:12,lineHeight:18},
   cutoffBtn:{marginTop:10,alignSelf:'flex-start',minHeight:44,justifyContent:'center',paddingHorizontal:16,borderRadius:10,backgroundColor:'#8A4B00'},
   cutoffBtnT:{color:'#fff',fontWeight:'700',fontSize:13},
-  chip:{flexDirection:'row',alignItems:'center',padding:10,borderWidth:1,borderColor:C.line,borderRadius:14,backgroundColor:'#fff',marginBottom:14},
+  chip:{flexDirection:'row',alignItems:'center',padding:10,borderWidth:1,borderColor:C.line,borderRadius:14,backgroundColor:C.card,marginBottom:14},
   productThumb:{width:46,height:56,borderRadius:9},productName:{fontFamily:F.bodyB,fontSize:13,color:C.ink},productMeta:{fontFamily:F.body,fontSize:11.5,color:C.muted,marginTop:2},change:{fontFamily:F.bodyB,fontSize:11,color:C.ink},
   steps:{flexDirection:'row',alignItems:'flex-start',marginBottom:12,paddingHorizontal:4},
   stepItem:{width:58,alignItems:'center'},
   stepLine:{flex:1,height:1,backgroundColor:C.line,marginTop:13,marginHorizontal:-7},
-  stepLineOn:{backgroundColor:C.sumi},
-  stepDot:{width:28,height:28,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},
-  stepDotOn:{backgroundColor:C.sumi,borderColor:C.sumi},
+  stepLineOn:{backgroundColor:C.inverseSurface},
+  stepDot:{width:28,height:28,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:C.card,alignItems:'center',justifyContent:'center'},
+  stepDotOn:{backgroundColor:C.inverseSurface,borderColor:C.inverseSurface},
   stepNumber:{fontFamily:F.bodyB,fontSize:11,color:C.muted},
   stepLabel:{fontFamily:F.bodyM,fontSize:9.5,color:C.muted,marginTop:5,textAlign:'center'},
   stepLabelOn:{color:C.sumi,fontFamily:F.bodyB},
   result:{borderRadius:16,overflow:'hidden',borderWidth:1,borderColor:C.line,position:'relative'},tag:{position:'absolute',top:10,left:10,zIndex:5,elevation:5,backgroundColor:C.primary,paddingVertical:4,paddingHorizontal:8,borderRadius:8},tagT:{color:'#fff',fontFamily:F.bodyX,fontSize:10},
-  loading:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(26,20,16,.55)',alignItems:'center',justifyContent:'center',gap:8},loadingT:{color:'#fff',fontFamily:F.bodyB,fontSize:12},
-  pickRow:{flexDirection:'row',gap:10,marginVertical:10},pick:{flex:1,minHeight:48,flexDirection:'row',gap:7,borderWidth:1,borderColor:C.line,borderRadius:11,paddingVertical:10,alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},pickT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
-  presetWrap:{marginTop:4,marginBottom:6},
-  presetTitle:{fontFamily:F.bodyX,fontSize:10.5,letterSpacing:.8,color:C.muted},
-  presetHint:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:3},
-  presetRow:{gap:10,paddingVertical:10,paddingRight:4},
-  presetCard:{width:96,borderWidth:1,borderColor:C.line,borderRadius:11,backgroundColor:'#fff',padding:6},
-  presetCardOn:{borderColor:C.shu,borderWidth:2,padding:5},
-  presetImg:{width:'100%',aspectRatio:2/3,borderRadius:7,backgroundColor:C.washi2},
-  presetName:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink,marginTop:5},
-  presetNameOn:{color:C.shu},
-  presetMeta:{fontFamily:F.body,fontSize:9.5,color:C.muted,marginTop:1},
-  presetNote:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.ink,backgroundColor:C.washi2,borderRadius:9,padding:9},
+  loading:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(26,20,16,.74)',alignItems:'center',justifyContent:'center',paddingHorizontal:28,gap:8},
+  loadingOrb:{width:72,height:72,borderRadius:36,borderWidth:2,borderColor:'rgba(255,255,255,.78)',backgroundColor:'rgba(178,52,52,.72)',alignItems:'center',justifyContent:'center',marginBottom:4},
+  loadingTitle:{color:'#fff',fontFamily:F.bodyX,fontSize:11,letterSpacing:1.15,textAlign:'center'},
+  loadingT:{color:'#fff',fontFamily:F.bodyB,fontSize:13,textAlign:'center'},
+  loadingDots:{flexDirection:'row',gap:6,marginTop:3},loadingDot:{width:19,height:4,borderRadius:3,backgroundColor:'rgba(255,255,255,.24)'},loadingDotOn:{backgroundColor:'#fff'},
+  loadingTime:{color:'rgba(255,255,255,.76)',fontFamily:F.body,fontSize:10.5,textAlign:'center',marginTop:2},
+  pickRow:{flexDirection:'row',gap:10,marginVertical:10},pick:{flex:1,minHeight:48,flexDirection:'row',gap:7,borderWidth:1,borderColor:C.line,borderRadius:11,paddingVertical:10,alignItems:'center',justifyContent:'center',backgroundColor:C.card},pickT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   fitBanner:{borderRadius:13,borderWidth:1,padding:12,marginTop:10},
-  fitTight:{backgroundColor:'#FCE8E8',borderColor:'#EBC4C4'},fitLoose:{backgroundColor:C.warningSoft,borderColor:C.line},fitGood:{backgroundColor:'#E4F5E9',borderColor:'#BEE3CB'},
+  fitTight:{backgroundColor:C.dangerSoft,borderColor:'#EBC4C4'},fitLoose:{backgroundColor:C.warningSoft,borderColor:C.line},fitGood:{backgroundColor:C.okSoft,borderColor:'#BEE3CB'},
   fitTitle:{fontFamily:F.bodyX,fontSize:12.5,color:C.ink},fitMsg:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.ink,marginTop:4},
-  fitBtn:{alignSelf:'flex-start',backgroundColor:C.sumi,borderRadius:9,paddingVertical:7,paddingHorizontal:12,marginTop:8},fitBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11.5},
+  fitBtn:{alignSelf:'flex-start',backgroundColor:C.inverseSurface,borderRadius:9,paddingVertical:7,paddingHorizontal:12,marginTop:8},fitBtnT:{color:'#fff',fontFamily:F.bodyB,fontSize:11.5},
   fitNote:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:6},
   fitBadge:{position:'absolute',right:10,top:10,borderRadius:8,paddingHorizontal:9,paddingVertical:5,borderWidth:1},
   fitBadgeT:{fontFamily:F.bodyB,fontSize:10.5,color:'#fff',letterSpacing:.6},
   fitBadgeTight:{backgroundColor:'rgba(178,52,52,0.92)',borderColor:'rgba(255,255,255,0.5)'},
   fitBadgeLoose:{backgroundColor:'rgba(176,120,32,0.92)',borderColor:'rgba(255,255,255,0.5)'},
   fitBadgeGood:{backgroundColor:'rgba(44,120,72,0.92)',borderColor:'rgba(255,255,255,0.5)'},
-  bodyCard:{marginTop:14,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:13},
+  bodyCard:{marginTop:14,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:C.card,padding:13},
   bodyHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
   bodyTitle:{fontFamily:F.bodyB,fontSize:11,color:C.muted,letterSpacing:.7},
   bodyRetry:{fontFamily:F.bodyB,fontSize:11,color:C.ai},
@@ -1072,32 +1354,34 @@ const st=StyleSheet.create({
   bodyValue:{fontFamily:F.bodyB,fontSize:13,color:C.ink},
   bodyNote:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.muted,marginTop:10},
   bodyActions:{flexDirection:'row',gap:8,marginTop:11},
-  bodyBtn:{flex:1,height:40,borderRadius:10,borderWidth:1,borderColor:C.line,alignItems:'center',justifyContent:'center',backgroundColor:'#fff'},
+  bodyBtn:{flex:1,height:40,borderRadius:10,borderWidth:1,borderColor:C.line,alignItems:'center',justifyContent:'center',backgroundColor:C.card},
   bodyBtnT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
-  bodyBtnMain:{backgroundColor:C.sumi,borderColor:C.sumi},
+  bodyBtnMain:{backgroundColor:C.inverseSurface,borderColor:C.inverseSurface},
   bodyBtnMainT:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff'},
   bodyBtnOn:{backgroundColor:C.primary,borderColor:C.primary},
   estimateTag:{fontFamily:F.body,fontSize:10.5,lineHeight:15.5,color:C.ai,marginBottom:8},
-  consentCard:{marginTop:12,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#FFF9F0',padding:13},
+  consentCard:{marginTop:12,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:C.warningSoft,padding:13},
   consentTitle:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},
   consentBody:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.muted,marginTop:6},
   consentRow:{flexDirection:'row',alignItems:'center',gap:9,marginTop:11},
-  checkbox:{width:22,height:22,borderRadius:6,borderWidth:1.5,borderColor:C.line,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},
+  checkbox:{width:22,height:22,borderRadius:6,borderWidth:1.5,borderColor:C.line,backgroundColor:C.card,alignItems:'center',justifyContent:'center'},
   checkboxOn:{backgroundColor:C.primary,borderColor:C.primary},
   consentCheck:{flex:1,fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:C.ink},
-  safetyBanner:{marginTop:11,borderRadius:13,borderWidth:1,borderColor:'#E7C0C0',backgroundColor:'#FCEDED',padding:12},
+  safetyBanner:{marginTop:11,borderRadius:13,borderWidth:1,borderColor:'#E7C0C0',backgroundColor:C.dangerSoft,padding:12},
   safetyTitle:{fontFamily:F.bodyB,fontSize:12.5,color:'#8E2B2B'},
   safetyMsg:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:'#7A3A3A',marginTop:5},
-  coverageNote:{marginTop:10,borderRadius:12,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:11},
+  coverageNote:{marginTop:10,borderRadius:12,borderWidth:1,borderColor:C.line,backgroundColor:C.card,padding:11},
   coverageT:{fontFamily:F.body,fontSize:11,lineHeight:16.5,color:C.muted},
   sectionHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:15,marginBottom:8},
   section:{fontFamily:F.bodyB,fontSize:13,color:C.ink,marginTop:15,marginBottom:8},
   optionalLink:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink,textDecorationLine:'underline'},
   manualBox:{backgroundColor:C.washi2,borderRadius:12,padding:10,marginBottom:8},
   manualHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginBottom:8},
-  measureRow:{flexDirection:'row',gap:10},measureLabel:{fontFamily:F.bodyM,fontSize:10.5,color:C.muted,marginBottom:4},measure:{height:44,flexDirection:'row',alignItems:'center',backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:11,paddingHorizontal:10},measureInput:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},unit:{fontFamily:F.body,fontSize:11,color:C.muted},
-  sizeRow:{flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:10},size:{width:'22%',minWidth:62,height:38,borderRadius:9,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',alignItems:'center',justifyContent:'center'},sizeOn:{backgroundColor:C.sumi,borderColor:C.sumi},sizeT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
-  pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:'#fff'},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
+  measureRow:{flexDirection:'row',gap:10},measureLabel:{fontFamily:F.bodyM,fontSize:10.5,color:C.muted,marginBottom:4},measure:{height:44,flexDirection:'row',alignItems:'center',backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:11,paddingHorizontal:10},measureInput:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},unit:{fontFamily:F.body,fontSize:11,color:C.muted},
+  sizeRow:{flexDirection:'row',flexWrap:'wrap',gap:8,marginVertical:10},size:{width:'22%',minWidth:62,minHeight:48,borderRadius:9,borderWidth:1,borderColor:C.line,backgroundColor:C.card,alignItems:'center',justifyContent:'center',paddingVertical:5},sizeOn:{backgroundColor:C.inverseSurface,borderColor:C.inverseSurface},sizeT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
+  stockTiny:{fontFamily:F.body,fontSize:8.5,color:C.muted,marginTop:2},stockSummary:{fontFamily:F.bodyB,fontSize:11,color:C.ai,marginTop:-3,marginBottom:9},optionSold:{opacity:.4},
+  pill:{minHeight:48,flexDirection:'row',alignItems:'center',gap:7,borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:7,paddingHorizontal:13,backgroundColor:C.card},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
+  colorDot:{width:18,height:18,borderRadius:9,borderWidth:1.5,borderColor:C.line},colorStock:{fontFamily:F.body,fontSize:8.5,color:C.muted,marginTop:1},
   acc:{width:88},accImg:{width:88,height:88,borderRadius:12,borderWidth:2,borderColor:'transparent'},accOn:{borderColor:C.primary},accCheck:{position:'absolute',right:5,top:5,width:22,height:22,borderRadius:11,alignItems:'center',justifyContent:'center',backgroundColor:C.primary,borderWidth:2,borderColor:'#fff'},accCheckT:{color:'#fff',fontFamily:F.bodyB,fontSize:11},zoneTag:{position:'absolute',left:4,bottom:4,backgroundColor:'rgba(26,20,16,.78)',borderRadius:5,paddingHorizontal:5,paddingVertical:2},zoneTagT:{color:'#fff',fontFamily:F.bodyB,fontSize:8.5},spotTitle:{fontFamily:F.bodyB,fontSize:11,color:C.muted,letterSpacing:.6,textTransform:'uppercase',marginBottom:6},zoneHint:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:C.ai,marginBottom:9},conflict:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:C.ink,marginTop:6},accT:{fontFamily:F.bodyM,fontSize:10.5,color:C.ink,marginTop:4},selectedAcc:{fontFamily:F.bodyB,fontSize:11,color:C.ink,marginTop:9},
   tip:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:2,backgroundColor:C.washi2,borderRadius:9,padding:9},
   accHeader:{flexDirection:'row',alignItems:'center',marginTop:15},
@@ -1105,12 +1389,14 @@ const st=StyleSheet.create({
   accHint:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
   accWarn:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.warning,backgroundColor:C.warningSoft,borderRadius:9,padding:9,marginTop:8,marginBottom:8},
   message:{fontFamily:F.body,fontSize:11.5,lineHeight:18,color:C.muted,marginTop:8,textAlign:'center'},
-  errBanner:{backgroundColor:'#FCE8E8',borderWidth:1,borderColor:'#EBC4C4',borderRadius:13,padding:13,marginTop:10},
+  inlineLoading:{minHeight:68,flexDirection:'row',alignItems:'center',gap:10,backgroundColor:C.aiSoft,borderWidth:1,borderColor:C.line,borderRadius:14,paddingHorizontal:12,paddingVertical:9,marginTop:10},
+  inlineLoadingIcon:{width:42,height:42,borderRadius:21,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},inlineLoadingTitle:{fontFamily:F.bodyB,fontSize:12,color:C.ink},inlineLoadingText:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
+  errBanner:{backgroundColor:C.dangerSoft,borderWidth:1,borderColor:'#EBC4C4',borderRadius:13,padding:13,marginTop:10},
   errTitle:{fontFamily:F.bodyX,fontSize:13,color:C.shuDeep},errMsg:{fontFamily:F.body,fontSize:12,lineHeight:18,color:C.ink,marginTop:5},errTips:{fontFamily:F.body,fontSize:11,lineHeight:16,color:C.muted,marginTop:8},
   warnBanner:{backgroundColor:C.warningSoft,borderWidth:1,borderColor:C.line,borderRadius:13,padding:13,marginTop:10},warnTitle:{fontFamily:F.bodyX,fontSize:13,color:C.warning},warnMsg:{fontFamily:F.body,fontSize:11.5,lineHeight:17,color:C.ink,marginTop:4},
-  resultActions:{flexDirection:'row',gap:8,marginTop:10},action:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,paddingVertical:10,borderRadius:11,borderWidth:1,borderColor:C.line,backgroundColor:'#fff'},actionT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
-  videoActions:{flexDirection:'row',gap:8,paddingHorizontal:9,paddingBottom:9},videoAction:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,paddingVertical:9,borderRadius:10,borderWidth:1,borderColor:C.muted,backgroundColor:C.ink},videoActionT:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff'},
-  motionCard:{backgroundColor:C.sumi,borderWidth:1,borderColor:C.kin,borderRadius:18,padding:14,marginTop:12},
+  resultActions:{flexDirection:'row',gap:8,marginTop:10},action:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,paddingVertical:10,borderRadius:11,borderWidth:1,borderColor:C.line,backgroundColor:C.card},actionT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
+  videoActions:{flexDirection:'row',gap:8,paddingHorizontal:9,paddingBottom:9},videoAction:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,paddingVertical:9,borderRadius:10,borderWidth:1,borderColor:C.muted,backgroundColor:C.inverseSurface},videoActionT:{fontFamily:F.bodyB,fontSize:11.5,color:'#fff'},
+  motionCard:{backgroundColor:C.inverseSurface,borderWidth:1,borderColor:C.kin,borderRadius:18,padding:14,marginTop:12},
   motionHead:{flexDirection:'row',alignItems:'center',gap:10},motionMark:{width:43,height:43,borderRadius:13,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},motionMarkT:{fontFamily:F.display,fontSize:20,color:'#fff'},
   motionTitle:{fontFamily:F.display,fontSize:14,color:'#fff'},motionSub:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:'rgba(255,255,255,0.70)',marginTop:2},motionToggle:{borderWidth:1,borderColor:'rgba(255,255,255,0.72)',borderRadius:999,paddingVertical:7,paddingHorizontal:10},motionToggleT:{fontFamily:F.bodyB,fontSize:10.5,color:'rgba(255,255,255,0.72)'},
   motionPrompt:{fontFamily:F.bodyB,fontSize:12,color:'#fff',marginBottom:8},motionGrid:{flexDirection:'row',flexWrap:'wrap',gap:7},motionChoice:{width:'48%',minHeight:48,borderWidth:1,borderColor:'#665C54',borderRadius:11,paddingHorizontal:9,paddingVertical:8,flexDirection:'row',alignItems:'center',gap:7,backgroundColor:'#2B241F'},motionChoiceOn:{backgroundColor:C.primary,borderColor:C.primary},motionIcon:{fontSize:16,color:'#fff'},motionChoiceT:{flex:1,fontFamily:F.bodyM,fontSize:10.5,lineHeight:14,color:C.line},

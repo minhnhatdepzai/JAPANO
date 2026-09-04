@@ -1,7 +1,9 @@
-// Quỹ tích luỹ của "Mục tiêu mua sắm": khách nạp dần từng khoản vào quỹ của
-// một sản phẩm; khi quỹ đủ giá mục tiêu, hệ thống tự phát một voucher giảm 30%
-// dành riêng cho khách đó. Khi khách thực sự mua được sản phẩm mục tiêu bằng
-// một đơn thành công, mục tiêu được đánh dấu hoàn thành trọn vẹn.
+// Quỹ tích luỹ của "Mục tiêu mua sắm": khách ghi nhận dần từng khoản đã để
+// dành cho một sản phẩm. Khi khách thực sự mua được sản phẩm mục tiêu bằng một
+// đơn thành công, mục tiêu được đánh dấu hoàn thành trọn vẹn.
+//
+// Đủ 100% KHÔNG phát voucher. Số tiền ở đây do khách tự khai, JAPANO không giữ
+// tiền và không xác minh số dư, nên nó chỉ được đổi trạng thái tiến độ.
 //
 // Đây là SỔ TÍCH LUỸ, không phải ví điện tử: JAPANO không giữ tiền của khách.
 // Mỗi khoản nạp chỉ là một dòng ghi nhận để theo dõi tiến độ, khách có thể gỡ
@@ -73,36 +75,45 @@ function fundView(goal) {
   };
 }
 
-// Voucher thưởng là voucher cá nhân (ownerUserId) dùng đúng 1 lần — cùng cơ chế
-// khoá quyền sở hữu với voucher thưởng bộ thẻ địa danh trong lib/flagcards.js.
-function ensureGoalRewardVoucher(state, goal, now = Date.now()) {
-  const fund = goal.fund;
-  if (!fund || fund.status === 'saving') return null;
-  state.vouchers ||= [];
-  const code = fund.rewardVoucherCode || rewardCodeFor(goal);
-  let voucher = state.vouchers.find((item) => String(item.code) === code);
-  if (!voucher) {
-    voucher = {
-      code,
-      type: 'percent',
-      value: Math.min(100, Math.max(1, finite(fund.rewardPercent, REWARD_PERCENT))),
-      min: 0,
-      expiry: expiryDate(finite(fund.completedAt, now) || now, REWARD_VALID_DAYS),
-      limit: 1,
-      used: 0,
-      active: true,
-      appliesTo: 'all-products',
-      ownerUserId: String(goal.userId),
-      source: 'goal-fund',
-      goalId: goal.id,
-      goalProductId: goal.productId,
-      reason: `Hoàn thành quỹ tích luỹ mục tiêu "${goal.product?.name || goal.productId}"`,
-      issuedAt: now,
-    };
-    state.vouchers.push(voucher);
+/* Voucher thưởng mục tiêu: KHÔNG còn được phát từ tiền khách tự khai.
+ *
+ * Trước đây chỉ cần khai `currentSavings` đủ giá, hoặc bấm "nạp quỹ" tới 100%,
+ * là hệ thống tự phát một voucher giảm 30% có giá trị tiền thật. Quỹ này là SỔ
+ * THEO DÕI: JAPANO không giữ tiền, không xác minh số dư, nên một con số tự khai
+ * không được phép tạo ra quyền lợi tài chính.
+ *
+ * Hàm này giờ chỉ CHUẨN HOÁ voucher đã phát trước đây (dữ liệu cũ) để nó chạy
+ * đúng phạm vi sản phẩm, chứ không tạo voucher mới. Quyền lợi cũ được giữ
+ * nguyên; điều thay đổi là nó chỉ còn giảm đúng món mục tiêu.
+ */
+function normalizeGoalVoucherScope(voucher, goal) {
+  if (!voucher) return voucher;
+  voucher.scope = 'product';
+  const productId = String(voucher.goalProductId || goal?.productId || '');
+  voucher.eligibleProductIds = productId ? [productId] : (Array.isArray(voucher.eligibleProductIds) ? voucher.eligibleProductIds : []);
+  voucher.maxEligibleQty = Math.max(1, finite(voucher.maxEligibleQty, 1));
+  // Trần giảm dựa trên GIÁ ĐÃ KHOÁ của mục tiêu, không phải giá giỏ hàng.
+  const lockedPrice = Math.max(0, finite(goal?.fund?.target, finite(goal?.product?.price)));
+  if (lockedPrice > 0) {
+    const percent = Math.min(100, Math.max(0, finite(voucher.value)));
+    const byPercent = String(voucher.type || 'percent') === 'percent'
+      ? Math.round(lockedPrice * percent / 100)
+      : Math.min(lockedPrice, Math.max(0, finite(voucher.value)));
+    voucher.maxDiscountAmount = Math.max(0, Math.min(finite(voucher.maxDiscountAmount, byPercent) || byPercent, byPercent));
   }
-  fund.rewardVoucherCode = code;
   return voucher;
+}
+
+function ensureGoalRewardVoucher(state, goal, now = Date.now()) {
+  const fund = goal?.fund;
+  if (!fund) return null;
+  const code = fund.rewardVoucherCode;
+  // Không có mã cũ nghĩa là mục tiêu này chưa từng được thưởng — và từ nay
+  // tiền tự khai không phát voucher nữa, nên không tạo mới ở đây.
+  if (!code) return null;
+  const voucher = (state.vouchers || []).find((item) => String(item.code) === String(code));
+  if (!voucher) return null;
+  return normalizeGoalVoucherScope(voucher, goal);
 }
 
 function addDeposit(state, goal, { amount, note }, now = Date.now()) {
@@ -127,8 +138,9 @@ function addDeposit(state, goal, { amount, note }, now = Date.now()) {
   });
   ensureGoalFund(goal, goal.product?.price, now);
   const justCompleted = !wasCompleted && goal.fund.status !== 'saving';
-  const voucher = goal.fund.status === 'saving' ? null : ensureGoalRewardVoucher(state, goal, now);
-  return { fund: goal.fund, justCompleted, voucher };
+  // Đạt 100% chỉ đổi TRẠNG THÁI TIẾN ĐỘ. Không phát voucher: con số ở đây do
+  // khách tự khai và JAPANO không giữ tiền của khách.
+  return { fund: goal.fund, justCompleted, voucher: null };
 }
 
 // Ghi nhầm là chuyện thường; cho gỡ khoản nạp để số liệu luôn khớp thực tế.
@@ -142,9 +154,10 @@ function removeDeposit(state, goal, depositId, now = Date.now()) {
     error.status = 404;
     throw error;
   }
-  const keepCompleted = Boolean(fund.rewardVoucherCode);
+  // Gỡ khoản ghi nhầm thì tiến độ phải tính lại đúng thực tế. Trước đây trạng
+  // thái "completed" được giữ lại nếu đã từng phát voucher, khiến một mục tiêu
+  // đang thiếu tiền vẫn hiện là đã hoàn thành.
   ensureGoalFund(goal, goal.product?.price, now);
-  if (keepCompleted && goal.fund.status === 'saving') goal.fund.status = 'completed';
   return goal.fund;
 }
 
@@ -160,6 +173,7 @@ function reconcileGoalRewards(state, now = Date.now(), notify = null) {
     if (!goal.fund) continue;
     ensureGoalFund(goal, goal.product?.price, now);
     if (goal.fund.status === 'saving') continue;
+    // Chỉ chuẩn hoá phạm vi cho voucher đã phát trước đây; không phát mới.
     ensureGoalRewardVoucher(state, goal, now);
     if (goal.fund.achievedOrderId) continue;
     const order = (state.orders || [])
@@ -189,6 +203,7 @@ function reconcileGoalRewards(state, now = Date.now(), notify = null) {
 
 module.exports = {
   GOAL_FUND_CONFIG,
+  normalizeGoalVoucherScope,
   ensureGoalFund,
   fundView,
   ensureGoalRewardVoucher,

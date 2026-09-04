@@ -145,9 +145,18 @@ function validate(scene) {
 
   for (const slot of c.personSlots || []) {
     if (slot.x < 0 || slot.x > 1) problems.push(`slot ${slot.id} có x=${slot.x} ngoài ảnh`);
-    if (Array.isArray(c.groundPolygon) && anchor
-        && !pointInPolygon([slot.x, anchor.y], c.groundPolygon)) {
-      problems.push(`slot ${slot.id} (x=${slot.x}) không đứng trên mặt đất`);
+    if (Array.isArray(c.groundPolygon) && anchor) {
+      // Không chỉ kiểm tâm hai chân. Váy/kimono và dáng bước có bề ngang tiếp
+      // xúc lớn hơn, nên cả hai mép phải còn nằm trong mặt đất.
+      const halfFootprint = Math.max(0.025, Number(c.personHeightRatio?.preferred || 0.5) * 0.10);
+      const support = [slot.x - halfFootprint, slot.x, slot.x + halfFootprint]
+        .flatMap((x) => [[x, anchor.y], [x, Math.max(0, anchor.y - 0.012)]]);
+      if (support.some((point) => !pointInPolygon(point, c.groundPolygon))) {
+        problems.push(`slot ${slot.id} không đủ bề ngang mặt đất cho hai chân/vạt áo`);
+      }
+    }
+    if (zone && (slot.x < zone.x || slot.x > zone.x + zone.width)) {
+      problems.push(`slot ${slot.id} nằm ngoài safeZone theo chiều ngang`);
     }
   }
   if (!(c.personSlots || []).length) problems.push('scene phải có ít nhất một personSlot');

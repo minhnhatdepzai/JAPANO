@@ -195,6 +195,12 @@ class Handler(BaseHTTPRequestHandler):
                 'servedBy': 'warm-worker',
                 'method': 'segmentation-composite',
             })
+        except scene_compose.UnsafePlacementError as error:
+            self._send(422, {
+                'ok': False,
+                'code': 'UNSAFE_SCENE_PLACEMENT',
+                'message': str(error),
+            })
         except Exception as error:
             self._send(500, {'ok': False, 'message': f'{type(error).__name__}: {error}'})
 

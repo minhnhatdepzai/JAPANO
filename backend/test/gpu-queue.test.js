@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { GpuJobQueue, GpuJobCancelledError } = require('../lib/gpuJobQueue');
-const { FOCUS_PROFILES } = require('../lib/gpuArbiter');
+const { FOCUS_PROFILES, focusRestorePlan } = require('../lib/gpuArbiter');
 
 const deferred = () => {
   let resolve;
@@ -57,6 +57,21 @@ test('try-on và motion độc quyền GPU; vision và suggestion chỉ dùng GP
   assert.equal(FOCUS_PROFILES.vision.embeddingDevice, 'off');
   assert.deepEqual(FOCUS_PROFILES.browse.keep, ['embedding']);
   assert.equal(FOCUS_PROFILES.browse.embeddingDevice, 'cuda');
+});
+
+test('try-on trả ảnh trước rồi mới làm nóng lại FASHN khi focus không đổi', () => {
+  assert.deepEqual(focusRestorePlan('tryon', 'tryon'), {
+    restoreSynchronously: false,
+    deferFashnWarmup: true,
+  });
+  assert.deepEqual(focusRestorePlan('tryon', 'browse'), {
+    restoreSynchronously: true,
+    deferFashnWarmup: false,
+  });
+  assert.deepEqual(focusRestorePlan('motion', 'motion'), {
+    restoreSynchronously: false,
+    deferFashnWarmup: false,
+  });
 });
 
 // --- Huỷ theo chủ sở hữu -----------------------------------------------------

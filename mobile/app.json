@@ -2,7 +2,7 @@
   "expo": {
     "name": "JAPANO",
     "slug": "japano",
-    "version": "1.0.13",
+    "version": "1.0.19",
     "icon": "./assets/brand/japano-app-icon.png",
     "orientation": "portrait",
     "scheme": [
@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "vn.japano.app",
-      "versionCode": 14,
+      "versionCode": 20,
       "icon": "./assets/brand/japano-app-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/japano-adaptive-foreground.png",

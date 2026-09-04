@@ -275,17 +275,31 @@ test('mô tả Qwen giữ nhãn thị giác sau khi chuẩn hóa và đọc lạ
 
 test('mục tiêu kết hợp quỹ mua sắm và lộ trình giảm cân có giới hạn an toàn', () => {
   const product = seededState().products.find((item) => item.slug === 'haori-dang-dai');
+  // Sàng lọc an toàn phải được trả lời đủ và sạch thì mới có tốc độ giảm cân.
+  const clearedScreening = {
+    pregnancy: 'no', conditionOrMedication: 'no', eatingDisorderHistory: 'no', underCare: 'no',
+  };
   const plan = buildGoalPlan({
     age: 25, heightCm: 165, currentWeightKg: 65, targetWeightKg: 60,
     monthlyIncome: 15000000, fixedExpenses: 11000000, currentSavings: 200000, targetMonths: 6,
+    safetyScreening: clearedScreening,
   }, product);
   assert.ok(plan.saving.monthlySaving > 0);
   assert.ok(plan.saving.monthlySaving <= plan.saving.disposableIncome * 0.4);
   assert.equal(plan.wellness.weeklyRateKg, 0.5);
   assert.equal(plan.wellness.activityMinutesPerWeek, 150);
+  assert.equal(plan.wellness.provenance, 'self-reported');
   assert.match(plan.disclaimer, /không thay thế/i);
 
-  const minor = buildGoalPlan({ age: 16, heightCm: 165, currentWeightKg: 65, targetWeightKg: 55 }, product);
+  // Chưa trả lời sàng lọc thì KHÔNG có tốc độ giảm cân, dù mọi số đo hợp lệ.
+  const unscreened = buildGoalPlan({
+    age: 25, heightCm: 165, currentWeightKg: 65, targetWeightKg: 60,
+  }, product);
+  assert.equal(unscreened.wellness.status, 'needs-professional-guidance');
+  assert.equal(unscreened.wellness.weeklyRateKg, null);
+  assert.equal(unscreened.wellness.estimatedWeeks, null);
+
+  const minor = buildGoalPlan({ age: 16, heightCm: 165, currentWeightKg: 65, targetWeightKg: 55, safetyScreening: clearedScreening }, product);
   assert.equal(minor.wellness.status, 'needs-professional-guidance');
   assert.equal(minor.wellness.weeklyRateKg, null);
 });

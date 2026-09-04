@@ -6,7 +6,17 @@ import { api, runAiJob } from "@/lib/client-api";
 import { formatCurrency, mediaUrl } from "@/lib/format";
 import type { JapanSpot, Product } from "@/lib/types";
 
-type Scene = { id: string; name: string; thumbnailUrl: string; attribution?: string; sourceUrl?: string; personSlots?: Array<{ id: string; label: string }> };
+type TravelPose = { id: string; label: string; description: string; recommended?: boolean };
+type Scene = {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  attribution?: string;
+  sourceUrl?: string;
+  personSlots?: Array<{ id: string; label: string }>;
+  recommendedPoseId?: string;
+  poseOptions?: TravelPose[];
+};
 type Recommendation = { product: Product & { sizes?: string[] }; recommendedSize?: string | null; fitConfidence?: string; reasons?: string[]; culturalNote?: string; photoTip?: string };
 
 const resultImage = (data: Record<string, unknown>) => {
@@ -25,6 +35,9 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
   const selectedDefaultSize = selected?.recommendedSize || sizes[0] || "";
   const [size, setSize] = useState("");
   const [sceneId, setSceneId] = useState("");
+  const selectedScene = useMemo(() => scenes.find((scene) => scene.id === sceneId) || scenes[0], [scenes, sceneId]);
+  const [slotId, setSlotId] = useState("");
+  const [travelPoseId, setTravelPoseId] = useState("");
   const [photo, setPhoto] = useState("");
   const [consent, setConsent] = useState(false);
   const [adultConsent, setAdultConsent] = useState(false);
@@ -49,6 +62,8 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
       setScenes(nextScenes);
       setSelectedSlug(nextRecs[0]?.product.slug || "");
       setSceneId(nextScenes[0]?.id || "");
+      setSlotId(nextScenes[0]?.personSlots?.[0]?.id || "");
+      setTravelPoseId(nextScenes[0]?.recommendedPoseId || nextScenes[0]?.poseOptions?.[0]?.id || "");
       setSize(nextRecs[0]?.recommendedSize || nextRecs[0]?.product.sizes?.[0] || "");
     }).catch((caught) => setError(caught instanceof Error ? caught.message : "Không tải được gợi ý."))
       .finally(() => setStage("idle"));
@@ -74,13 +89,13 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
     try {
       if (!retrySceneOnly || !dressed) {
         setStage("tryon");
-        const response = await runAiJob<Record<string, unknown>>("/api/tryon/jobs", { clientId: "japano-web-travel", personImageBase64: photo, productId: product.slug, size, adultConsent: isAdultGarment ? adultConsent : undefined, qualityMode: "balanced" }, { timeoutMs: 15 * 60_000, onStage: setJobStage });
+        const response = await runAiJob<Record<string, unknown>>("/api/tryon/jobs", { clientId: "japano-web-travel", personImageBase64: photo, productId: product.slug, size, adultConsent: isAdultGarment ? adultConsent : undefined, qualityMode: "balanced", travelPoseId: travelPoseId || undefined }, { timeoutMs: 15 * 60_000, onStage: setJobStage });
         dressed = resultImage(response);
         if (!dressed) throw new Error(String(response.message || "Chưa tạo được ảnh thử đồ thật."));
         setTryon(dressed);
       }
       setStage("scene");
-      const response = await runAiJob<Record<string, unknown>>("/api/japan-spots/scene-photo/jobs", { place: spot.place, prefecture: spot.prefecture, personImageBase64: dressed, sceneId: sceneId || undefined }, { timeoutMs: 5 * 60_000, onStage: setJobStage });
+      const response = await runAiJob<Record<string, unknown>>("/api/japan-spots/scene-photo/jobs", { place: spot.place, prefecture: spot.prefecture, personImageBase64: dressed, sceneId: sceneId || undefined, slotId: slotId || undefined }, { timeoutMs: 5 * 60_000, onStage: setJobStage });
       const composed = resultImage(response);
       if (!composed) throw new Error(String(response.message || "Đã thử đồ xong nhưng chưa ghép được cảnh."));
       setFinalImage(composed);
@@ -98,11 +113,13 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
     </section>
     <aside className="travel-controls">
       <span className="eyebrow"><MapPin aria-hidden="true" /> Đưa tôi tới đây</span><h2>{spot.place}</h2><p>{spot.photoTip || spot.where}</p>
-      <div className="travel-field"><strong>1. Góc chụp phù hợp</strong><div className="scene-options">{scenes.length ? scenes.map((scene) => <button key={scene.id} className={sceneId === scene.id ? "active" : ""} aria-pressed={sceneId === scene.id} onClick={() => { setSceneId(scene.id); setFinalImage(""); }}><img src={mediaUrl(scene.thumbnailUrl)} width="150" height="100" alt="" /><span>{scene.name}</span></button>) : <p>Địa điểm chưa có góc chụp đã duyệt; backend sẽ dùng ảnh nền khả dụng nếu hợp lệ.</p>}</div></div>
-      <div className="travel-field"><strong>2. Ảnh của bạn</strong><input ref={inputRef} className="sr-only" type="file" aria-label="Chọn ảnh của bạn để ghép cảnh Nhật Bản" accept="image/jpeg,image/png,image/webp" onChange={(event) => loadPhoto(event.target.files?.[0])} /><button className="upload-zone compact" onClick={() => inputRef.current?.click()}><ImagePlus aria-hidden="true" />{photo ? "Đổi ảnh" : "Chọn ảnh rõ người"}</button><label className="consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Tôi có quyền sử dụng ảnh này.</span></label>{isAdultGarment && <label className="consent adult"><input type="checkbox" checked={adultConsent} onChange={(event) => setAdultConsent(event.target.checked)} /><span>Người trong ảnh từ 18 tuổi; backend vẫn kiểm tra safety.</span></label>}</div>
-      <div className="travel-field"><strong>3. Sản phẩm sẽ mặc ngay tại đây</strong><p className="field-note">Hiển thị ngay khi chọn địa điểm; chỉ lấy sản phẩm live còn tồn kho.</p><div className="travel-products">{recommendations.map((item) => <button key={item.product.slug} className={selected?.product.slug === item.product.slug ? "active" : ""} aria-pressed={selected?.product.slug === item.product.slug} onClick={() => setSelectedSlug(item.product.slug)}><img src={mediaUrl(item.product.image || "")} width="72" height="90" alt="" /><span><strong>{item.product.name}</strong><small>{formatCurrency(item.product.price)}</small><em>{item.reasons?.[0] || item.photoTip || "Hợp khung cảnh"}</em></span></button>)}</div></div>
-      <div className="travel-field"><strong>4. Size</strong><div className="size-options compact">{sizes.map((value) => <button key={value} className={size === value ? "active" : ""} aria-pressed={size === value} onClick={() => setSize(value)}>{value}</button>)}</div></div>
-      <button className="button primary full" disabled={stage !== "idle" || !photo || !selected} onClick={() => generate(false)}>{stage !== "idle" ? <LoaderCircle className="spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}Thử đồ & đến đây</button>
+      <div className="travel-field"><strong>1. Góc chụp phù hợp</strong><div className="scene-options">{scenes.length ? scenes.map((scene) => <button key={scene.id} className={sceneId === scene.id ? "active" : ""} aria-pressed={sceneId === scene.id} onClick={() => { setSceneId(scene.id); setSlotId(scene.personSlots?.[0]?.id || ""); setTravelPoseId(scene.recommendedPoseId || scene.poseOptions?.[0]?.id || ""); setTryon(""); setFinalImage(""); }}><img src={mediaUrl(scene.thumbnailUrl)} width="150" height="100" alt="" /><span>{scene.name}</span></button>) : <p>Địa điểm chưa có góc chụp với vùng mặt đất đã kiểm duyệt nên hệ thống sẽ không ghép bừa.</p>}</div></div>
+      {selectedScene?.personSlots?.length ? <div className="travel-field"><strong>2. Vị trí đứng an toàn</strong><p className="field-note">Chỉ những vùng đã kiểm tra không phải nước, mái nhà hay bầu trời.</p><div className="size-options compact">{selectedScene.personSlots.map((slot) => <button key={slot.id} className={slotId === slot.id ? "active" : ""} aria-pressed={slotId === slot.id} onClick={() => { setSlotId(slot.id); setFinalImage(""); }}>{slot.label}</button>)}</div></div> : null}
+      {selectedScene?.poseOptions?.length ? <div className="travel-field"><strong>3. Dáng chụp AI</strong><p className="field-note">FLUX.2 đổi tư thế, FASHN mặc đồ; kết quả vẫn qua cổng chất lượng trước khi ghép cảnh.</p><div className="size-options compact">{selectedScene.poseOptions.map((pose) => <button key={pose.id} title={pose.description} className={travelPoseId === pose.id ? "active" : ""} aria-pressed={travelPoseId === pose.id} onClick={() => { setTravelPoseId(pose.id); setTryon(""); setFinalImage(""); }}>{pose.label}{pose.recommended ? " · hợp cảnh" : ""}</button>)}</div></div> : null}
+      <div className="travel-field"><strong>4. Ảnh của bạn</strong><input ref={inputRef} className="sr-only" type="file" aria-label="Chọn ảnh của bạn để ghép cảnh Nhật Bản" accept="image/jpeg,image/png,image/webp" onChange={(event) => loadPhoto(event.target.files?.[0])} /><button className="upload-zone compact" onClick={() => inputRef.current?.click()}><ImagePlus aria-hidden="true" />{photo ? "Đổi ảnh" : "Chọn ảnh rõ người"}</button><label className="consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Tôi có quyền sử dụng ảnh này.</span></label>{isAdultGarment && <label className="consent adult"><input type="checkbox" checked={adultConsent} onChange={(event) => setAdultConsent(event.target.checked)} /><span>Người trong ảnh từ 18 tuổi; backend vẫn kiểm tra safety.</span></label>}</div>
+      <div className="travel-field"><strong>5. Sản phẩm sẽ mặc ngay tại đây</strong><p className="field-note">Hiển thị ngay khi chọn địa điểm; chỉ lấy sản phẩm live còn tồn kho.</p><div className="travel-products">{recommendations.map((item) => <button key={item.product.slug} className={selected?.product.slug === item.product.slug ? "active" : ""} aria-pressed={selected?.product.slug === item.product.slug} onClick={() => setSelectedSlug(item.product.slug)}><img src={mediaUrl(item.product.image || "")} width="72" height="90" alt="" /><span><strong>{item.product.name}</strong><small>{formatCurrency(item.product.price)}</small><em>{item.reasons?.[0] || item.photoTip || "Hợp khung cảnh"}</em></span></button>)}</div></div>
+      <div className="travel-field"><strong>6. Size</strong><div className="size-options compact">{sizes.map((value) => <button key={value} className={size === value ? "active" : ""} aria-pressed={size === value} onClick={() => setSize(value)}>{value}</button>)}</div></div>
+      <button className="button primary full" disabled={stage !== "idle" || !photo || !selected || !selectedScene || !slotId || !travelPoseId} onClick={() => generate(false)}>{stage !== "idle" ? <LoaderCircle className="spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}Thử đồ & đến đây</button>
       {error && <div className="error-banner compact"><div><strong>Chưa hoàn tất</strong><p>{error}</p></div></div>}
     </aside>
   </div>;

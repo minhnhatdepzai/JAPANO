@@ -55,6 +55,62 @@ TEMPERATURE_GAIN = {
 }
 
 
+class UnsafePlacementError(ValueError):
+    """Bàn chân thật của cutout vượt khỏi vùng mặt đất đã duyệt."""
+
+
+def _point_in_polygon(point, polygon):
+    """Ray casting trên toạ độ pixel; điểm ở biên được xem là hợp lệ."""
+    px, py = point
+    inside = False
+    for index, current in enumerate(polygon):
+        previous = polygon[index - 1]
+        x1, y1 = previous
+        x2, y2 = current
+        cross = (py - y1) * (x2 - x1) - (px - x1) * (y2 - y1)
+        if abs(cross) <= 1e-5 and min(x1, x2) - 1e-5 <= px <= max(x1, x2) + 1e-5 \
+                and min(y1, y2) - 1e-5 <= py <= max(y1, y2) + 1e-5:
+            return True
+        if (y1 > py) != (y2 > py):
+            crossing_x = (x2 - x1) * (py - y1) / (y2 - y1 + 1e-12) + x1
+            if px < crossing_x:
+                inside = not inside
+    return inside
+
+
+def _map_source_point(point, transform):
+    """Đổi điểm 0..1 của ảnh gốc sang pixel của khung đã cover/crop."""
+    return (
+        point[0] * transform['resizedWidth'] - transform['left'],
+        point[1] * transform['resizedHeight'] - transform['top'],
+    )
+
+
+def _contact_points(alpha_np, paste_x, paste_y):
+    """Lấy biên dưới thật của hai chân/vạt áo thay vì đoán từ tâm bbox.
+
+    Chỉ giữ những cột nằm sát hàng thấp nhất. Nhờ vậy tay buông thấp hoặc tà áo
+    chéo không bị hiểu nhầm là bàn chân, nhưng váy/kimono chạm đất vẫn được kiểm
+    tra hết bề ngang tiếp xúc.
+    """
+    opaque = alpha_np >= 48
+    candidates = []
+    for column in range(opaque.shape[1]):
+        rows = np.flatnonzero(opaque[:, column])
+        if rows.size:
+            candidates.append((column, int(rows[-1])))
+    if not candidates:
+        return []
+    deepest = max(row for _, row in candidates)
+    tolerance = max(3, round(alpha_np.shape[0] * 0.025))
+    contact = [(column, row) for column, row in candidates if row >= deepest - tolerance]
+    # Kiểm tra toàn bộ span bằng tối đa 9 mẫu; hai đầu luôn được giữ lại.
+    if len(contact) > 9:
+        indexes = np.linspace(0, len(contact) - 1, 9).round().astype(int)
+        contact = [contact[index] for index in indexes]
+    return [(paste_x + column, paste_y + row) for column, row in contact]
+
+
 def _feathered_alpha(mask, radius=2.0):
     """Alpha 0-255 từ mặt nạ nhị phân, biên được làm mềm."""
     alpha = Image.fromarray((mask.astype(np.uint8) * 255), mode='L')
@@ -147,11 +203,17 @@ def _cover(background, frame, anchor=None):
         top = max(0, min(resized.height - frame[1], top))
 
     canvas = resized.crop((left, top, left + frame[0], top + frame[1]))
+    transform = {
+        'resizedWidth': resized.width,
+        'resizedHeight': resized.height,
+        'left': left,
+        'top': top,
+    }
     if anchor is None:
-        return canvas, None
+        return canvas, None, transform
     mapped = ((anchor[0] * resized.width - left) / frame[0],
               (anchor[1] * resized.height - top) / frame[1])
-    return canvas, mapped
+    return canvas, mapped, transform
 
 
 def compose_scene(person_image, background_image, mask, *, composition=None,
@@ -189,7 +251,8 @@ def compose_scene(person_image, background_image, mask, *, composition=None,
         float(anchor_x if anchor_x is not None else anchor['x']),
         float(anchor['y']),
     )
-    canvas, mapped_anchor = _cover(background_image.convert('RGB'), frame, source_anchor)
+    canvas, mapped_anchor, background_transform = _cover(
+        background_image.convert('RGB'), frame, source_anchor)
 
     # Chiều cao mong muốn, kẹp trong khoảng scene cho phép để người dùng không
     # kéo ra một kết quả phi thực tế.
@@ -210,6 +273,22 @@ def compose_scene(person_image, background_image, mask, *, composition=None,
 
     person_np = np.asarray(cutout.convert('RGB'))
     alpha_np = np.asarray(cutout.split()[-1])
+
+    # Cổng cuối cùng dùng chính silhouette sau resize. Metadata cũ chỉ kiểm một
+    # điểm giữa hai chân nên người mặc váy rộng vẫn có thể lấn khỏi lối đi hoặc
+    # bờ cỏ. Nếu bất kỳ điểm tiếp xúc nào ra khỏi groundPolygon, dừng và yêu cầu
+    # scene/slot khác — không bao giờ trả ảnh người đứng trên nước/không trung.
+    source_ground = composition.get('groundPolygon') or []
+    contacts = _contact_points(alpha_np, paste_x, paste_y)
+    mapped_ground = [
+        _map_source_point((float(point[0]), float(point[1])), background_transform)
+        for point in source_ground
+    ] if len(source_ground) >= 3 else []
+    if mapped_ground and (not contacts or any(not _point_in_polygon(point, mapped_ground) for point in contacts)):
+        raise UnsafePlacementError(
+            'Vùng hai chân/vạt áo vượt khỏi mặt đất an toàn của góc chụp. '
+            'Hãy chọn vị trí đứng hoặc góc chụp khác.'
+        )
     toned = _tone_match(person_np, alpha_np, np.asarray(canvas),
                         temperature=composition.get('lightTemperature', 'neutral'))
     toned_image = Image.fromarray(toned, mode='RGB')
@@ -233,6 +312,11 @@ def compose_scene(person_image, background_image, mask, *, composition=None,
         'personBox': {'x': paste_x, 'y': paste_y, 'width': target_w, 'height': target_h},
         'footAnchor': {'x': round(foot_x, 4), 'y': round(foot_y, 4)},
         'heightRatio': round(target_h / frame[1], 3),
+        'groundSafe': bool(mapped_ground and contacts),
+        'contactPoints': [
+            {'x': round(x / frame[0], 4), 'y': round(y / frame[1], 4)}
+            for x, y in contacts
+        ],
     }
     return canvas, placement
 

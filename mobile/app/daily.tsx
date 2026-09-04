@@ -63,10 +63,10 @@ export default function Daily() {
 const st = StyleSheet.create({
   hi:{ fontFamily:F.displayX, fontSize:29, color:C.sumi, marginTop:6, lineHeight:34 },
   sub:{ fontFamily:F.body, color:C.muted, fontSize:13.5, marginTop:6 },
-  card:{ padding:16, borderRadius:18, backgroundColor:'#fff', borderWidth:1, borderColor:C.line },
+  card:{ padding:16, borderRadius:18, backgroundColor:C.card, borderWidth:1, borderColor:C.line },
   q:{ fontFamily:F.bodyM, fontSize:14, color:C.ink, marginTop:10, marginBottom:2 },
   grid:{ flexDirection:'row', flexWrap:'wrap', gap:10, marginVertical:14 },
-  opt:{ width:'47%', flexGrow:1, borderWidth:1.5, borderColor:C.line, borderRadius:14, overflow:'hidden', backgroundColor:'#fff' },
+  opt:{ width:'47%', flexGrow:1, borderWidth:1.5, borderColor:C.line, borderRadius:14, overflow:'hidden', backgroundColor:C.card },
   optSel:{ borderColor:C.primary },
   optLbl:{ padding:8, fontFamily:F.bodyB, fontSize:12, textAlign:'center', color:C.ink },
   skip:{ textAlign:'center', marginTop:10, fontFamily:F.body, fontSize:12.5, color:C.muted },

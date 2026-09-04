@@ -8,21 +8,26 @@ import { useToast } from '../lib/toast';
 import { syncPushToken } from '../lib/push';
 import { sendTestNotification } from '../lib/localNotify';
 
-const Row = ({ icon, label, description, right }:{icon:string;label:string;description?:string;right:React.ReactNode}) => (
-  <View style={st.row}>
+const Row = ({ icon, label, description, right, onPress }:{icon:string;label:string;description?:string;right:React.ReactNode;onPress?:()=>void}) => {
+  const Body = onPress ? Pressable : View;
+  return (
+  <Body
+    style={st.row}
+    {...(onPress ? { onPress, accessibilityRole:'button' as const, accessibilityLabel:label } : {})}
+  >
     <View style={st.ic}><Ionicons name={icon as any} size={17} color={C.ink} /></View>
     <View style={{ flex:1 }}>
       <Text style={st.lbl}>{label}</Text>
       {!!description && <Text style={st.description}>{description}</Text>}
     </View>
     {right}
-  </View>
-);
+  </Body>
+  );
+};
 const Arrow = ({ t }:{t?:string}) => (<Text style={{ fontFamily:F.body, fontSize:12, color:C.muted }}>{t? t+' ›':'›'}</Text>);
 export default function Settings() {
   const bot = useBotChat();
   const { toast } = useToast();
-  const [dark, setDark] = useState(false);
   const [ai, setAi] = useState(true);
   const [noti, setNoti] = useState(true);
   const [testing, setTesting] = useState(false);
@@ -58,8 +63,18 @@ export default function Settings() {
       <Header title="Cài đặt hệ thống" />
       <ScrollView contentContainerStyle={{ paddingHorizontal:18, paddingBottom:24 }}>
         <Text style={st.grp}>GIAO DIỆN</Text>
-        <Row icon="moon-outline" label="Chế độ tối màu mực" right={<Switch value={dark} onValueChange={setDark} trackColor={{ true:C.shu }} />} />
-        <Row icon="text-outline" label="Cỡ chữ" right={<Arrow t="Vừa" />} />
+        <Row
+          icon="moon-outline"
+          label="Chế độ tối màu mực"
+          description="Tạm tắt ở bản ổn định — ứng dụng luôn dùng giao diện sáng"
+          right={<Switch value={false} disabled trackColor={{ false:C.hair, true:C.shu }} />}
+        />
+        <Row
+          icon="text-outline"
+          label="Cỡ chữ"
+          description="Tạm dùng cỡ chữ vừa để tránh lỗi khởi động"
+          right={<Arrow t="Vừa" />}
+        />
         <Row icon="language-outline" label="Ngôn ngữ" right={<Arrow t="Tiếng Việt" />} />
         <Text style={st.grp}>TRỢ LÝ & GỢI Ý</Text>
         <Row icon="sparkles-outline" label="Trợ lý thông minh và gợi ý" right={<Switch value={ai} onValueChange={setAi} trackColor={{ true:C.shu }} />} />

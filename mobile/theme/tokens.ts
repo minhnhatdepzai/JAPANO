@@ -48,6 +48,9 @@ const palette = {
   infoSoft: '#EEF3F8',
 } as const;
 
+// Android phân giải lại các resource này theo values/values-night mỗi khi cây
+// view được remount. Cast về string chỉ để giữ tương thích kiểu với các thư
+// viện icon/SVG cũ; giá trị runtime vẫn là OpaqueColorValue của React Native.
 /** Token ngữ nghĩa — đây là thứ màn hình nên dùng. */
 export const color = {
   background: palette.neutral100,
@@ -238,6 +241,8 @@ export const C = {
   // nút hành động chính
   primary: color.brand,
   onPrimary: color.onBrand,
+  inverseSurface: palette.black,
+  inverseText: palette.neutral0,
 
   // trạng thái
   ok: color.success,

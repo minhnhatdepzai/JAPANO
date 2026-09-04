@@ -236,14 +236,14 @@ export default function Products() {
 const st = StyleSheet.create({
   eyebrow:{fontFamily:F.bodyM,fontSize:9.5,letterSpacing:1.6,color:C.muted,marginBottom:2},
   title:{fontFamily:F.display,fontSize:24,color:C.sumi,marginBottom:10},
-  search:{ flexDirection:'row', alignItems:'center', gap:8, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, marginBottom:12 },
-  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
+  search:{ flexDirection:'row', alignItems:'center', gap:8, minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:C.card, paddingHorizontal:13, marginBottom:12 },
+  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:C.card },
   chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
   toolsRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:10,gap:8},
   toolActions:{flexDirection:'row',alignItems:'center',gap:7},
-  toolButton:{minHeight:38,flexDirection:'row',alignItems:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:999,backgroundColor:'#fff',paddingHorizontal:11},
+  toolButton:{minHeight:38,flexDirection:'row',alignItems:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:999,backgroundColor:C.card,paddingHorizontal:11},
   toolButtonOn:{backgroundColor:C.primary,borderColor:C.primary},
   toolText:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
-  sortMenu:{ borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', marginBottom:10, overflow:'hidden' },
+  sortMenu:{ borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:C.card, marginBottom:10, overflow:'hidden' },
   sortOpt:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', paddingVertical:11, paddingHorizontal:14, borderTopWidth:1, borderTopColor:C.hair },
 });

@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Enso } from '../components/art';
 import { useCatalog } from '../lib/data';
-import { sendStylistMessage } from '../lib/api';
+import { sendStylistMessage, StylistAction, warmStylistChat } from '../lib/api';
 import { loadStyleProfile } from '../lib/profile';
 import { C, F } from '../theme/tokens';
 import { SmartImage } from '../components/SmartImage';
@@ -15,7 +15,7 @@ import { useAuth } from '../lib/auth';
 import { getHomeRecommendations } from '../lib/api';
 import { useGpuFocus } from '../lib/useGpuFocus';
 
-type Msg = { role: 'ai' | 'me'; text: string; productIds?: string[] };
+type Msg = { role: 'ai' | 'me'; text: string; productIds?: string[]; actions?: StylistAction[] };
 const GREETING: Msg = {
   role: 'ai',
   text: 'Hôm nay bạn thế nào? Mình là Ori. Bạn kể mình nghe tâm trạng hoặc dịp sắp tới nhé — mình sẽ chọn món phù hợp và bạn có thể thêm giỏ, yêu thích hoặc mua ngay trong cuộc trò chuyện.',
@@ -40,6 +40,22 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const bySlug = (key: string) => products.find(p => p.slug === key || p.id === key);
+
+  const runAction = (action: StylistAction) => {
+    Keyboard.dismiss();
+    switch (action.id) {
+      case 'open_shop': router.push('/(tabs)/products'); break;
+      case 'open_checkout': router.push('/checkout'); break;
+      case 'open_cart': router.push('/cart'); break;
+      case 'open_wishlist': router.push('/(tabs)/wishlist'); break;
+      case 'open_orders': router.push('/orders'); break;
+      case 'open_explore_japan': router.push('/explore-japan'); break;
+      case 'open_tryon': router.push(action.productId ? { pathname:'/tryon', params:{ productId:action.productId } } as any : '/tryon'); break;
+      case 'open_product': if (action.productId) router.push(`/product/${action.productId}`); break;
+    }
+  };
+
+  useEffect(() => { void warmStylistChat(); }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -72,6 +88,14 @@ export default function Chat() {
 
   useEffect(() => { scrollRef.current?.scrollToEnd({ animated: true }); }, [messages, loading]);
 
+  useEffect(() => {
+    const event = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const subscription = Keyboard.addListener(event, () => {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+    });
+    return () => subscription.remove();
+  }, []);
+
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -85,9 +109,18 @@ export default function Chat() {
         userId: user?.id,
         message: trimmed,
         profile,
-        history: history.slice(-8).map(m => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text })),
+        history: history.slice(-8).map(m => ({
+          role: m.role === 'me' ? 'user' : 'assistant',
+          content: m.text,
+          productIds: m.productIds,
+        })),
       });
-      setMessages(m => [...m, { role: 'ai', text: result.message, productIds: result.products?.map(String) }]);
+      setMessages(m => [...m, {
+        role: 'ai', text: result.message,
+        productIds: result.products?.map(String), actions: result.actions,
+      }]);
+      const automatic = result.actions.find(action => action.auto);
+      if (automatic) setTimeout(() => runAction(automatic), 280);
     } catch (e: any) {
       setMessages(m => [...m, { role: 'ai', text: e?.message || 'Ori chưa kết nối được, bạn thử lại nhé.' }]);
     } finally {
@@ -102,23 +135,40 @@ export default function Chat() {
         <Enso size={38} sw={7} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: F.display, fontSize: 16, color: C.sumi }}>Trợ lý Ori</Text>
-          <Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.matcha }}>● mLSTM memory · MoE · catalog-grounded</Text>
+          <Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.matcha }}>● Qwen3-VL tools · catalog-grounded</Text>
         </View>
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-        <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 16, gap: 10 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          ref={scrollRef}
+          style={st.messageList}
+          contentContainerStyle={st.messageContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        >
           {messages.map((m, i) => (
             <View key={i} style={[st.bubble, m.role === 'ai' ? st.ai : st.me]}>
               <Text style={m.role === 'ai' ? st.aiT : st.meT}>{m.text}</Text>
               {!!m.productIds?.length && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 10 }}>
+                <ScrollView
+                  horizontal
+                  nestedScrollEnabled
+                  showsHorizontalScrollIndicator={false}
+                  style={st.productCarousel}
+                  contentContainerStyle={st.productCarouselContent}
+                >
                   {m.productIds.map(slug => {
                     const p = bySlug(slug);
                     if (!p) return null;
                     return (
                       <Pressable key={slug} style={st.mini} onPress={() => router.push(`/product/${p.slug}`)}>
                         <SmartImage source={p.images[0]} style={{ width: 54, height: 66, borderRadius: 9 }} recyclingKey={`${p.slug}-chat`} />
-                        <View style={{ marginLeft: 10, maxWidth: 140 }}>
+                        <View style={st.miniBody}>
                           <Text style={{ fontFamily: F.bodyB, fontSize: 12.5, color: C.ink }} numberOfLines={1}>{p.name}</Text>
                           <Text style={{ fontFamily: F.bodyX, fontSize: 12, color: C.ink }}>{p.price.toLocaleString('vi-VN')}₫</Text>
                           <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }}>
@@ -134,6 +184,22 @@ export default function Chat() {
                     );
                   })}
                 </ScrollView>
+              )}
+              {!!m.actions?.length && (
+                <View style={st.actionRow}>
+                  {m.actions.filter(action => !action.auto).map(action => (
+                    <Pressable
+                      key={`${action.id}-${action.productId || ''}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={action.label}
+                      style={st.actionBtn}
+                      onPress={() => runAction(action)}
+                    >
+                      <Ionicons name="arrow-forward-circle-outline" size={16} color="#fff" />
+                      <Text style={st.actionText}>{action.label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
               )}
             </View>
           ))}
@@ -158,12 +224,20 @@ export default function Chat() {
               onChangeText={setInput}
               placeholder="Nhắn cho Ori…"
               placeholderTextColor={C.muted}
-              style={{ fontFamily: F.body, fontSize: 14, color: C.ink }}
+              style={st.textInput}
               onSubmitEditing={() => void send(input)}
               returnKeyType="send"
             />
           </View>
-          <Pressable style={st.send} onPress={() => void send(input)}><Ionicons name="send" size={18} color="#fff" /></Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Gửi tin nhắn cho Ori"
+            disabled={!input.trim() || loading}
+            style={({ pressed }) => [st.send, (!input.trim() || loading) && st.sendDisabled, pressed && input.trim() && !loading && st.sendPressed]}
+            onPress={() => void send(input)}
+          >
+            <Ionicons name="send" size={18} color="#fff" />
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -171,19 +245,30 @@ export default function Chat() {
 }
 const st = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: C.hair },
+  messageList: { flex: 1 },
+  messageContent: { padding: 16, gap: 10 },
   bubble: { maxWidth: '85%', padding: 12, borderRadius: 16 },
-  ai: { alignSelf: 'flex-start', backgroundColor: '#fff', borderWidth: 1, borderColor: C.line, borderTopLeftRadius: 4 },
+  ai: { alignSelf: 'flex-start', backgroundColor:C.card, borderWidth: 1, borderColor: C.line, borderTopLeftRadius: 4 },
   me: { alignSelf: 'flex-end', backgroundColor: C.primary, borderTopRightRadius: 4 },
   aiT: { fontFamily: F.body, fontSize: 13.5, color: C.ink, lineHeight: 20 },
   meT: { fontFamily: F.body, fontSize: 13.5, color: '#fff', lineHeight: 20 },
-  mini: { flexDirection: 'row', backgroundColor: C.paper, borderRadius: 12, padding: 8, width: 300 },
-  miniBtn: { borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: '#fff' },
+  productCarousel: { height: 92, flexGrow: 0, alignSelf: 'stretch' },
+  productCarouselContent: { gap: 8, paddingTop: 10, paddingRight: 4 },
+  mini: { flexDirection: 'row', backgroundColor: C.paper, borderRadius: 12, padding: 8, width: 280, height: 82 },
+  miniBody: { flex: 1, minWidth: 0, marginLeft: 10 },
+  miniBtn: { borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingVertical: 4, paddingHorizontal: 8, backgroundColor:C.card },
   miniOn: { backgroundColor: C.primary, borderColor: C.primary },
   wishOn: { backgroundColor: C.primary, borderColor: C.primary },
   buyBtn: { backgroundColor: C.ai, borderColor: C.ai },
   miniBtnT: { fontFamily: F.bodyB, fontSize: 10.5, color: C.ink },
-  sug: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#fff' },
+  sug: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12, backgroundColor:C.card },
+  actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, backgroundColor: C.ai, paddingVertical: 8, paddingHorizontal: 12 },
+  actionText: { fontFamily: F.bodyB, fontSize: 11.5, color: '#fff' },
   inputBar: { flexDirection: 'row', gap: 10, alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.hair, backgroundColor: C.washi },
-  input: { flex: 1, height: 44, borderRadius: 22, borderWidth: 1, borderColor: C.line, backgroundColor: '#fff', paddingHorizontal: 16, justifyContent: 'center' },
+  input: { flex: 1, height: 44, borderRadius: 22, borderWidth: 1, borderColor: C.line, backgroundColor:C.card, paddingHorizontal: 16, justifyContent: 'center' },
+  textInput: { flex: 1, fontFamily: F.body, fontSize: 14, color: C.ink, paddingVertical: 0 },
   send: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' },
+  sendDisabled: { opacity: 0.42 },
+  sendPressed: { opacity: 0.72 },
 });

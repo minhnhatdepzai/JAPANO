@@ -7,6 +7,98 @@ from PIL import Image, ImageDraw, ImageFilter
 TARGET_SIZE = (768, 1024)
 INFERENCE_SIZE = (576, 768)
 
+# Dáng toàn thân chuẩn hoá cho ảnh du lịch. Đây là điều kiện hình học cho model,
+# không mang khuôn mặt/quần áo của một người mẫu khác vào ảnh người dùng.
+TRAVEL_POSE_PRESETS = {
+    'relaxed': {
+        'label': 'Đứng thư giãn',
+        'instruction': (
+            'a relaxed full-body standing pose, weight shifted subtly onto one leg, '
+            'shoulders relaxed, both hands visible and naturally lowered'
+        ),
+        'points': {
+            'nose': (.50, .13), 'left_eye': (.53, .12), 'right_eye': (.47, .12),
+            'left_ear': (.56, .13), 'right_ear': (.44, .13), 'neck': (.50, .22),
+            'left_shoulder': (.61, .25), 'right_shoulder': (.39, .25),
+            'left_elbow': (.65, .42), 'right_elbow': (.35, .42),
+            'left_wrist': (.62, .58), 'right_wrist': (.38, .58),
+            'left_hip': (.57, .57), 'right_hip': (.43, .57),
+            'left_knee': (.59, .76), 'right_knee': (.44, .76),
+            'left_ankle': (.61, .93), 'right_ankle': (.42, .93),
+        },
+    },
+    'stroll': {
+        'label': 'Bước dạo nhẹ',
+        'instruction': (
+            'a natural slow walking pose toward the camera, one short step forward, '
+            'arms swinging only slightly, upright head, both feet touching the ground'
+        ),
+        'points': {
+            'nose': (.50, .13), 'left_eye': (.53, .12), 'right_eye': (.47, .12),
+            'left_ear': (.56, .13), 'right_ear': (.44, .13), 'neck': (.50, .22),
+            'left_shoulder': (.61, .25), 'right_shoulder': (.39, .25),
+            'left_elbow': (.66, .40), 'right_elbow': (.34, .41),
+            'left_wrist': (.70, .53), 'right_wrist': (.29, .54),
+            'left_hip': (.57, .57), 'right_hip': (.43, .57),
+            'left_knee': (.61, .75), 'right_knee': (.40, .73),
+            'left_ankle': (.66, .92), 'right_ankle': (.35, .93),
+        },
+    },
+    'three-quarter': {
+        'label': 'Nghiêng 3/4',
+        'instruction': (
+            'an elegant three-quarter standing pose facing slightly toward the camera, '
+            'one hand resting lightly near the waist, the other hand lowered, both feet grounded'
+        ),
+        'points': {
+            'nose': (.51, .13), 'left_eye': (.54, .12), 'right_eye': (.49, .12),
+            'left_ear': (.57, .13), 'right_ear': (.46, .13), 'neck': (.51, .22),
+            'left_shoulder': (.59, .25), 'right_shoulder': (.42, .27),
+            'left_elbow': (.64, .42), 'right_elbow': (.37, .42),
+            'left_wrist': (.60, .58), 'right_wrist': (.44, .54),
+            'left_hip': (.56, .57), 'right_hip': (.45, .58),
+            'left_knee': (.57, .76), 'right_knee': (.44, .76),
+            'left_ankle': (.58, .93), 'right_ankle': (.42, .93),
+        },
+    },
+    'greeting': {
+        'label': 'Chào duyên dáng',
+        'instruction': (
+            'a respectful travel greeting pose, upright body, one open palm raised beside the shoulder with fingers naturally separated, '
+            'the hand must not cover the chest, the other hand naturally lowered, legs straight and both feet grounded'
+        ),
+        'points': {
+            'nose': (.50, .13), 'left_eye': (.53, .12), 'right_eye': (.47, .12),
+            'left_ear': (.56, .13), 'right_ear': (.44, .13), 'neck': (.50, .22),
+            'left_shoulder': (.61, .25), 'right_shoulder': (.39, .25),
+            'left_elbow': (.68, .35), 'right_elbow': (.35, .42),
+            'left_wrist': (.66, .25), 'right_wrist': (.38, .58),
+            'left_hip': (.57, .57), 'right_hip': (.43, .57),
+            'left_knee': (.57, .76), 'right_knee': (.43, .76),
+            'left_ankle': (.58, .93), 'right_ankle': (.42, .93),
+        },
+    },
+}
+
+
+def travel_pose_ids():
+    return tuple(TRAVEL_POSE_PRESETS)
+
+
+def travel_pose_instruction(pose_id):
+    preset = TRAVEL_POSE_PRESETS.get(str(pose_id)) or TRAVEL_POSE_PRESETS['relaxed']
+    return preset['instruction']
+
+
+def travel_pose_guide(pose_id, size=TARGET_SIZE):
+    preset = TRAVEL_POSE_PRESETS.get(str(pose_id)) or TRAVEL_POSE_PRESETS['relaxed']
+    width, height = size
+    points = {
+        name: (float(x) * width, float(y) * height)
+        for name, (x, y) in preset['points'].items()
+    }
+    return draw_openpose(points, size=size)
+
 
 def _point(keypoints, name):
     value = (keypoints or {}).get(name)

@@ -73,7 +73,7 @@ export default function Register() {
 const st = StyleSheet.create({
   sub:{ fontFamily:F.body, color:C.muted, fontSize:13, marginBottom:14 },
   lbl:{ fontFamily:F.bodyM, color:C.muted, fontSize:11, marginBottom:5 },
-  input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:'#fff', paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink },
+  input:{ minHeight:48, borderWidth:1, borderColor:C.line, borderRadius:12, backgroundColor:C.card, paddingHorizontal:13, fontFamily:F.body, fontSize:14, color:C.ink },
   bar:{ flex:1, height:4, borderRadius:2 },
   foot:{ textAlign:'center', marginTop:16, fontFamily:F.body, fontSize:13, color:C.muted },
   guest:{ textAlign:'center', marginTop:14, fontFamily:F.bodyB, fontSize:12.5, color:C.ink },

@@ -22,6 +22,8 @@ from starlette.concurrency import run_in_threadpool
 
 import torch
 
+from pose_reposer import travel_pose_guide, travel_pose_ids, travel_pose_instruction
+
 
 FASHN_HOME = Path(os.getenv("JAPANO_FASHN_HOME", str(Path.home() / "jp/ai/fashn-vton-1.5"))).resolve()
 FASHN_WEIGHTS = Path(os.getenv("JAPANO_FASHN_WEIGHTS", str(FASHN_HOME / "weights"))).resolve()
@@ -191,12 +193,50 @@ def unload_flux():
         cuda_cleanup()
 
 
+def free_vram_gb() -> float:
+    """VRAM trống thật sự, tính theo GB."""
+    if not torch.cuda.is_available():
+        return 999.0
+    cuda_cleanup()
+    free, _ = torch.cuda.mem_get_info()
+    return free / (1024 ** 3)
+
+
+def evict_other_model(unload_fn, needs_gb_env: str, default_gb: str) -> None:
+    """Chỉ đuổi model kia khi VRAM thật sự không đủ.
+
+    Trước đây `load_fashn` gỡ FLUX và `load_flux` gỡ FASHN VÔ ĐIỀU KIỆN, nên hai
+    model đá nhau qua lại suốt: mỗi lượt thử đồ dùng tới FLUX (sửa dáng, fit-refine,
+    fidelity) là một lần gỡ rồi nạp lại FASHN.
+
+    Đo trên máy 2026-09-02, cùng ảnh và cùng seed:
+      - lượt giữ được model trên GPU: 23,6-34,1 giây
+      - lượt bị tráo model:           63,9-72,7 giây
+    Hai model nằm cạnh nhau chỉ chiếm 7,76 GB trên card 16 GB, nên việc đuổi nhau
+    đó không mua lại được gì — nó chỉ đổi ~35 giây chờ lấy một khoảng VRAM đang
+    thừa. Máy này cũng không còn chạy Android emulator (không có AVD nào), tức là
+    tiền đề của quyết định cũ đã hết hiệu lực.
+
+    Vẫn giữ đường đuổi model cho trường hợp VRAM thật sự chật (chạy kèm việc khác,
+    card nhỏ hơn) và cho phép tắt hẳn bằng JAPANO_MODELS_CORESIDENT=0.
+    """
+    coresident = os.getenv("JAPANO_MODELS_CORESIDENT", "1").strip().lower() not in {"0", "false", "no", "off"}
+    if not coresident:
+        unload_fn()
+        return
+    needs = float(os.getenv(needs_gb_env, default_gb))
+    available = free_vram_gb()
+    if available < needs:
+        print(f"=== VRAM trống {available:.1f} GB < {needs:.1f} GB — nhả model kia ===", flush=True)
+        unload_fn()
+
+
 def load_fashn():
     global FASHN_PIPELINE, LAST_ENGINE
     if FASHN_PIPELINE is None:
         if not (FASHN_WEIGHTS / "model.safetensors").exists():
             raise RuntimeError(f"Thiếu FASHN weights tại {FASHN_WEIGHTS}")
-        unload_flux()
+        evict_other_model(unload_flux, "JAPANO_FASHN_NEEDS_GB", "6")
         release_ollama_vram()
         wait_for_gpu_headroom()
         from fashn_vton import TryOnPipeline
@@ -215,7 +255,7 @@ def load_flux():
             raise RuntimeError(f"Thiếu FLUX.2 Klein 4B tại {FLUX_HOME}")
         if not POSE_REFERENCE.exists():
             raise RuntimeError(f"Thiếu ảnh pose chuẩn tại {POSE_REFERENCE}")
-        unload_fashn()
+        evict_other_model(unload_fashn, "JAPANO_FLUX_NEEDS_GB", "6")
         release_ollama_vram()
         wait_for_gpu_headroom()
         from diffusers import Flux2KleinPipeline
@@ -305,19 +345,27 @@ def normalized_output_size(image: Image.Image, low_memory: bool = False):
     return (768, 1024) if image.height >= image.width else (1024, 768)
 
 
-def repose_main_subject(person: Image.Image, output_path: Path, low_memory: bool = False) -> Image.Image:
+def repose_main_subject(
+    person: Image.Image,
+    output_path: Path,
+    low_memory: bool = False,
+    pose_id: str = 'relaxed',
+) -> Image.Image:
     pipe = load_flux()
-    target = open_rgb(POSE_REFERENCE)
     width, height = normalized_output_size(person, low_memory)
+    pose_id = pose_id if pose_id in travel_pose_ids() else 'relaxed'
+    target = travel_pose_guide(pose_id, (width, height))
+    pose_instruction = travel_pose_instruction(pose_id)
     prompt = (
-        "Edit image 1 only. Image 1 is the user's photograph. Image 2 is an identity-free pose guide. "
+        "Edit image 1 only. Image 1 is the user's photograph. Image 2 is an identity-free colored OpenPose skeleton guide. "
         "Keep the same main person's exact face, hair, age, skin tone and body proportions from image 1. "
-        "Move only the largest central main person into the upright front-facing catalog stance of image 2: "
-        "head upright, torso visible, legs straight, feet apart, both arms lowered naturally, hands away from the chest. "
+        f"Move only the largest central main person into {pose_instruction}, following image 2. "
+        "Keep the complete body visible from head to both feet and keep both feet on the same floor plane. "
         "Keep the original background, lighting and every secondary person from image 1 unchanged. "
         "If the main person originally holds food, a sign, brochure, bag or any prop, either place it naturally in a lowered hand "
         "or remove it cleanly and reconstruct the background; never leave a detached or floating object at the old hand position. "
-        "Do not copy the mannequin body, face, material or nudity. Keep the user's current ordinary clothing for this pose-only step. "
+        "Do not render the skeleton, copy its colors, or copy another person's face or clothes. "
+        "Keep the user's current ordinary clothing for this pose-only step. "
         "Exactly one main subject is re-posed; no duplicate limbs, no extra people, no text. Photorealistic."
     )
     generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(
@@ -709,7 +757,7 @@ def run_fit_refine_locked(
         try:
             check_cancelled()
             release_ollama_vram()
-            unload_fashn()
+            evict_other_model(unload_fashn, "JAPANO_FLUX_NEEDS_GB", "6")
             cuda_cleanup()
             tryon_image = open_rgb(tryon_path)
             garment = open_rgb(garment_path) if garment_path is not None else None
@@ -747,6 +795,7 @@ def run_fit_refine_locked(
             return output_path
         finally:
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            touch_last_used()
             # Cùng chính sách với run_tryon_locked: JAPANO_UNLOAD_AFTER_TRYON=0
             # giữ FLUX lại giữa các lượt liên tiếp. Trước đây bước fit LUÔN nhả
             # model, nên sinh dataset hay thử nhiều size liền nhau phải nạp lại
@@ -881,6 +930,7 @@ def run_accessory_refine_locked(
         finally:
             unload_flux()
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            touch_last_used()
 
 
 def render_two_piece_swimwear(
@@ -890,6 +940,7 @@ def render_two_piece_swimwear(
     seed: int,
     repose: bool = False,
     low_memory: bool = False,
+    pose_id: str = 'relaxed',
 ) -> Image.Image:
     """Mặc bikini hai mảnh trong một lượt edit đa tham chiếu.
 
@@ -903,9 +954,9 @@ def render_two_piece_swimwear(
     references = [person, top, bottom]
     pose_note = ""
     if repose:
-        references.append(open_rgb(POSE_REFERENCE))
+        references.append(travel_pose_guide(pose_id, (width, height)))
         pose_note = (
-            "Image 4 is an identity-free pose guide. Move only the main person into its upright front-facing stance, "
+            f"Image 4 is an identity-free OpenPose guide. Move only the main person into {travel_pose_instruction(pose_id)}, "
             "while retaining the exact identity and body proportions from image 1. "
         )
     prompt = (
@@ -940,6 +991,7 @@ def run_swimwear_tryon_locked(
     bottom_path: Path,
     seed: int,
     repose: bool = False,
+    pose_id: str = 'relaxed',
 ):
     global LAST_ENGINE
     with LOCK:
@@ -956,7 +1008,7 @@ def run_swimwear_tryon_locked(
                 "0", "false", "no", "off"
             }
             result = render_two_piece_swimwear(
-                person, top, bottom, seed, repose=repose, low_memory=prefer_low_memory,
+                person, top, bottom, seed, repose=repose, low_memory=prefer_low_memory, pose_id=pose_id,
             )
             check_cancelled()
             output_path = RUNTIME_DIR / f"swimwear-{time.time_ns()}.png"
@@ -965,6 +1017,7 @@ def run_swimwear_tryon_locked(
             return output_path
         finally:
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            touch_last_used()
             if os.getenv("JAPANO_UNLOAD_AFTER_TRYON", "1").strip().lower() not in {"0", "false", "no", "off"}:
                 unload_flux()
             cuda_cleanup()
@@ -978,6 +1031,7 @@ def run_tryon(
     repose: bool,
     refine: bool,
     seed: int,
+    pose_id: str = 'relaxed',
     low_memory: bool = False,
     quality_mode: str = "high",
 ):
@@ -988,7 +1042,7 @@ def run_tryon(
     person = open_rgb(person_path)
     reposed_path = RUNTIME_DIR / f"reposed-{time.time_ns()}.png"
     if repose:
-        person = repose_main_subject(person, reposed_path, low_memory)
+        person = repose_main_subject(person, reposed_path, low_memory, pose_id)
         check_cancelled()
         # Do not keep the 13 GB edit model resident while loading FASHN.
         unload_flux()
@@ -1006,12 +1060,37 @@ def run_tryon(
         num_timesteps=quality["steps"],
         guidance_scale=float(os.getenv("JAPANO_FASHN_CFG", "1.5")),
         seed=seed,
-        segmentation_free=True,
+        # segmentation_free=True bỏ qua bước human parsing, tức là model được tự
+        # do vẽ lại phần thân ngoài vùng trang phục. Đo trên máy 2026-09-02: thử
+        # MỘT chiếc áo (cardigan/haori, category=tops) lên người đang mặc kín làm
+        # vùng chậu đi từ 0 lên 0.44 và mông từ 0 lên 0.39 — pipeline cởi mất
+        # quần của khách, rồi cổng an toàn chặn đúng và khách không nhận được ảnh.
+        # Đây chính là lỗi "thử áo xong mất quần".
+        #
+        # Bật parser (segmentation_free=False) buộc model chỉ sửa đúng vùng của
+        # category được yêu cầu. FashnHumanParser vốn đã được nạp sẵn trong
+        # pipeline nên không tốn thêm model nào.
+        # MẶC ĐỊNH TRỞ LẠI True sau khi đo trên máy thật ngày 2026-09-02.
+        #
+        # Bật parser (False) ban đầu có vẻ đúng: nó sửa được ca ảnh mẫu dựng sẵn +
+        # một chiếc áo, vốn bị cởi mất quần (chậu 0 -> 0.44). Nhưng trên ẢNH THẬT
+        # của người dùng thì hỏng nặng hơn: một cô gái mặc váy trắng dài, thử áo
+        # len khoác, cho ra chậu 0.145 -> 0.591 và mông 0.155 -> 0.513 — bộ phân
+        # đoạn coi cả chiếc váy dài là "áo", nên lượt category=tops thay luôn cả
+        # váy và để lại thân trần. Cổng an toàn chặn đúng, và khách không thử được.
+        #
+        # Hai chế độ hỏng ở hai lớp ảnh khác nhau, nên đây KHÔNG phải một tham số
+        # có đáp án đúng chung. Giữ mặc định là đường đã chạy ổn với ảnh thật của
+        # khách; bật parser bằng JAPANO_FASHN_SEGMENTATION_FREE=0 khi cần thử lại
+        # trên ảnh mẫu dựng sẵn.
+        segmentation_free=os.getenv("JAPANO_FASHN_SEGMENTATION_FREE", "1").strip().lower() in {"1", "true", "yes", "on"},
     ).images[0].convert("RGB")
     check_cancelled()
     refined = False
     if refine:
-        unload_fashn()
+        # Đây là đường chạy phổ biến nhất (mọi flat-lay đã duyệt đều qua đây), nên
+        # gỡ FASHN ở chỗ này là nguyên nhân chính của việc tráo model mỗi lượt.
+        evict_other_model(unload_fashn, "JAPANO_FLUX_NEEDS_GB", "6")
         try:
             output = refine_garment_fidelity(output, cloth, low_memory)
             check_cancelled()
@@ -1048,6 +1127,7 @@ def run_tryon_locked(
     repose: bool,
     refine: bool,
     seed: int,
+    pose_id: str = 'relaxed',
     quality_mode: str = "high",
 ):
     """Serialize GPU jobs without ever blocking FastAPI's event loop.
@@ -1074,6 +1154,7 @@ def run_tryon_locked(
                         repose,
                         refine,
                         seed,
+                        pose_id,
                         low_memory=prefer_low_memory or attempt > 0,
                         quality_mode=quality_mode,
                     )
@@ -1094,12 +1175,64 @@ def run_tryon_locked(
                     time.sleep(2)
         finally:
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            touch_last_used()
             # Máy này đồng thời chạy Android emulator và Remote Desktop. Giữ
             # model nằm trên GPU sau khi đã trả ảnh chỉ làm giao diện từ xa dễ
             # thiếu VRAM; lượt sau có thể nạp lại khi người dùng thật sự yêu cầu.
             if os.getenv("JAPANO_UNLOAD_AFTER_TRYON", "1").strip().lower() not in {"0", "false", "no", "off"}:
                 unload_fashn()
                 unload_flux()
+
+
+LAST_USED = time.monotonic()
+
+
+def touch_last_used():
+    """Đánh dấu vừa có người dùng GPU, để bộ đếm rảnh tính lại từ đầu."""
+    global LAST_USED
+    LAST_USED = time.monotonic()
+
+
+def idle_release_loop():
+    """Nhả model sau một khoảng RẢNH, không nhả ngay sau mỗi lượt.
+
+    Hai yêu cầu tưởng như trái nhau: model chỉ chạy khi được gọi và phải nhường
+    GPU cho việc khác, nhưng thử đồ cũng phải nhanh nhất có thể. Nhả ngay sau mỗi
+    lượt thì mỗi lần bấm lại phải nạp lại — đo trên máy 2026-09-02 là 63,9-72,7
+    giây/lượt so với 23,6-34,1 giây khi model còn sẵn trên GPU.
+
+    Cách dung hoà: giữ model trong lúc người dùng còn thử liên tục, và chỉ nhả khi
+    đã im lặng đủ lâu. Người dùng vẫn có GPU trống khi không dùng thử đồ, mà không
+    phải trả giá nạp lại giữa các lượt bấm liên tiếp.
+
+    Không bao giờ nhả giữa chừng: chỉ lấy LOCK khi rảnh (non-blocking), nên một
+    lượt đang chạy sẽ giữ khoá và vòng lặp này bỏ qua lượt kiểm tra đó.
+    """
+    while True:
+        time.sleep(10)
+        try:
+            idle_limit = float(os.getenv("JAPANO_MODEL_IDLE_RELEASE_SEC", "180"))
+            if idle_limit <= 0:
+                continue
+            if FASHN_PIPELINE is None and FLUX_PIPELINE is None:
+                continue
+            if time.monotonic() - LAST_USED < idle_limit:
+                continue
+            if not LOCK.acquire(blocking=False):
+                continue
+            try:
+                if time.monotonic() - LAST_USED >= idle_limit:
+                    print(f"=== Rảnh {idle_limit:.0f}s — nhả model, trả GPU cho việc khác ===", flush=True)
+                    unload_fashn()
+                    unload_flux()
+                    cuda_cleanup()
+            finally:
+                LOCK.release()
+        except Exception as exc:  # vòng nền không được phép làm chết service
+            print(f"idle_release_loop lỗi: {exc}", flush=True)
+
+
+threading.Thread(target=idle_release_loop, name="japano-idle-release", daemon=True).start()
 
 
 def warm_fashn_locked():
@@ -1113,6 +1246,7 @@ def warm_fashn_locked():
             return {"ok": pipeline is not None, "engine": "fashn-vton-1.5", "freeVramGb": round(free_bytes / (1024 ** 3), 2)}
         finally:
             GPU_ACTIVE_FILE.unlink(missing_ok=True)
+            touch_last_used()
 
 
 @api.get("/health")
@@ -1131,6 +1265,7 @@ def health():
         "fitLora": fit_lora_status(),
         "modelReady": model_ready,
         "poseEditorReady": flux_ready,
+        "travelPoseIds": list(travel_pose_ids()),
         "loaded": {"fashn": FASHN_PIPELINE is not None, "flux": FLUX_PIPELINE is not None},
         "lastEngine": LAST_ENGINE,
         "singleSubject": True,
@@ -1246,6 +1381,7 @@ async def swimwear_tryon(
     top: UploadFile = File(...),
     bottom: UploadFile = File(...),
     repose: bool = Form(False),
+    pose_id: str = Form('relaxed'),
     seed: int = Form(43),
 ):
     person_path = RUNTIME_DIR / f"swimwear-person-{time.time_ns()}.png"
@@ -1256,8 +1392,10 @@ async def swimwear_tryon(
     bottom_path.write_bytes(await bottom.read())
     try:
         CANCEL_REQUESTED.clear()
+        normalized_pose_id = pose_id if pose_id in travel_pose_ids() else 'relaxed'
         output_path = await run_in_threadpool(
-            run_swimwear_tryon_locked, person_path, top_path, bottom_path, int(seed), bool(repose),
+            run_swimwear_tryon_locked, person_path, top_path, bottom_path,
+            int(seed), bool(repose), normalized_pose_id,
         )
         return FileResponse(
             output_path,
@@ -1363,6 +1501,7 @@ async def tryon(
     category: str = Form("tops"),
     garment_photo_type: str = Form("model"),
     repose: bool = Form(False),
+    pose_id: str = Form('relaxed'),
     refine: bool = Form(False),
     seed: int = Form(42),
     quality_mode: str = Form("high"),
@@ -1377,8 +1516,10 @@ async def tryon(
     cloth_path.write_bytes(await cloth.read())
     try:
         CANCEL_REQUESTED.clear()
+        normalized_pose_id = pose_id if pose_id in travel_pose_ids() else 'relaxed'
         output_path, reposed_path = await run_in_threadpool(
-            run_tryon_locked, person_path, cloth_path, category, garment_photo_type, repose, refine, seed, quality_mode
+            run_tryon_locked, person_path, cloth_path, category, garment_photo_type,
+            repose, refine, seed, normalized_pose_id, quality_mode,
         )
         return FileResponse(
             output_path,

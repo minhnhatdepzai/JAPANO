@@ -1,0 +1,97 @@
+{
+  "reviewedAt": "2026-09-01",
+  "purpose": "Chọn dữ liệu có nguồn gốc rõ ràng cho nghiên cứu độ chân thật, pose và fit của JAPANO; không tự động cấp quyền dùng thương mại.",
+  "machine": {
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "vramMiB": 16311,
+    "freeDiskGiBAtReview": 226
+  },
+  "sources": [
+    {
+      "id": "viton-hd-local",
+      "name": "VITON-HD",
+      "kaggleUrl": "https://www.kaggle.com/datasets/marquis03/high-resolution-viton-zalando-dataset",
+      "canonicalUrl": "https://github.com/shadow2496/VITON-HD",
+      "license": "CC-BY-NC-SA-4.0 on the downloaded Kaggle package; canonical repository is CC-BY-NC-4.0",
+      "policy": "research_only",
+      "downloadStatus": "available_local",
+      "localPath": "/home/nhat/jp/datasets/viton-hd",
+      "bytes": 5248038325,
+      "trainPairs": 11647,
+      "testPairs": 2032,
+      "strengths": ["paired person and upper garment", "1024x768", "cloth mask", "human parsing", "OpenPose", "DensePose"],
+      "limits": ["women and upper-body only", "studio/front pose bias", "no real tight-loose labels", "non-commercial"],
+      "decision": "Use only for offline upper-body research and disjoint evaluation; never claim coverage of the whole catalog."
+    },
+    {
+      "id": "street-tryon",
+      "name": "StreetTryOn",
+      "githubUrl": "https://github.com/cuiaiyu/street-tryon-benchmark",
+      "license": "inherits DeepFashion2 and VITON-HD; no commercial use",
+      "policy": "research_only_access_required",
+      "downloadStatus": "blocked_by_deepfashion2_access_request",
+      "trainImages": 12364,
+      "validationImages": 2089,
+      "strengths": ["in-the-wild people", "cross-domain try-on benchmark", "DensePose and segmentation annotations"],
+      "limits": ["unpaired street images", "requires official DeepFashion2 access/password", "non-commercial"],
+      "decision": "Best next external realism benchmark after access is approved; do not fetch from an unofficial mirror."
+    },
+    {
+      "id": "dresscode",
+      "name": "Dress Code",
+      "githubUrl": "https://github.com/aimagelab/dress-code",
+      "license": "signed release agreement; non-institutional email rejected; not released to private companies",
+      "policy": "access_required",
+      "downloadStatus": "not_requested",
+      "pairs": 53792,
+      "strengths": ["upper-body", "lower-body", "dresses", "1024x768", "keypoints", "human parsing", "DensePose"],
+      "limits": ["manual institutional request", "not automatically usable by an ecommerce product"],
+      "decision": "Request through the school only if the thesis supervisor accepts the terms."
+    },
+    {
+      "id": "fit-vto-100k",
+      "name": "FIT-VTO 100K preview",
+      "githubUrl": "https://github.com/HarryWang355/FIT-VTO",
+      "datasetUrl": "https://huggingface.co/datasets/Yuanhao-Harry-Wang/fitvto-100k",
+      "license": "CC-BY-NC-ND-4.0",
+      "policy": "evaluation_hold",
+      "downloadStatus": "not_downloaded",
+      "trainSamples": 100000,
+      "evaluationSamples": 5000,
+      "strengths": ["person-cloth-target triplets", "body and garment measurements", "many body shapes and poses", "fit-aware labels"],
+      "limits": ["non-commercial", "NoDerivatives makes training/redistribution of derived adapters unsuitable without written permission", "hundreds of approximately 500 MB shards"],
+      "decision": "Do not train or activate a checkpoint from it until written permission clarifies derivative-model use."
+    },
+    {
+      "id": "somaset",
+      "name": "SOMASet",
+      "kaggleUrl": "https://www.kaggle.com/datasets/vicolab/somaset",
+      "license": "CC-BY-NC-SA-4.0",
+      "policy": "benchmark_only",
+      "downloadStatus": "kaggle_credentials_missing",
+      "bytes": 1572701961,
+      "images": 100000,
+      "strengths": ["50 synthetic identities", "8 outfits per identity", "250 poses", "outdoor scenes"],
+      "limits": ["2017 synthetic rendering", "not a person-garment-target VTON dataset", "non-commercial", "may reduce photorealism if used as direct image target"],
+      "decision": "Useful for pose/contact stress tests, not selected as a photorealistic VTON training target."
+    },
+    {
+      "id": "people-clothing-segmentation",
+      "name": "People Clothing Segmentation",
+      "kaggleUrl": "https://www.kaggle.com/datasets/rajkumarl/people-clothing-segmentation",
+      "license": "CC0 declared by Kaggle uploader; upstream image provenance still needs review",
+      "policy": "provenance_hold",
+      "downloadStatus": "kaggle_credentials_missing",
+      "images": 1000,
+      "strengths": ["outdoor people", "59-class clothing masks"],
+      "limits": ["small", "not VTON pairs", "mirror provenance not sufficient for production training"],
+      "decision": "Potential parsing evaluation only after upstream rights are verified."
+    }
+  ],
+  "currentDecision": {
+    "trainableNow": "Existing VITON-HD supports the already completed upper-body academic LoRA experiment only.",
+    "doNotRetrainReason": "Repeating training on the same 116 mostly synthetic fit targets would not add realism or category coverage.",
+    "nextDataGate": "Obtain written school access to StreetTryOn/DeepFashion2 or collect consented JAPANO person-garment-target captures with identity-disjoint splits.",
+    "productionCheckpointApproved": false
+  }
+}

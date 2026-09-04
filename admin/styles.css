@@ -478,10 +478,17 @@ body.nav-collapsed .nav a:hover::after{
   transition:border-color var(--motion-fast),box-shadow var(--motion-fast),transform var(--motion-fast);
 }
 .panel:hover{border-color:var(--border-strong);box-shadow:0 8px 24px rgba(17,17,17,.035)}
+/* Hàng tiêu đề panel là flex một dòng, và flex item mặc định có min-width:auto —
+ * tức là KHÔNG co nhỏ hơn nội dung của chính nó. Một tiêu đề dài cộng một .sub
+ * tiếng Việt dài (ví dụ "Mỗi đơn đạt điều kiện ngẫu nhiên nhận 1 thẻ chưa có")
+ * đẩy cả hàng rộng 466px trong khung nhìn 390px, kéo theo cả trang trượt ngang
+ * 95px ở màn Thẻ địa danh. Cho phép xuống dòng và cho phép co lại. */
 .panel .ph{
-  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:var(--sp-2) var(--sp-3);
   padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--line2);
 }
+.panel .ph>*{min-width:0}
 .panel .ph h3{font-size:13.5px;font-weight:700;letter-spacing:-.1px;display:flex;align-items:center;gap:7px}
 .panel .ph .sub{font-size:11px;color:var(--text-muted);font-weight:500}
 .panel .pb{padding:var(--sp-5)}
@@ -496,7 +503,7 @@ body.nav-collapsed .nav a:hover::after{
 .grid.g-2-1{grid-template-columns:2fr 1fr}
 .grid.g-1-2{grid-template-columns:1fr 2fr}
 .grid.g-3-2{grid-template-columns:3fr 2fr}
-.grid.g-auto{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.grid.g-auto{grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr))}
 .grid.align-start{align-items:start}
 .grid.pairlist{font-size:12px;gap:var(--sp-2)}
 .mt{margin-top:var(--sp-4)}
@@ -1024,7 +1031,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
   .kpis{grid-template-columns:repeat(2,1fr)}
   .chartsummary{grid-template-columns:repeat(2,1fr)}
   .content{padding:var(--sp-5)}
-  .grid.g-2-1,.grid.g-1-2,.grid.g-3-2{grid-template-columns:1fr}
+  .grid.g-2-1,.grid.g-1-2,.grid.g-3-2{grid-template-columns:minmax(0,1fr)}
   .grid.g-4{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:1024px){
@@ -1075,8 +1082,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
   .who{padding-left:0;border-left:0}
   .whotrigger{padding:1px}.whotrigger .chev{display:none}
   .kpis,.chartsummary,.metriccards{grid-template-columns:1fr}
-  .grid.g-2,.grid.g-3,.grid.g-4{grid-template-columns:1fr}
-  .row2,.row3{grid-template-columns:1fr}
+  .grid.g-2,.grid.g-3,.grid.g-4{grid-template-columns:minmax(0,1fr)}
+  .row2,.row3{grid-template-columns:minmax(0,1fr)}
   .apibtn span:not(.dot){display:none}
   .filters{gap:var(--sp-2)}
   .tabs{width:100%;overflow-x:auto}
@@ -1099,3 +1106,28 @@ table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
   .main{margin-left:0}
   .panel,.kpi{border-color:#ccc;break-inside:avoid}
 }
+
+/* ---------------------------------------------------------------------------
+   Kích thước vùng chạm tối thiểu (WCAG 2.2 AA — 2.5.8 Target Size, 24x24px).
+   Trang quản trị cố tình dày đặc thông tin, nên KHÔNG phóng to các điều khiển
+   này về mặt thị giác: chỉ nới vùng bấm bằng pseudo-element hoặc min-height,
+   giữ nguyên bố cục bảng. Đo được trước đó: .switch 38x22, .seg button 51x22,
+   button.link 65x15, ô tìm kiếm 220x15 — tất cả đều dưới ngưỡng 24px.
+   --------------------------------------------------------------------------- */
+.switch::after{content:"";position:absolute;left:0;right:0;top:50%;height:24px;transform:translateY(-50%)}
+.seg button{min-height:24px}
+.search input{min-height:24px}
+/* button.link nằm trong ô bảng: nới vùng bấm mà không đổi chiều cao dòng.
+   Cần inline-block thì hộp định vị mới bao đủ dải 24px (hộp inline bị cắt theo
+   line box, nên nửa dưới của dải rơi ra ngoài và chạm vào <td>). */
+.tbl button.link{position:relative;display:inline-block}
+.tbl button.link::after{content:"";position:absolute;left:0;right:0;top:50%;height:24px;transform:translateY(-50%)}
+/* Liên kết "Xem tất cả" trong .ph .sub của bảng điều khiển (đo được 71x12). */
+.panel .ph .sub a{position:relative;display:inline-block}
+.panel .ph .sub a::after{content:"";position:absolute;left:0;right:0;top:50%;height:24px;transform:translateY(-50%)}
+
+/* Bỏ qua điều hướng: thanh bên có 16 mục, trước đây người dùng bàn phím phải Tab
+   hết cả 16 mục đó ở MỌI khung nhìn mới tới được nội dung. Chỉ hiện khi có focus. */
+.skip-link{position:fixed;z-index:200;left:12px;top:12px;padding:10px 16px;background:var(--brand,#111);color:#fff;
+  border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;transform:translateY(-160%);transition:transform var(--motion-fast) var(--ease)}
+.skip-link:focus-visible{transform:none}

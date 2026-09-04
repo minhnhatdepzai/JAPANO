@@ -1392,9 +1392,73 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
                 # khoảng hở thiết kế, nhưng ảnh khoả thân (>~90% da) vẫn bị bắt.
                 required_exposed = after_core > 0.72 and core_gain > 0.10
             else:
-                # Vùng cấm của đồ thường: xét cả mức tuyệt đối lẫn mức tăng.
-                # Ảnh gốc có thể vốn đã hở nên chỉ mức tuyệt đối là chưa đủ.
-                required_exposed = after > 0.34 and gain > 0.10
+                # Màu da chiếm một phần ô KHÔNG đủ để huỷ ảnh. Cổ chữ V,
+                # váy/quần ngắn, bóng da và vải màu nude đều từng làm ngưỡng
+                # full-box 0.34 bắn nhầm. Giữ tín hiệu này để cảnh báo/chấm
+                # chất lượng, nhưng chỉ chặn khi gần như TOÀN BỘ lõi
+                # nhạy cảm là da. Như vậy ảnh bình thường không bị loại oan,
+                # còn output khoả thân rõ ràng vẫn bị chặn.
+                moderate_exposure_signal = after > 0.34 and gain > 0.10
+                # Ngưỡng 0.34 chấm TRUNG BÌNH cả ô. Áo khoác mở trước (haori,
+                # cardigan) chỉ hở một dải giữa, còn vải hai bên kéo trung bình
+                # xuống, nên một ảnh hở ngực thật vẫn lọt. Đo trên máy ngày
+                # 2026-09-02: người mặc áo dài tay kín + quần, thử haori-dang-dai
+                # xong ngực đi từ 0.0014 lên 0.1422 (gấp ~100 lần) mà cổng vẫn
+                # trả ok=True vì 0.1422 < 0.34 — ảnh trả về là người cởi trần
+                # dưới lớp haori.
+                #
+                # Nhánh thứ hai bắt tình huống "đang mặc thành không mặc": vùng
+                # bắt buộc kín vốn gần như không có da, sau lượt sinh ảnh lại có
+                # da mới đáng kể.
+                #
+                # Phải đo trên LÕI chứ không trên cả ô, vì các ô cạnh nhau chồng
+                # lấn: quần short hở chân (hợp lệ) làm mép dưới ô mông dính da và
+                # nhánh này bắn nhầm nếu chấm cả ô. Lõi mông/chậu là 58% phía
+                # trên — phần bắt buộc có vải — nên da từ đùi không lọt vào.
+                core_clean_box = protected_core(clean_box, zone)
+                core_result_box = protected_core(result_box, zone)
+                before_core = _skin_ratio(clean.crop(core_clean_box), skin_reference) if core_clean_box else before
+                after_core = _skin_ratio(result.crop(core_result_box), skin_reference) if core_result_box else after
+                core_gain = after_core - before_core
+                zone_info.update({
+                    'coreBefore': round(before_core, 4),
+                    'coreAfter': round(after_core, 4),
+                    'coreGain': round(core_gain, 4),
+                })
+                hard_core_threshold = float(os.getenv('JAPANO_COVERAGE_HARD_CORE_THRESHOLD', '0.82'))
+                hard_core_gain = float(os.getenv('JAPANO_COVERAGE_HARD_CORE_GAIN', '0.12'))
+                severe_core_exposure = (
+                    after_core > hard_core_threshold
+                    and (core_gain > hard_core_gain or before_core > hard_core_threshold)
+                )
+                # Ngưỡng đặt trên mức nhiễu nền/đổ bóng (lõi trước < 0.06) nên áo
+                # cổ tim/cổ tròn bình thường — chỉ nhích vài phần trăm — không bị
+                # chặn oan.
+                #
+                # CẢNH BÁO, KHÔNG CHẶN.
+                #
+                # Ngưỡng dưới đây được hiệu chỉnh trên ĐÚNG MỘT mẫu (ca haori:
+                # lõi ngực 0.0 -> 0.1784). Khi bật chặn thật, nó đánh rớt hàng
+                # loạt ảnh hợp lệ của người dùng: cổ kimono/yukata mở chữ V rơi
+                # đúng vào lõi ngực (phần .00-.58 phía trên của ô), nên một kiểu
+                # cổ áo hoàn toàn bình thường trông giống hệt dấu hiệu "bị cởi
+                # mất lớp trong". Chặn bằng ngưỡng chưa đo trên đủ mẫu gây hại
+                # nhiều hơn lợi — khách không thử được món nào, và mỗi lần chặn
+                # còn kéo theo một lượt sửa che phủ nên thời gian chờ tăng vọt.
+                #
+                # Vẫn giữ tín hiệu để không quên lỗ hổng thật (áo khoác mở phía
+                # trước xoá lớp trong mà vẫn lọt cổng), nhưng chỉ ở mức cảnh báo
+                # cho tới khi có bộ mẫu đủ lớn để đặt ngưỡng. Bật lại thành chặn
+                # bằng JAPANO_COVERAGE_UNDRESS_BLOCK=1 sau khi đã hiệu chỉnh.
+                undressed = before_core < 0.06 and after_core > 0.12 and core_gain > 0.08
+                block_undressed = os.getenv('JAPANO_COVERAGE_UNDRESS_BLOCK', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
+                required_exposed = severe_core_exposure or (undressed and block_undressed)
+                if moderate_exposure_signal and not required_exposed:
+                    warnings.append(f'coverage_review:{zone}')
+                if undressed:
+                    zone_info['undressed'] = True
+                    if not severe_core_exposure and not block_undressed:
+                        warnings.append(f'undressed_suspected:{zone}')
             if required_exposed:
                 reasons.append(f'required_zone_exposed:{zone}')
         elif zone in allowed:
@@ -1610,6 +1674,30 @@ def accessory_quality(clean_image, result_image, kinds):
         right = np.asarray(result.crop(region).resize((96, 96)), dtype=np.float32)
         return float(np.abs(left - right).mean())
 
+    def region_peak_diff(region, tile=12):
+        """Mức đổi CAO NHẤT trên một ô nhỏ bên trong vùng.
+
+        Trâm cài/kẹp tóc chỉ chiếm vài phần trăm diện tích nửa cái đầu, nên trung
+        bình cả vùng luôn nằm dưới ngưỡng dù ảnh đã thật sự đổi — đo trên máy
+        2026-09-03: "Trâm cài tóc Kanzashi" bị trả `hair_clip_missing` trong khi
+        món đã được đặt đúng thái dương. Lấy đỉnh theo ô nhỏ thì một vật nhỏ
+        nhưng có thật vẫn lộ ra, mà một ảnh không đổi gì thì mọi ô đều ~0.
+        """
+        region = clipped(region)
+        if region[2] <= region[0] or region[3] <= region[1]:
+            return 255.0
+        left = np.asarray(clean.crop(region).resize((96, 96)), dtype=np.float32)
+        right = np.asarray(result.crop(region).resize((96, 96)), dtype=np.float32)
+        diff = np.abs(left - right)
+        if diff.ndim == 3:
+            diff = diff.mean(axis=2)
+        height_px, width_px = diff.shape
+        peak = 0.0
+        for top in range(0, height_px - tile + 1, tile):
+            for left_px in range(0, width_px - tile + 1, tile):
+                peak = max(peak, float(diff[top:top + tile, left_px:left_px + tile].mean()))
+        return peak
+
     clean_kp = clean_pose.get('keypoints') or {}
     left_eye = clean_kp.get('left_eye')
     right_eye = clean_kp.get('right_eye')
@@ -1657,7 +1745,12 @@ def accessory_quality(clean_image, result_image, kinds):
                                   x1 + box_w * .48, y1 + box_h * .25))
     right_head_diff = region_diff((x1 + box_w * .52, y1 - box_h * .03,
                                    x2 - box_w * .08, y1 + box_h * .25))
-    if 'hair_clip' in kinds and max(left_head_diff, right_head_diff) < 3.2:
+    # Đo theo đỉnh cục bộ thay vì trung bình cả nửa đầu: xem region_peak_diff.
+    clip_peak_diff = max(
+        region_peak_diff((x1 + box_w * .08, y1 - box_h * .03, x1 + box_w * .48, y1 + box_h * .25)),
+        region_peak_diff((x1 + box_w * .52, y1 - box_h * .03, x2 - box_w * .08, y1 + box_h * .25)),
+    ) if 'hair_clip' in kinds else 0.0
+    if 'hair_clip' in kinds and clip_peak_diff < float(os.getenv('JAPANO_ACCESSORY_CLIP_PEAK_MIN', '9')):
         reasons.append('hair_clip_missing')
     if 'earmuffs' in kinds and min(left_head_diff, right_head_diff) < 4.2:
         reasons.append('earmuffs_missing')
@@ -1726,11 +1819,79 @@ def accessory_quality(clean_image, result_image, kinds):
         'headDiff': round(head_diff, 3),
         'leftHeadDiff': round(left_head_diff, 3),
         'rightHeadDiff': round(right_head_diff, 3),
+        'clipPeakDiff': round(clip_peak_diff, 3),
         'feetDiff': round(feet_diff, 3),
         'bestArmAngle': round(best_arm_angle, 2),
         'maxWristTravel': round(max_wrist_travel, 4),
         'resultPose': result_pose,
     }
+
+
+def confine_to_accessory_region(clean, rough, refined, margin_ratio=0.018, extra_regions=None):
+    """Giữ nét vẽ của FLUX CHỈ trong vùng đã dán phụ kiện, phần còn lại lấy lại
+    nguyên xi từ ảnh quần áo sạch.
+
+    Vì sao cần: `/accessory-refine` nhận cả tấm ảnh nên FLUX vẽ lại toàn khung —
+    kể cả khuôn mặt và trang phục vốn không liên quan gì tới đôi giày. Cổng chất
+    lượng phụ kiện đo đúng chuyện đó rồi loại cả ảnh: đo trên máy 2026-09-02, ghép
+    "Dép quai Nhật" cho ra faceDiff 74.7 và garmentDiff 73.5 nên bị bỏ, dù
+    feetDiff 33.1 cho thấy đôi dép ĐÃ được đặt đúng chỗ. Kết quả là khách không
+    bao giờ nhận được giày.
+
+    Vùng phụ kiện được suy ra từ chính chỗ `rough` khác `clean` — tức là đúng
+    những pixel mà bước dán đã chạm vào — nên không cần mỗi hàm add_* trả thêm toạ
+    độ. Nới biên một chút để FLUX còn chỗ hoà bóng đổ và mép tiếp đất.
+
+    Sau bước này faceDiff/garmentDiff bằng 0 theo cấu trúc, không phải nhờ model
+    chịu nghe prompt.
+    """
+    clean = clean.convert('RGB')
+    rough = rough.convert('RGB').resize(clean.size, Image.Resampling.LANCZOS)
+    refined = refined.convert('RGB').resize(clean.size, Image.Resampling.LANCZOS)
+
+    diff = ImageChops.difference(clean, rough).convert('L')
+    # Ngưỡng thấp: cutout dán vào có thể rất gần màu nền ở vài pixel mép.
+    mask = diff.point(lambda value: 255 if value > 10 else 0)
+
+    # Món CẦM TAY cần thêm quyền sửa vùng cánh tay.
+    #
+    # Cổng chất lượng đòi một tư thế cầm thật: ít nhất một cổ tay phải rời khỏi
+    # vị trí buông thõng (`hand_pose_not_engaged`). Nhưng nếu chỉ cho FLUX vẽ
+    # trong đúng vùng đã dán thì cánh tay không thể nhúc nhích, nên quạt/kiếm/
+    # găng tay/khăn furoshiki đều trượt cổng dù cái cutout đã nằm đúng chỗ — đo
+    # trên máy 2026-09-03: 4/13 loại hỏng, tất cả đều là đồ cầm tay.
+    #
+    # Mở thêm đúng vùng chi cần cử động, KHÔNG mở toàn khung: mặt và thân áo vẫn
+    # nằm ngoài vùng cho phép nên faceDiff/garmentDiff vẫn được bảo vệ.
+    if extra_regions:
+        allow = ImageDraw.Draw(mask)
+        for region in extra_regions:
+            x1, y1, x2, y2 = [int(value) for value in region]
+            if x2 <= x1 or y2 <= y1:
+                continue
+            allow.rectangle((max(0, x1), max(0, y1), min(clean.width, x2), min(clean.height, y2)), fill=255)
+
+    width, height = clean.size
+    grow = max(3, int(min(width, height) * margin_ratio))
+    # MaxFilter cần kernel lẻ.
+    kernel = grow * 2 + 1
+    mask = mask.filter(ImageFilter.MaxFilter(min(kernel, 25)))
+    # Lặp lại nếu cần nới rộng hơn giới hạn kernel của MaxFilter.
+    remaining = grow - 12
+    while remaining > 0:
+        mask = mask.filter(ImageFilter.MaxFilter(25))
+        remaining -= 12
+    mask = mask.filter(ImageFilter.GaussianBlur(max(2, grow * .6)))
+
+    coverage = float(np.asarray(mask, dtype=np.float32).mean()) / 255.0
+    # Nếu vùng khác biệt phủ gần hết ảnh thì bước dán đã không còn khu trú, và
+    # việc giới hạn vùng chẳng bảo vệ được gì — trả None để đường gọi giữ nguyên
+    # hành vi cũ thay vì âm thầm cho qua một ảnh đã bị vẽ lại toàn bộ.
+    if coverage > 0.55:
+        return None, {'applied': False, 'reason': 'accessory_region_too_large', 'coverage': round(coverage, 4)}
+
+    merged = Image.composite(refined, clean, mask)
+    return merged, {'applied': True, 'coverage': round(coverage, 4), 'growPx': grow}
 
 
 def restore_secondary_people(source, result, boxes):
@@ -1880,6 +2041,21 @@ def main():
                 bool(payload.get('strictIdentity')),
             )
             print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
+            return
+        if mode == 'confine_accessory_region':
+            rough = decode_image(payload.get('roughImageBase64'))
+            refined = decode_image(payload.get('compareImageBase64'))
+            merged, info = confine_to_accessory_region(
+                image, rough, refined, extra_regions=payload.get('extraRegions'),
+            )
+            if merged is None:
+                print(json.dumps({'ok': False, 'confine': info}, ensure_ascii=False))
+                return
+            print(json.dumps({
+                'ok': True,
+                'imageBase64': encode_png(merged),
+                'confine': info,
+            }, ensure_ascii=False))
             return
         if mode == 'fit_quality':
             other = decode_image(payload.get('compareImageBase64'))

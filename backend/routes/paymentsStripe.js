@@ -4,6 +4,7 @@
 // server.js, trước body-parser JSON) và routes/payments.js, routes/returns.js dùng lại
 // — nên được export qua makeStripeHelpers(ctx) để tạo lại với cùng ctx dùng chung.
 const { stripeAmount, localStripeAmount, STRIPE_CURRENCY } = require('../lib/stripeMoney');
+const { consume: consumeVoucher, release: releaseVoucher } = require('../lib/voucherLifecycle');
 const { findPayment, findReturnRequest, checkoutItemsKey, reusableStripeOrder } = require('../lib/paymentLookup');
 const { restockCancelledOrder, restockRemainingOrderUnits } = require('../lib/inventory');
 const { makeCreateOrderInState, requestedVipProductId } = require('./orders');
@@ -118,6 +119,8 @@ function makeStripeHelpers(ctx) {
         // Kho đã bị giữ chỗ lúc tạo đơn; thanh toán hỏng thì hàng chưa bao giờ
         // rời cửa hàng nên phải nhả lại để khách khác mua được.
         restockCancelledOrder(state, order, 'stripe-checkout-failed');
+        // Voucher cũng vậy: chỗ đã giữ phải nhả để khách dùng lại được.
+        releaseVoucher(state, order.id, 'stripe-checkout-failed');
       }
       result = { payment, order };
       return state;
@@ -179,6 +182,9 @@ function makeStripeHelpers(ctx) {
       if (!order.history.some((item) => item.s === 'paid' && item.txn === intentId)) {
         order.history.push({ s: 'paid', at: now, txn: intentId });
       }
+      // Tiền đã thực sự về: chốt lượt dùng voucher đúng một lần. Hàm này
+      // idempotent nên webhook lặp hay retry không cộng `used` hai lần.
+      consumeVoucher(next, order.id, 'stripe-paid', now);
       reconcileFlagRewards(next);
       if (reconcileGoalRewards) reconcileGoalRewards(next, now, pushNotification);
       result = { order, payment, alreadyPaid: wasPaid };
@@ -254,6 +260,9 @@ function makeStripeHelpers(ctx) {
       if (!order.history.some((item) => item.s === 'paid' && item.txn === intent.id)) {
         order.history.push({ s: 'paid', at: now, txn: intent.id });
       }
+      // Tiền đã thực sự về: chốt lượt dùng voucher đúng một lần. Hàm này
+      // idempotent nên webhook lặp hay retry không cộng `used` hai lần.
+      consumeVoucher(next, order.id, 'stripe-paid', now);
       reconcileFlagRewards(next);
       if (reconcileGoalRewards) reconcileGoalRewards(next, now, pushNotification);
       result = { order, payment, alreadyPaid: wasPaid };
@@ -280,6 +289,7 @@ function makeStripeHelpers(ctx) {
       order.history ||= [];
       order.history.push({ s: 'payment_failed', at: Date.now(), reason: payment.failureReason });
       restockCancelledOrder(state, order, 'stripe-intent-failed');
+      releaseVoucher(state, order.id, 'stripe-intent-failed');
       result = { payment, order };
       return state;
     });

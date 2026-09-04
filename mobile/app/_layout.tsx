@@ -116,7 +116,7 @@ function NotificationBridge() {
   return null;
 }
 
-export default function RootLayout() {
+function AppRoot() {
   const [brandSplashVisible, setBrandSplashVisible] = useState(true);
   const finishBrandSplash = useCallback(() => setBrandSplashVisible(false), []);
   // Không để việc tải font chặn toàn bộ ứng dụng. Ở một số máy Android cũ,
@@ -143,7 +143,7 @@ export default function RootLayout() {
       <AuthProvider>
       <ShopProvider>
       <StoreProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="dark" backgroundColor={C.washi} />
       <CatalogProvider>
       <BotChatProvider>
       <AuthGate />
@@ -189,4 +189,8 @@ export default function RootLayout() {
       </ToastProvider>
     </SafeAreaProvider>
   );
+}
+
+export default function RootLayout() {
+  return <AppRoot />;
 }

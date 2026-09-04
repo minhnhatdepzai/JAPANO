@@ -7,7 +7,7 @@ const {
   buildDemandAndTrends,
   buildMarketBasketRules,
 } = require('./analytics');
-const { buildAdvancedModel, scoreAdvanced } = require('./advancedRecommend');
+const { buildAdvancedModel, scoreAdvanced, usableRankWeights, COLD_RANK_WEIGHTS } = require('./advancedRecommend');
 const { ensureProductEmbeddingsFresh, getProductEmbedding, cosineSimilarity: embeddingCosine, embeddingsStatus } = require('./embeddings');
 
 // Trọng số phản ánh mức độ chủ ý: tìm kiếm mạnh hơn lượt xem nhưng nhẹ hơn
@@ -19,6 +19,96 @@ const NEIGHBOR_LIMIT = 12;
 const CATEGORY_CAP = 2;
 
 let cache = new WeakMap();
+
+/* ---------------------------------------------------------------------------
+ * Sổ hiển thị (impression ledger) — chống "feed đóng băng"
+ *
+ * Đo được trước khi sửa: hai lượt mở trang chủ liên tiếp trả về 7/8 món giống
+ * hệt nhau, và 3/8 ô là món người dùng vừa xem xong. Người dùng mở app lần thứ
+ * ba trong ngày thấy y nguyên màn hình lần đầu thì không có lý do gì để mở lần
+ * thứ tư — đây là chỗ rò giữ chân lớn nhất của bộ gợi ý.
+ *
+ * Cách chữa: nhớ đã bày món nào cho ai, và trừ điểm dần món đã bày nhiều lần mà
+ * người dùng không chạm vào. Chạm vào (xem/thích/giỏ/thử/mua) thì xoá nợ ngay —
+ * quan tâm thật luôn thắng mệt mỏi hiển thị.
+ *
+ * Sổ này nằm trong RAM, có phân rã và có trần bộ nhớ: khởi động lại thì quên,
+ * đúng ý muốn — không ai muốn một món bị chôn vĩnh viễn vì tuần trước lỡ hiện
+ * nhiều lần.
+ * ------------------------------------------------------------------------- */
+const IMPRESSION_HALF_LIFE_MS = 36 * 3600 * 1000; // trí nhớ tính bằng ngày, không phải giờ
+const IMPRESSION_DEDUPE_MS = 90 * 1000; // kéo-làm-mới trong cùng phiên không tính là lần bày mới
+const IMPRESSION_FREE = 1;              // lần bày đầu tiên miễn phí, phạt tính từ lần thứ hai
+const IMPRESSION_MAX_USERS = 4000;
+const FATIGUE_K = 2.5;        // số lần hiện (đã phân rã, đã trừ suất miễn phí) để đạt nửa mức phạt
+const FATIGUE_STRENGTH = 3.0; // trừ trên thang logit, đủ xáo nhóm giữa, không chôn món khớp mạnh
+const OWNED_HALF_LIFE_DAYS = 45;
+const OWNED_STRENGTH = 3.0;
+
+const impressionLedger = new Map();
+
+function ledgerFor(userId) {
+  const key = String(userId || 'guest');
+  const existing = impressionLedger.get(key);
+  if (existing) {
+    // đưa lên cuối để lượt dọn bỏ đúng người lâu không quay lại
+    impressionLedger.delete(key);
+    impressionLedger.set(key, existing);
+    return existing;
+  }
+  const created = new Map();
+  impressionLedger.set(key, created);
+  while (impressionLedger.size > IMPRESSION_MAX_USERS) {
+    const oldest = impressionLedger.keys().next().value;
+    if (oldest === undefined) break;
+    impressionLedger.delete(oldest);
+  }
+  return created;
+}
+
+function noteImpressions(userId, slugs, now = Date.now()) {
+  if (!Array.isArray(slugs) || !slugs.length) return;
+  const rows = ledgerFor(userId);
+  slugs.forEach((slug) => {
+    const previous = rows.get(slug);
+    if (previous && now - previous.at < IMPRESSION_DEDUPE_MS) {
+      // Cùng một phiên xem: chỉ dời mốc thời gian, không cộng thêm lần bày.
+      rows.set(slug, { n: previous.n, at: now });
+      return;
+    }
+    const decayed = previous ? previous.n * Math.pow(0.5, (now - previous.at) / IMPRESSION_HALF_LIFE_MS) : 0;
+    rows.set(slug, { n: Math.min(24, decayed + 1), at: now });
+  });
+}
+
+// Mệt mỏi hiển thị trong khoảng 0..1. `engagedAt` là lần chạm gần nhất của chính
+// người này vào chính món này — chạm sau khi thấy thì coi như xoá nợ.
+function impressionFatigue(userId, slug, now, engagedAt) {
+  const rows = impressionLedger.get(String(userId || 'guest'));
+  const row = rows && rows.get(slug);
+  if (!row) return 0;
+  if (engagedAt && engagedAt >= row.at) return 0;
+  const decayed = row.n * Math.pow(0.5, (now - row.at) / IMPRESSION_HALF_LIFE_MS) - IMPRESSION_FREE;
+  if (decayed <= 0.05) return 0;
+  return decayed / (decayed + FATIGUE_K);
+}
+
+// Chỉ dùng cho test: xoá sạch sổ để hai bài đo không dẫm lên nhau.
+function resetImpressionLedger() {
+  impressionLedger.clear();
+}
+
+function impressionLedgerStats() {
+  let rows = 0;
+  impressionLedger.forEach((entries) => { rows += entries.size; });
+  return {
+    users: impressionLedger.size,
+    rows,
+    halfLifeHours: IMPRESSION_HALF_LIFE_MS / 3600000,
+    dedupeSeconds: IMPRESSION_DEDUPE_MS / 1000,
+    freeImpressions: IMPRESSION_FREE,
+  };
+}
 
 function decay(weight, ageDays) {
   return weight * Math.pow(0.5, Math.max(0, ageDays) / HALF_LIFE_DAYS);
@@ -129,13 +219,20 @@ function build(state, now = Date.now()) {
     }
     events.push({ userId: String(row.userId), productSlug, weight: weight * Math.min(5, value), at: row.createdAt || now });
   });
+  // Món đã mua rồi: vẫn là tín hiệu sở thích mạnh, nhưng không nên bày lại ở
+  // trang chủ ngay hôm sau. Đo trước khi sửa: món vừa mua vẫn đứng hạng 2.
+  const userOwned = new Map();
   successfulOrders.forEach((order) => {
     const userId = String(order.userId || order.customer?.id || '');
     if (!userId) return;
     (order.items || []).forEach((item) => {
       const productSlug = itemProductId(item);
       if (!itemIndex.has(productSlug)) return;
+      const at = timestampMs(order.createdAt, now);
       events.push({ userId, productSlug, weight: TYPE_WEIGHT.purchase, at: order.createdAt || now });
+      const rows = userOwned.get(userId) || new Map();
+      rows.set(productSlug, Math.max(rows.get(productSlug) || 0, at));
+      userOwned.set(userId, rows);
     });
   });
 
@@ -194,13 +291,21 @@ function build(state, now = Date.now()) {
     rows.push(rule);
     basketByAntecedent.set(rule.antecedent, rows);
   });
-  const advanced = buildAdvancedModel({ products, events: events.map((event) => ({
-    ...event,
-    at: timestampMs(event.at, now),
-  })), now });
+  // Bộ xếp hạng tiếp tục từ trọng số đã học lần trước thay vì học lại từ đầu.
+  //
+  // Trước đây `trainRanker` luôn khởi tạo bằng bốn số cứng, mà `build()` chạy lại
+  // mỗi khi cache 60 giây hết hạn — nghĩa là mọi thứ nó học được đều bị vứt đi
+  // vài chục lần mỗi giờ, và một cửa hàng chạy sáu tháng vẫn xếp hạng y như ngày
+  // đầu. Đây là lý do gợi ý không "khá dần lên" theo thời gian.
+  const advanced = buildAdvancedModel({
+    products,
+    events: events.map((event) => ({ ...event, at: timestampMs(event.at, now) })),
+    now,
+    warmRankWeights: state?.recsysModel?.rankWeights || null,
+  });
 
   return {
-    products, itemIndex, itemSim, mf, userIndex, userRecent, userNegatives,
+    products, itemIndex, itemSim, mf, userIndex, userRecent, userNegatives, userOwned,
     trendingByProduct, predictions: demand.predictions, categoryTrends: demand.categoryTrends,
     contentVectors,
     marketBasketRules,
@@ -294,8 +399,15 @@ function reasonFor(reco, slug, contributions, exploring) {
   return `Đang là xu hướng trong danh mục ${catLabel}`;
 }
 
-function scoreCandidates(reco, userId, profile) {
+function scoreCandidates(reco, userId, profile, now = Date.now()) {
   const interactions = reco.userRecent.get(String(userId)) || [];
+  // Lần chạm gần nhất của người này vào từng món — dùng để xoá nợ hiển thị.
+  const lastEngaged = new Map();
+  interactions.forEach((event) => {
+    const previous = lastEngaged.get(event.productSlug) || 0;
+    if (event.at > previous) lastEngaged.set(event.productSlug, event.at);
+  });
+  const owned = reco.userOwned?.get(String(userId)) || null;
   const recentDistinct = [...new Map(interactions.slice().reverse().map((e) => [e.productSlug, e])).values()].slice(0, 8);
   const contentVector = userContentVector(reco, userId, profile);
   const weights = pickWeights(new Set(interactions.map((e) => e.productSlug)).size, contentVector.size > 0);
@@ -328,6 +440,11 @@ function scoreCandidates(reco, userId, profile) {
     const trendingScore = reco.trendingByProduct.get(slug) || 0;
     const advanced = scoreAdvanced(reco.advanced, String(userId), slug, contentScore, trendingScore);
     const rejected = reco.userNegatives.get(String(userId))?.has(slug) ? 0.45 : 0;
+    const fatigue = impressionFatigue(userId, slug, now, lastEngaged.get(slug));
+    const ownedAt = owned?.get(slug);
+    const ownedPenalty = ownedAt
+      ? Math.pow(0.5, Math.max(0, (now - ownedAt) / 86400000) / OWNED_HALF_LIFE_DAYS)
+      : 0;
     const contributions = {
       mf: weights.mf * mfScore, cf: weights.cf * cfScore,
       basket: weights.basket * basketScore, content: weights.content * contentScore,
@@ -337,19 +454,48 @@ function scoreCandidates(reco, userId, profile) {
       transition: weights.transition * advanced.transition,
       rank: weights.rank * advanced.rank,
       negative: -rejected,
+      fatigue: -fatigue,
+      owned: -ownedPenalty,
     };
     // Final stacked ranker: MoE experts tạo retrieval score đã calibration,
     // pairwise model tạo logit cuối. Diversification chỉ chạy sau điểm này.
     const retrievalMass = Math.max(0.0001, 1 - weights.rank);
     const retrievalScore = Object.entries(contributions)
-      .filter(([name]) => !['rank', 'negative'].includes(name))
+      .filter(([name]) => !['rank', 'negative', 'fatigue', 'owned'].includes(name))
       .reduce((sum, [, value]) => sum + value, 0) / retrievalMass;
-    const finalLogit = 0.7 * logit(advanced.rank) + 2.2 * (retrievalScore - 0.5) - rejected * 5;
-    const score = 1 / (1 + Math.exp(-Math.max(-20, Math.min(20, finalLogit))));
-    return { slug, score, contributions, category: categoryOf(reco, slug) };
-  }).sort((a, b) => b.score - a.score);
+    // "Đã mua rồi" trừ thẳng và trừ đủ: món vừa mua không nên nằm trang chủ.
+    // Mệt mỏi hiển thị thì trừ ở lượt sau, sau khi đã biết món này khớp mạnh
+    // đến đâu so với phần còn lại (xem `applyFatigue`).
+    const baseLogit = 0.7 * logit(advanced.rank) + 2.2 * (retrievalScore - 0.5)
+      - rejected * 5 - OWNED_STRENGTH * ownedPenalty;
+    return { slug, baseLogit, contributions, category: categoryOf(reco, slug), fatigue, owned: ownedPenalty };
+  });
 
-  return scored;
+  return applyFatigue(scored);
+}
+
+/* Đổi mới feed mà không đảo lộn cửa hàng.
+ *
+ * Nếu mọi món vừa được bày đều chịu cùng một mức phạt thì cả trang đổi một
+ * lượt — đo được 1/8 món trùng sau 9 giờ, tức người dùng quay lại thấy một
+ * cửa hàng khác hẳn và mất luôn món họ định bấm. Cũng tệ như feed đóng băng.
+ *
+ * Nên phạt phải nể độ khớp: món khớp mạnh nhất gần như miễn nhiễm và ở lại làm
+ * mỏ neo, càng xuống dưới càng dễ bị thay. `exp(-i/3)` cho: hạng 1 miễn hoàn
+ * toàn, hạng 4 chịu ~64% mức phạt, từ hạng 9 trở xuống chịu gần đủ. Hình dạng
+ * này không phụ thuộc số lượng sản phẩm nên kho lớn hay nhỏ đều hành xử giống
+ * nhau.
+ */
+const FATIGUE_ANCHOR_DECAY = 3;
+
+function applyFatigue(candidates) {
+  const byMatch = candidates.slice().sort((a, b) => b.baseLogit - a.baseLogit);
+  byMatch.forEach((candidate, index) => {
+    const immunity = Math.exp(-index / FATIGUE_ANCHOR_DECAY);
+    const logitValue = candidate.baseLogit - FATIGUE_STRENGTH * candidate.fatigue * (1 - immunity);
+    candidate.score = 1 / (1 + Math.exp(-Math.max(-20, Math.min(20, logitValue))));
+  });
+  return byMatch.sort((a, b) => b.score - a.score);
 }
 
 function diversify(scored, limit, excludeSlugs) {
@@ -369,22 +515,36 @@ function diversify(scored, limit, excludeSlugs) {
   return picked;
 }
 
+/* Ô "khám phá" ở cuối feed.
+ *
+ * Bản cũ bốc thăm theo đúng điểm xu hướng, nên thực chất nó là "món phổ biến
+ * hạng nhì" chứ không phải khám phá: hàng mới nhập chưa ai chạm có điểm xu
+ * hướng 0, rơi xuống sàn 0.01, gần như không bao giờ được bày. Đo được: chỉ
+ * 11/30 lượt có một món thuộc kho lạnh.
+ *
+ * Bản này cộng một sàn cơ hội cố định cho mọi món (ai cũng có vé) rồi nhân với
+ * phần chưa-mệt — món vừa bày mấy lần không chiếm lại ô khám phá.
+ */
+const EXPLORE_FLOOR = 0.35;
+
 function weightedSample(candidates, excludeSlugs) {
   const excluded = new Set(excludeSlugs || []);
-  const pool = candidates.filter((c) => !excluded.has(c.slug));
-  const total = pool.reduce((sum, c) => sum + Math.max(0.01, c.contributions.trending), 0);
+  const pool = candidates.filter((c) => !excluded.has(c.slug) && !(c.owned > 0.35));
+  if (!pool.length) return null;
+  const weightOf = (c) => Math.max(0.01, (EXPLORE_FLOOR + Math.max(0, c.contributions.trending)) * (1 - (c.fatigue || 0)));
+  const total = pool.reduce((sum, c) => sum + weightOf(c), 0);
   if (!total) return pool[0];
   let roll = Math.random() * total;
   for (const c of pool) {
-    roll -= Math.max(0.01, c.contributions.trending);
+    roll -= weightOf(c);
     if (roll <= 0) return c;
   }
   return pool[pool.length - 1];
 }
 
-function getHomeRecommendations(state, { userId = 'guest', limit = 8, profile } = {}) {
+function getHomeRecommendations(state, { userId = 'guest', limit = 8, profile, now = Date.now() } = {}) {
   const reco = getCached(state);
-  const scored = scoreCandidates(reco, userId, profile);
+  const scored = scoreCandidates(reco, userId, profile, now);
   const mainCount = limit >= 4 ? limit - 1 : limit;
   const main = diversify(scored, mainCount, []);
   const items = [...main];
@@ -394,6 +554,8 @@ function getHomeRecommendations(state, { userId = 'guest', limit = 8, profile } 
   }
   const reasons = {};
   items.forEach((c, i) => { reasons[c.slug] = reasonFor(reco, c.slug, c.contributions, limit >= 4 && i === items.length - 1); });
+  // Ghi sổ những gì vừa bày, để lượt sau không bày lại y hệt.
+  noteImpressions(userId, items.map((c) => c.slug), now);
   return {
     items: items.map((c) => c.slug),
     reasons,
@@ -492,10 +654,60 @@ function getRecommendationDiagnostics(state) {
       { id: 'pairwise-logistic-ranker', role: 'final ranker', active: stats.pairwiseRankerActive, metrics: { epochs: stats.rankerEpochs, positives: stats.rankerPositiveEvents, pairs: stats.rankerTrainingPairs } },
       { id: 'adaptive-moe-gate', role: 'expert fusion', active: stats.events > 0, metrics: { experts: 9 } },
       { id: 'semantic-embeddings', role: 'related-products content matcher', active: embeddingsStatus().ready, metrics: embeddingsStatus() },
+      { id: 'impression-fatigue', role: 'feed freshness', active: impressionLedger.size > 0, metrics: impressionLedgerStats() },
     ],
+    retention: {
+      rankerWarmStarted: Boolean(stats.rankerWarmStarted),
+      persistedRankWeights: usableRankWeights(state?.recsysModel?.rankWeights) ? 4 : 0,
+      rankWeightsUpdatedAt: state?.recsysModel?.updatedAt || null,
+      impressionLedger: impressionLedgerStats(),
+      ownedSuppressionHalfLifeDays: OWNED_HALF_LIFE_DAYS,
+      usersWithOwnedItems: reco.userOwned.size,
+    },
     implementation: 'online-js',
     evaluation: { status: 'not-measured', ndcgAt10: null, recallAt10: null, sampleSize: 0 },
   };
+}
+
+/* Ghi trọng số bộ xếp hạng vừa học xuống store để lượt sau dùng lại.
+ *
+ * Có tiết lưu: ghi nhiều nhất một lần mỗi 10 phút, và chỉ ghi khi trọng số thật
+ * sự đổi đáng kể. `build()` chạy vài chục lần mỗi giờ nên ghi mỗi lượt là vô ích
+ * và tốn ghi đĩa/Mongo.
+ *
+ * Gọi kiểu fire-and-forget từ đường phục vụ gợi ý: lưu thất bại thì lượt sau
+ * đơn giản là khởi động nguội, không ảnh hưởng câu trả lời đang trả cho khách.
+ */
+const PERSIST_INTERVAL_MS = 10 * 60 * 1000;
+let lastPersistAt = 0;
+
+function persistRankWeights(state, update) {
+  try {
+    if (typeof update !== 'function') return false;
+    const now = Date.now();
+    if (now - lastPersistAt < PERSIST_INTERVAL_MS) return false;
+    const learned = usableRankWeights(getCached(state)?.advanced?.rankWeights);
+    if (!learned) return false;
+    const previous = usableRankWeights(state?.recsysModel?.rankWeights);
+    // Chênh lệch quá nhỏ thì không đáng một lượt ghi.
+    if (previous && learned.every((weight, index) => Math.abs(weight - previous[index]) < 0.002)) {
+      lastPersistAt = now;
+      return false;
+    }
+    lastPersistAt = now;
+    update((next) => {
+      next.recsysModel = {
+        ...(next.recsysModel || {}),
+        rankWeights: learned,
+        updatedAt: now,
+        coldWeights: COLD_RANK_WEIGHTS,
+      };
+      return next;
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 module.exports = {
@@ -503,6 +715,10 @@ module.exports = {
   getRelatedProducts,
   getRecommendationDiagnostics,
   invalidateCache,
+  persistRankWeights,
+  noteImpressions,
+  impressionFatigue,
+  resetImpressionLedger,
   buildTagIndex,
   trendingList,
   TYPE_WEIGHT,

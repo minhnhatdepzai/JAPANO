@@ -96,6 +96,50 @@ function vipAllocation(order, selection) {
 
 // coversWholeOrder: mọi món của đơn đều nằm trong lần trả này (không còn gì để
 // trả nữa) → hoàn cả phí vận chuyển và chuyển đơn sang trạng thái "đã trả hàng".
+/* Phân bổ voucher theo dòng hàng, nếu đơn có ghi.
+ *
+ * Trả về Map(lineKey -> {amount, qty}) hoặc null cho đơn cũ.
+ */
+function voucherAllocationMap(order) {
+  const rows = Array.isArray(order?.voucherAllocations) && order.voucherAllocations.length
+    ? order.voucherAllocations
+    : null;
+  if (!rows) return null;
+  const map = new Map();
+  for (const row of rows) {
+    const key = String(row?.key || '');
+    if (!key) continue;
+    const previous = map.get(key) || { amount: 0, qty: 0 };
+    map.set(key, {
+      amount: previous.amount + Math.max(0, finite(row.amount)),
+      qty: previous.qty + Math.max(0, finite(row.qty)),
+    });
+  }
+  return map.size ? map : null;
+}
+
+/* Trả một phần của dòng có nhiều đơn vị nhưng chỉ MỘT đơn vị được giảm.
+ *
+ * Quy tắc làm tròn xác định: hoàn theo tỉ lệ số đơn vị trả trên số đơn vị ĐƯỢC
+ * GIẢM của dòng đó, làm tròn xuống rồi kẹp trong khoản đã phân bổ. Không bao
+ * giờ hoàn quá số tiền thực trả cho dòng đó.
+ */
+function voucherAllocation(order, selection, allocations) {
+  let total = 0;
+  for (const item of selection) {
+    const key = itemKey(item);
+    const row = allocations.get(key);
+    if (!row || !(row.amount > 0)) continue;
+    const discountedQty = Math.max(1, finite(row.qty, 1));
+    const returnedQty = Math.max(0, finite(item.qty));
+    const share = returnedQty >= discountedQty
+      ? row.amount
+      : Math.floor((row.amount * returnedQty) / discountedQty);
+    total += Math.max(0, Math.min(row.amount, share));
+  }
+  return total;
+}
+
 function computeRefund(state, order, selection, excludeRequestId = '') {
   const subtotal = Math.max(0, finite(order.subtotal) || (order.items || []).reduce((sum, item) => sum + finite(item.price) * finite(item.qty), 0));
   const selectedValue = selection.reduce((sum, item) => sum + finite(item.price) * finite(item.qty), 0);
@@ -107,7 +151,18 @@ function computeRefund(state, order, selection, excludeRequestId = '') {
 
   const vipDiscount = Math.max(0, finite(order.vipDiscount));
   const generalDiscount = Math.max(0, finite(order.discount) - vipDiscount);
-  const allocatedGeneral = subtotal > 0 ? Math.round((generalDiscount * selectedValue) / subtotal) : 0;
+  // Voucher phạm vi sản phẩm chỉ giảm đúng một vài dòng hàng, nên chia đều theo
+  // giá trị là sai: trả lại món KHÔNG được giảm mà vẫn bị trừ, còn trả món ĐƯỢC
+  // giảm lại được hoàn quá số thực trả. Đơn mới lưu sẵn phân bổ theo dòng; đơn
+  // cũ không có thì mới rơi về chia theo tỉ lệ.
+  const voucherDiscount = Math.max(0, finite(order.voucherDiscount));
+  const otherGeneral = Math.max(0, generalDiscount - voucherDiscount);
+  const allocations = voucherAllocationMap(order);
+  const allocatedVoucher = allocations
+    ? voucherAllocation(order, selection, allocations)
+    : (subtotal > 0 ? Math.round((voucherDiscount * selectedValue) / subtotal) : 0);
+  const allocatedOther = subtotal > 0 ? Math.round((otherGeneral * selectedValue) / subtotal) : 0;
+  const allocatedGeneral = Math.min(generalDiscount, allocatedVoucher + allocatedOther);
   const allocatedVip = vipAllocation(order, selection);
   const ship = coversWholeOrder ? Math.max(0, finite(order.ship)) : 0;
   const amount = Math.max(0, selectedValue - allocatedGeneral - allocatedVip + ship);
@@ -118,6 +173,8 @@ function computeRefund(state, order, selection, excludeRequestId = '') {
     breakdown: {
       itemsValue: selectedValue,
       discountAllocated: allocatedGeneral,
+      voucherDiscountAllocated: allocatedVoucher,
+      voucherAllocationSource: allocations ? 'line-allocations' : 'pro-rata-fallback',
       vipDiscountAllocated: allocatedVip,
       shipRefunded: ship,
       orderSubtotal: subtotal,
@@ -138,6 +195,7 @@ function allItemsRefunded(state, order) {
 
 module.exports = {
   itemKey,
+  voucherAllocationMap,
   reservedQuantities,
   returnableItems,
   resolveSelection,

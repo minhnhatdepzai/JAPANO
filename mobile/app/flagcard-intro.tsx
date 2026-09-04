@@ -134,7 +134,7 @@ export default function FlagcardIntro() {
 const st = StyleSheet.create({
   backdrop:{ flex:1, backgroundColor:'rgba(17,12,8,0.55)', justifyContent:'flex-end' },
   sheet:{ backgroundColor:C.washi, borderTopLeftRadius:28, borderTopRightRadius:28, paddingTop:18, paddingBottom:28, overflow:'hidden' },
-  close:{ position:'absolute', right:16, top:14, zIndex:10, width:32, height:32, borderRadius:16, backgroundColor:'#fff', alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:C.line },
+  close:{ position:'absolute', right:16, top:14, zIndex:10, width:32, height:32, borderRadius:16, backgroundColor:C.card, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:C.line },
 
   slide:{ flex:1, alignItems:'center', justifyContent:'center', paddingHorizontal:30 },
   introEyebrow:{ fontFamily:F.bodyX, fontSize:10.5, letterSpacing:1.5, color:C.ink, marginTop:12 },

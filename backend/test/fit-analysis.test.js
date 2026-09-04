@@ -240,7 +240,37 @@ test('cờ môi trường tắt được toàn bộ hiệu ứng fit mà không 
   }
 });
 
-test('ngưỡng rách có thể chỉnh bằng env và mặc định là 0.85', () => {
+test('lệch fit nhẹ không tốn thêm một lượt FLUX nhưng lệch rõ vẫn refine', () => {
+  const previous = process.env.JAPANO_FIT_REFINE_CLEAR_GAP_MIN_SEVERITY;
+  delete process.env.JAPANO_FIT_REFINE_CLEAR_GAP_MIN_SEVERITY;
+  try {
+    assert.deepEqual(
+      fitRefinePlan({ verdict: 'slightly_loose', severity: 0.39 }),
+      { shouldRefine: false, mandatory: false, reason: 'fit_gap_too_subtle_for_cost' },
+    );
+    assert.deepEqual(
+      fitRefinePlan({ verdict: 'slightly_tight', severity: 0.39 }),
+      { shouldRefine: false, mandatory: false, reason: 'fit_gap_too_subtle_for_cost' },
+    );
+    assert.deepEqual(
+      fitRefinePlan({ verdict: 'loose', severity: 0.6 }),
+      { shouldRefine: true, mandatory: false, reason: 'clear_fit_gap' },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.JAPANO_FIT_REFINE_CLEAR_GAP_MIN_SEVERITY;
+    else process.env.JAPANO_FIT_REFINE_CLEAR_GAP_MIN_SEVERITY = previous;
+  }
+});
+
+test('fast preview luôn là một lượt VTON, kể cả fit cực đoan', () => {
+  assert.deepEqual(
+    fitRefinePlan({ verdict: 'very_tight', severity: 0.95 }, { fast: true }),
+    { shouldRefine: false, mandatory: false, reason: 'fast_preview_single_pass' },
+  );
+  assert.equal(fitRefinePlan({ verdict: 'very_tight', severity: 0.95 }).shouldRefine, true);
+});
+
+test('ngưỡng rách có thể chỉnh bằng env và mặc định là 0.60', () => {
   const previous = process.env.JAPANO_FIT_TEAR_MIN_SEVERITY;
   process.env.JAPANO_FIT_TEAR_MIN_SEVERITY = '0.99';
   try {

@@ -1,3 +1,4 @@
+const { voucherScope, eligibleProductIds, maxEligibleQty, discountFor, hasCapacity } = require('./voucherLifecycle');
 const DEFAULT_FLAGCARD_CONFIG = Object.freeze({
   active: true,
   qualifyingOrderMin: 5_000_000,
@@ -258,19 +259,56 @@ function flagcardCollectionView(state, userId) {
   };
 }
 
-function validateVoucher(state, { code, userId, subtotal }) {
+/* Kiểm tra voucher và tính giảm giá.
+ *
+ * `items` là danh sách dòng hàng ĐÃ CHUẨN HOÁ TỪ CATALOG SERVER (giá server,
+ * không phải giá client gửi lên). Có `items` thì phạm vi áp dụng được thực thi
+ * thật; không có thì chỉ voucher toàn đơn mới tính được.
+ *
+ * Trước đây hàm này luôn nhân phần trăm với TOÀN BỘ subtotal, nên voucher
+ * thưởng mục tiêu 30% giảm 300.000₫ trên giỏ 1.000.000₫ dù món mục tiêu chỉ
+ * đáng 100.000₫. Trường `appliesTo` có tồn tại nhưng không nơi nào đọc.
+ */
+function validateVoucher(state, { code, userId, subtotal, items }) {
   ensureFlagcardState(state);
   const voucher = (state.vouchers || []).find((item) => String(item.code).toUpperCase() === String(code || '').trim().toUpperCase());
   if (!voucher) return { ok: false, message: 'Mã voucher không tồn tại.' };
   if (!voucher.active) return { ok: false, message: 'Voucher đang tạm khóa.' };
   if (voucher.ownerUserId && String(voucher.ownerUserId) !== String(userId || '')) return { ok: false, message: 'Đây là voucher cá nhân của tài khoản khác.' };
-  if (finite(voucher.used) >= Math.max(1, finite(voucher.limit, 1))) return { ok: false, message: 'Voucher đã hết lượt sử dụng.' };
+  if (!hasCapacity(state, voucher)) return { ok: false, message: 'Voucher đã hết lượt sử dụng.' };
   if (voucher.expiry && voucher.expiry !== '—' && new Date(`${voucher.expiry}T23:59:59`).getTime() < Date.now()) return { ok: false, message: 'Voucher đã hết hạn.' };
-  if (finite(subtotal) < finite(voucher.min)) return { ok: false, message: `Đơn hàng cần tối thiểu ${finite(voucher.min).toLocaleString('vi-VN')}₫.` };
-  const discount = voucher.type === 'percent'
-    ? Math.round(finite(subtotal) * Math.min(100, Math.max(0, finite(voucher.value))) / 100)
-    : Math.min(finite(subtotal), Math.max(0, finite(voucher.value)));
-  return { ok: true, voucher: clone(voucher), discount, subtotal: finite(subtotal) };
+
+  const lines = Array.isArray(items) ? items : null;
+  const orderSubtotal = lines
+    ? lines.reduce((sum, item) => sum + Math.max(0, finite(item.price)) * Math.max(0, finite(item.qty ?? item.quantity, 0)), 0)
+    : finite(subtotal);
+  if (orderSubtotal < finite(voucher.min)) return { ok: false, message: `Đơn hàng cần tối thiểu ${finite(voucher.min).toLocaleString('vi-VN')}₫.` };
+
+  const scope = voucherScope(voucher);
+  if (scope === 'product') {
+    // Fail closed: voucher chỉ-đúng-một-sản-phẩm mà không biết giỏ có gì, hoặc
+    // không biết nó thuộc sản phẩm nào, thì KHÔNG được rơi về giảm toàn đơn.
+    if (!lines) return { ok: false, message: 'Không xác định được sản phẩm trong giỏ để áp mã này. Hãy thử lại từ giỏ hàng.' };
+    if (!eligibleProductIds(voucher).length) {
+      return { ok: false, message: 'Mã ưu đãi này thiếu thông tin sản phẩm áp dụng. Vui lòng liên hệ hỗ trợ JAPANO.' };
+    }
+  }
+  const applied = discountFor(voucher, lines || [{ price: orderSubtotal, qty: 1, slug: '' }]);
+  if (scope === 'product' && !(applied.eligibleSubtotal > 0)) {
+    return { ok: false, message: 'Giỏ hàng chưa có sản phẩm được áp dụng mã ưu đãi này.' };
+  }
+  return {
+    ok: true,
+    voucher: clone(voucher),
+    discount: applied.discount,
+    subtotal: orderSubtotal,
+    eligibleSubtotal: applied.eligibleSubtotal,
+    allocations: applied.allocations,
+    scope,
+    eligibleProductIds: eligibleProductIds(voucher),
+    maxEligibleQty: maxEligibleQty(voucher) === Infinity ? null : maxEligibleQty(voucher),
+    maxDiscountAmount: finite(voucher.maxDiscountAmount, 0) || null,
+  };
 }
 
 module.exports = {

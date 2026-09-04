@@ -3,15 +3,49 @@
 const { successfulLiveOrder } = require('../lib/orderStatus');
 const { OLLAMA_URL } = require('../lib/serviceUrls');
 
-module.exports = function registerReviewRoutes(api, ctx) {
-  const { read, update, httpError, moderateReview, REVIEW_MODERATION_MODEL, uploadReviewMedia, requireAdmin } = ctx;
+function reviewPurchaseOrders(state, userId, productId) {
+  return (state.orders || []).filter((order) => String(order.userId || order.customer?.id || '') === String(userId)
+    && String(order.status || '').toLowerCase() === 'completed'
+    && successfulLiveOrder(order)
+    && (order.items || []).some((item) => String(item.slug || item.productId) === String(productId)))
+    .sort((left, right) => Number(left.createdAt || left.completedAt || 0) - Number(right.createdAt || right.completedAt || 0));
+}
 
-  function reviewPurchaseOrders(state, userId, productId) {
-    return (state.orders || []).filter((order) => String(order.userId || order.customer?.id || '') === String(userId)
-      && String(order.status || '').toLowerCase() === 'completed'
-      && successfulLiveOrder(order)
-      && (order.items || []).some((item) => String(item.slug || item.productId) === String(productId)));
+// Mỗi đơn mua đã hoàn tất tạo một "suất" đánh giá cho sản phẩm. Đánh giá cũ
+// không có orderId (dữ liệu trước khi có verified purchase) được gán vào lần
+// mua cũ nhất chỉ trong phép tính này, nhờ đó một lần mua lại mới vẫn mở được
+// nút đánh giá mà không cho review cũ tạo vô hạn suất trống.
+function reviewPurchaseSlots(state, userId, productId) {
+  const orders = reviewPurchaseOrders(state, userId, productId);
+  const orderById = new Map(orders.map((order) => [String(order.id), order]));
+  const reviews = (state.reviews || []).filter((review) => String(review.userId) === String(userId)
+    && String(review.productId) === String(productId));
+  const reviewedOrderIds = new Set();
+  let legacyReviewCount = 0;
+
+  for (const review of reviews) {
+    const orderId = String(review.orderId || '');
+    if (orderId && orderById.has(orderId)) reviewedOrderIds.add(orderId);
+    else legacyReviewCount += 1;
   }
+  for (const order of orders) {
+    if (!legacyReviewCount) break;
+    const orderId = String(order.id);
+    if (reviewedOrderIds.has(orderId)) continue;
+    reviewedOrderIds.add(orderId);
+    legacyReviewCount -= 1;
+  }
+
+  return {
+    orders,
+    reviews,
+    reviewedOrderIds,
+    availableOrders: orders.filter((order) => !reviewedOrderIds.has(String(order.id))),
+  };
+}
+
+function registerReviewRoutes(api, ctx) {
+  const { read, update, httpError, moderateReview, REVIEW_MODERATION_MODEL, uploadReviewMedia, requireAdmin } = ctx;
 
   function publicReview(state, review, userId = '') {
     const reactions = (state.reviewReactions || []).filter((reaction) => reaction.reviewId === review.id);
@@ -38,14 +72,21 @@ module.exports = function registerReviewRoutes(api, ctx) {
     const reviews = (state.reviews || []).filter((review) => review.productId === product.slug && review.status === 'approved')
       .sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0))
       .map((review) => publicReview(state, review, userId));
-    const purchaseOrders = userId ? reviewPurchaseOrders(state, userId, product.slug) : [];
-    const existing = userId ? (state.reviews || []).find((review) => review.userId === userId && review.productId === product.slug) : null;
+    const slots = userId ? reviewPurchaseSlots(state, userId, product.slug) : { orders: [], reviews: [], reviewedOrderIds: new Set(), availableOrders: [] };
     const average = reviews.length ? Math.round(reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length * 10) / 10 : 0;
     res.json({
       ok: true,
       productId: product.slug,
       summary: { average, count: reviews.length, distribution: [5, 4, 3, 2, 1].map((rating) => ({ rating, count: reviews.filter((review) => review.rating === rating).length })) },
-      eligibility: { canReview: Boolean(userId && purchaseOrders.length && !existing), purchased: Boolean(purchaseOrders.length), alreadyReviewed: Boolean(existing), orderIds: purchaseOrders.map((order) => order.id) },
+      eligibility: {
+        canReview: Boolean(userId && slots.availableOrders.length),
+        purchased: Boolean(slots.orders.length),
+        alreadyReviewed: Boolean(slots.reviews.length),
+        orderIds: slots.orders.map((order) => order.id),
+        eligibleOrderIds: slots.availableOrders.map((order) => order.id),
+        reviewedOrderIds: slots.orders.filter((order) => slots.reviewedOrderIds.has(String(order.id))).map((order) => order.id),
+        reviewCount: slots.reviews.length,
+      },
       reviews,
     });
   });
@@ -55,18 +96,28 @@ module.exports = function registerReviewRoutes(api, ctx) {
       const snapshot = read(), product = snapshot.products.find((item) => item.slug === String(req.params.slug) || item.id === String(req.params.slug));
       if (!product) throw httpError(404, 'Không tìm thấy sản phẩm.');
       const userId = String(req.body?.userId || ''), rating = Number(req.body?.rating), comment = String(req.body?.comment || '').trim();
+      const requestedOrderId = String(req.body?.orderId || '');
       if (!userId || userId === 'guest') throw httpError(401, 'Bạn cần đăng nhập để đánh giá.');
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw httpError(400, 'Số sao phải từ 1 đến 5.');
       if (comment.length < 3 || comment.length > 2000) throw httpError(400, 'Bình luận cần từ 3 đến 2.000 ký tự.');
-      const orders = reviewPurchaseOrders(snapshot, userId, product.slug);
-      if (!orders.length) throw httpError(403, 'Chỉ khách đã mua và nhận sản phẩm mới được đánh giá.');
-      if ((snapshot.reviews || []).some((review) => review.userId === userId && review.productId === product.slug)) throw httpError(409, 'Bạn đã đánh giá sản phẩm này rồi. Mỗi sản phẩm chỉ được đánh giá một lần.');
+      const slots = reviewPurchaseSlots(snapshot, userId, product.slug);
+      if (!slots.orders.length) throw httpError(403, 'Chỉ khách đã mua và nhận sản phẩm mới được đánh giá.');
+      if (requestedOrderId && !slots.orders.some((order) => String(order.id) === requestedOrderId)) {
+        throw httpError(403, 'Đơn hàng này chưa đủ điều kiện đánh giá sản phẩm.');
+      }
+      const availableOrder = requestedOrderId
+        ? slots.availableOrders.find((order) => String(order.id) === requestedOrderId)
+        : slots.availableOrders[slots.availableOrders.length - 1];
+      if (!availableOrder) throw httpError(409, 'Lần mua này đã được đánh giá. Khi mua lại và nhận hàng ở đơn khác, bạn vẫn có thể đánh giá tiếp.');
       const moderation = await moderateReview(comment, { samples: snapshot.moderationSamples, ollamaUrl: OLLAMA_URL, model: REVIEW_MODERATION_MODEL, timeoutMs: Number(process.env.JAPANO_REVIEW_MODERATION_TIMEOUT_MS || 45000) });
       const media = req.body?.media ? await uploadReviewMedia(req.body.media, req.body?.mediaKind) : null;
       let review;
       update((state) => {
-        if (state.reviews.some((item) => item.userId === userId && item.productId === product.slug)) throw httpError(409, 'Bạn đã đánh giá sản phẩm này rồi.');
-        const order = orders.sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0))[0];
+        const currentSlots = reviewPurchaseSlots(state, userId, product.slug);
+        const order = requestedOrderId
+          ? currentSlots.availableOrders.find((item) => String(item.id) === requestedOrderId)
+          : currentSlots.availableOrders[currentSlots.availableOrders.length - 1];
+        if (!order) throw httpError(409, 'Lần mua này đã được đánh giá. Khi mua lại và nhận hàng ở đơn khác, bạn vẫn có thể đánh giá tiếp.');
         review = {
           id: `review-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           productId: product.slug,
@@ -155,4 +206,8 @@ module.exports = function registerReviewRoutes(api, ctx) {
       res.status(error.status || 400).json({ ok: false, message: error.message || 'Không cập nhật được kiểm duyệt.' });
     }
   });
-};
+}
+
+module.exports = registerReviewRoutes;
+module.exports.reviewPurchaseOrders = reviewPurchaseOrders;
+module.exports.reviewPurchaseSlots = reviewPurchaseSlots;

@@ -13,7 +13,7 @@ const Row = ({ icon, label, to, danger }:{ icon:string; label:string; to?:Href; 
   const router = useRouter();
   return (
     <Pressable style={st.row} onPress={()=> to && router.push(to)}>
-      <View style={[st.ic, danger&&{ backgroundColor:'#F6E3E3' }]}><Ionicons name={icon as any} size={17} color={danger?C.danger:C.shu} /></View>
+      <View style={[st.ic, danger&&{ backgroundColor:C.dangerSoft }]}><Ionicons name={icon as any} size={17} color={danger?C.danger:C.shu} /></View>
       <Text style={[st.rowLbl, danger&&{ color:C.danger }]}>{label}</Text>
       {!danger && <Ionicons name="chevron-forward" size={16} color={C.muted} />}
     </Pressable>
@@ -98,7 +98,7 @@ export default function Me() {
         <Row icon="shield-checkmark-outline" label="Chính sách giao – nhận – đổi/trả" to="/policy" />
         <Row icon="settings-outline" label="Cài đặt hệ thống" to="/settings" />
         <Pressable style={st.row} onPress={()=>void signOut().then(()=>router.replace('/login'))}>
-          <View style={[st.ic,{ backgroundColor:'#F6E3E3' }]}><Ionicons name="power-outline" size={17} color={C.danger} /></View>
+          <View style={[st.ic,{ backgroundColor:C.dangerSoft }]}><Ionicons name="power-outline" size={17} color={C.danger} /></View>
           <Text style={[st.rowLbl,{ color:C.danger }]}>Đăng xuất</Text>
         </Pressable>
       </ScrollView>
@@ -108,11 +108,11 @@ export default function Me() {
 const st = StyleSheet.create({
   memberBadge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:4,backgroundColor:C.washi2,borderRadius:999,paddingHorizontal:8,paddingVertical:4,marginTop:5},
   memberBadgeVip:{backgroundColor:C.primary},memberBadgeT:{fontFamily:F.bodyB,fontSize:9.5,color:C.muted},memberBadgeTVip:{color:C.onPrimary},
-  vipCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:14,marginTop:15},vipCardActive:{backgroundColor:C.washi2,borderColor:C.primary},
-  vipIcon:{width:42,height:42,borderRadius:13,backgroundColor:C.ink,alignItems:'center',justifyContent:'center'},vipTitle:{fontFamily:F.display,fontSize:15,color:C.sumi},vipSub:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
+  vipCard:{backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:16,padding:14,marginTop:15},vipCardActive:{backgroundColor:C.washi2,borderColor:C.primary},
+  vipIcon:{width:42,height:42,borderRadius:13,backgroundColor:C.inverseSurface,alignItems:'center',justifyContent:'center'},vipTitle:{fontFamily:F.display,fontSize:15,color:C.sumi},vipSub:{fontFamily:F.body,fontSize:10.5,lineHeight:15,color:C.muted,marginTop:2},
   vipTrack:{height:8,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginTop:12},vipTrackOn:{height:'100%',borderRadius:5,backgroundColor:C.primary},vipMeta:{flexDirection:'row',justifyContent:'space-between',marginTop:6},vipMetaT:{fontFamily:F.bodyB,fontSize:10,color:C.muted},
-  editChip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:7, paddingHorizontal:13, backgroundColor:'#fff' },
-  stat:{ flex:1, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:12, alignItems:'center' },
+  editChip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:7, paddingHorizontal:13, backgroundColor:C.card },
+  stat:{ flex:1, backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:14, padding:12, alignItems:'center' },
   grp:{ fontFamily:F.display, fontSize:12, color:C.muted, letterSpacing:1.5, marginTop:16, marginBottom:2 },
   row:{ flexDirection:'row', alignItems:'center', gap:12, paddingVertical:14, borderBottomWidth:1, borderBottomColor:C.hair },
   ic:{ width:34, height:34, borderRadius:10, backgroundColor:C.washi2, alignItems:'center', justifyContent:'center' },

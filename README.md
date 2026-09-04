@@ -134,7 +134,7 @@ arbiter xếp hàng theo màn hình người dùng đang mở, nạp và nhả m
 | **Mua sắm** | Catalog, tìm kiếm, lọc/sắp xếp, gallery ảnh–video, wishlist, giỏ đa biến thể, voucher, sổ địa chỉ |
 | **Thanh toán** | COD, Stripe Card/Checkout (Test Mode), VNPay Sandbox trong WebView |
 | **Hậu mãi** | Timeline đơn, yêu cầu trả từng dòng hàng, theo dõi hoàn tiền |
-| **Thử đồ AI** | Virtual try-on, phụ kiện theo pose, hiệu ứng chật/vừa/rộng, quality gate, video "Ảnh sống" |
+| **Thử đồ AI** | Tải/chụp ảnh thật, chọn màu–size theo tồn kho, virtual try-on, phụ kiện theo pose, quality gate, video "Ảnh sống" |
 | **Đo cơ thể** | Chiều cao, cân nặng, vòng 1/2/3 dạng khoảng kèm độ tin cậy và cảnh báo |
 | **Trợ lý Ori** | Botchat nổi + màn chat đầy đủ, grounded vào catalog thật, nhớ nhiều lượt |
 | **Stylist** | Màu chủ đạo, hồ sơ phong cách, tư vấn size, gợi ý outfit |
@@ -142,8 +142,17 @@ arbiter xếp hàng theo màn hình người dùng đang mở, nạp và nhả m
 | **Mục tiêu** | Quỹ tiết kiệm mua sản phẩm; lộ trình sức khoẻ tách riêng, có guardrail |
 | **Loyalty** | VIP theo chi tiêu tháng, Flagcard, voucher cá nhân, thông báo |
 
-Bản phát hành hiện tại: `1.0.13` (`versionCode 14`), package `vn.japano.app`,
+Bản phát hành hiện tại: `1.0.19` (`versionCode 20`), package `vn.japano.app`,
 targetSdk 34. Cài đè để giữ dữ liệu; **không** gỡ bản cũ trước.
+
+`1.0.19` bỏ ảnh người mẫu thử nhanh khỏi màn TryOn: khách chỉ chụp hoặc tải ảnh
+thật từ thư viện. Màn này hiện tồn kho theo từng màu–size, giữ ảnh kết quả khi
+ghép tiếp phụ kiện, và tách hiệu ứng chờ thành 5 giây "Đang kiểm tra ảnh" rồi
+mới đếm "Thời gian xử lý AI" từ 0. Request GPU không bị huỷ khi app vào nền;
+khi quay lại, đồng hồ dùng thời gian thực và kết quả vẫn được nhận bình thường.
+Catalog giữ bản server gần nhất, tự tải lại khi app trở thành active và thử lại
+mỗi 12 giây khi mất kết nối, nên lỗi mạng lúc mở app không còn làm mất lựa chọn
+màu–size vào dữ liệu mẫu đóng gói.
 
 ### 🌐 Website storefront
 
@@ -160,6 +169,12 @@ nhìn và rơi về ảnh tĩnh khi bật Data Saver hoặc `prefers-reduced-mot
 cửa hàng chỉ nhúng khi người dùng bấm mở, để trang mua sắm luôn nhẹ.
 
 Chi tiết: [`web/README.md`](web/README.md).
+
+App và Storefront dùng cùng backend MongoDB, catalog, danh tính người dùng và
+đơn hàng khi đăng nhập bằng cùng email. Tuy nhiên giỏ/wishlist chưa có tính nhất
+quán đa thiết bị hoàn chỉnh: App còn cache giỏ theo tài khoản trong AsyncStorage,
+còn Storefront giữ giỏ và wishlist trong `localStorage` của trình duyệt. Không
+được xem "cùng database" là bằng chứng hai màn hình này luôn hiển thị giống nhau.
 
 ### 🛠️ Web Admin
 
@@ -282,7 +297,7 @@ về cơ thể.
 | Chia dữ liệu | **Theo danh tính**: train 81 mẫu/15 người · validation 18/3 · test 17/3 |
 | Cấu hình | 512 px, BF16, batch 1, grad-accum 4, Adam 8-bit, LR `1e-4`, 600 bước, seed 17 |
 | Tài nguyên đo được | 80,3 phút · peak VRAM 15,2 GB |
-| Checkpoint đang dùng | `checkpoint-400`, hash `a1643dda4cdb1f3c-16731128` |
+| Checkpoint được chấp nhận offline | `checkpoint-400`, hash `a1643dda4cdb1f3c-16731128`; runtime mặc định không nạp |
 
 Checkpoint 500 và 600 **bị acceptance gate loại** vì artifact — mốc cuối không
 mặc nhiên là mốc tốt nhất. Benchmark validation (8 mẫu / 2 danh tính):
@@ -317,6 +332,20 @@ chép từ tài liệu. Quy trình tái tạo dataset, train và benchmark nằm
 > Mọi checkpoint và hằng số hiệu chuẩn phái sinh thừa hưởng ràng buộc đó — phù
 > hợp nghiên cứu và đồ án, không phải asset thương mại. Phần suy từ ANSUR II
 > (`CC0-1.0`) thì không bị ràng buộc.
+
+Khảo sát dữ liệu ngày 01/09/2026 được khóa trong
+[`tryon_sources.manifest.json`](backend/ai_training/provenance/tryon_sources.manifest.json)
+và kiểm tra bằng `python3 backend/ai_training/audit_tryon_sources.py`. Kết luận:
+
+- VITON-HD 5,2 GB đã có đủ 11.647 cặp train / 2.032 cặp test, nhưng chỉ phù hợp
+  nghiên cứu upper-body trong studio.
+- StreetTryOn là ứng viên tốt nhất để đo ảnh ngoài đời, nhưng cần quyền truy cập
+  DeepFashion2 chính thức và vẫn cấm thương mại.
+- Dress Code đủ tops/bottoms/dresses nhưng cần biểu mẫu có chữ ký và email tổ chức.
+- FIT-VTO 100K có nhãn số đo/fit tốt, nhưng giấy phép `CC-BY-NC-ND-4.0`; chưa có
+  chấp thuận bằng văn bản thì không dùng nó để sinh adapter phái sinh.
+- Không tải lại mirror Kaggle hoặc train thêm trên cùng 116 target tổng hợp chỉ
+  để tăng số bước: việc đó không bổ sung pose, danh mục hay ground truth thật.
 
 ### Đo cơ thể từ ảnh
 
@@ -380,7 +409,7 @@ sequenceDiagram
     participant V as FASHN + FLUX.2
 
     U->>API: ảnh + sản phẩm + size + đồng ý dùng ảnh
-    API->>API: kiểm tra độ tuổi và độ che phủ nếu là đồ 18+
+    API->>API: kiểm tra đồng ý và độ tuổi nếu là đồ 18+
     API->>B: phân tích bằng chứng (CPU, ~0,35 s)
     B-->>API: khoảng số đo + độ tin cậy, hoặc “chưa đủ bằng chứng”
     Note over API: thiếu số đo KHÔNG chặn thử đồ
@@ -395,16 +424,37 @@ sequenceDiagram
     end
 ```
 
-Đo trên RTX 5060 Ti 16 GB: ca thường **37,9 giây**; profile `balanced` (20 bước,
-cạnh dài 1536) trả PNG 1152×1536 trong **57,9 giây**; bikini hai mảnh qua FLUX.2
-đa tham chiếu **58,1 giây** khi cache 18+ đã ấm và khoảng **73 giây** khi cache
+App hiện dùng profile preview `fast` (16 bước, cạnh dài 1280) và khởi động làm
+nóng GPU song song với bước phân tích cơ thể trên CPU. Smoke API thật cho một
+món đồ, model đã sẵn sàng và không dùng cache hoàn tất trong **22,835 giây** trên
+RTX 5060 Ti 16 GB. Ma trận sáu loại trang phục ở profile này đạt 6/6, trong
+**22–41,6 giây**, trung bình **28,37 giây**. Trang phục nhiều lớp, dáng khó hoặc
+hiệu ứng chật/rộng mạnh vẫn có thể lâu hơn. Bikini hai mảnh qua FLUX.2 đa tham
+chiếu từng đo **58,1 giây** khi cache 18+ đã ấm và khoảng **73 giây** khi cache
 nguội. Video chuyển động: walk khoảng **58 giây** trực tiếp / **65 giây** qua
 backend, turn khoảng **71 giây**, pose khoảng **66 giây**.
+
+Coverage gate coi cổ áo rộng/chữ V, bóng da và vải màu da là tín hiệu cần cảnh
+báo thay vì tự động huỷ một ảnh bình thường. Ảnh lộ gần như toàn bộ lõi vùng
+nhạy cảm vẫn bị chặn; đồng ý sử dụng ảnh và kiểm tra người trưởng thành cho đồ
+18+ vẫn được giữ nguyên.
 
 ### Luồng "Đưa tôi đến đây"
 
 Chọn địa điểm → sản phẩm phù hợp hiện ngay bên dưới → thử đồ → ghép kết quả vào
 ảnh thật của địa điểm.
+
+Storefront và app dùng cùng hợp đồng backend: mỗi scene trả 4 dáng AI, một dáng
+đề xuất theo loại địa điểm và danh sách vị trí đứng đã duyệt. Client gửi
+`travelPoseId` vào `/api/tryon` và `slotId` vào `/api/japan-spots/scene-photo`.
+Backend kiểm tra footprint thật của chân/vạt áo sau resize; một điểm tiếp xúc
+nằm ngoài `groundPolygon` là từ chối ảnh thay vì đặt người trên nước/không trung.
+Hiện 36/36 scene của đủ 35/35 địa điểm hiển thị qua validator, với 38 vị trí
+đứng đã duyệt. Ma trận dùng ảnh thử đồ thật đạt 38/38 lượt `groundSafe:true`;
+ma trận payload cũ đi đúng đường Tailscale của OPPO đạt 35/35 HTTP 200. Scene
+chưa curate vẫn bị chặn fail-closed, nhưng không còn địa điểm nào trong app rơi
+vào nhánh đó. Arashiyama, Itsukushima và Ginzan là các regression 422 đã được
+khóa bằng test phủ toàn bộ catalog.
 
 Gợi ý sản phẩm chấm điểm bằng quy tắc trên metadata thật của catalog — phong
 cách, mùa, màu, loại đồ, size còn hàng — **không gọi LLM**, đo được **8 ms** khi
@@ -421,6 +471,32 @@ không cắt giữa. Một ảnh đẹp, license rõ, độ phân giải cao v�
 người không thể đứng được trong đó — ảnh Naoshima cũ chụp từ ngoài biển từng làm
 model đứng giữa mặt nước, và đó là lý do lớp metadata này tồn tại.
 
+A/B cùng người, Yukata và dáng nghiêng 3/4 ngày 01/09/2026: `balanced` 20 bước
+54,83 giây và `high` 25 bước 54,57 giây, cả hai qua coverage gate và không có
+quality warning. Hai ảnh gần như tương đương (`SSIM 0,992`, sai khác trung bình
+0,74/255); tăng step không được coi là cải thiện độ chân thật khi chưa có khác
+biệt nhìn thấy. App vì vậy dùng profile `fast` đã được đo riêng; Storefront có
+thể chọn profile theo ngữ cảnh hiển thị.
+
+Sau một lượt cần FLUX để mô phỏng chật/rộng, backend trả ảnh ngay khi quality
+gate hoàn tất rồi mới làm nóng lại FASHN ở nền. Việc nạp model cho lượt kế tiếp
+không còn nằm trong thời gian chờ của request hiện tại; số bước, ảnh đầu ra và
+các cổng chất lượng không thay đổi.
+
+Đo trực tiếp trên Redmi Note 8 Pro ngày 03/09/2026: ca cũ lệch fit nhẹ
+`severity=0,39` đã mất 65,544 giây ở backend và 117–161 giây trên UI vì chờ phân
+tích cơ thể rồi chạy thêm một lượt FLUX. Chế độ `fast` hiện chờ phân tích tối đa
+4,5 giây và luôn dùng một lượt VTON; chỉ chạy fit-effect khi client yêu cầu rõ
+`fitEffect: true`. Lượt thật mới nhất từ ảnh thư viện đạt HTTP 200 trong 23,576
+giây; FASHN và quality/safety gate vẫn chạy. Một phép đo trước đó đạt 19,918
+giây. Android ghi nhận app chuyển qua Home, Cài đặt và Camera trong lúc request
+chạy mà không có `GPU_JOB_CANCELLED`.
+
+Motion local cũng đã được kiểm tra trực tiếp trên Redmi: worker One-to-All sẵn
+sàng, request hoàn tất trong 70,186 giây và hai khung hình cách nhau hai giây
+khác nhau, xác nhận video thật sự phát. Đây vẫn là profile chất lượng, chưa phải
+luồng nhanh như ảnh thử đồ.
+
 ### Luồng mua hàng
 
 Giỏ hàng khách nằm trên thiết bị và được **hợp nhất vào tài khoản sau khi đăng
@@ -429,11 +505,55 @@ bộ giá, mã ưu đãi, tồn kho và tổng tiền được tính lại từ 
 xác nhận ngay; Stripe và VNPay chỉ báo thành công **sau** callback thật từ cổng
 thanh toán.
 
+Mỗi đơn đã nhận hàng tạo một lượt đánh giá cho từng sản phẩm. Khách mua lại sản
+phẩm trong một đơn khác đã hoàn tất sẽ được đánh giá tiếp; cùng một sản phẩm
+trong cùng một đơn chỉ gửi được một đánh giá.
+
 ### Loyalty
 
 Chi tiêu hợp lệ đạt `5.000.000₫`/tháng mở VIP 30 ngày, giảm 10% cho một đơn vị
 sản phẩm tự chọn mỗi đơn. Mỗi đơn từ `5.000.000₫` nhận một Flagcard; đủ 7 thẻ đổi
 được voucher cá nhân giảm 50%, dùng một lần, hiệu lực 90 ngày.
+
+### Mục tiêu mua sắm và lộ trình sức khoẻ
+
+**Quỹ mục tiêu là sổ theo dõi, không phải ví.** JAPANO không giữ tiền và không
+xác minh số dư của bạn. Ghi nhận đủ 100% chỉ đánh dấu cột mốc tiến độ — **không
+phát mã giảm giá**. Mục tiêu chỉ được coi là hoàn thành trọn vẹn khi bạn thực
+sự mua được đúng sản phẩm đó bằng một đơn thành công.
+
+Mã ưu đãi mục tiêu đã cấp trước đây vẫn dùng được, nhưng **chỉ giảm đúng sản
+phẩm mục tiêu, tối đa một sản phẩm** — không giảm các món khác trong giỏ.
+
+**Lộ trình sức khoẻ** yêu cầu 4 câu sàng lọc an toàn (mang thai/hậu sản, bệnh
+nền hoặc thuốc ảnh hưởng cân nặng, tiền sử rối loạn ăn uống, đang được điều
+trị). Bất kỳ câu nào là "Có" hoặc "Không muốn nói" — hoặc chưa trả lời đủ — thì
+hệ thống chỉ đưa hướng dẫn chung, không tạo tốc độ giảm cân hay mốc thời gian.
+Mọi số đo là **do bạn tự khai, không phải xác minh y tế**; hệ thống chỉ lưu kết
+luận tổng hợp, không lưu chi tiết bệnh lý. Mục tiêu sức khoẻ không có quỹ,
+không có voucher và không lưu dữ liệu thu nhập/tiết kiệm.
+
+### Vòng đời voucher
+
+Voucher **không bị trừ lượt ngay khi đặt hàng**. Vòng đời:
+
+| Trạng thái | Khi nào | `voucher.used` |
+|---|---|---|
+| `reserved` | vừa tạo đơn | chưa tăng |
+| `consumed` | tiền đã thực sự về (COD nhận hàng, hoặc callback Stripe/VNPay báo `paid`) | +1, đúng một lần |
+| `released` | huỷ đơn, thanh toán thất bại/hết hạn | giữ nguyên, mã dùng lại được |
+
+Thanh toán thất bại hay huỷ đơn **không làm bạn mất lượt dùng mã**. Trả lại
+toàn bộ đơn đã thanh toán thì mã được **cấp lại** dưới dạng một mã thay thế
+(hạn ít nhất 30 ngày) — nhưng chỉ sau khi tiền đã hoàn thành công. Trả một phần
+thì không cấp lại, và số hoàn chỉ tính trên đúng phần bạn thực trả.
+
+Rà soát sổ đổi mã (mặc định **chỉ đọc**, không ghi gì):
+
+```bash
+node backend/scripts/auditVoucherRedemptions.js            # dry-run
+node backend/scripts/auditVoucherRedemptions.js --apply    # chỉ chạy khi đã xem báo cáo
+```
 
 ## Bắt đầu nhanh
 
@@ -457,6 +577,23 @@ npm --prefix web install
 npm --prefix web run dev           # http://localhost:4200
 ```
 
+### MongoDB Compass dùng khi thuyết trình
+
+Backend và ứng dụng **luôn dùng MongoDB Atlas** theo `MONGODB_URI` trong
+`.env.server`. MongoDB cục bộ chỉ là bản trình bày đã che dữ liệu nhạy cảm, có
+đúng **19 collection trùng với 19 bảng trên `JAPANO_ERD.drawio`**.
+
+```bash
+docker start japano-mongodb-compass
+node scripts/sync_compass_presentation_erd19.js          # dry-run, không ghi
+node scripts/sync_compass_presentation_erd19.js --apply  # chỉ tạo khi DB đích còn trống
+```
+
+Trong MongoDB Compass, kết nối `mongodb://127.0.0.1:27017` và mở database
+`japano_presentation_19`. Không đổi `MONGODB_URI` của backend sang địa chỉ này.
+Tập lệnh từ chối đích không phải localhost, từ chối ghi đè database đã có dữ
+liệu, và che email, số điện thoại, địa chỉ, mật khẩu băm, số đo cùng mã giao dịch.
+
 Dịch vụ AI là tuỳ chọn và bật riêng:
 
 ```bash
@@ -478,7 +615,7 @@ Toàn bộ biến môi trường tham khảo nằm trong [`.env.example`](.env.e
 
 ```bash
 npm run check                      # backend tests + mobile typecheck + python tests
-npm --workspace backend test       # 342 test
+npm --workspace backend test       # 429 test (2026-09-03)
 npm --workspace mobile run typecheck
 python3 -m unittest discover -s backend/test/python -v
 

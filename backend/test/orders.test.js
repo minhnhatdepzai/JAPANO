@@ -98,3 +98,111 @@ test('findVariant khớp theo size khi không tìm thấy đúng màu', () => {
   const variant = findVariant(product, 'Không tồn tại', 'M');
   assert.equal(variant.stock, 4);
 });
+
+// ---------------------------------------------------------------------------
+// R1/R6/V1/V8 ở cấp ĐƯỜNG TẠO ĐƠN — không chỉ ở module vòng đời.
+const L = require('../lib/voucherLifecycle');
+
+function stateWithGoalVoucher() {
+  const state = baseState();
+  // Giá đặt sao cho SAU phụ thu theo size (M +10.000, L +20.000 — xem
+  // lib/pricing.js) ra đúng 100.000₫ và 900.000₫, để con số trong bài đọc thẳng.
+  state.products.push({
+    id: 'p2', slug: 'quan-khac', name: 'Quần khác', price: 880000,
+    variants: [{ colorName: 'Đen', size: 'L', stock: 5 }],
+  });
+  state.products[0].price = 90000;
+  state.vouchers.push({
+    id: 'v1', code: 'GOAL30-U1-AAAA', type: 'percent', value: 30, min: 0, expiry: '—',
+    limit: 1, used: 0, active: true, ownerUserId: 'u1', source: 'goal-fund',
+    scope: 'product', eligibleProductIds: ['ao-test'], maxEligibleQty: 1,
+    goalId: 'goal-u1', goalProductId: 'ao-test',
+  });
+  return state;
+}
+
+test('R1 · tạo đơn COD chỉ giữ chỗ voucher, chưa tăng used', () => {
+  const state = stateWithGoalVoucher();
+  const result = create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 }],
+  });
+  assert.equal(state.vouchers[0].used, 0, 'used chỉ tăng khi tiền thực sự về');
+  assert.equal(state.voucherRedemptions.length, 1);
+  assert.equal(state.voucherRedemptions[0].status, 'reserved');
+  assert.equal(result.order.voucherDiscount, 30000);
+});
+
+test('V1/V8 · đơn nhiều món: voucher mục tiêu chỉ giảm đúng món mục tiêu', () => {
+  const state = stateWithGoalVoucher();
+  const result = create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [
+      { slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 },
+      { slug: 'quan-khac', colorName: 'Đen', size: 'L', qty: 1 },
+    ],
+  });
+  assert.equal(result.order.subtotal, 1000000);
+  assert.equal(result.order.voucherDiscount, 30000, 'không phải 300.000₫');
+  assert.equal(result.order.voucherScope, 'product');
+  assert.equal(result.order.voucherEligibleSubtotal, 100000);
+  assert.equal(result.order.voucherAllocations.length, 1);
+  assert.equal(result.order.voucherAllocations[0].amount, 30000);
+  // Đơn đã lưu và bản ghi giữ chỗ phải khớp nhau từng đồng.
+  const record = L.redemptionForOrder(state, result.order.id);
+  assert.equal(record.discount, result.order.voucherDiscount);
+  assert.equal(
+    record.allocations.reduce((sum, row) => sum + row.amount, 0),
+    result.order.voucherDiscount,
+  );
+});
+
+test('V4 · giá client gửi lên bị bỏ qua, backend tính lại từ catalog', () => {
+  const state = stateWithGoalVoucher();
+  const result = create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1, price: 99999999 }],
+  });
+  assert.equal(result.order.items[0].price, 100000);
+  assert.equal(result.order.voucherDiscount, 30000);
+});
+
+test('V2 · voucher mục tiêu bị từ chối khi giỏ không có món mục tiêu', () => {
+  const state = stateWithGoalVoucher();
+  assert.throws(() => create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'quan-khac', colorName: 'Đen', size: 'L', qty: 1 }],
+  }), /chưa có sản phẩm/i);
+});
+
+test('R6 · hai đơn liên tiếp dùng voucher limit 1: đơn thứ hai bị chặn', () => {
+  const state = stateWithGoalVoucher();
+  create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 }],
+  });
+  // Chưa consume, `used` vẫn 0 — nhưng chỗ đã bị giữ nên đơn sau phải trượt.
+  assert.equal(state.vouchers[0].used, 0);
+  assert.throws(() => create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 }],
+  }), /hết lượt sử dụng/i);
+});
+
+test('R2/R3 · chốt rồi nhả trên cùng một đơn: chỉ một lượt được tính', () => {
+  const state = stateWithGoalVoucher();
+  const { order } = create(state, {
+    userId: 'u1', voucherCode: 'GOAL30-U1-AAAA',
+    items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 }],
+  });
+  L.consume(state, order.id, 'order-completed');
+  assert.equal(state.vouchers[0].used, 1);
+  L.release(state, order.id, 'huỷ-muộn');
+  assert.equal(state.vouchers[0].used, 1, 'đã tiêu là trạng thái cuối');
+});
+
+test('đơn không dùng voucher không tạo bản ghi đổi nào', () => {
+  const state = stateWithGoalVoucher();
+  create(state, { userId: 'u1', items: [{ slug: 'ao-test', colorName: 'Đỏ', size: 'M', qty: 1 }] });
+  assert.equal(state.voucherRedemptions.length, 0);
+});

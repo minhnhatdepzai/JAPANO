@@ -117,3 +117,22 @@ export type CartItem = {
   quantity: number;
   stock: number;
 };
+
+/** Bộ đồ đang chọn còn khuyết chỗ nào — trả về từ GET /api/outfits/completeness. */
+export type OutfitSlotSuggestion = { slug: string; name: string; price: number; score: number; reason?: string };
+export type OutfitMissingSlot = {
+  slot: string;
+  /** `required` = bộ đồ không mặc được ngoài đời (áo khoác mà không có áo trong). */
+  level: "required" | "optional";
+  label: string;
+  message: string;
+  suggestions?: OutfitSlotSuggestion[];
+};
+export type OutfitCompleteness = {
+  ok?: boolean;
+  filled?: string[];
+  missing?: OutfitMissingSlot[];
+  conflicts?: { slot: string; reason: string; message: string }[];
+  complete?: boolean;
+  torsoCovered?: boolean;
+};

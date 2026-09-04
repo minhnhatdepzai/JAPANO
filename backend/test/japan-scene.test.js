@@ -16,7 +16,7 @@ test('bảng địa điểm của backend khớp danh sách trong mobile/lib/jap
   const fromMobile = [...source.matchAll(/\{ place: '([^']+)', photoUrl: '([^']+)', prefecture: '([^']+)'/g)]
     .map((match) => ({ place: match[1], photoUrl: match[2], prefecture: match[3] }));
 
-  assert.ok(fromMobile.length >= 25, `chỉ đọc được ${fromMobile.length} địa điểm từ file mobile`);
+  assert.ok(fromMobile.length >= 35, `chỉ đọc được ${fromMobile.length} địa điểm từ file mobile`);
   assert.equal(SCENE_BACKGROUNDS.length, fromMobile.length, 'số địa điểm hai bên lệch nhau');
 
   for (const spot of fromMobile) {

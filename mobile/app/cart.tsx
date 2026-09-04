@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +26,16 @@ export default function Cart() {
   const router = useRouter();
   const {user}=useAuth();
   const { cart, incQty, decQty, removeCart, cartSubtotal, voucher, setVoucher, clearVoucher } = useStore();
+  // Dòng hàng gửi cho máy chủ kiểm mã: voucher chỉ-đúng-một-sản-phẩm cần biết
+  // giỏ có gì. Tên sản phẩm chỉ dùng để hiển thị "mã này áp cho món nào".
+  const voucherLines = useMemo(
+    () => cart.map((it) => ({ slug: it.slug, colorName: it.color, size: it.size, qty: it.qty })),
+    [cart],
+  );
+  const voucherProductNames = useMemo(
+    () => Object.fromEntries(cart.map((it) => [it.slug, bySlug(it.slug)?.name || it.slug])),
+    [cart],
+  );
   const disc = voucher ? voucherDiscountFor(cartSubtotal, voucher) : 0;
   const grand = cartSubtotal - disc;
 
@@ -73,7 +83,7 @@ export default function Cart() {
           );
         })}
         <View style={{ marginVertical:8 }}>
-          <VoucherField subtotal={cartSubtotal} voucher={voucher} onApply={setVoucher} onClear={clearVoucher} userId={user?.id} />
+          <VoucherField subtotal={cartSubtotal} items={voucherLines} productNames={voucherProductNames} voucher={voucher} onApply={setVoucher} onClear={clearVoucher} userId={user?.id} />
         </View>
         <View style={st.summary}>
           <Row k="Tạm tính" v={money(cartSubtotal)} />
@@ -105,13 +115,13 @@ const Row = ({ k, v, shu }:{k:string;v:string;shu?:boolean}) => (
   </View>
 );
 const st = StyleSheet.create({
-  card:{ flexDirection:'row', backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:10, marginBottom:10 },
+  card:{ flexDirection:'row', backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:14, padding:10, marginBottom:10 },
   qty:{ flexDirection:'row', alignItems:'center', borderWidth:1, borderColor:C.line, borderRadius:8, paddingHorizontal:8, paddingVertical:2 },
-  summary:{ backgroundColor:'#fff', borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4 },
+  summary:{ backgroundColor:C.card, borderWidth:1, borderColor:C.line, borderRadius:14, padding:14, marginTop:4 },
   flagProgress:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.washi2, borderWidth:1, borderColor:C.primary, borderRadius:14, padding:13, marginTop:10 },
-  flagProgressReady:{ backgroundColor:C.sumi, borderColor:C.kin },
+  flagProgressReady:{ backgroundColor:C.inverseSurface, borderColor:C.kin },
   flagProgressText:{ flex:1, fontFamily:F.bodyB, fontSize:11.5, lineHeight:17, color:C.shuDeep },
-  stripeHint:{ flexDirection:'row',alignItems:'center',gap:8,backgroundColor:'#E8F6EC',borderRadius:10,padding:10,marginVertical:7 },
+  stripeHint:{ flexDirection:'row',alignItems:'center',gap:8,backgroundColor:C.okSoft,borderRadius:10,padding:10,marginVertical:7 },
   stripeHintT:{ flex:1,fontFamily:F.bodyB,fontSize:11,color:'#166534' },
   sticky:{ position:'absolute', left:0, right:0, bottom:0, backgroundColor:C.paper, borderTopWidth:1, borderTopColor:C.line, padding:12, paddingBottom:24 },
 });

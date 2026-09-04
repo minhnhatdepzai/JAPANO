@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, LoaderCircle, LockKeyhole, TicketPercent } from "lucide-react";
+import { Check, LoaderCircle, LockKeyhole, ShoppingBag, TicketPercent } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -32,7 +33,13 @@ export function CheckoutForm({ shop }: { shop: Shop }) {
   const validateVoucher = async () => {
     setVoucherMessage("");
     try {
-      const result = await postJson<{ discount: number; voucher?: { code?: string } }>("/api/vouchers/validate", { code: voucher, subtotal }, 10_000);
+      // Gửi cả dòng hàng: mã chỉ-đúng-một-sản-phẩm cần biết giỏ có gì, nếu
+      // không máy chủ fail closed và từ chối mã. Giá vẫn do máy chủ tính lại.
+      const result = await postJson<{ discount: number; voucher?: { code?: string } }>(
+        "/api/vouchers/validate",
+        { code: voucher, subtotal, items: items.map((item) => ({ slug: item.slug, productId: item.productId, colorName: item.color, size: item.size, qty: item.quantity })) },
+        10_000,
+      );
       setDiscount(Number(result.discount || 0)); setVoucherMessage(`Đã áp dụng ${result.voucher?.code || voucher}.`);
     } catch (error) { setDiscount(0); setVoucherMessage(error instanceof Error ? error.message : "Voucher không hợp lệ."); }
   };
@@ -59,6 +66,10 @@ export function CheckoutForm({ shop }: { shop: Shop }) {
     }
   });
 
-  if (!items.length) return <div className="empty-rail">Giỏ hàng đang trống. Hãy chọn sản phẩm trước khi thanh toán.</div>;
+  // Giỏ trống ở bước thanh toán từng là một khung gạch đứt không có lối ra: không
+  // biểu tượng, không tiêu đề, không nút nào để đi tiếp. Năm chỗ trống khác trong
+  // storefront (giỏ hàng, wishlist, tài khoản, đơn hàng, ngăn kéo giỏ) đều dùng
+  // .empty-state page-empty kèm một CTA, nên dùng lại đúng mẫu đó thay vì tự chế.
+  if (!items.length) return <div className="empty-state page-empty"><ShoppingBag aria-hidden="true" /><h2>Chưa có gì để thanh toán</h2><p>Giỏ hàng đang trống. Chọn một thiết kế JAPANO rồi quay lại bước này.</p><Link href="/san-pham" className="button primary">Khám phá sản phẩm</Link></div>;
   return <form className="checkout-layout" onSubmit={submit} noValidate><section className="checkout-form"><div className="checkout-block"><span className="eyebrow">01 · Người nhận</span><label><span>Họ và tên</span><input autoComplete="name" placeholder="Nguyễn Minh Anh…" {...register("name")} />{errors.name && <small role="alert">{errors.name.message}</small>}</label><label><span>Số điện thoại</span><input type="tel" inputMode="tel" autoComplete="tel" placeholder="0901 234 567…" {...register("phone")} />{errors.phone && <small role="alert">{errors.phone.message}</small>}</label><label><span>Địa chỉ giao hàng</span><textarea autoComplete="street-address" placeholder="Số nhà, đường, phường/xã, tỉnh/thành…" {...register("address")} />{errors.address && <small role="alert">{errors.address.message}</small>}</label></div><div className="checkout-block"><span className="eyebrow">02 · Thanh toán</span><div className="payment-options">{shop.cod && <label><input type="radio" value="COD" {...register("paymentMethod")} /><span><strong>Thanh toán khi nhận hàng</strong><small>COD · xác nhận đơn ngay</small></span></label>}{shop.stripe && <label><input type="radio" value="stripe" {...register("paymentMethod")} /><span><strong>Thẻ quốc tế qua Stripe</strong><small>Chuyển sang Stripe Checkout bảo mật</small></span></label>}{shop.vnpay && <label><input type="radio" value="vnpay" {...register("paymentMethod")} /><span><strong>VNPay</strong><small>QR, ATM nội địa và ví hỗ trợ</small></span></label>}</div></div></section><aside className="order-summary checkout-summary"><span className="eyebrow">Đơn của bạn</span>{items.map((item) => <div className="checkout-line" key={item.key}><img src={item.image} width="64" height="80" alt="" /><span><strong>{item.name}</strong><small>{item.color} · {item.size} · ×{item.quantity}</small></span><b>{formatCurrency(item.price * item.quantity)}</b></div>)}<div className="voucher-field"><label htmlFor="voucher"><TicketPercent aria-hidden="true" />Voucher</label><div><input id="voucher" name="voucher" autoComplete="off" placeholder="Nhập mã…" value={voucher} onChange={(event) => setVoucher(event.target.value.toUpperCase())} /><button type="button" onClick={validateVoucher} disabled={!voucher.trim()}>Áp dụng</button></div>{voucherMessage && <small aria-live="polite">{discount > 0 && <Check aria-hidden="true" />}{voucherMessage}</small>}</div><dl><div><dt>Tạm tính</dt><dd>{formatCurrency(subtotal)}</dd></div>{discount > 0 && <div><dt>Ưu đãi</dt><dd>-{formatCurrency(discount)}</dd></div>}<div><dt>Giao hàng</dt><dd>{formatCurrency(ship)}</dd></div><div className="grand-total"><dt>Tổng cộng</dt><dd>{formatCurrency(total)}</dd></div></dl>{serverError && <p className="form-error" role="alert">{serverError}</p>}<button className="button primary full" disabled={isSubmitting}>{isSubmitting ? <LoaderCircle className="spin" aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}{method === "COD" ? "Đặt hàng COD" : method === "stripe" ? "Tiếp tục với Stripe" : "Tiếp tục với VNPay"}</button><p className="secure-copy">Giá, mã ưu đãi, size và tồn kho được kiểm tra lại một lần nữa trước khi đơn được tạo.</p></aside></form>;
 }

@@ -128,7 +128,7 @@ export default function ForgotPassword() {
 const st = StyleSheet.create({
   sub: { fontFamily: F.body, color: C.muted, fontSize: 13, marginBottom: 16, lineHeight: 19 },
   lbl: { fontFamily: F.bodyM, color: C.muted, fontSize: 11, marginBottom: 5 },
-  input: { minHeight: 48, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor: '#fff', paddingHorizontal: 13, fontFamily: F.body, fontSize: 14, color: C.ink, marginBottom: 13 },
+  input: { minHeight: 48, borderWidth: 1, borderColor: C.line, borderRadius: 12, backgroundColor:C.card, paddingHorizontal: 13, fontFamily: F.body, fontSize: 14, color: C.ink, marginBottom: 13 },
   bar: { flex: 1, height: 4, borderRadius: 2 },
   previewBox: { backgroundColor: C.aiSoft, borderRadius: 11, padding: 11, marginBottom: 14 },
   previewT: { fontFamily: F.bodyM, fontSize: 11.5, color: C.ai, lineHeight: 16 },

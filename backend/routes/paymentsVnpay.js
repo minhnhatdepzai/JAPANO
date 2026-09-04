@@ -7,6 +7,7 @@ const {
   VNPAY_TMN_CODE, VNPAY_API_URL, VNPAY_RETURN_URL, VNPAY_VERSION,
 } = require('../lib/vnpaySign');
 const { findPayment, findReturnRequest, reusableProviderOrder } = require('../lib/paymentLookup');
+const { consume: consumeVoucher, release: releaseVoucher } = require('../lib/voucherLifecycle');
 const { restockCancelledOrder, restockRemainingOrderUnits } = require('../lib/inventory');
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
 const { makeCreateOrderInState } = require('./orders');
@@ -57,6 +58,9 @@ function makeVnpayHelpers(ctx) {
         if (!order.history.some((item) => item.s === 'paid' && item.txn === txnRef)) {
           order.history.push({ s: 'paid', at: now, txn: txnRef });
         }
+        // Tiền đã về: chốt lượt voucher đúng một lần. VNPay gọi cả return URL
+        // lẫn IPN cho cùng giao dịch nên hàm này phải idempotent.
+        consumeVoucher(state, order.id, 'vnpay-paid', now);
         reconcileFlagRewards(state);
         if (reconcileGoalRewards) reconcileGoalRewards(state, now, pushNotification);
         outcome = { code: 'success', order, payment };
@@ -69,6 +73,8 @@ function makeVnpayHelpers(ctx) {
         order.history.push({ s: payment.status, at: now, reason: responseCode });
         // Huỷ/thất bại ở cổng VNPay: hàng chưa rời cửa hàng, nhả kho lại ngay.
         restockCancelledOrder(state, order, `vnpay-${payment.status}`);
+        // Nhả chỗ voucher: khách huỷ ở cổng thanh toán không được mất lượt dùng.
+        releaseVoucher(state, order.id, `vnpay-${payment.status}`, now);
         outcome = { code: payment.status, order, payment };
       }
       return state;

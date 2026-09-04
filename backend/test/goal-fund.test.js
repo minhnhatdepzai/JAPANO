@@ -49,28 +49,26 @@ test('nạp dần vào quỹ cộng đúng tiến độ và chưa thưởng khi 
   assert.equal(state.vouchers.length, 0);
 });
 
-test('tích đủ mục tiêu thì tự phát voucher giảm 30% cá nhân, dùng một lần', () => {
+// G6 — tiền TỰ KHAI không tạo ra quyền lợi tài chính. Quỹ này là sổ theo dõi:
+// JAPANO không giữ tiền của khách và không xác minh số dư, nên đủ 100% chỉ
+// được đổi trạng thái tiến độ.
+test('ghi nhận đủ số tiền mục tiêu KHÔNG phát voucher', () => {
   const state = baseState();
   addDeposit(state, goalOf(state), { amount: 600000 });
   const result = addDeposit(state, goalOf(state), { amount: 400000 });
 
-  assert.equal(result.justCompleted, true);
+  assert.equal(result.justCompleted, true, 'vẫn ghi nhận cột mốc tiến độ');
   assert.equal(goalOf(state).fund.status, 'completed');
-  assert.equal(state.vouchers.length, 1);
-  const voucher = state.vouchers[0];
-  assert.equal(voucher.type, 'percent');
-  assert.equal(voucher.value, GOAL_FUND_CONFIG.rewardPercent);
-  assert.equal(voucher.value, 30);
-  assert.equal(voucher.ownerUserId, 'u1', 'voucher khoá theo đúng chủ mục tiêu');
-  assert.equal(voucher.limit, 1);
-  assert.equal(voucher.source, 'goal-fund');
+  assert.equal(result.voucher, null, 'không phát voucher từ số tiền tự khai');
+  assert.equal(state.vouchers.length, 0, 'không có voucher nào được tạo');
+  assert.equal(goalOf(state).fund.rewardVoucherCode, null);
 });
 
-test('nạp thêm sau khi đã đủ không phát thêm voucher thứ hai', () => {
+test('ghi nhận thêm sau khi đã đủ vẫn không phát voucher', () => {
   const state = baseState();
   addDeposit(state, goalOf(state), { amount: 1000000 });
   addDeposit(state, goalOf(state), { amount: 500000 });
-  assert.equal(state.vouchers.length, 1);
+  assert.equal(state.vouchers.length, 0);
   assert.equal(fundView(goalOf(state)).saved, 1500000);
 });
 
@@ -81,7 +79,10 @@ test('số tiền nạp không hợp lệ bị chặn', () => {
   assert.throws(() => addDeposit(state, goalOf(state), { amount: 999999999999 }), /tối đa/);
 });
 
-test('gỡ khoản ghi nhầm trừ lại đúng số tiền nhưng không thu hồi thưởng đã phát', () => {
+// G7 — gỡ khoản ghi nhầm phải tính lại tiến độ đúng thực tế. Trước đây trạng
+// thái "completed" được giữ lại, khiến một mục tiêu đang thiếu tiền vẫn hiện là
+// đã hoàn thành.
+test('gỡ khoản ghi nhầm tính lại tiến độ đúng, không giữ trạng thái hoàn thành giả', () => {
   const state = baseState();
   addDeposit(state, goalOf(state), { amount: 400000 });
   const second = goalOf(state).fund.deposits[0].id;
@@ -89,12 +90,12 @@ test('gỡ khoản ghi nhầm trừ lại đúng số tiền nhưng không thu h
   assert.equal(fundView(goalOf(state)).saved, 0);
 
   addDeposit(state, goalOf(state), { amount: 1000000 });
-  assert.equal(state.vouchers.length, 1);
+  assert.equal(goalOf(state).fund.status, 'completed');
   const depositId = goalOf(state).fund.deposits[0].id;
   removeDeposit(state, goalOf(state), depositId);
   assert.equal(fundView(goalOf(state)).saved, 0);
-  assert.equal(goalOf(state).fund.status, 'completed', 'đã đạt mốc một lần thì giữ nguyên phần thưởng');
-  assert.equal(state.vouchers.length, 1);
+  assert.equal(goalOf(state).fund.status, 'saving', 'gỡ hết tiền thì quay lại đang tích luỹ');
+  assert.equal(state.vouchers.length, 0);
 });
 
 test('mua đúng sản phẩm mục tiêu sau khi đủ quỹ mới được ghi nhận hoàn thành', () => {
@@ -142,7 +143,7 @@ test('reconcile chạy lại nhiều lần không ghi nhận trùng', () => {
   });
   assert.equal(reconcileGoalRewards(state, Date.now(), pushNotification).length, 1);
   assert.equal(reconcileGoalRewards(state, Date.now(), pushNotification).length, 0);
-  assert.equal(state.vouchers.length, 1);
+  assert.equal(state.vouchers.length, 0, 'reconcile không phát voucher từ tiền tự khai');
 });
 
 test('đơn đặt TRƯỚC khi tích đủ quỹ không được tính là hoàn thành mục tiêu', () => {

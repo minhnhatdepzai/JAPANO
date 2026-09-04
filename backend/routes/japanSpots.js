@@ -240,23 +240,25 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
         throw httpError(400, 'Góc chụp không thuộc địa điểm này.');
       }
 
-      const spot = findSceneBackground(place, prefecture);
-      if (!scene && !spot) {
-        throw httpError(404, `Chưa có ảnh nền cho địa điểm "${place}" ở ${prefecture}.`);
+      if (!scene) {
+        throw httpError(422, `Địa điểm "${place}" chưa có góc chụp với vùng mặt đất đã kiểm duyệt.`);
       }
 
       // Slot chỉ được chọn trong danh sách của chính scene — không nhận toạ độ
       // tự do từ client, nếu không người lại đứng ra ngoài mặt đất.
+      let chosenSlot = null;
       let anchorX;
-      if (scene && b.slotId) {
+      if (b.slotId) {
         const slot = (scene.composition.personSlots || []).find((item) => item.id === String(b.slotId));
         if (!slot) throw httpError(400, 'Vị trí đứng không hợp lệ cho góc chụp này.');
+        chosenSlot = slot;
         anchorX = slot.x;
+      } else {
+        chosenSlot = (scene.composition.personSlots || [])[0] || null;
+        anchorX = chosenSlot?.x;
       }
 
-      const backgroundImageBase64 = scene
-        ? loadSceneBackground(scene)
-        : await fetchBackgroundImage(spot.photoUrl);
+      const backgroundImageBase64 = loadSceneBackground(scene);
       const composed = await composeViaWorker({
         personImageBase64,
         backgroundImageBase64,
@@ -265,7 +267,7 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
         anchorX,
       });
       if (!composed.ok) {
-        return res.status(composed.code === 'PERSON_NOT_SEGMENTED' ? 422 : 503).json({
+        return res.status(['PERSON_NOT_SEGMENTED', 'UNSAFE_SCENE_PLACEMENT'].includes(composed.code) ? 422 : 503).json({
           ok: false, code: composed.code, message: composed.message,
         });
       }
@@ -279,14 +281,16 @@ module.exports = function registerJapanSpotsRoutes(api, ctx) {
         height: composed.height,
         method: composed.method,
         placement: composed.placement || null,
-        place: scene ? scene.spotPlace : spot.place,
-        prefecture: scene ? scene.spotPrefecture : spot.prefecture,
-        sceneId: scene ? scene.id : null,
-        sceneName: scene ? scene.name : null,
+        place: scene.spotPlace,
+        prefecture: scene.spotPrefecture,
+        sceneId: scene.id,
+        sceneName: scene.name,
+        slotId: chosenSlot?.id || null,
+        slotLabel: chosenSlot?.label || null,
         // Ảnh nền là tệp Creative Commons, nên phải hiện ghi công ngay trên ảnh.
-        attribution: scene ? scene.attribution : PHOTO_ATTRIBUTION,
-        sourceLabel: scene ? `${scene.author} · ${scene.license}` : spot.sourceLabel,
-        sourceUrl: scene ? scene.sourceUrl : spot.sourceUrl,
+        attribution: scene.attribution,
+        sourceLabel: `${scene.author} · ${scene.license}`,
+        sourceUrl: scene.sourceUrl,
         durationMs: Date.now() - startedAt,
       });
     } catch (error) {

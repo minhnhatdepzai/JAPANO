@@ -52,6 +52,56 @@ test('Ollama từ chối hoặc làm rơi dữ kiện thì giữ bản grounded'
   assert.equal(groundedRewriteOrDraft('Xin lỗi, tôi không thể trả lời.', draft).message, draft);
   assert.equal(groundedRewriteOrDraft('Mẫu Yukata này rất đẹp.', draft).message, draft);
   assert.equal(groundedRewriteOrDraft('Yukata vải bông xanh đen giá 1.290.000₫.', draft).accepted, true);
+  assert.equal(groundedRewriteOrDraft('Yukata vải bông xanh đen giá 1.590.000₫.', draft).reason, 'ollama-invented-money');
+  assert.equal(groundedRewriteOrDraft('Mẫu này giá 1.290.000₫.', draft, ['Yukata vải bông xanh đen']).reason, 'ollama-dropped-catalog-products');
+});
+
+test('lệnh mở mua sắm trả action điều hướng có kiểm soát', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Mở trang mua sắm cho tôi' });
+  assert.equal(result.intent, 'navigation');
+  assert.deepEqual(result.actions, [{ id:'open_shop', label:'Mở trang mua sắm', auto:true }]);
+  assert.match(result.message, /mở trang mua sắm/i);
+});
+
+test('lệnh tới thanh toán trả đúng action checkout thay vì gợi ý sản phẩm', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Đi tới trang thanh toán giúp tôi' });
+  assert.equal(result.intent, 'navigation');
+  assert.deepEqual(result.actions, [{ id:'open_checkout', label:'Tới trang thanh toán', auto:true }]);
+  assert.deepEqual(result.productIds, []);
+});
+
+test('cách nói tính tiền và xem đơn đã mua không bị semantic catalog bắt nhầm', () => {
+  const checkout = chatbot.reply(state, { userId:'eval-chat', message:'Tính tiền giúp tôi đi' });
+  assert.equal(checkout.intent, 'navigation');
+  assert.equal(checkout.actions[0].id, 'open_checkout');
+  const orders = chatbot.reply(state, { userId:'eval-chat', message:'Tôi muốn xem các đơn đã mua' });
+  assert.equal(orders.intent, 'navigation');
+  assert.equal(orders.actions[0].id, 'open_orders');
+});
+
+test('hỏi địa điểm đẹp trả địa điểm từ catalog phong cảnh và nút Khám phá Nhật Bản', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Ở Nhật có địa điểm nào đẹp để chụp ảnh?' });
+  assert.equal(result.intent, 'travel');
+  assert.match(result.message, /Kyoto|Tokyo|Yamanashi|Nara|Kagawa/);
+  assert.ok(result.message.split('\n').length >= 4);
+  assert.deepEqual(result.actions, [{ id:'open_explore_japan', label:'Mở Khám phá Nhật Bản', auto:false }]);
+});
+
+test('trời mưa ưu tiên đồ che mưa và không trả Jinbei mùa hè', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Trời mưa mà, mưa mưa mặc gì?' });
+  assert.equal(result.intent, 'weather_outfit');
+  assert.ok(result.productIds.includes('du-nhat'));
+  assert.ok(!result.productIds.includes('jinbei-mua-he'));
+  assert.match(result.message, /mưa|chống ướt|áo khoác/i);
+});
+
+test('phối đồ có ngân sách không tạo tổng vượt giới hạn', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Phối đồ đi làm dưới 2 triệu' });
+  assert.equal(result.intent, 'outfit');
+  const selected = state.products.filter((product) => result.productIds.includes(product.slug));
+  assert.ok(selected.length > 0);
+  assert.ok(selected.reduce((sum, product) => sum + Number(product.price || 0), 0) <= 2_000_000);
+  assert.match(result.message, /2\.000\.000₫/);
 });
 
 test('coaching sức khỏe chỉ nói đúng mục tiêu sức khỏe, không chèn mua áo hay tiết kiệm', () => {
@@ -86,4 +136,3 @@ test('người dưới 18 tuổi không nhận lịch giảm cân cá nhân', ()
   assert.equal(plan.status, 'needs-professional-guidance');
   assert.equal(plan.estimatedWeeks, null);
 });
-

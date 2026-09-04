@@ -152,7 +152,7 @@ export default function Home() {
             </View>
             <View style={st.studioRow}>
               <StudioAction icon="shirt-outline" label="Thử đồ AI" caption="Tự chọn size" onPress={()=>{if(requireAuth('/tryon?productId=kimono-hong'))router.push('/tryon?productId=kimono-hong');}} />
-              <StudioAction icon="image-outline" label="Ảnh tại Nhật" caption="25 phong cảnh" onPress={()=>router.push('/explore-japan')} />
+              <StudioAction icon="image-outline" label="Ảnh tại Nhật" caption="35 phong cảnh" onPress={()=>router.push('/explore-japan')} />
               <StudioAction icon="chatbubble-ellipses-outline" label="Trợ lý Ori" caption="Phối đồ riêng" onPress={()=>{if(requireAuth('/chat'))router.push('/chat');}} />
             </View>
           </View>
@@ -238,9 +238,9 @@ const st = StyleSheet.create({
   greet:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingHorizontal:18, paddingTop:6, paddingBottom:12 },
   greetEyebrow:{ fontFamily:F.bodyM, fontSize:9.5, letterSpacing:1.6, color:C.muted },
   greetName:{ fontFamily:F.display, fontSize:17, color:C.sumi, marginTop:2 },
-  icBtn:{ width:38, height:38, borderRadius:12, backgroundColor:'#fff', borderWidth:1, borderColor:C.line, alignItems:'center', justifyContent:'center' },
+  icBtn:{ width:38, height:38, borderRadius:12, backgroundColor:C.card, borderWidth:1, borderColor:C.line, alignItems:'center', justifyContent:'center' },
   badge:{ position:'absolute', top:8, right:9, width:7, height:7, borderRadius:4, backgroundColor:C.shu },
-  dailyBanner:{ flexDirection:'row', alignItems:'center', marginHorizontal:18, marginBottom:6, padding:12, borderRadius:14, backgroundColor:C.sumi },
+  dailyBanner:{ flexDirection:'row', alignItems:'center', marginHorizontal:18, marginBottom:6, padding:12, borderRadius:14, backgroundColor:C.inverseSurface },
   countBadge:{ position:'absolute', top:-4, right:-4, minWidth:18, height:18, borderRadius:9, backgroundColor:C.shu, alignItems:'center', justifyContent:'center', paddingHorizontal:4, borderWidth:1.5, borderColor:C.washi },
   countT:{ color:'#fff', fontFamily:F.bodyX, fontSize:10 },
   hero:{ height:276, overflow:'hidden', borderRadius:26, marginHorizontal:12, borderWidth:1, borderColor:'rgba(17,17,17,.08)' },
@@ -252,9 +252,9 @@ const st = StyleSheet.create({
   heroEyebrow:{ fontFamily:F.displaySb, letterSpacing:2.6, fontSize:9, color:'rgba(255,255,255,.72)' },
   heroTitle:{ fontFamily:F.displayX, fontSize:27, lineHeight:31, color:'#fff', marginTop:5, marginBottom:7, letterSpacing:-.4 },
   heroBody:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'rgba(255,255,255,.82)', marginBottom:11, maxWidth:330 },
-  heroBtn:{ backgroundColor:'#fff', alignSelf:'flex-start', paddingVertical:9, paddingLeft:13, paddingRight:10, borderRadius:12, flexDirection:'row', alignItems:'center', gap:8 },
+  heroBtn:{ backgroundColor:C.card, alignSelf:'flex-start', paddingVertical:9, paddingLeft:13, paddingRight:10, borderRadius:12, flexDirection:'row', alignItems:'center', gap:8 },
   heroBtnT:{ color:C.ink, fontFamily:F.bodyB, fontSize:12 },
-  studio:{ marginTop:14, borderRadius:20, backgroundColor:C.sumi, padding:14, overflow:'hidden' },
+  studio:{ marginTop:14, borderRadius:20, backgroundColor:C.inverseSurface, padding:14, overflow:'hidden' },
   studioHead:{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:12 },
   studioEyebrow:{ color:'rgba(255,255,255,.54)', fontFamily:F.bodyM, fontSize:8.5, letterSpacing:1.7 },
   studioTitle:{ color:'#fff', fontFamily:F.displaySb, fontSize:16, marginTop:2 },
@@ -265,13 +265,13 @@ const st = StyleSheet.create({
   studioIcon:{ width:30, height:30, borderRadius:10, backgroundColor:'rgba(255,255,255,.12)', alignItems:'center', justifyContent:'center', marginBottom:8 },
   studioLabel:{ color:'#fff', fontFamily:F.bodyB, fontSize:10.5 },
   studioCaption:{ color:'rgba(255,255,255,.48)', fontFamily:F.body, fontSize:8.5, marginTop:2 },
-  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:'#fff' },
+  chip:{ borderWidth:1, borderColor:C.line, borderRadius:999, paddingVertical:8, paddingHorizontal:13, backgroundColor:C.card },
   chipOn:{ backgroundColor:C.primary, borderColor:C.primary },
   culture:{ borderRadius:18, overflow:'hidden', borderWidth:1, borderColor:C.line, marginTop:18 },
   cultureBand:{ flexDirection:'row', alignItems:'center', padding:14, backgroundColor:'rgba(26,20,16,0.03)' },
-  look:{ flexDirection:'row', alignItems:'center', padding:10, borderWidth:1, borderColor:C.line, borderRadius:14, backgroundColor:'#fff' },
+  look:{ flexDirection:'row', alignItems:'center', padding:10, borderWidth:1, borderColor:C.line, borderRadius:14, backgroundColor:C.card },
   lookThumb:{ width:46, height:56, borderRadius:9, borderWidth:2, borderColor:'#fff' },
-  addSet:{ backgroundColor:C.sumi, paddingVertical:8, paddingHorizontal:11, borderRadius:10 },
+  addSet:{ backgroundColor:C.inverseSurface, paddingVertical:8, paddingHorizontal:11, borderRadius:10 },
   grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'center', columnGap:12, rowGap:12, width:'100%', alignSelf:'center' },
   productSkeleton:{ height:281, borderRadius:18, overflow:'hidden', borderWidth:1, borderColor:C.line, backgroundColor:C.card },
   productSkeletonMeta:{ height:101, paddingHorizontal:10, paddingTop:9, paddingBottom:10 },

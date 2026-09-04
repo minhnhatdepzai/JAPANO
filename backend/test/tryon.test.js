@@ -20,10 +20,16 @@ test('biến coverageFixRequested sống tới lúc dựng response, không làm
   // ReferenceError khiến client chờ tới lúc báo Network request failed.
   const source = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tryon.js'), 'utf8');
   const declarations = [...source.matchAll(/let coverageFixRequested = false;/g)].map((match) => match.index);
-  const runGpuJobIndex = source.indexOf('await runGpuJob(');
   assert.equal(declarations.length, 1, 'coverageFixRequested phải chỉ có một khai báo');
-  assert.ok(runGpuJobIndex > 0 && declarations[0] < runGpuJobIndex,
-    'coverageFixRequested phải nằm ngoài callback runGpuJob');
+  // Phải neo vào ĐÚNG handler POST /tryon. Bản cũ lấy `indexOf('await runGpuJob(')`
+  // trên cả tệp, nên bất kỳ hàm phụ trợ nào phía trên có gọi runGpuJob — ví dụ
+  // đường ghép phụ kiện đơn lẻ — đều làm bài test đỏ dù lỗi hồi quy nó canh vẫn
+  // chưa hề tái diễn.
+  const handlerIndex = source.indexOf("api.post('/tryon'");
+  assert.ok(handlerIndex > 0, 'không tìm thấy handler POST /tryon');
+  const runGpuJobIndex = source.indexOf('await runGpuJob(', handlerIndex);
+  assert.ok(runGpuJobIndex > 0 && declarations[0] > handlerIndex && declarations[0] < runGpuJobIndex,
+    'coverageFixRequested phải nằm trong handler và ngoài callback runGpuJob');
   assert.ok(source.indexOf('coverageFixRequested,', declarations[0]) > declarations[0],
     'response phải dùng lại biến đã khai báo ở scope handler');
 });

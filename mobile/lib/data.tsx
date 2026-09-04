@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { AppState } from 'react-native';
 import { BUNDLED, setCatalog, Product } from './catalog';
 import { getProducts, resolveApiMediaUrl } from './api';
 
@@ -71,19 +72,38 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(BUNDLED);
   const [online, setOnline] = useState(false);
   const [loading,setLoading]=useState(false);
+  const lastGoodCatalog=useRef<Product[]|null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const remote = await getProducts();
+      if(!remote.length)throw new Error('Catalog API returned no products.');
       const merged=normalizedRemote(remote||[]);
+      lastGoodCatalog.current=merged;
       setCatalog(merged); setProducts(merged); setOnline(true);
     } catch {
-      setCatalog(BUNDLED); setProducts(BUNDLED); setOnline(false);
+      // Backend/đường truyền có thể đang khởi động lại đúng lúc app mở. Không
+      // được xoá catalog live đã tải thành công (kèm variant, size và tồn kho)
+      // rồi thay bằng bản đóng gói thiếu tồn kho chỉ vì một request tạm lỗi.
+      const fallback=lastGoodCatalog.current||BUNDLED;
+      setCatalog(fallback); setProducts(fallback); setOnline(false);
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(()=>{
+    // Release APK trước đây chỉ tải catalog đúng một lần. Nếu backend khởi động
+    // sau app, màn thử đồ giữ bản đóng gói và mất hẳn mục size cho tới khi buộc
+    // dừng app. Tự thử lại khi trở về app và định kỳ chỉ trong lúc offline.
+    const subscription=AppState.addEventListener('change',state=>{if(state==='active')void load();});
+    return()=>subscription.remove();
+  },[load]);
+  useEffect(()=>{
+    if(online)return;
+    const retry=setInterval(()=>void load(),12_000);
+    return()=>clearInterval(retry);
+  },[online,load]);
 
   const value = useMemo(() => ({ products, online, loading, refresh: load }), [products, online, loading, load]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

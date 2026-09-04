@@ -162,7 +162,7 @@ const st=StyleSheet.create({
   emptyT:{color:'#fff',fontFamily:F.bodyM,fontSize:11.5,textAlign:'center'},
   loading:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(26,20,16,.42)',alignItems:'center',justifyContent:'center'},
   pickRow:{flexDirection:'row',gap:10,marginVertical:10},
-  pick:{flex:1,backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:10,alignItems:'center'},
+  pick:{flex:1,backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:10,alignItems:'center'},
   pickT:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   error:{fontFamily:F.bodyM,fontSize:11.5,color:C.danger,marginTop:8},
   summary:{fontFamily:F.body,fontSize:12.5,lineHeight:20,color:C.ink,marginTop:10},

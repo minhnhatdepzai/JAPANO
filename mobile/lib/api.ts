@@ -352,6 +352,8 @@ async function readBody(response: Response) {
 export async function requestJson<T = any>(path: string, options: RequestOptions = {}): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 12000;
   const { timeoutMs: _timeout, ...fetchOptions } = options;
+  const method = String(fetchOptions.method || 'GET').toUpperCase();
+  const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
   const bases = activeBase
     ? [activeBase, ...apiBaseCandidates().filter(base => base !== activeBase)]
     : apiBaseCandidates();
@@ -360,6 +362,7 @@ export async function requestJson<T = any>(path: string, options: RequestOptions
   for (const base of bases) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let responseReceived = false;
     try {
       const headers = new Headers(fetchOptions.headers || {});
       if (fetchOptions.body && typeof fetchOptions.body === 'string' && !headers.has('Content-Type')) {
@@ -371,6 +374,7 @@ export async function requestJson<T = any>(path: string, options: RequestOptions
         headers,
         signal: controller.signal,
       });
+      responseReceived = true;
       const body = await readBody(response);
       if (!response.ok) {
         const message = body?.message || body?.error || body?.detail || `HTTP ${response.status}`;
@@ -386,6 +390,10 @@ export async function requestJson<T = any>(path: string, options: RequestOptions
       // submit the same GPU job several times and can exhaust VRAM.
       if (error instanceof ApiHttpError) throw error;
       lastError = new Error(error?.name === 'AbortError' ? 'Backend phản hồi quá lâu.' : (error?.message || 'Lỗi kết nối backend.'));
+      // Khi máy chủ đã nhận và xử lý một mutation, lỗi đọc phần thân phản hồi
+      // không được phép biến thành một POST thứ hai ở địa chỉ fallback. Điều đó
+      // từng làm /api/tryon chạy hai job GPU cho cùng một lần bấm trên Android.
+      if (responseReceived && isMutation) throw lastError;
     } finally {
       clearTimeout(timer);
     }
@@ -767,6 +775,13 @@ export type JapanScene = {
   footAnchor: { x: number; y: number };
   personHeightRatio: { min: number; preferred: number; max: number };
   personSlots: { id: string; label: string; x: number }[];
+  recommendedPoseId: string;
+  poseOptions: {
+    id: string;
+    label: string;
+    description: string;
+    recommended: boolean;
+  }[];
 };
 
 export type SpotRecommendation = {
@@ -903,10 +918,21 @@ export async function postJapanSpotSuggestion(payload:{prefecture:string;suggest
   return data.suggestion;
 }
 
+export type StylistAction = {
+  id: 'open_shop'|'open_checkout'|'open_cart'|'open_wishlist'|'open_orders'|'open_explore_japan'|'open_tryon'|'open_product';
+  label: string;
+  auto: boolean;
+  productId?: string;
+};
+
+export async function warmStylistChat() {
+  return jsonPost('/api/stylist/chat/warmup', {}, 35000).catch(() => null);
+}
+
 export async function sendStylistMessage(payload: {
   userId?: string;
   message: string;
-  history?: Array<{ role: string; content: string }>;
+  history?: Array<{ role: string; content: string; productIds?: string[] }>;
   profile?: StyleProfile;
 }) {
   const data: any = await jsonPost('/api/stylist/chat', { userId: USER_ID, ...payload }, 90000);
@@ -920,6 +946,14 @@ export async function sendStylistMessage(payload: {
     intent: String(result?.intent || ''),
     confidence: Number(result?.confidence || 0),
     models: Array.isArray(result?.models) ? result.models.map(String) : [],
+    actions: (Array.isArray(result?.actions) ? result.actions : [])
+      .filter((action: any) => action && typeof action.id === 'string' && typeof action.label === 'string')
+      .map((action: any) => ({
+        id: action.id,
+        label: String(action.label),
+        auto: Boolean(action.auto),
+        ...(action.productId ? { productId:String(action.productId) } : {}),
+      })) as StylistAction[],
   };
 }
 
@@ -1056,11 +1090,11 @@ export async function getFulfillmentPolicy():Promise<FulfillmentPolicy>{
 }
 
 export type ProductReview={id:string;productId:string;userName:string;rating:number;comment:string;media?:ReviewMedia;verifiedPurchase:boolean;createdAt:number;updatedAt:number;helpful:number;notHelpful:number;myReaction:'helpful'|'not_helpful'|null};
-export type ProductReviews={ok:boolean;productId:string;summary:{average:number;count:number;distribution:Array<{rating:number;count:number}>};eligibility:{canReview:boolean;purchased:boolean;alreadyReviewed:boolean;orderIds:string[]};reviews:ProductReview[]};
+export type ProductReviews={ok:boolean;productId:string;summary:{average:number;count:number;distribution:Array<{rating:number;count:number}>};eligibility:{canReview:boolean;purchased:boolean;alreadyReviewed:boolean;orderIds:string[];eligibleOrderIds:string[];reviewedOrderIds:string[];reviewCount:number};reviews:ProductReview[]};
 export function getProductReviews(slug:string,userId=''):Promise<ProductReviews>{
   return requestJson(`/api/products/${encodeURIComponent(slug)}/reviews?userId=${encodeURIComponent(userId)}`,{timeoutMs:10000});
 }
-export function createProductReview(slug:string,payload:{userId:string;userName?:string;rating:number;comment:string;media?:string;mediaKind?:'video'|'audio'}):Promise<{ok:boolean;status:string;message:string;review:ProductReview|null}>{
+export function createProductReview(slug:string,payload:{userId:string;userName?:string;orderId:string;rating:number;comment:string;media?:string;mediaKind?:'video'|'audio'}):Promise<{ok:boolean;status:string;message:string;review:ProductReview|null}>{
   return jsonPost(`/api/products/${encodeURIComponent(slug)}/reviews`,payload,90000);
 }
 export function reactToReview(reviewId:string,userId:string,value:'helpful'|'not_helpful'):Promise<{ok:boolean;review:ProductReview}>{
@@ -1085,14 +1119,48 @@ export function getFlagcardCollection(userId=USER_ID):Promise<FlagcardCollection
   return requestJson(`/api/flagcards/collection/${encodeURIComponent(userId)}`,{timeoutMs:10000});
 }
 
-export function validateVoucher(code:string,subtotal:number,userId=USER_ID):Promise<{ok:boolean;discount:number;voucher:{code:string;value:number;type:string;min:number}}>{
-  return jsonPost('/api/vouchers/validate',{code,userId,subtotal},10000);
+export type VoucherLine = { slug:string; colorName?:string; size?:string; qty:number };
+export type VoucherValidation = {
+  ok:boolean;
+  message?:string;
+  discount:number;
+  subtotal:number;
+  eligibleSubtotal?:number;
+  scope?:'order'|'product';
+  eligibleProductIds?:string[];
+  maxEligibleQty?:number|null;
+  maxDiscountAmount?:number|null;
+  allocations?:{ key:string; qty:number; lineValue:number; amount:number }[];
+  voucher:{code:string;value:number;type:string;min:number};
+};
+
+/* Gửi CẢ DÒNG HÀNG, không chỉ tạm tính.
+ *
+ * Voucher phạm vi sản phẩm cần biết giỏ có gì mới tính đúng được; nếu chỉ gửi
+ * subtotal thì máy chủ fail closed và từ chối mã. `userId` KHÔNG còn được gửi:
+ * chủ sở hữu voucher lấy từ JWT, client tự khai không chứng minh được gì.
+ */
+export function validateVoucher(code:string,subtotal:number,items?:VoucherLine[]):Promise<VoucherValidation>{
+  return jsonPost('/api/vouchers/validate',
+    items?.length ? { code, items } : { code, subtotal },
+    10000);
 }
 
-export type AppliedVoucher = { code:string; type:string; value:number; min:number };
+export type AppliedVoucher = {
+  code:string; type:string; value:number; min:number;
+  // Máy chủ là nguồn quyết định cuối cùng: giữ lại đúng con số nó đã tính,
+  // không tự tính lại ở client rồi hiển thị lệch với đơn thật.
+  discount?:number;
+  scope?:'order'|'product';
+  eligibleProductIds?:string[];
+  maxEligibleQty?:number|null;
+  maxDiscountAmount?:number|null;
+};
 export type ApiVoucher = {
   code:string; type:string; value:number; min:number; expiry:string; limit:number; used:number;
   active:boolean; ownerUserId?:string; source?:string;
+  scope?:'order'|'product'; eligibleProductIds?:string[]; maxEligibleQty?:number;
+  maxDiscountAmount?:number; goalProductId?:string; reissuedFromCode?:string;
 };
 const finite = (value:unknown, fallback=0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 export async function getVouchers(userId=USER_ID):Promise<ApiVoucher[]>{
@@ -1108,8 +1176,16 @@ export async function getVouchers(userId=USER_ID):Promise<ApiVoucher[]>{
   }).sort((a,b)=> (a.min||0) - (b.min||0));
 }
 
+/* Số giảm hiển thị.
+ *
+ * Ưu tiên TUYỆT ĐỐI con số máy chủ đã trả về lúc kiểm mã: voucher phạm vi sản
+ * phẩm không thể tính đúng từ mỗi subtotal, và hiển thị một con số rồi đặt đơn
+ * ra con số khác là lỗi nặng hơn cả việc không hiển thị.
+ */
 export function voucherDiscountFor(subtotal:number, voucher:AppliedVoucher|null|undefined):number{
   if(!voucher || subtotal<voucher.min) return 0;
+  if(Number.isFinite(voucher.discount as number)) return Math.max(0, Number(voucher.discount));
+  if(voucher.scope==='product') return 0; // chưa có số từ máy chủ thì không đoán
   return voucher.type==='percent'
     ? Math.round(subtotal*Math.min(100,Math.max(0,voucher.value))/100)
     : Math.min(subtotal,Math.max(0,voucher.value));

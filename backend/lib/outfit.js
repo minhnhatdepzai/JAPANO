@@ -337,7 +337,57 @@ function styleRecommendation(state, { userId = 'guest', profile, dominantHex, li
   };
 }
 
+/**
+ * Gợi ý món lấp vào từng slot còn trống của bộ đồ đang chọn.
+ *
+ * Khác hẳn "có thể bạn thích": đầu vào là DANH SÁCH SLOT CÒN THIẾU do
+ * `analyseOutfit` đọc ra, nên mỗi gợi ý trả lời đúng một câu hỏi cụ thể — "bộ này
+ * thiếu quần, quần nào hợp nhất với những món đã chọn". Điểm số vẫn là công thức
+ * cũ: hoà sắc HSL 0.4 + tương đồng chủ đề 0.35 + độ thịnh hành 0.25.
+ *
+ * Neo chấm điểm là món đã chọn đầu tiên. Chỉ đề xuất hàng còn bán được, và không
+ * bao giờ đề xuất món rơi vào slot đã có (tránh tạo ra xung đột mới).
+ */
+function suggestForMissingSlots(state, chosenProducts, missingSlots, opts = {}) {
+  const { slotOf } = require('./outfitSlots');
+  const perSlot = Math.max(1, Math.min(6, opts.perSlot ?? 3));
+  const products = publishedProducts(state);
+  const anchor = chosenProducts[0];
+  if (!anchor) return [];
+  const tagIndex = buildTagIndex(products);
+  const trending = trendingScoreMap(state);
+  const exclude = new Set(chosenProducts.map((item) => pid(item)));
+
+  const out = [];
+  for (const missing of missingSlots) {
+    const pool = products.filter((candidate) => slotOf(candidate) === missing.slot);
+    const picks = [];
+    const localExclude = new Set(exclude);
+    for (let i = 0; i < perSlot; i += 1) {
+      const pick = pickBest(pool, anchor, tagIndex, trending, localExclude);
+      if (!pick) break;
+      localExclude.add(pid(pick.product));
+      picks.push({
+        slug: pid(pick.product),
+        name: pick.product.name,
+        price: finiteNumber(pick.product.price, 0),
+        score: Number(pick.score.toFixed(4)),
+        reason: reasonForProduct(pick.product, {
+          dominantHex: anchor.colorHex,
+          profile: opts.profile || null,
+          behaviourReason: '',
+        }),
+      });
+    }
+    out.push({ ...missing, suggestions: picks });
+  }
+  return out;
+}
+
 module.exports = {
   composeOutfit, todaysOutfit, adviseSize, styleRecommendation, roleOf, colorHarmony, reasonForProduct,
   sizeFromHeightWeight, availableSizesFor, closestAvailableSize,
+  // Mở ra cho outfitSlots.js dùng lại đúng công thức chấm điểm (hoà sắc HSL +
+  // tương đồng tag + độ thịnh hành) thay vì tự chế một thang điểm thứ hai.
+  suggestForMissingSlots,
 };

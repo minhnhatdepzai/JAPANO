@@ -19,6 +19,15 @@ type ActivityLevel='low'|'some'|'regular';
 const QUICK_DEPOSITS=[50000,100000,200000,500000];
 const dateOf=(at:number)=>new Date(at).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
 
+type SafetyAnswer='yes'|'no'|'prefer_not_to_say';
+const SAFETY_QUESTIONS:Array<[string,string]>=[
+  ['pregnancy','Bạn đang mang thai hoặc trong giai đoạn hậu sản?'],
+  ['conditionOrMedication','Bạn có bệnh nền hoặc đang dùng thuốc ảnh hưởng tới cân nặng?'],
+  ['eatingDisorderHistory','Bạn từng có tiền sử rối loạn ăn uống?'],
+  ['underCare','Bạn đang được bác sĩ hoặc chuyên gia dinh dưỡng điều trị?'],
+];
+const SAFETY_OPTIONS:Array<[SafetyAnswer,string]>=[['no','Không'],['yes','Có'],['prefer_not_to_say','Không muốn nói']];
+
 function Field({label,value,onChange,suffix,placeholder}:{label:string;value:string;onChange:(value:string)=>void;suffix?:string;placeholder?:string}){
   return (
     <View style={st.fieldWrap}>
@@ -65,14 +74,19 @@ export default function Goals(){
   const [goals,setGoals]=useState<ApiGoal[]>([]);
   const goal=useMemo(()=>goals.find(item=>item.productId===productId)||null,[goals,productId]);
   const upsertGoal=(next:ApiGoal)=>setGoals(current=>[next,...current.filter(item=>item.id!==next.id)]);
-  const [age,setAge]=useState('25');
-  const [height,setHeight]=useState('165');
-  const [currentWeight,setCurrentWeight]=useState('65');
-  const [targetWeight,setTargetWeight]=useState('60');
-  const [income,setIncome]=useState('15000000');
-  const [expenses,setExpenses]=useState('11000000');
-  const [saved,setSaved]=useState('200000');
+  // Form mở lần đầu để TRỐNG. Số điền sẵn kiểu 25 tuổi / 165 cm / 65 kg /
+  // 15 triệu trông như dữ liệu thật của người dùng và dễ được gửi đi nguyên
+  // xi; giá trị chỉ được nạp lại nếu đó là mục tiêu đã lưu của chính họ.
+  const [age,setAge]=useState('');
+  const [height,setHeight]=useState('');
+  const [currentWeight,setCurrentWeight]=useState('');
+  const [targetWeight,setTargetWeight]=useState('');
+  const [income,setIncome]=useState('');
+  const [expenses,setExpenses]=useState('');
+  const [saved,setSaved]=useState('');
   const [months,setMonths]=useState('6');
+  // Sàng lọc an toàn: backend tự suy ra trạng thái, client chỉ thu câu trả lời.
+  const [screening,setScreening]=useState<Record<string,SafetyAnswer>>({});
   const [healthGoal,setHealthGoal]=useState<HealthGoal>('gradual-loss');
   const [activityLevel,setActivityLevel]=useState<ActivityLevel>('low');
   const [plan,setPlan]=useState<GoalPlan|null>(null);
@@ -117,6 +131,7 @@ export default function Goals(){
         productId:product.slug,age,heightCm:height,currentWeightKg:currentWeight,targetWeightKg:targetWeight,
         monthlyIncome:income,fixedExpenses:expenses,currentSavings:saved,targetMonths:months,
         goalType:tab==='health'?'health':'shopping',healthGoal,activityLevel,
+        safetyScreening:screening,
       });
       setPlan(response.goal.plan);
       upsertGoal(response.goal);
@@ -203,7 +218,33 @@ export default function Goals(){
               <Field label="Cân nặng hiện tại" value={currentWeight} onChange={setCurrentWeight} suffix="kg" />
               <Field label="Mục tiêu cân nặng" value={targetWeight} onChange={setTargetWeight} suffix="kg" />
             </View>
-            <Text style={st.safety}>Nếu dưới 18 tuổi, BMI mục tiêu dưới 18,5, đang mang thai, có bệnh nền hoặc tiền sử rối loạn ăn uống, hệ thống sẽ không đưa lộ trình giảm cân cá nhân.</Text>
+            <Text style={st.provenance}>Thông tin do bạn tự khai · Không phải xác minh y tế</Text>
+
+            <Text style={st.fieldLabel}>Sàng lọc an toàn</Text>
+            <Text style={st.safety}>Bốn câu dưới đây quyết định JAPANO có đưa lộ trình giảm cân hay chỉ đưa hướng dẫn chung. Chúng tôi chỉ lưu kết luận tổng hợp, không lưu chi tiết bệnh lý.</Text>
+            {SAFETY_QUESTIONS.map(([id,question])=>(
+              <View key={id} style={st.screenBlock}>
+                <Text style={st.screenQ} nativeID={`safety-${id}`}>{question}</Text>
+                <View style={st.choiceRow} accessibilityRole="radiogroup" accessibilityLabelledBy={`safety-${id}`}>
+                  {SAFETY_OPTIONS.map(([value,label])=>(
+                    <Pressable
+                      key={value}
+                      style={[st.choice,screening[id]===value&&st.choiceOn]}
+                      onPress={()=>setScreening(current=>({...current,[id]:value}))}
+                      accessibilityRole="radio"
+                      accessibilityState={{checked:screening[id]===value}}
+                      accessibilityLabel={`${question} — ${label}`}
+                    >
+                      <Text style={[st.choiceText,screening[id]===value&&st.choiceTextOn]}>{label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ))}
+            {SAFETY_QUESTIONS.some(([id])=>!screening[id]) && (
+              <Text style={st.safety}>Hãy trả lời đủ 4 câu để JAPANO biết có thể đưa lộ trình cá nhân hay không.</Text>
+            )}
+            <Text style={st.safety}>Nếu dưới 18 tuổi, BMI mục tiêu dưới 18,5, hoặc bất kỳ câu sàng lọc nào là "Có"/"Không muốn nói", hệ thống chỉ đưa hướng dẫn chung và không tạo tốc độ giảm cân.</Text>
             <Btn label={loading?'Đang xây dựng lộ trình…':'Tạo lộ trình của tôi'} icon="sparkles" onPress={create} style={{marginTop:16}} />
           </>
         )}
@@ -268,16 +309,16 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
       const result=await depositToGoal(goal.id,{amount:value});
       onChange(result.goal);
       setAmount('');
-      if(result.justCompleted&&result.rewardVoucher){
+      if(result.justCompleted){
         toast({
-          message:`🎉 Đủ quỹ rồi! Bạn nhận mã ${result.rewardVoucher.code} giảm ${result.rewardVoucher.value}% cho món này.`,
+          message:'🎯 Sổ theo dõi của bạn đã đủ số tiền mục tiêu. Chúc bạn sớm mua được món mình muốn!',
           kind:'success',
           durationMs:6000,
-          action:{label:'Mua ngay',onPress:()=>router.push(`/product/${goal.productId}` as any)},
+          action:{label:'Xem sản phẩm',onPress:()=>router.push(`/product/${goal.productId}` as any)},
         });
       }else{
         const remaining=Math.max(0,result.goal.fund?.remaining??0);
-        toast(`Đã ghi nhận ${money(value)} vào quỹ · còn ${money(remaining)}`);
+        toast(`Đã ghi nhận ${money(value)} · còn ${money(remaining)}`);
       }
     }catch(e:any){toast({message:e?.message||'Không ghi nhận được khoản tích luỹ.',kind:'error'});}
     finally{setBusy(false);}
@@ -310,18 +351,24 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
 
       {done ? (
         <View style={st.rewardBox}>
-          <Text style={st.rewardTitle}>🎁 Phần thưởng hoàn thành mục tiêu</Text>
-          {fund.rewardVoucherCode
-            ? <Text selectable style={st.rewardCode}>{fund.rewardVoucherCode}</Text>
-            : <Text style={st.rewardBody}>Mã giảm giá đang được tạo, hãy tải lại sau ít phút.</Text>}
-          <Text style={st.rewardBody}>Giảm {fund.rewardPercent}% — nhập mã ở bước thanh toán. Mã dùng được 1 lần và chỉ thuộc về tài khoản của bạn.</Text>
+          <Text style={st.rewardTitle}>🎯 Bạn đã ghi nhận đủ số tiền mục tiêu</Text>
+          {/* Không còn phát voucher từ số tự khai. Mã cũ đã cấp trước đây vẫn
+              dùng được, nhưng chỉ giảm đúng sản phẩm mục tiêu. */}
+          {fund.rewardVoucherCode ? (
+            <>
+              <Text selectable style={st.rewardCode}>{fund.rewardVoucherCode}</Text>
+              <Text style={st.rewardBody}>Mã ưu đãi đã cấp trước đây · giảm {fund.rewardPercent}% và chỉ áp dụng cho {goal.product?.name}, tối đa 1 sản phẩm.</Text>
+            </>
+          ) : (
+            <Text style={st.rewardBody}>Đây là số tiền bạn tự khai trong sổ theo dõi — JAPANO không giữ tiền và không phát mã giảm giá từ con số này.</Text>
+          )}
           {fund.status==='achieved'
             ? <View style={st.achieved}><Ionicons name="checkmark-circle" size={15} color={C.matcha} /><Text style={st.achievedT}>Đã mua thành công trong đơn #{fund.achievedOrderCode}. Chúc mừng bạn!</Text></View>
             : <Btn label="Dùng mã và mua ngay" icon="bag-handle-outline" onPress={()=>router.push(`/product/${goal.productId}` as any)} style={{marginTop:10}} />}
         </View>
       ) : (
         <>
-          <Text style={st.fundHint}>Mỗi lần để dành được bao nhiêu, ghi vào đây bấy nhiêu. Đủ giá món hàng là bạn nhận ngay voucher giảm {fund.rewardPercent}%.</Text>
+          <Text style={st.fundHint}>Mỗi lần để dành được bao nhiêu, ghi vào đây bấy nhiêu. Đây là sổ theo dõi tiến độ — JAPANO không giữ tiền của bạn.</Text>
           <View style={st.quickRow}>
             {QUICK_DEPOSITS.map(value=>(
               <Pressable key={value} disabled={busy} style={st.quick} onPress={()=>void deposit(value)}>
@@ -335,7 +382,7 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
               <Text style={st.suffix}>₫</Text>
             </View>
             <Pressable disabled={busy} style={[st.depositBtn,busy&&{opacity:.5}]} onPress={()=>void deposit(Number(amount)||0)}>
-              {busy?<ActivityIndicator color="#fff" size="small"/>:<Text style={st.depositBtnT}>Nạp vào quỹ</Text>}
+              {busy?<ActivityIndicator color="#fff" size="small"/>:<Text style={st.depositBtnT}>Ghi nhận đã để dành</Text>}
             </Pressable>
           </View>
           <Text style={st.ledgerNote}>JAPANO không giữ tiền của bạn — đây là sổ theo dõi tiến độ tiết kiệm, tiền vẫn nằm trong tài khoản của bạn.</Text>
@@ -365,7 +412,7 @@ function FundCard({goal,onChange}:{goal:ApiGoal;onChange:(goal:ApiGoal)=>void}){
 
 function CoachCard({plan}:{plan:GoalPlan}){
   return (
-    <View style={[st.resultCard,{backgroundColor:C.sumi,borderColor:C.sumi}]}>
+    <View style={[st.resultCard,{backgroundColor:C.inverseSurface,borderColor:C.inverseSurface}]}>
       <Text style={[st.resultKicker,{color:'rgba(255,255,255,0.70)'}]}>HUẤN LUYỆN VIÊN THÔNG MINH</Text>
       <Text style={st.coachTitle}>{plan.coaching.motivation}</Text>
       <Text style={st.identity}>"{plan.coaching.identityStatement}"</Text>
@@ -442,18 +489,18 @@ function JapanGoalTab(){
 }
 
 const st=StyleSheet.create({
-  hero:{flexDirection:'row',gap:12,backgroundColor:C.sumi,borderRadius:18,padding:18,marginTop:6},
+  hero:{flexDirection:'row',gap:12,backgroundColor:C.inverseSurface,borderRadius:18,padding:18,marginTop:6},
   eyebrow:{fontFamily:F.bodyX,fontSize:10,letterSpacing:1.2,color:'rgba(255,255,255,0.70)'},
   heroTitle:{fontFamily:F.display,fontSize:19,lineHeight:27,color:'#fff',marginTop:6},
   heroSub:{fontFamily:F.body,fontSize:11.5,lineHeight:18,color:'rgba(255,255,255,0.70)',marginTop:7},
   tabs:{flexDirection:'row',gap:8,marginTop:16},
-  tab:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:10,backgroundColor:'#fff'},
+  tab:{flex:1,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:5,borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:10,backgroundColor:C.card},
   tabOn:{backgroundColor:C.primary,borderColor:C.primary},
   tabT:{fontFamily:F.bodyB,fontSize:11.5,color:C.muted},
   titleRow:{flexDirection:'row',alignItems:'center',gap:10,marginTop:22,marginBottom:10},
   titleIcon:{width:36,height:36,borderRadius:11,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},
   title:{fontFamily:F.display,fontSize:16,color:C.sumi},sub:{fontFamily:F.body,fontSize:10.5,lineHeight:16,color:C.muted,marginTop:1},
-  product:{width:124,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:'#fff',padding:7},
+  product:{width:124,borderRadius:14,borderWidth:1,borderColor:C.line,backgroundColor:C.card,padding:7},
   productOn:{borderWidth:2,borderColor:C.primary},productImg:{width:'100%',height:112,borderRadius:10},
   productName:{fontFamily:F.bodyB,fontSize:11.5,lineHeight:16,color:C.ink,minHeight:34,marginTop:6},productPrice:{fontFamily:F.bodyX,fontSize:11,color:C.ink,marginTop:2},
   check:{position:'absolute',right:10,top:10,width:24,height:24,borderRadius:12,backgroundColor:C.primary,alignItems:'center',justifyContent:'center'},
@@ -461,17 +508,20 @@ const st=StyleSheet.create({
   selectedName:{fontFamily:F.bodyB,fontSize:12.5,color:C.ink},selectedPrice:{fontFamily:F.bodyX,fontSize:12,color:C.ink,marginTop:3},view:{fontFamily:F.bodyB,fontSize:12,color:C.ink},
   formGrid:{flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',rowGap:10},fieldWrap:{width:'48%'},fieldLabel:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink,marginBottom:5},
   choiceRow:{flexDirection:'row',flexWrap:'wrap',gap:7,marginBottom:12},
-  choice:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:12,backgroundColor:'#fff'},
+  choice:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:12,backgroundColor:C.card},
   choiceOn:{backgroundColor:C.primary,borderColor:C.primary},choiceText:{fontFamily:F.bodyB,fontSize:10.5,color:C.ink},choiceTextOn:{color:'#fff'},
-  field:{height:46,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:'#fff',paddingHorizontal:11},input:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},suffix:{fontFamily:F.body,fontSize:11,color:C.muted},
+  field:{height:46,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:C.line,borderRadius:12,backgroundColor:C.card,paddingHorizontal:11},input:{flex:1,fontFamily:F.bodyB,fontSize:13,color:C.ink},suffix:{fontFamily:F.body,fontSize:11,color:C.muted},
   safety:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:C.muted,backgroundColor:C.washi2,borderRadius:10,padding:10,marginTop:10},
+  provenance:{fontFamily:F.bodyX,fontSize:10,letterSpacing:0.6,color:C.primary,marginTop:12,textTransform:'uppercase'},
+  screenBlock:{marginTop:10},
+  screenQ:{fontFamily:F.bodyB,fontSize:12,lineHeight:19,color:C.ink,marginBottom:6},
   loading:{flexDirection:'row',alignItems:'center',gap:8,justifyContent:'center',padding:12},loadingText:{fontFamily:F.body,fontSize:11,color:C.muted,flex:1},error:{fontFamily:F.bodyB,fontSize:12,color:C.danger,textAlign:'center',marginTop:10},
-  resultCard:{backgroundColor:'#fff',borderWidth:1,borderColor:C.line,borderRadius:16,padding:15},resultKicker:{fontFamily:F.bodyX,fontSize:10.5,letterSpacing:1,color:C.ink},resultBig:{fontFamily:F.displayX,fontSize:30,color:C.sumi,marginTop:5},
+  resultCard:{backgroundColor:C.card,borderWidth:1,borderColor:C.line,borderRadius:16,padding:15},resultKicker:{fontFamily:F.bodyX,fontSize:10.5,letterSpacing:1,color:C.ink},resultBig:{fontFamily:F.displayX,fontSize:30,color:C.sumi,marginTop:5},
   progress:{height:9,borderRadius:5,backgroundColor:C.hair,overflow:'hidden',marginVertical:9},progressOn:{height:'100%',borderRadius:5,backgroundColor:C.matcha},resultText:{fontFamily:F.body,fontSize:12,lineHeight:19,color:C.ink},strong:{fontFamily:F.bodyX,color:C.ink},item:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:C.ink,marginTop:6},
   metricRow:{flexDirection:'row',gap:8,marginVertical:12},metric:{flex:1,alignItems:'center',backgroundColor:C.washi2,borderRadius:11,padding:9},metricN:{fontFamily:F.display,fontSize:20,color:C.sumi},metricL:{fontFamily:F.body,fontSize:9.5,color:C.muted,textAlign:'center'},warning:{fontFamily:F.bodyB,fontSize:10.5,lineHeight:17,color:C.shuDeep,backgroundColor:C.washi2,borderRadius:10,padding:9},
   coachTitle:{fontFamily:F.display,fontSize:17,lineHeight:25,color:'#fff',marginTop:10},identity:{fontFamily:F.bodyB,fontSize:12.5,lineHeight:20,color:'rgba(255,255,255,0.70)',marginTop:10},coachSub:{fontFamily:F.bodyX,fontSize:11,color:'#fff',marginTop:13,marginBottom:3},coachItem:{fontFamily:F.body,fontSize:11.5,lineHeight:19,color:C.line,marginTop:4},question:{fontFamily:F.bodyB,fontSize:12,lineHeight:20,color:'rgba(255,255,255,0.70)',borderTopWidth:1,borderTopColor:C.muted,paddingTop:10,marginTop:12},disclaimer:{fontFamily:F.body,fontSize:10.5,lineHeight:17,color:'#B9B2AA',textAlign:'center',marginTop:10},
-  pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:'#fff'},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
-  spotPick:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:11,paddingHorizontal:13,backgroundColor:'#fff',marginBottom:8},
+  pill:{borderWidth:1,borderColor:C.line,borderRadius:999,paddingVertical:8,paddingHorizontal:13,backgroundColor:C.card},pillOn:{backgroundColor:C.primary,borderColor:C.primary},pillT:{fontFamily:F.bodyM,fontSize:11.5,color:C.ink},
+  spotPick:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderWidth:1,borderColor:C.line,borderRadius:12,paddingVertical:11,paddingHorizontal:13,backgroundColor:C.card,marginBottom:8},
   spotPickOn:{backgroundColor:C.primary,borderColor:C.primary},spotPickT:{fontFamily:F.bodyM,fontSize:12.5,color:C.ink},
   exploreLink:{flexDirection:'row',alignItems:'center',gap:7,marginTop:2,marginBottom:6},exploreLinkT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   fundBig:{fontFamily:F.displayX,fontSize:24,color:C.sumi,marginTop:7},fundTarget:{fontFamily:F.body,fontSize:13,color:C.muted},
@@ -487,7 +537,7 @@ const st=StyleSheet.create({
   ledgerToggleT:{fontFamily:F.bodyB,fontSize:11.5,color:C.ink},
   ledgerRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.hair},
   ledgerAmount:{fontFamily:F.bodyX,fontSize:12.5,color:C.ink},ledgerMeta:{fontFamily:F.body,fontSize:10.5,color:C.muted,marginTop:2},
-  rewardBox:{backgroundColor:'#F0F7F0',borderWidth:1,borderColor:'#CBE3CC',borderRadius:13,padding:12,marginTop:11},
+  rewardBox:{backgroundColor:C.okSoft,borderWidth:1,borderColor:'#CBE3CC',borderRadius:13,padding:12,marginTop:11},
   rewardTitle:{fontFamily:F.bodyB,fontSize:12.5,color:'#25603A'},
   rewardCode:{fontFamily:F.displayX,fontSize:19,letterSpacing:1,color:'#1F6B44',marginTop:6},
   rewardBody:{fontFamily:F.body,fontSize:11,lineHeight:17,color:'#3C6A4C',marginTop:5},

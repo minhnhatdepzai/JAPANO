@@ -74,6 +74,9 @@ function textEmbedding(text) {
 }
 
 const INTENT_PROTOTYPES = {
+  navigation: ['mở trang mua sắm', 'đi tới trang thanh toán', 'cho tôi vào giỏ hàng'],
+  travel: ['địa điểm nào đẹp ở nhật', 'gợi ý nơi chụp ảnh tại nhật bản', 'phong cảnh nhật bản nên đi đâu'],
+  weather_outfit: ['trời mưa mặc gì', 'phối đồ ngày mưa', 'áo khoác và dù khi trời mưa'],
   greeting: ['xin chào ori', 'chào bạn', 'hello shop'],
   discount: ['mã giảm giá khuyến mãi', 'voucher ưu đãi đang có', 'sản phẩm sale'],
   order: ['đơn hàng của tôi ở đâu', 'kiểm tra giao hàng vận chuyển', 'tình trạng đơn đã đặt'],

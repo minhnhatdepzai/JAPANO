@@ -61,14 +61,14 @@ export default function Success() {
 }
 
 const st = StyleSheet.create({
-  awardCard:{ width:'100%', maxWidth:330, backgroundColor:C.sumi, borderWidth:1, borderColor:C.kin, borderRadius:20, padding:17, marginTop:16, alignItems:'center' },
+  awardCard:{ width:'100%', maxWidth:330, backgroundColor:C.inverseSurface, borderWidth:1, borderColor:C.kin, borderRadius:20, padding:17, marginTop:16, alignItems:'center' },
   awardEyebrow:{ fontFamily:F.bodyX, fontSize:10, letterSpacing:1.1, color:'rgba(255,255,255,0.72)' },
   awardGlyph:{ fontSize:42, marginTop:6 },
   awardTitle:{ fontFamily:F.display, fontSize:18, color:'#fff', textAlign:'center', marginTop:3 },
   awardRegion:{ fontFamily:F.body, fontSize:11, color:'rgba(255,255,255,0.70)', marginTop:3 },
   awardButton:{ backgroundColor:C.primary, borderRadius:12, paddingVertical:10, paddingHorizontal:18, marginTop:12 },
   awardButtonText:{ fontFamily:F.bodyB, fontSize:11.5, color:'#fff' },
-  flagBanner:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.sumi, borderRadius:14, padding:13, marginTop:16, maxWidth:320 },
+  flagBanner:{ flexDirection:'row', alignItems:'center', gap:10, backgroundColor:C.inverseSurface, borderRadius:14, padding:13, marginTop:16, maxWidth:320 },
   flagText:{ flex:1, fontFamily:F.body, fontSize:11.5, lineHeight:17, color:'rgba(255,255,255,0.70)' },
   flagStrong:{ fontFamily:F.bodyB, color:'rgba(255,255,255,0.72)' },
   flagHint:{ fontFamily:F.body, fontSize:11.5, lineHeight:17, color:C.muted, textAlign:'center', marginTop:14, maxWidth:280 },

@@ -56,7 +56,7 @@ const st = StyleSheet.create({
   grid:{ flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between', rowGap:14 },
   tile:{ height:178, borderRadius:14, overflow:'hidden', backgroundColor:C.washi2, borderWidth:1.5, borderColor:C.blue },
   heart:{ position:'absolute', top:8, right:8, width:30, height:30, borderRadius:15, backgroundColor:C.primary, alignItems:'center', justifyContent:'center' },
-  mini:{ flex:1, alignItems:'center', paddingVertical:6, borderRadius:999, borderWidth:1, borderColor:C.line, backgroundColor:'#fff' },
+  mini:{ flex:1, alignItems:'center', paddingVertical:6, borderRadius:999, borderWidth:1, borderColor:C.line, backgroundColor:C.card },
   miniOn:{ backgroundColor:C.primary, borderColor:C.primary },
   miniT:{ fontFamily:F.bodyM, fontSize:11, color:C.ink },
 });

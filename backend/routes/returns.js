@@ -9,6 +9,7 @@
 // Dùng cả issueStripeRefund lẫn issueVnpayRefund tuỳ cổng thanh toán; đơn COD
 // hoàn tiền thủ công vì không có cổng để gọi API.
 const { STRIPE_CURRENCY } = require('../lib/stripeMoney');
+const { consume: consumeVoucher, release: releaseVoucher, reissue: reissueVoucher, extendIfExpiredWhileReserved } = require('../lib/voucherLifecycle');
 const { findPayment, findReturnRequest } = require('../lib/paymentLookup');
 const { makeStripeHelpers } = require('./paymentsStripe');
 const { makeVnpayHelpers } = require('./paymentsVnpay');
@@ -88,6 +89,17 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         if (rr.kind === 'return' && allItemsRefunded(next, order)) {
           order.status = 'returned';
           order.history.push({ s: 'returned', at: now });
+        }
+        // Voucher: chỉ xử lý SAU KHI hoàn tiền đã thực sự thành công (đang ở
+        // đúng nhánh này), và chỉ khi khách trả lại toàn bộ giá trị đơn.
+        // Trả một phần thì quyền lợi voucher đã dùng cho phần khách giữ lại.
+        const wholeOrder = rr.coversWholeOrder || (rr.kind === 'return' && allItemsRefunded(next, order)) || rr.kind === 'cancel';
+        if (wholeOrder) {
+          // Chưa tiêu (huỷ trước khi giao) thì chỉ cần nhả chỗ; đã tiêu thì cấp
+          // một voucher thay thế mới, giữ nguyên quyền lợi cũ.
+          const released = releaseVoucher(next, order.id, `refunded:${rr.id}`, now);
+          if (released) extendIfExpiredWhileReserved(next, order.id, now);
+          reissueVoucher(next, { orderId: order.id, refundRef: rr.id }, now);
         }
       }
       const scope = rr.coversWholeOrder ? 'toàn bộ đơn' : itemSummary(rr.items);
@@ -172,6 +184,8 @@ module.exports = function registerReturnsRoutes(api, ctx) {
           type: 'Đơn hàng',
           action: `order:${order.id}`,
         });
+        // Khách đã nhận và (với COD) đã trả tiền: chốt lượt dùng voucher.
+        consumeVoucher(state, order.id, 'order-completed', now);
         reconcileFlagRewards(state);
         if (reconcileGoalRewards) reconcileGoalRewards(state, now, pushNotification);
         response = { order };
@@ -439,6 +453,7 @@ module.exports = function registerReturnsRoutes(api, ctx) {
               if (order) {
                 order.status = 'cancelled';
                 order.history.push({ s: 'cancelled', at: now, returnRequestId: rr.id });
+                releaseVoucher(next, order.id, 'order-cancelled', now);
                 order.returnStatus = 'approved';
                 order.returnRequest = { id: rr.id, code: rr.code, status: 'approved', kind: 'cancel' };
                 // Hàng chưa từng rời cửa hàng — trả lại kho ngay khi huỷ được duyệt.
@@ -492,6 +507,7 @@ module.exports = function registerReturnsRoutes(api, ctx) {
           if (order) {
             order.status = 'cancelled';
             order.history.push({ s: 'cancelled', at: now, returnRequestId: returnRequest.id });
+            releaseVoucher(next, order.id, 'order-cancelled', now);
             restockCancelledOrder(next, order, 'cancel-approved');
           }
           pushNotification(next, { userId: returnRequest.userId, title: `Đơn #${returnRequest.orderCode} đã được huỷ`, body: 'Yêu cầu huỷ đơn của bạn đã được chấp nhận.', type: 'Đơn hàng', action: `order:${returnRequest.orderId}` });
@@ -569,8 +585,15 @@ module.exports = function registerReturnsRoutes(api, ctx) {
         if (order.status === 'completed') order.completedAt ||= now;
         // Đơn kết thúc mà hàng không đi tới khách (huỷ) hoặc quay về kho (trả)
         // thì tồn kho phải được hoàn — xem lib/inventory.js.
-        if (order.status === 'cancelled') restockCancelledOrder(next, order, 'admin-cancelled-order');
+        if (order.status === 'cancelled') {
+          restockCancelledOrder(next, order, 'admin-cancelled-order');
+          // Shop huỷ đơn: khách không được mất lượt dùng voucher.
+          releaseVoucher(next, order.id, 'admin-cancelled-order', now);
+          extendIfExpiredWhileReserved(next, order.id, now);
+        }
         if (order.status === 'returned') restockRemainingOrderUnits(next, order, 'admin-marked-returned');
+        // Đơn hoàn tất = tiền đã về (COD thu tại nhà, online đã paid từ trước).
+        if (order.status === 'completed') consumeVoucher(next, order.id, 'admin-completed-order', now);
         order.history ||= [];
         order.history.push({ s: order.status, at: now });
       }

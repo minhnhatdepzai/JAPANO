@@ -200,9 +200,28 @@ function featureVector(model, userId, slug, contentScore = 0, trendingScore = 0)
   ];
 }
 
-function trainRanker(model, holdouts, products, knownPositive) {
-  const weights = [0.8, 0.9, 0.7, 0.35];
-  if (products.length < 2) return { weights, positives: 0, pairs: 0, trained: false };
+// Trọng số khởi tạo khi CHƯA từng học lần nào.
+const COLD_RANK_WEIGHTS = [0.8, 0.9, 0.7, 0.35];
+
+/* Trọng số đã học có dùng lại được không.
+ *
+ * Chỉ nhận đúng 4 số hữu hạn nằm trong biên hợp lý. Một mảng hỏng (NaN, độ dài
+ * sai, giá trị nổ) mà được nạp vào sẽ làm hỏng mọi gợi ý về sau và rất khó lần
+ * ra, nên thà quay về trọng số nguội. */
+function usableRankWeights(value) {
+  if (!Array.isArray(value) || value.length !== COLD_RANK_WEIGHTS.length) return null;
+  const clean = value.map(Number);
+  if (!clean.every((weight) => Number.isFinite(weight) && Math.abs(weight) <= 12)) return null;
+  return clean;
+}
+
+function trainRanker(model, holdouts, products, knownPositive, warmStart = null) {
+  // KHỞI ĐỘNG ẤM: tiếp tục từ trọng số đã học, thay vì học lại từ đầu mỗi lần
+  // dựng model. Trước đây mỗi lần cache 60 giây hết hạn là bộ xếp hạng quay về
+  // đúng bốn số cứng ban đầu — nghĩa là một cửa hàng chạy sáu tháng vẫn xếp hạng
+  // y như ngày đầu, mọi thứ nó học được đều bị vứt đi.
+  const weights = usableRankWeights(warmStart) || COLD_RANK_WEIGHTS.slice();
+  if (products.length < 2) return { weights, positives: 0, pairs: 0, trained: false, warmStarted: Boolean(usableRankWeights(warmStart)) };
   const positives = holdouts.filter((event) => event.weight >= 2).sort((a, b) => a.at - b.at).slice(-500);
   let pairs = 0;
   for (let epoch = 0; epoch < RANK_EPOCHS; epoch += 1) {
@@ -227,10 +246,13 @@ function trainRanker(model, holdouts, products, knownPositive) {
       }
     });
   }
-  return { weights, positives: positives.length, pairs, trained: pairs > 0 };
+  return {
+    weights, positives: positives.length, pairs, trained: pairs > 0,
+    warmStarted: Boolean(usableRankWeights(warmStart)),
+  };
 }
 
-function buildAdvancedModel({ products, events, now = Date.now() }) {
+function buildAdvancedModel({ products, events, now = Date.now(), warmRankWeights = null }) {
   const cleanEvents = events
     .filter((event) => event.userId && event.productSlug)
     .map((event) => ({ ...event, at: timestampMs(event.at, now) }))
@@ -270,7 +292,7 @@ function buildAdvancedModel({ products, events, now = Date.now() }) {
     transitions: buildTransitions(causalEvents),
     userEvents: causalUserEvents,
   };
-  const ranker = trainRanker(causalModel, [...holdoutSet], products, knownPositive);
+  const ranker = trainRanker(causalModel, [...holdoutSet], products, knownPositive, warmRankWeights);
 
   // Inference dùng toàn bộ lịch sử đã quan sát; chỉ trọng số ranker được học
   // trên target causal phía trên.
@@ -302,6 +324,7 @@ function buildAdvancedModel({ products, events, now = Date.now() }) {
     rankerPositiveEvents: ranker.positives,
     rankerTrainingPairs: ranker.pairs,
     rankerTrained: ranker.trained,
+    rankerWarmStarted: ranker.warmStarted,
     causalHoldouts: holdoutSet.size,
   };
   return model;
@@ -317,4 +340,5 @@ function scoreAdvanced(model, userId, slug, contentScore, trendingScore) {
   };
 }
 
-module.exports = { buildAdvancedModel, scoreAdvanced };
+module.exports = {
+  usableRankWeights, COLD_RANK_WEIGHTS, buildAdvancedModel, scoreAdvanced };

@@ -62,6 +62,7 @@ let currentFocus = DEFAULT_FOCUS;
 let lastChangedAt = Date.now();
 let lastActions = [];
 let transitionChain = Promise.resolve();
+let deferredFashnWarmupTimer = null;
 
 function focusProfile(focus) {
   return FOCUS_PROFILES[focus] || FOCUS_PROFILES[DEFAULT_FOCUS];
@@ -93,6 +94,41 @@ async function warmFashn() {
   }
   const body = await postService(`${FASHN_URL}/warmup`, 60000);
   return { service: 'fashn', warmed: Boolean(body?.ok), engine: body?.engine, freeVramGb: body?.freeVramGb };
+}
+
+function focusRestorePlan(type, restoreFocus) {
+  const sameFocus = String(type) === String(restoreFocus);
+  return {
+    restoreSynchronously: !sameFocus,
+    // Fit-refine dùng FLUX và đẩy FASHN khỏi GPU. Nạp lại FASHN trước khi
+    // resolve runGpuJob từng giữ ảnh đã xong thêm 15-30 giây ở backend. Khi
+    // người dùng vẫn đứng ở màn try-on, trả ảnh trước rồi warm ở nền.
+    deferFashnWarmup: sameFocus && type === 'tryon',
+  };
+}
+
+function deferFashnWarmup() {
+  if (deferredFashnWarmupTimer) clearTimeout(deferredFashnWarmupTimer);
+  const configured = Number(process.env.JAPANO_FASHN_BACKGROUND_WARMUP_DELAY_MS || 750);
+  const delayMs = Number.isFinite(configured) ? Math.max(100, Math.min(10000, configured)) : 750;
+  deferredFashnWarmupTimer = setTimeout(() => {
+    deferredFashnWarmupTimer = null;
+    // Đi qua cùng transition chain để không đua với thao tác đổi sang
+    // home/browse/motion. Kiểm tra lại focus và queue ngay trước khi nạp model.
+    transitionChain = transitionChain
+      .catch(() => undefined)
+      .then(async () => {
+        const queue = gpuQueue.status();
+        if (currentFocus !== 'tryon' || queue.active || queue.pending.length) return;
+        try {
+          const action = await warmFashn();
+          logger.info({ action }, 'GPU arbiter: làm nóng FASHN nền sau khi đã trả ảnh');
+        } catch (error) {
+          logger.warn({ error: error?.message || String(error) }, 'GPU arbiter: không làm nóng được FASHN ở nền');
+        }
+      });
+  }, delayMs);
+  deferredFashnWarmupTimer.unref?.();
 }
 
 async function releaseMotion() {
@@ -260,7 +296,12 @@ function runGpuJob(type, task, metadata = {}) {
       // Job từ script/worker không được để focus tạo sinh bám lại vĩnh viễn.
       // Nếu màn hình đã đổi trong lúc chạy, giữ lựa chọn mới nhất của màn hình.
       const restoreFocus = currentFocus === type ? returnFocus : currentFocus;
-      await setFocus(restoreFocus, { force: true }).catch(() => undefined);
+      const plan = focusRestorePlan(type, restoreFocus);
+      if (plan.restoreSynchronously) {
+        await setFocus(restoreFocus, { force: true }).catch(() => undefined);
+      } else if (plan.deferFashnWarmup) {
+        deferFashnWarmup();
+      }
     }
   }, metadata);
 }
@@ -291,4 +332,5 @@ module.exports = {
   FOCUS_PROFILES,
   DEFAULT_FOCUS,
   GpuJobCancelledError,
+  focusRestorePlan,
 };

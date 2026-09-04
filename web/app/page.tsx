@@ -41,7 +41,7 @@ export default async function HomePage() {
     </ReactBitsFadeContent>
 
     <ReactBitsFadeContent as="section" className="experience-split" blur={false}>
-      <div className="tryon-editorial"><span className="eyebrow"><Sparkles aria-hidden="true" /> AI Try-on Studio</span><h2>Thử phom dáng.<br />Giữ chính bạn.</h2><p>Chọn sản phẩm, đưa ảnh rõ người vào và nhận ảnh AI thật từ backend. Phân tích số đo thiếu bằng chứng không ngăn bạn thử đồ.</p><ul><li><ShieldCheck aria-hidden="true" />Ảnh cá nhân không đưa vào cache Cloudflare</li><li><Camera aria-hidden="true" />Giữ nguyên danh tính và vóc dáng</li><li><RefreshCw aria-hidden="true" />Tạo chuyển động từ kết quả đạt chất lượng</li></ul><Link className="button light" href="/thu-do">Mở phòng thử đồ<ArrowUpRight aria-hidden="true" /></Link></div>
+      <div className="tryon-editorial"><span className="eyebrow"><Sparkles aria-hidden="true" /> AI Try-on Studio</span><h2>Thử phom dáng.<br />Giữ chính bạn.</h2><p>Chọn sản phẩm, đưa ảnh rõ người vào và nhận ảnh AI thật. Phân tích số đo thiếu bằng chứng không ngăn bạn thử đồ.</p><ul><li><ShieldCheck aria-hidden="true" />Ảnh cá nhân không đưa vào cache Cloudflare</li><li><Camera aria-hidden="true" />Giữ nguyên danh tính và vóc dáng</li><li><RefreshCw aria-hidden="true" />Tạo chuyển động từ kết quả đạt chất lượng</li></ul><Link className="button light" href="/thu-do">Mở phòng thử đồ<ArrowUpRight aria-hidden="true" /></Link></div>
       <FujiCinematic />
     </ReactBitsFadeContent>
 
