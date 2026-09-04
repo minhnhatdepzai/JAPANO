@@ -1,4 +1,0 @@
-interface:
-  display_name: "JAPANO Motion Fast Inference"
-  short_description: "Benchmark and accelerate One-to-All motion"
-  default_prompt: "Profile and safely accelerate JAPANO motion generation with measured quality gates."
