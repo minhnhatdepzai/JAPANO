@@ -115,3 +115,6 @@ test-results/
 
 # Video motion sinh ra lúc chạy thử — nặng, không phải mã nguồn
 backend/data/motion/*.mp4
+
+# Claude Code local tooling (không đưa lên repo)
+.claude/
