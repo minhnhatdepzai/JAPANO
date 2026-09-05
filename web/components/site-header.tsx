@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import { useStore } from "@/components/store-provider";
+import { loginHref } from "@/lib/storefront-access";
 
 const nav = [
   { href: "/san-pham", label: "Sản phẩm" },
@@ -52,7 +53,9 @@ function CartDrawer() {
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { count, wishlist, setCartOpen } = useStore();
+  const { authStatus, count, wishlist, setCartOpen } = useStore();
+  const protectedHref = (path: string) => authStatus === "guest" ? loginHref(path) : path;
+  const navHref = (path: string) => path === "/thu-do" ? protectedHref(path) : path;
   return <>
     <div className="announcement">Miễn phí đổi size trong 7 ngày · AI thử đồ dùng ảnh riêng tư, không lưu lâu dài</div>
     <header className="site-header" style={{ viewTransitionName: "persistent-nav" }}>
@@ -62,15 +65,15 @@ export function SiteHeader() {
         {/* Không đặt aria-label: WCAG 2.5.3 yêu cầu tên khả truy cập chứa đúng chữ
             nhìn thấy. Để tên tự sinh từ nội dung, phần bổ nghĩa nằm trong span ẩn. */}
         <Link href="/" className="brand"><img className="brand-mark" src="/media/assets/brand/japano-monogram.png" width="827" height="759" alt="" fetchPriority="high" /><span className="brand-type"><strong>JAPANO</strong><small>Thời trang Nhật Bản</small></span><span className="sr-only">— Trang chủ</span></Link>
-        <nav className="desktop-nav right" aria-label="Tính năng JAPANO">{nav.slice(3).map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}</nav>
+        <nav className="desktop-nav right" aria-label="Tính năng JAPANO">{nav.slice(3).map((item) => <Link key={item.href} href={navHref(item.href)}>{item.label}</Link>)}</nav>
         <div className="header-actions">
           <Link className="icon-button" href="/tim-kiem" aria-label="Tìm kiếm"><Search aria-hidden="true" /></Link>
-          <Link className="icon-button badge-button" href="/yeu-thich" aria-label={`Yêu thích, ${wishlist.length} sản phẩm`}><Heart aria-hidden="true" />{wishlist.length > 0 && <span>{wishlist.length}</span>}</Link>
-          <Link className="icon-button desktop-account" href="/tai-khoan" aria-label="Tài khoản"><UserRound aria-hidden="true" /></Link>
+          <Link className="icon-button badge-button" href={protectedHref("/yeu-thich")} aria-label={`Yêu thích, ${wishlist.length} sản phẩm`}><Heart aria-hidden="true" />{wishlist.length > 0 && <span>{wishlist.length}</span>}</Link>
+          <Link className="icon-button desktop-account" href={protectedHref("/tai-khoan")} aria-label={authStatus === "authenticated" ? "Tài khoản" : "Đăng nhập tài khoản"}><UserRound aria-hidden="true" /></Link>
           <button className="icon-button badge-button" data-cart-target aria-label={`Mở giỏ hàng, ${count} sản phẩm`} onClick={() => setCartOpen(true)}><ShoppingBag aria-hidden="true" />{count > 0 && <motion.span key={count} initial={{ scale: 0.6 }} animate={{ scale: 1 }}>{count}</motion.span>}</button>
         </div>
       </div>
-      <AnimatePresence>{menuOpen && <motion.nav className="mobile-nav" aria-label="Điều hướng di động" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>{nav.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<span aria-hidden="true">↗</span></Link>)}<Link href="/tai-khoan" onClick={() => setMenuOpen(false)}>Tài khoản<span aria-hidden="true">↗</span></Link></motion.nav>}</AnimatePresence>
+      <AnimatePresence>{menuOpen && <motion.nav className="mobile-nav" aria-label="Điều hướng di động" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>{nav.map((item) => <Link key={item.href} href={navHref(item.href)} onClick={() => setMenuOpen(false)}>{item.label}<span aria-hidden="true">↗</span></Link>)}<Link href={protectedHref("/tai-khoan")} onClick={() => setMenuOpen(false)}>{authStatus === "authenticated" ? "Tài khoản" : "Đăng nhập"}<span aria-hidden="true">↗</span></Link></motion.nav>}</AnimatePresence>
     </header>
     <CartDrawer />
   </>;

@@ -43,6 +43,7 @@ export type StylistRecommendation = {
   moodLabel: string|null;
   ageRange: string|null;
   cheerUp: CheerUp|null;
+  portraitPending?: boolean;
 };
 
 /** Bảy mức vừa vặn — khớp với lib/fitAnalysis.js ở backend. */
@@ -537,8 +538,16 @@ export function logSearch(payload: { userId?: string; query: string; resultCount
   return jsonPost('/api/search-log', { userId: USER_ID, ...payload }, 6000);
 }
 
-export function syncCart(userId:string,items:Array<{slug:string;color:string;size:string;qty:number}>){
-  return jsonPost('/api/carts/sync',{userId,items},8000);
+export type RemoteCartItem = { productId:string; color:string; size:string; quantity:number; updatedAt?:number };
+
+export async function getCart(userId=USER_ID):Promise<RemoteCartItem[]>{
+  const data:any=await requestJson(`/api/carts?userId=${encodeURIComponent(userId)}`,{timeoutMs:8000});
+  return Array.isArray(data?.cart)?data.cart:[];
+}
+
+export async function syncCart(userId:string,items:Array<{slug:string;color:string;size:string;qty:number}>,merge=false):Promise<RemoteCartItem[]>{
+  const data:any=await jsonPost('/api/carts/sync',{userId,items,merge},8000);
+  return Array.isArray(data?.cart)?data.cart:[];
 }
 
 // Wishlist lưu trên backend (ERD v2: bảng wishlists) — đồng bộ đa thiết bị.
@@ -554,6 +563,8 @@ export async function recommendStyle(payload: {
   userId?: string;
   imageBase64: string;
   profile?: StyleProfile;
+  /** true: trả gợi ý màu/sản phẩm ngay, không chờ model đọc chân dung. */
+  quick?: boolean;
 }): Promise<StylistRecommendation> {
   const data: any = await jsonPost('/api/stylist/recommend', { userId: USER_ID, ...payload }, 90000);
   const result = data?.recommendation || data?.result || data;
@@ -567,6 +578,7 @@ export async function recommendStyle(payload: {
     moodLabel: data?.moodLabel || null,
     ageRange: data?.ageRange || null,
     cheerUp: data?.cheerUp || null,
+    portraitPending: Boolean(data?.portraitPending),
   };
 }
 

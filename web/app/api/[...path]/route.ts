@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { loginHref, requiresStorefrontSession } from "@/lib/storefront-access";
 
 const ORIGIN = String(process.env.JAPANO_API_ORIGIN || "https://rd-system.tail6502ce.ts.net:4101").replace(/\/$/, "");
 const BLOCKED_PREFIXES = ["admin", "state", "seed", "reset", "analytics", "users", "payments"];
@@ -59,6 +60,24 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     return response;
   }
 
+  // Kiểm tra trạng thái phiên là phép đọc công khai nhưng tuyệt đối không trả
+  // dữ liệu cá nhân khi thiếu cookie. Trả 200 + user:null để trang catalog của
+  // khách không tạo một lỗi 401 giả trong console ở mọi lần tải trang.
+  if (path === "auth/me" && request.method === "GET" && !request.cookies.get("japano_session")?.value) {
+    return NextResponse.json({ ok: true, authenticated: false, user: null }, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
+  if (requiresStorefrontSession(request.method, path) && !request.cookies.get("japano_session")?.value) {
+    return NextResponse.json({
+      ok: false,
+      message: "Bạn cần đăng nhập để sử dụng tính năng này.",
+      loginUrl: loginHref(request.nextUrl.pathname),
+    }, { status: 401, headers: { "Cache-Control": "no-store" } });
+  }
+
   const target = new URL(`${ORIGIN}/api/${path}`);
   request.nextUrl.searchParams.forEach((value, key) => target.searchParams.append(key, value));
   const hasBody = !["GET", "HEAD"].includes(request.method);
@@ -69,6 +88,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     redirect: "manual",
     cache: "no-store",
   });
+
+  if (path === "auth/me" && request.method === "GET" && upstream.status === 401) {
+    const response = NextResponse.json({ ok: true, authenticated: false, user: null }, {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+    });
+    response.cookies.set("japano_session", "", { path: "/", maxAge: 0, httpOnly: true, secure: request.nextUrl.protocol === "https:", sameSite: "lax" });
+    return response;
+  }
 
   const contentType = upstream.headers.get("content-type") || "application/octet-stream";
   if (AUTH_ENDPOINTS.has(path) && contentType.includes("application/json")) {

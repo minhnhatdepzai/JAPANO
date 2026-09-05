@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PRODUCTS, getVariantStock, isOutOfStock, variantPrice } from './catalog';
-import { trackInteraction, syncCart, getWishlist, syncWishlist, AppliedVoucher } from './api';
+import { trackInteraction, syncCart, getCart, getWishlist, syncWishlist, AppliedVoucher, RemoteCartItem } from './api';
 import { emitBotEvent } from './botEvents';
 import { useAuth } from './auth';
 import { ToastKind, useToast } from './toast';
@@ -42,6 +42,21 @@ const lineUnitPrice = (item:CartItem)=>{
   const product = PRODUCTS.find(p=>p.slug===item.slug);
   return product ? variantPrice(product, item.color, item.size) : 0;
 };
+const remoteCartItem = (item:RemoteCartItem):CartItem|null => {
+  const slug=String(item.productId||'');
+  const qty=Math.min(20,Math.max(0,Number(item.quantity)||0));
+  if(!slug||qty<=0)return null;
+  return {slug,color:String(item.color||'Mặc định'),size:String(item.size||'M'),qty};
+};
+const mergeCartItems = (remote:CartItem[],local:CartItem[]) => {
+  const rows=new Map<string,CartItem>();
+  for(const item of [...remote,...local]){
+    const key=`${item.slug}:${item.color}:${item.size}`;
+    const current=rows.get(key);
+    rows.set(key,current?{...current,qty:Math.min(20,Math.max(current.qty,item.qty))}:item);
+  }
+  return [...rows.values()];
+};
 const fireInteraction = (userId:string, type:'wishlist'|'cart', item:CartItem | { slug:string; qty:number }, metadata:Record<string, unknown> = {}) => {
   void trackInteraction({ userId, type, productId:item.slug, value:item.qty, metadata }).catch(()=>undefined);
 };
@@ -65,12 +80,15 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
     setCart([]);
     setVoucher(null);
     if(!user){setHydrated(true);return()=>{live=false;};}
-    // Nạp song song: cache cục bộ (nhanh, offline) + wishlist thật từ backend.
+    // Nạp song song: cache cục bộ (nhanh, offline) + giỏ/wishlist thật từ
+    // backend. Trước đây app không đọc giỏ máy chủ rồi 300ms sau lại sync mảng
+    // cục bộ rỗng lên, có thể xoá giỏ vừa tạo từ Storefront.
     const localP = AsyncStorage.getItem(`${STORAGE_KEY}/${encodeURIComponent(user.id)}`)
       .then(raw=>raw?JSON.parse(raw):null).catch(()=>null);
+    const remoteCartP = getCart(user.id).catch(()=>null);
     const remoteWishP = getWishlist(user.id).catch(()=>null);
-    Promise.all([localP,remoteWishP])
-      .then(([saved,remoteWish])=>{
+    Promise.all([localP,remoteCartP,remoteWishP])
+      .then(([saved,remoteCart,remoteWish])=>{
         if(!live)return;
         const localWish = Array.isArray(saved?.wish)?saved.wish.map(String):[];
         // Hợp nhất: ưu tiên bản backend, gộp thêm mục cục bộ chưa kịp đồng bộ.
@@ -78,7 +96,11 @@ export function StoreProvider({ children }:{ children:React.ReactNode }) {
           ? [...remoteWish, ...localWish.filter(s=>!remoteWish.includes(s))]
           : localWish;
         setWish(merged);
-        if (Array.isArray(saved?.cart)) setCart(saved.cart);
+        const localCart=Array.isArray(saved?.cart)?saved.cart:[];
+        const serverCart=Array.isArray(remoteCart)
+          ? remoteCart.map(remoteCartItem).filter(Boolean) as CartItem[]
+          : [];
+        setCart(remoteCart===null?localCart:mergeCartItems(serverCart,localCart));
       })
       .finally(()=>{if(live)setHydrated(true);});
     return()=>{live=false;};

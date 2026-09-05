@@ -7,61 +7,24 @@ import { useForm } from "react-hook-form";
 import { api, postJson } from "@/lib/client-api";
 import { loginSchema, registerSchema } from "@/lib/schemas";
 import { useStore } from "@/components/store-provider";
-import { productImage } from "@/lib/format";
-import { normalizeVariants } from "@/lib/product";
-import type { CartItem, Product } from "@/lib/types";
+import { safeReturnPath } from "@/lib/storefront-access";
 
 type Values = { name?: string; email: string; password: string };
-type ServerCartRow = { productId: string; color: string; size: string; quantity: number };
 declare global { interface Window { google?: { accounts?: { id?: { initialize: (options: unknown) => void; renderButton: (element: HTMLElement, options: unknown) => void } } } } }
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({ mode, nextPath }: { mode: "login" | "register"; nextPath?: string }) {
   const router = useRouter();
-  const { items, replaceCart } = useStore();
+  const { connectAccount } = useStore();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
   const [googleReady, setGoogleReady] = useState(false);
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<Values>();
 
-  // Giỏ khách được gửi lên với merge=true (backend giữ số lượng lớn hơn, không
-  // ghi đè giỏ cũ của tài khoản), rồi giao diện dựng lại đúng giỏ đã hợp nhất
-  // từ catalog thật. Nếu bước dựng lại lỗi thì giữ nguyên giỏ cục bộ để không
-  // mất sản phẩm nào.
-  const mergeCart = async (userId: string) => {
-    if (!items.length) return;
-    const payload = items.map((item) => ({ productId: item.slug, color: item.color, size: item.size, quantity: item.quantity }));
-    const merged = await postJson<{ cart?: ServerCartRow[] }>("/api/carts/sync", { userId, merge: true, items: payload }, 12_000).catch(() => null);
-    const rows = merged?.cart;
-    if (!rows?.length) return;
-    const catalog = await api<Product[]>("/api/products", { timeoutMs: 12_000 }).catch(() => null);
-    if (!catalog) return;
-    const bySlug = new Map(catalog.map((product) => [product.slug, product]));
-    const rebuilt: CartItem[] = [];
-    for (const row of rows) {
-      const product = bySlug.get(String(row.productId));
-      if (!product) continue;
-      const variants = normalizeVariants(product.variants);
-      const variant = variants.find((entry) => entry.colorName === row.color && entry.size === row.size) || variants.find((entry) => entry.size === row.size);
-      const stock = Math.max(Number(variant?.stock || 0), Number(row.quantity || 0));
-      rebuilt.push({
-        key: `${product.slug}:${row.color}:${row.size}`,
-        productId: product.id,
-        slug: product.slug,
-        name: product.name,
-        image: productImage(product),
-        color: row.color,
-        size: row.size,
-        price: product.price,
-        quantity: Math.max(1, Number(row.quantity || 1)),
-        stock,
-      });
-    }
-    if (rebuilt.length >= rows.length) replaceCart(rebuilt);
-  };
-
   const completeLogin = async (payload: { user?: { id?: string } }) => {
-    if (payload.user?.id) await mergeCart(payload.user.id);
-    router.push("/tai-khoan");
+    // Chỉ sau khi cookie phiên đã được BFF đặt mới nạp giỏ và wishlist của đúng
+    // tài khoản. Storefront không còn duy trì giỏ khách.
+    if (payload.user?.id) await connectAccount(payload.user.id);
+    router.push(safeReturnPath(nextPath));
     router.refresh();
   };
 

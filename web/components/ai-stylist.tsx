@@ -3,8 +3,9 @@
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { postJson } from "@/lib/client-api";
+import { useStore } from "@/components/store-provider";
 
 type StylistAction = {
   id: "open_shop"|"open_checkout"|"open_cart"|"open_wishlist"|"open_orders"|"open_explore_japan"|"open_tryon"|"open_product";
@@ -16,6 +17,8 @@ type Message = { role: "user" | "assistant"; text: string; actions?: StylistActi
 
 export function AiStylist() {
   const router = useRouter();
+  const { authStatus, requireAuth } = useStore();
+  const messagesRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,12 +40,18 @@ export function AiStylist() {
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || authStatus !== "authenticated") return;
     void postJson("/api/stylist/chat/warmup", {}, 35_000).catch(() => undefined);
-  }, [open]);
+  }, [authStatus, open]);
+
+  useEffect(() => {
+    const list = messagesRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [open, messages, loading]);
 
   const send = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!requireAuth()) return;
     const message = input.trim();
     if (!message || loading) return;
     setInput("");
@@ -64,9 +73,9 @@ export function AiStylist() {
   return <div className="stylist-root" style={{ viewTransitionName: "stylist-popover" }}>
     <AnimatePresence>{open && <motion.section className="stylist-panel" role="dialog" aria-modal="false" aria-labelledby="stylist-title" initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: 0.98 }}>
       <header><div><span className="eyebrow"><Sparkles aria-hidden="true" /> AI Stylist</span><h2 id="stylist-title">Hỏi Ori</h2></div><button className="icon-button" aria-label="Đóng trợ lý Ori" onClick={() => setOpen(false)}><X aria-hidden="true" /></button></header>
-      <div className="stylist-messages" aria-live="polite">{messages.map((message, index) => <div key={`${message.role}-${index}`} className={`message ${message.role}`}><span>{message.text}</span>{!!message.actions?.length && <div className="stylist-actions">{message.actions.filter((action) => !action.auto).map((action) => <button key={`${action.id}-${action.productId || ""}`} type="button" onClick={() => runAction(action)}>{action.label}</button>)}</div>}</div>)}{loading && <div className="message assistant loading-dots">Ori đang tìm trong catalog<span>•••</span></div>}</div>
+      <div ref={messagesRef} className="stylist-messages" aria-live="polite" aria-busy={loading}>{messages.map((message, index) => <div key={`${message.role}-${index}`} className={`message ${message.role}`}><span>{message.text}</span>{!!message.actions?.length && <div className="stylist-actions">{message.actions.filter((action) => !action.auto).map((action) => <button key={`${action.id}-${action.productId || ""}`} type="button" onClick={() => runAction(action)}>{action.label}</button>)}</div>}</div>)}{loading && <div className="message assistant loading-dots">Ori đang tìm trong catalog<span>•••</span></div>}</div>
       <form onSubmit={send}><label className="sr-only" htmlFor="ori-message">Câu hỏi cho Ori</label><input id="ori-message" name="message" autoComplete="off" placeholder="Ví dụ: phối áo haori đi Đà Lạt…" value={input} onChange={(event) => setInput(event.target.value)} /><button aria-label="Gửi câu hỏi" disabled={loading || !input.trim()}><Send aria-hidden="true" /></button></form>
     </motion.section>}</AnimatePresence>
-    <button className="stylist-toggle" aria-label={open ? "Hỏi Ori — đóng trợ lý thời trang" : "Hỏi Ori — mở trợ lý thời trang"} aria-expanded={open} onClick={() => setOpen((value) => !value)}><MessageCircle aria-hidden="true" /><span>Hỏi Ori</span></button>
+    <button className="stylist-toggle" aria-label={open ? "Hỏi Ori — đóng trợ lý thời trang" : authStatus === "authenticated" ? "Hỏi Ori — mở trợ lý thời trang" : "Đăng nhập để hỏi Ori"} aria-expanded={open} onClick={() => { if (open) setOpen(false); else if (requireAuth()) setOpen(true); }}><MessageCircle aria-hidden="true" /><span>Hỏi Ori</span></button>
   </div>;
 }

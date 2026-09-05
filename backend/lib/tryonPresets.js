@@ -17,10 +17,10 @@ const path = require('path');
 const PRESET_DIR = path.join(__dirname, '..', '..', 'mobile', 'assets', 'tryon-presets');
 
 // Khoảng số đo dưới đây KHÔNG phải số đo khai báo của một người thật — người
-// mẫu là ảnh dựng. Chúng là đầu ra của chính pipeline body_analysis chạy trên
-// đúng file này (2026-08-29), làm tròn về bin 10 đơn vị như UI vẫn hiển thị.
-// Chúng có mặt để gợi ý size có điểm khởi đầu hợp lý, không phải để tuyên bố
-// một phép đo chính xác.
+// mẫu là ảnh dựng. Phần lớn là bin của pipeline body_analysis; riêng mẫu ngoại
+// cỡ 110–120 kg là MỤC TIÊU THIẾT KẾ đã chủ động dùng để dựng ảnh, không phải
+// cân nặng AI suy ra từ pixel. Chúng chỉ làm prior chọn size và không được trả
+// như một phép đo chính xác của ảnh khách.
 const PRESETS = Object.freeze([
   {
     id: 'nu-thanh-manh',
@@ -69,18 +69,18 @@ const PRESETS = Object.freeze([
   },
   {
     id: 'nu-mem-mai',
-    label: 'Nữ · dáng mềm mại',
-    file: 'nu-mem-mai.jpg',
+    label: 'Nữ · ngoại cỡ 110–120 kg',
+    file: 'nu-mem-mai-110-120.jpg',
     adult: true,
     gender: 'female',
     bodyProfile: 'curvy',
     heightCm: [150, 160],
-    weightKg: [70, 80],
-    bustCm: [100, 110],
-    waistCm: [90, 100],
-    hipCm: [110, 120],
+    weightKg: [110, 120],
+    bustCm: [140, 150],
+    waistCm: [130, 140],
+    hipCm: [150, 160],
     preferredCategories: ['ao-truyen-thong', 'haori', 'trang-phuc'],
-    sha256: 'f634936a52d59e48a27b906c6b5b7796053eb67249b1d6a1e0363671a5b82758',
+    sha256: '502eae63036697551113e04520ddbafdbea27d31215596a92b45072c6b3793f0',
   },
   {
     id: 'nam-can-doi',

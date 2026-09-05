@@ -1,7 +1,8 @@
 // Trợ lý phong cách AI: sức khoẻ dịch vụ AI, gợi ý trang chủ/liên quan, hồ sơ
 // phong cách, mục tiêu mua sắm + sức khoẻ, ghép set trang phục, tư vấn size,
 // và chatbot Ori.
-const { fetchWithTimeout, serviceHealth } = require('../lib/httpFetch');
+const { serviceHealth } = require('../lib/httpFetch');
+const { fetchChatJson } = require('../lib/chatHttp');
 const { CATVTON_URL, FASHN_URL, MOTION_URL, AI_GATEWAY_URL, OLLAMA_URL, EMBEDDING_URL } = require('../lib/serviceUrls');
 const { setFocus, getFocus } = require('../lib/gpuArbiter');
 const { pushNotification } = require('../lib/notify');
@@ -108,12 +109,12 @@ module.exports = function registerStylistRoutes(api, ctx) {
     if (chatWarmupPromise) return chatWarmupPromise;
     chatWarmupPromise = (async () => {
       try {
-        const response = await fetchWithTimeout(`${OLLAMA_URL}/api/generate`, {
+        await fetchChatJson(`${OLLAMA_URL}/api/generate`, {
           method: 'POST',
           headers: { 'content-type':'application/json' },
           body: JSON.stringify({ model:ollamaChatModel(), stream:false, keep_alive:'10m' }),
         }, Number(process.env.JAPANO_OLLAMA_WARMUP_TIMEOUT_MS || 30000));
-        return { warmed:response.ok, model:ollamaChatModel(), reason:response.ok ? null : `ollama-http-${response.status}` };
+        return { warmed:true, model:ollamaChatModel(), reason:null };
       } catch (error) {
         return { warmed:false, model:ollamaChatModel(), reason:error?.name === 'AbortError' ? 'ollama-timeout' : 'ollama-unavailable' };
       } finally {
@@ -123,8 +124,8 @@ module.exports = function registerStylistRoutes(api, ctx) {
     return chatWarmupPromise;
   }
 
-  async function planChatRequest(userMessage, history = []) {
-    if (!ollamaChatEnabled() || tryonGpuBusy()) return null;
+  async function planChatRequest(userMessage, history = [], timeoutMs = 3000) {
+    if (timeoutMs <= 0 || !ollamaChatEnabled() || tryonGpuBusy()) return null;
     const schema = {
       type:'object',
       properties:{
@@ -138,7 +139,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
       .map((row) => `${row?.role || 'user'}: ${row?.content || row?.message || row?.text || ''}`)
       .join('\n').slice(0, 1400);
     try {
-      const response = await fetchWithTimeout(`${OLLAMA_URL}/api/chat`, {
+      const data = await fetchChatJson(`${OLLAMA_URL}/api/chat`, {
         method:'POST',
         headers:{ 'content-type':'application/json' },
         body:JSON.stringify({
@@ -161,9 +162,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
           ],
           options:{ temperature:0, num_predict:100, num_ctx:4096 },
         }),
-      }, Number(process.env.JAPANO_OLLAMA_TIMEOUT_MS || 45000));
-      if (!response.ok) return null;
-      const data = await response.json();
+      }, timeoutMs);
       const parsed = JSON.parse(String(data?.message?.content || '{}'));
       const intent = plannableIntents.has(String(parsed.intent)) ? String(parsed.intent) : 'fallback';
       const actionId = allowedChatActions.has(String(parsed.actionId)) ? String(parsed.actionId) : 'none';
@@ -225,7 +224,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
     });
   });
 
-  async function polishWithOllama(userMessage, draft, productFacts = []) {
+  async function polishWithOllama(userMessage, draft, productFacts = [], timeoutMs = 5000) {
     const startedAt = Date.now();
     // Retrieval là mặc định để tên/giá/sản phẩm luôn đúng catalog. Chỉ bật LLM viết lại
     // khi người vận hành chủ động đặt JAPANO_OLLAMA_CHAT=1.
@@ -233,8 +232,8 @@ module.exports = function registerStylistRoutes(api, ctx) {
     if (!ollamaChatEnabled()) {
       return { message: draft, used: false, model: 'local-grounded-retrieval', latencyMs: Date.now() - startedAt, fallbackReason: 'ollama-disabled' };
     }
-    if (tryonGpuBusy()) {
-      return { message: draft, used: false, model: 'local-grounded-retrieval', latencyMs: Date.now() - startedAt, fallbackReason: 'gpu-busy' };
+    if (timeoutMs <= 0 || tryonGpuBusy()) {
+      return { message: draft, used: false, model: 'local-grounded-retrieval', latencyMs: Date.now() - startedAt, fallbackReason: timeoutMs <= 0 ? 'chat-deadline' : 'gpu-busy' };
     }
     try {
       const prompt = [
@@ -246,15 +245,11 @@ module.exports = function registerStylistRoutes(api, ctx) {
         `Câu hỏi: ${String(userMessage || '').slice(0, 800)}`,
         `Câu trả lời nháp đã truy hồi từ dữ liệu thật: ${String(draft || '').slice(0, 1600)}`,
       ].filter(Boolean).join('\n');
-      const response = await fetchWithTimeout(`${OLLAMA_URL}/api/generate`, {
+      const data = await fetchChatJson(`${OLLAMA_URL}/api/generate`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ model, prompt, stream:false, keep_alive:'10m', options: { temperature:0.2, num_predict:220, num_ctx:4096 } }),
-      }, Number(process.env.JAPANO_OLLAMA_TIMEOUT_MS || 45000));
-      if (!response.ok) {
-        return { message: draft, used: false, model: 'local-grounded-retrieval', latencyMs: Date.now() - startedAt, fallbackReason: `ollama-http-${response.status}` };
-      }
-      const data = await response.json();
+      }, timeoutMs);
       const checked = groundedRewriteOrDraft(data.response, draft, productFacts.map((product) => product.name));
       return {
         message: checked.message,
@@ -651,6 +646,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
   // + phân tích tâm trạng/độ tuổi qua ảnh (vision) để tinh chỉnh gợi ý và động viên người dùng.
   api.post('/stylist/recommend', async (req, res) => {
     const b = req.body || {};
+    const quick = b.quick === true;
     const userId = String(b.userId || 'guest');
     const s = read();
     const stored = s.profiles.find((row) => row.userId === userId);
@@ -660,7 +656,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
     if (b.imageBase64) {
       const [colorResult, portraitResult] = await Promise.all([
         runPillow({ mode: 'dominant_color', imageBase64: b.imageBase64 }, 15000),
-        tryonGpuBusy() ? Promise.resolve(null) : analyzePortrait({
+        quick || tryonGpuBusy() ? Promise.resolve(null) : analyzePortrait({
           imageBase64: b.imageBase64,
           ollamaUrl: OLLAMA_URL,
           model: process.env.JAPANO_PORTRAIT_MODEL || 'qwen3-vl:8b',
@@ -682,97 +678,126 @@ module.exports = function registerStylistRoutes(api, ctx) {
       moodLabel: portrait?.moodLabel || null,
       ageRange: portrait?.ageRange || null,
       cheerUp: portrait?.cheerUp || null,
+      // Client hiển thị gợi ý màu/sản phẩm ngay rồi mới gọi lượt đầy đủ ở nền.
+      // Đây là progressive enhancement, không phải giả kết quả vision.
+      portraitPending: Boolean(quick && b.imageBase64),
     });
   });
 
   // chatbot Ori: nhận diện ý định theo từ khoá + truy hồi sản phẩm từ engine gợi ý/ghép đồ đã có
   api.post('/stylist/chat', async (req, res) => {
-    const b = req.body || {};
-    const s = read();
-    const userId = String(b.userId || 'guest');
-    const stored = s.profiles.find((row) => row.userId === userId);
-    const profile = { ...stored, ...(b.profile || {}) };
-    const storedHistory = (s.chats || []).filter((row) => String(row.userId) === userId).slice(-12);
-    const requestHistory = Array.isArray(b.history) ? b.history.slice(-12) : [];
-    const history = requestHistory.length ? requestHistory : storedHistory;
-    let result = chatbot.reply(s, { userId, message: b.message, profile, history });
-    let planner = null;
-    if (result.modelTrace?.ruleIntent === 'fallback') {
-      planner = await planChatRequest(b.message, history);
-      if (planner?.actionId && planner.actionId !== 'none') {
-        const label = actionLabels[planner.actionId] || 'Mở trang';
-        result = {
-          message:`Được nhé, Ori đang ${label.toLowerCase()} cho bạn.`,
-          productIds:[], actions:[{ id:planner.actionId, label, auto:true }],
-          intent:'navigation', confidence:planner.confidence,
-          modelTrace:{
-            ...(result.modelTrace || {}), intent:'navigation', confidence:planner.confidence,
-            models:[...new Set([...(result.modelTrace?.models || []), 'qwen3-vl-intent-planner'])],
-          },
-        };
-      } else if (planner?.intent && planner.intent !== 'fallback') {
-        result = chatbot.reply(s, {
-          userId, message:b.message, profile, history,
-          plannedIntent:planner.intent, plannedConfidence:planner.confidence,
+    const startedAt = Date.now();
+    // One budget for planning AND rewriting, below both clients' timeouts.
+    const configuredBudget = Number(process.env.JAPANO_CHAT_BUDGET_MS || 8000);
+    const budgetMs = Math.min(12000, Math.max(50, Number.isFinite(configuredBudget) ? configuredBudget : 8000));
+    const configuredStage = Number(process.env.JAPANO_OLLAMA_TIMEOUT_MS || 45000);
+    const stageMs = Number.isFinite(configuredStage) && configuredStage > 0 ? configuredStage : 45000;
+    const remainingMs = () => Math.max(0, Math.min(stageMs, budgetMs - (Date.now() - startedAt)));
+    try {
+      const b = req.body || {};
+      if (typeof b.message !== 'string' || !b.message.trim()) {
+        return res.status(400).json({ ok:false, code:'CHAT_MESSAGE_REQUIRED', message:'Bạn nhập câu hỏi cho Ori nhé.' });
+      }
+      const s = read();
+      const userId = String(b.userId || 'guest');
+      const stored = s.profiles.find((row) => row.userId === userId);
+      const profile = { ...stored, ...(b.profile || {}) };
+      const storedHistory = (s.chats || []).filter((row) => String(row.userId) === userId).slice(-12);
+      const requestHistory = Array.isArray(b.history) ? b.history.slice(-12) : [];
+      const history = requestHistory.length ? requestHistory : storedHistory;
+      let result = chatbot.reply(s, { userId, message: b.message, profile, history });
+      let planner = null;
+      if (result.modelTrace?.ruleIntent === 'fallback') {
+        planner = await planChatRequest(b.message, history, Math.min(3000, remainingMs()));
+        if (planner?.actionId && planner.actionId !== 'none') {
+          const label = actionLabels[planner.actionId] || 'Mở trang';
+          result = {
+            message:`Được nhé, Ori đang ${label.toLowerCase()} cho bạn.`,
+            productIds:[], actions:[{ id:planner.actionId, label, auto:true }],
+            intent:'navigation', confidence:planner.confidence,
+            modelTrace:{
+              ...(result.modelTrace || {}), intent:'navigation', confidence:planner.confidence,
+              models:[...new Set([...(result.modelTrace?.models || []), 'qwen3-vl-intent-planner'])],
+            },
+          };
+        } else if (planner?.intent && planner.intent !== 'fallback') {
+          result = chatbot.reply(s, {
+            userId, message:b.message, profile, history,
+            plannedIntent:planner.intent, plannedConfidence:planner.confidence,
+          });
+        }
+      }
+      const actions = safeChatActions(result.actions);
+      const referenced = new Set((result.productIds || []).map(String));
+      const referencedProducts = (s.products || [])
+        .filter((product) => referenced.has(String(product.slug || product.id)))
+        .map((product) => ({ name:String(product.name), price:`${Number(product.price || 0).toLocaleString('vi-VN')}₫` }));
+      // Action trực tiếp phải phản hồi tức thì; Qwen chỉ làm nhiệm vụ diễn đạt cho
+      // tư vấn, không được quyền sinh route hay tự điều hướng ứng dụng.
+      const shouldPolish = !result.productIds?.length && ['greeting', 'fallback'].includes(result.intent);
+      const generation = result.intent === 'navigation'
+        ? { message:result.message, used:false, model:'whitelisted-action-router', latencyMs:0, fallbackReason:'deterministic-action' }
+        : shouldPolish
+          ? await polishWithOllama(b.message, result.message, referencedProducts, remainingMs())
+          : { message:result.message, used:false, model:'local-grounded-retrieval', latencyMs:0, fallbackReason:'grounded-answer-protected' };
+      const message = generation.message;
+      const engine = generation.used ? 'hybrid-post-transformer+ollama' : 'hybrid-post-transformer';
+      const informationSources = [];
+      const sourceUrls = new Set();
+      for (const product of s.products || []) {
+        if (!referenced.has(String(product.slug || product.id))) continue;
+        for (const source of product.informationSources || []) {
+          if (!source?.url || sourceUrls.has(source.url)) continue;
+          sourceUrls.add(source.url);
+          informationSources.push({ title: source.title, url: source.url });
+        }
+      }
+      let historySaved = true;
+      try {
+        update((state) => {
+          const createdAt = Date.now();
+          state.chats.push({ id: `chat-${createdAt}`, userId, role: 'user', message: String(b.message || ''), createdAt });
+          state.chats.push({
+            id: `chat-${createdAt}-ai`, userId, role: 'assistant', message,
+            productIds: result.productIds, actions, createdAt: createdAt + 1, engine,
+            intent: result.intent, confidence: result.confidence, modelTrace: result.modelTrace,
+            generationModel: generation.model, latencyMs: generation.latencyMs,
+            fallbackReason: generation.fallbackReason,
+            planner,
+          });
+          const explicitProductIntent = ['lookup', 'shopping', 'price', 'outfit'].includes(result.intent);
+          (result.productIds || []).forEach((productId, index) => state.interactions.push({
+            id: `chat-i-${createdAt}-${index}`, userId, productId,
+            type: explicitProductIntent ? 'chat' : 'impression',
+            value: explicitProductIntent ? 1 : 0, createdAt, source: 'mobile',
+            metadata: { intent: result.intent, generatedByBot: true },
+          }));
+          return state;
         });
+      } catch (error) {
+        // A failed history write must not discard the answer already computed.
+        historySaved = false;
+        logger.error({ err:error, stage:'ori-history' }, 'Không lưu được lịch sử Ori');
       }
-    }
-    const actions = safeChatActions(result.actions);
-    const referenced = new Set((result.productIds || []).map(String));
-    const referencedProducts = (s.products || [])
-      .filter((product) => referenced.has(String(product.slug || product.id)))
-      .map((product) => ({ name:String(product.name), price:`${Number(product.price || 0).toLocaleString('vi-VN')}₫` }));
-    // Action trực tiếp phải phản hồi tức thì; Qwen chỉ làm nhiệm vụ diễn đạt cho
-    // tư vấn, không được quyền sinh route hay tự điều hướng ứng dụng.
-    const shouldPolish = !result.productIds?.length && ['greeting', 'fallback'].includes(result.intent);
-    const generation = result.intent === 'navigation'
-      ? { message:result.message, used:false, model:'whitelisted-action-router', latencyMs:0, fallbackReason:'deterministic-action' }
-      : shouldPolish
-        ? await polishWithOllama(b.message, result.message, referencedProducts)
-        : { message:result.message, used:false, model:'local-grounded-retrieval', latencyMs:0, fallbackReason:'grounded-answer-protected' };
-    const message = generation.message;
-    const engine = generation.used ? 'hybrid-post-transformer+ollama' : 'hybrid-post-transformer';
-    const informationSources = [];
-    const sourceUrls = new Set();
-    for (const product of s.products || []) {
-      if (!referenced.has(String(product.slug || product.id))) continue;
-      for (const source of product.informationSources || []) {
-        if (!source?.url || sourceUrls.has(source.url)) continue;
-        sourceUrls.add(source.url);
-        informationSources.push({ title: source.title, url: source.url });
-      }
-    }
-    update((state) => {
-      const createdAt = Date.now();
-      state.chats.push({ id: `chat-${createdAt}`, userId, role: 'user', message: String(b.message || ''), createdAt });
-      state.chats.push({
-        id: `chat-${createdAt}-ai`, userId, role: 'assistant', message,
-        productIds: result.productIds, actions, createdAt: createdAt + 1, engine,
-        intent: result.intent, confidence: result.confidence, modelTrace: result.modelTrace,
-        generationModel: generation.model, latencyMs: generation.latencyMs,
-        fallbackReason: generation.fallbackReason,
+      res.json({
+        historySaved, responseLatencyMs:Date.now() - startedAt,
+        ok: true, message, reply: message, productIds: result.productIds,
+        products: result.productIds, engine, intent: result.intent,
+        actions,
+        confidence: result.confidence,
+        models: [...new Set([...(result.modelTrace?.models || []), generation.model])],
+        modelTrace: result.modelTrace, generationModel: generation.model,
         planner,
+        latencyMs: generation.latencyMs, fallbackReason: generation.fallbackReason,
+        informationSources: informationSources.slice(0, 8),
       });
-      const explicitProductIntent = ['lookup', 'shopping', 'price', 'outfit'].includes(result.intent);
-      (result.productIds || []).forEach((productId, index) => state.interactions.push({
-        id: `chat-i-${createdAt}-${index}`, userId, productId,
-        type: explicitProductIntent ? 'chat' : 'impression',
-        value: explicitProductIntent ? 1 : 0, createdAt, source: 'mobile',
-        metadata: { intent: result.intent, generatedByBot: true },
-      }));
-      return state;
-    });
-    res.json({
-      ok: true, message, reply: message, productIds: result.productIds,
-      products: result.productIds, engine, intent: result.intent,
-      actions,
-      confidence: result.confidence,
-      models: [...new Set([...(result.modelTrace?.models || []), generation.model])],
-      modelTrace: result.modelTrace, generationModel: generation.model,
-      planner,
-      latencyMs: generation.latencyMs, fallbackReason: generation.fallbackReason,
-      informationSources: informationSources.slice(0, 8),
-    });
+    } catch (error) {
+      // Express 4 does not forward rejected async handlers automatically.
+      logger.error({ err:error, stage:'ori-chat' }, 'Ori không xử lý được câu hỏi');
+      if (!res.headersSent) res.status(503).json({
+        ok:false, code:'CHAT_UNAVAILABLE', message:'Ori chưa xử lý được câu hỏi này. Bạn thử gửi lại nhé.',
+      });
+    }
   });
 };
 

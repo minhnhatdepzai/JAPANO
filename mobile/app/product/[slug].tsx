@@ -116,6 +116,21 @@ const StoryBlock = ({ kanji: _kanji, title, children }:{kanji:string;title:strin
   </View>
 );
 
+// Nội dung có căn cứ từ catalog phải hiện ngay trong frame đầu. Bản vision chỉ
+// nâng cấp câu chữ ở nền; nó không được biến cả khối thành spinner 1–2 phút.
+const catalogStyleDescription = (product:Product):ProductAiDescription => {
+  const productStory=storyFor(product.cat);
+  return {
+    headline:`${product.name} · ${productStory.ikiTitle}`,
+    visualSummary:productStory.ikiText,
+    details:[productStory.material,productStory.craftText,...productStory.tags.map(tag=>`Hợp ${tag}`)].slice(0,3),
+    stylingTip:productStory.ikiText,
+    purchaseReason:`Phù hợp khi bạn muốn một lựa chọn ${productStory.tags.slice(0,2).join(' và ')} trong tủ đồ JAPANO.`,
+    confidence:'catalog-grounded',
+    engine:'du-lieu-catalog',
+  };
+};
+
 export default function Detail() {
   const { slug } = useLocalSearchParams<{ slug:string }>();
   const router = useRouter();
@@ -180,7 +195,7 @@ export default function Detail() {
   const fallbackRel = related.length? related : PRODUCTS.filter(x=>x.slug!==p.slug).slice(0,4);
   const [relatedSlugs,setRelatedSlugs] = useState<string[]|null>(null);
   const [outfit,setOutfit] = useState<OutfitSet|null>(null);
-  const [aiDescription,setAiDescription] = useState<ProductAiDescription|null>(null);
+  const [aiDescription,setAiDescription] = useState<ProductAiDescription>(()=>catalogStyleDescription(p));
   const [aiLoading,setAiLoading] = useState(true);
   const isVisionDescription = aiDescription?.engine === 'thi-giac-san-pham' || aiDescription?.engine === 'qwen3-vl:8b';
   const [reviewData,setReviewData]=useState<ProductReviews|null>(null);
@@ -194,6 +209,7 @@ export default function Detail() {
     let live=true;
     void getRelatedProducts(p.slug,8).then(slugs=>{if(live)setRelatedSlugs(slugs);}).catch(()=>undefined);
     void getOutfitFor(p.slug).then(set=>{if(live)setOutfit(set);}).catch(()=>undefined);
+    setAiDescription(catalogStyleDescription(p));
     setAiLoading(true);
     void getProductAiDescription(p.slug).then(data=>{if(live)setAiDescription(data);}).catch(()=>undefined).finally(()=>{if(live)setAiLoading(false);});
     void getProductReviews(p.slug,user?.id||'').then(data=>{if(live)setReviewData(data);}).catch(()=>undefined);
@@ -274,12 +290,13 @@ export default function Detail() {
                 <Text style={st.aiEngine}>{isVisionDescription ? 'Phân tích từ hình ảnh và thông tin sản phẩm' : 'Tóm tắt từ thông tin sản phẩm đã xác nhận'}</Text>
               </View>
             </View>
-            {aiLoading ? (
-              <View style={{ flexDirection:'row', alignItems:'center', gap:8, paddingVertical:12 }}>
+            {aiLoading && (
+              <View style={{ flexDirection:'row', alignItems:'center', gap:8, paddingTop:10 }}>
                 <ActivityIndicator size="small" color={C.ink} />
-                <Text style={st.aiMuted}>Đang chuẩn bị gợi ý phối đồ dành cho bạn…</Text>
+                <Text style={st.aiMuted}>Đang nâng cấp phân tích hình ảnh ở nền…</Text>
               </View>
-            ) : aiDescription ? (
+            )}
+            {aiDescription ? (
               <>
                 <Text style={st.aiHeadline}>{aiDescription.headline}</Text>
                 <Text style={st.aiBody}>{aiDescription.visualSummary}</Text>

@@ -10,7 +10,7 @@ import { logSearch, trackInteraction } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { useReduceMotion } from '../../components/motion';
 
-const norm = (s:string)=> s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const norm = (s:string)=> s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase();
 
 // Kho\u1ea3ng c\u00e1ch ch\u1ec9nh s\u1eeda \u2014 cho ph\u00e9p sai/thi\u1ebfu 1-2 k\u00fd t\u1ef1 (g\u00f5 nh\u1ea7m) v\u1eabn ra k\u1ebft qu\u1ea3
 // thay v\u00ec ch\u1ec9 kh\u1edbp substring tuy\u1ec7t \u0111\u1ed1i nh\u01b0 tr\u01b0\u1edbc.
@@ -28,19 +28,25 @@ function searchScore(product:Product,queryNorm:string):number{
   if(!queryNorm)return 1;
   const name=norm(product.name);
   const catLabel=norm(CAT_LABEL[product.cat]||'');
+  const haystack=`${name} ${catLabel}`.trim();
   if(name===queryNorm)return 100;
   if(name.startsWith(queryNorm))return 80;
   if(name.includes(queryNorm))return 60;
   if(catLabel.includes(queryNorm))return 40;
-  const tokens=queryNorm.split(' ').filter(Boolean);
-  const tokenScore=tokens.reduce((sum,token)=>sum+(token.length>=2&&name.includes(token)?15:0),0);
-  if(tokenScore>0)return tokenScore;
+  const tokens=queryNorm.split(/\s+/).filter(token=>token.length>=2);
+  // Cụm nhiều từ chỉ khớp khi TẤT CẢ từ đều có trong dữ liệu sản phẩm. Logic
+  // cũ cộng điểm từng từ riêng lẻ nên "hà nội" vẫn khớp "haori" nhờ chữ "ha".
+  if(tokens.length&&tokens.every(token=>haystack.includes(token)))return 20+tokens.length*10;
   // Dung sai g\u00f5 nh\u1ea7m: so t\u1eebng t\u1eeb trong t\u00ean v\u1edbi t\u1eeb kho\u00e1, l\u1ec7ch t\u1ed1i \u0111a 2 k\u00fd t\u1ef1.
+  // Chỉ áp dụng cho MỘT từ đủ dài; không biến tên địa danh/câu không liên quan
+  // thành một món hàng gần giống về mặt ký tự.
+  if(tokens.length!==1||tokens[0]!==queryNorm||queryNorm.length<4)return 0;
   const words=name.split(' ');
   return Math.max(0,...words.map(word=>{
     if(Math.abs(word.length-queryNorm.length)>2)return 0;
     const distance=levenshtein(word,queryNorm);
-    return distance<=2?Math.max(0,20-distance*8):0;
+    const maxDistance=queryNorm.length<=5?1:2;
+    return distance<=maxDistance?Math.max(0,20-distance*8):0;
   }));
 }
 const SORTS = [

@@ -1,9 +1,12 @@
 "use client";
 
 import { Check, Download, ImagePlus, LoaderCircle, MapPin, RefreshCw, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useStore } from "@/components/store-provider";
 import { api, runAiJob } from "@/lib/client-api";
 import { formatCurrency, mediaUrl } from "@/lib/format";
+import { loginHref } from "@/lib/storefront-access";
 import type { JapanSpot, Product } from "@/lib/types";
 
 type TravelPose = { id: string; label: string; description: string; recommended?: boolean };
@@ -26,6 +29,7 @@ const resultImage = (data: Record<string, unknown>) => {
 };
 
 export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: Product[] }) {
+  const { authStatus } = useStore();
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [selectedSlug, setSelectedSlug] = useState("");
@@ -51,6 +55,10 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
   const isAdultGarment = /bikini|swim|đồ bơi/i.test([product?.slug, product?.name, ...(product?.tags || [])].join(" "));
 
   useEffect(() => {
+    if (authStatus !== "authenticated") {
+      setStage("idle");
+      return;
+    }
     const query = new URLSearchParams({ place: spot.place, prefecture: spot.prefecture, limit: "10" });
     Promise.all([
       api<{ recommendations?: Recommendation[]; scenes?: Scene[] }>(`/api/japan-spots/recommendations?${query}`, { timeoutMs: 12_000 }),
@@ -67,7 +75,7 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
       setSize(nextRecs[0]?.recommendedSize || nextRecs[0]?.product.sizes?.[0] || "");
     }).catch((caught) => setError(caught instanceof Error ? caught.message : "Không tải được gợi ý."))
       .finally(() => setStage("idle"));
-  }, [spot.place, spot.prefecture]);
+  }, [authStatus, spot.place, spot.prefecture]);
 
   useEffect(() => {
     setSize(selectedDefaultSize);
@@ -104,6 +112,13 @@ export function TravelExperience({ spot, catalog }: { spot: JapanSpot; catalog: 
       setError(caught instanceof Error ? caught.message : "Chưa hoàn tất được ảnh du lịch.");
     } finally { setStage("idle"); }
   };
+
+  if (authStatus !== "authenticated") {
+    return <div className="travel-experience">
+      <section className="travel-stage"><div className="travel-result"><img src={mediaUrl(spot.photoUrl)} width="1024" height="1365" alt={`Phong cảnh ${spot.place}`} /></div></section>
+      <aside className="travel-controls"><span className="eyebrow"><MapPin aria-hidden="true" /> Đưa tôi tới đây</span><h2>Đăng nhập để tạo ảnh tại {spot.place}</h2><p>Khách có thể xem sản phẩm và thông tin địa điểm. Tải ảnh, thử đồ và ghép cảnh chỉ mở sau khi đăng nhập.</p><Link className="button primary full" href={loginHref(`/du-lich-nhat-ban/${spot.id}`)}>Đăng nhập để tiếp tục</Link><Link className="button secondary full" href="/san-pham">Xem sản phẩm JAPANO</Link></aside>
+    </div>;
+  }
 
   return <div className="travel-experience">
     <section className="travel-stage">

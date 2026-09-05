@@ -170,11 +170,15 @@ cửa hàng chỉ nhúng khi người dùng bấm mở, để trang mua sắm lu
 
 Chi tiết: [`web/README.md`](web/README.md).
 
-App và Storefront dùng cùng backend MongoDB, catalog, danh tính người dùng và
-đơn hàng khi đăng nhập bằng cùng email. Tuy nhiên giỏ/wishlist chưa có tính nhất
-quán đa thiết bị hoàn chỉnh: App còn cache giỏ theo tài khoản trong AsyncStorage,
-còn Storefront giữ giỏ và wishlist trong `localStorage` của trình duyệt. Không
-được xem "cùng database" là bằng chứng hai màn hình này luôn hiển thị giống nhau.
+App và Storefront dùng cùng backend MongoDB, catalog, danh tính người dùng, đơn
+hàng, giỏ và wishlist khi đăng nhập bằng cùng email. Cache AsyncStorage/localStorage
+chỉ giúp mở nhanh/offline sau khi xác thực và được tách theo từng user. Storefront
+không có giỏ/yêu thích khách: chưa đăng nhập chỉ xem, tìm và lọc sản phẩm; giỏ,
+yêu thích, thanh toán, tài khoản, Ori và thử đồ AI đều chuyển tới đăng nhập và
+BFF từ chối API bảo vệ bằng `401`. Sau đăng nhập, hai client tiếp tục đồng bộ
+giỏ/wishlist của tài khoản về backend. Số “Đã bán” trên mọi
+thẻ sản phẩm lấy từ đơn thành công thật (loại dữ liệu demo/admin-test), kể cả khi
+giá trị là 0 — không chèn đơn giả để làm bảng bán chạy trông dày hơn.
 
 ### 🛠️ Web Admin
 
@@ -317,6 +321,27 @@ mặc nhiên là mốc tốt nhất. Benchmark validation (8 mẫu / 2 danh tín
 [`fit_lora.status.json`](backend/ai_training/models/fit_lora.status.json), không
 chép từ tài liệu. Quy trình tái tạo dataset, train và benchmark nằm trong
 [`backend/ai_training/README.md`](backend/ai_training/README.md).
+
+QA runtime ngày 05/09/2026 với 10 bộ bổ sung × 5 ảnh full-body đã được AI
+outpaint: 49/50 request trả ảnh, một ca fail-closed; tuy nhiên review nghiêm ngặt
+chỉ ra 0/50 ảnh giữ đúng đồng thời loại, kết cấu và phom garment. Có 35/50 ảnh
+giữ được màu/họa tiết nhưng sai dáng, 14/50 không còn nhận ra đúng garment và 1
+lỗi kỹ thuật. Đây là giới hạn chất lượng hiện tại, không được diễn giải 49/50
+thành tỷ lệ thành công thị giác. Chi tiết và contact sheet nằm tại
+[`test-results/tryon/2026-09-05/10-more-outfits-x-5-full-body-ai-20260905-050239/`](test-results/tryon/2026-09-05/10-more-outfits-x-5-full-body-ai-20260905-050239/).
+
+Test bổ sung lúc 06:43 ngày 05/09: Yukata xanh chàm + Haori Seigaiha × 5 mẫu
+trả 10/10 ảnh 960×1280, trung bình 33,16 giây (fast, size M, không profile/số đo).
+Yukata vẫn sai phom ở 5/5 ảnh; Haori có 3/5 ảnh đóng vạt thành sơ mi.
+Xem [bảng ảnh và review](test-results/tryon/2026-09-05/2-outfits-x-5-people-064308/REVIEW.md); tỷ lệ API không phải tỷ lệ đạt thị giác.
+
+Cùng ngày, test riêng `bikini-hoa-anh-dao` trên 5 ảnh đó đạt 5/5 API và 5/5
+giữ đúng thiết kế hai mảnh/họa tiết, nhưng không giữ nghiêm ngặt pose ban đầu.
+P50 là 36,72 giây; cold-start đầu tiên 88,19 giây, bốn lượt sau trung bình 35,99
+giây. Bikini chậm vì có cổng Qwen3-VL kiểm tra ảnh người lớn trước, rồi chạy một
+lượt FLUX.2 đa tham chiếu low-memory cho cả áo và quần; arbiter nhả model khi về
+focus `browse`, nên lần sau phải nạp lại. Xem
+[`REVIEW.md`](test-results/tryon/2026-09-05/bikini-1-outfit-x-5-full-body-ai-20260905054341/REVIEW.md).
 
 **❌ Không fine-tune, và nói rõ vì sao**
 
@@ -492,6 +517,34 @@ giây; FASHN và quality/safety gate vẫn chạy. Một phép đo trước đó
 giây. Android ghi nhận app chuyển qua Home, Cài đặt và Camera trong lúc request
 chạy mà không có `GPU_JOB_CANCELLED`.
 
+Warm-up tối 04/09/2026 chạy đúng 70 request thật (5 preset × 14 trang phục,
+`fast`, size M): 67 ảnh vượt quality gate, 3 ảnh bị từ chối vì thay đổi/che mặt,
+0 cache hit và 0 job bị huỷ. Thời gian trung bình 21,56 giây/request, khoảng
+19,86–37,76 giây; GPU đạt đỉnh 100% ở cả 70 lượt và VRAM cao nhất 4.962 MiB.
+Sau khi trả ảnh cuối, hàng đợi rỗng và GPU trở về 0%; model FASHN vẫn warm cho
+lượt kế tiếp, còn arbiter sẽ nhả nó khi chuyển sang Motion. Đây là kiểm tra
+runtime có ảnh trả về, chưa phải đánh giá trực quan chất lượng toàn bộ 67 ảnh.
+
+Ma trận Khám phá Nhật Bản tối 04/09/2026 chạy 10 địa điểm × 5 preset theo đúng
+mặc định app (giữ pose, sản phẩm/size gợi ý đầu tiên, scene/slot đầu tiên):
+48/50 ảnh 1024×1536 ghép thành công và đều `groundSafe:true`; hai lượt Otaru bị
+coverage gate chặn trước khi ghép. Có 22 inference mới (trung bình 21,76 giây)
+và 28 cache hit khi nhiều địa điểm dùng cùng outfit; bước ghép cảnh trung bình
+0,46 giây. Visual review xác nhận hình thể năm preset được giữ nhưng còn ba gap:
+người mẫu đi chân trần/ánh sáng chưa hòa nền, áo happi `khoac-nhat` mất cấu trúc
+mở vạt, và hồ sơ 155 cm/115 kg bị recommender rơi về S khi 4XL không có thay vì
+chọn size khả dụng gần nhất XXL. Ba điểm này chưa được sửa trong lượt kiểm thử.
+
+Ma trận ngày 05/09/2026 chạy 15 trang phục × 5 ảnh kiểm thử qua API thật ở
+profile `fast`: 74/75 ảnh 960×1280 hợp lệ; một ca Sơ mi trắng với ảnh very-slim
+bị fail-closed lặp lại ở lần retry, không trả overlay giả. P50 là 22,6 giây,
+P95 40,3 giây và trung bình 28,0 giây. Bốn output pass sau đó được ghép với 10
+scene: 40/40 request trả JPEG 1024×1536, `groundSafe:true`, trung bình 0,51
+giây. Tuy nhiên visual review chỉ 10/40 ảnh cảnh đạt tự nhiên vì chỉ nguồn
+Cardigan có toàn thân; ba nguồn còn lại đã cắt chân nên vẫn trông cụt/lơ lửng
+dù validator hình học đạt. Kết quả này xác nhận scene cần thêm cổng kiểm tra độ
+phủ chân, không được coi HTTP 200 hoặc `groundSafe` là đủ cho chất lượng nhìn.
+
 Motion local cũng đã được kiểm tra trực tiếp trên Redmi: worker One-to-All sẵn
 sàng, request hoàn tất trong 70,186 giây và hai khung hình cách nhau hai giây
 khác nhau, xác nhận video thật sự phát. Đây vẫn là profile chất lượng, chưa phải
@@ -499,9 +552,9 @@ luồng nhanh như ảnh thử đồ.
 
 ### Luồng mua hàng
 
-Giỏ hàng khách nằm trên thiết bị và được **hợp nhất vào tài khoản sau khi đăng
-nhập** — backend giữ số lượng lớn hơn, không mất sản phẩm. Ở bước đặt hàng, toàn
-bộ giá, mã ưu đãi, tồn kho và tổng tiền được tính lại từ dữ liệu server. Đơn COD
+Storefront yêu cầu đăng nhập trước khi thêm giỏ hoặc yêu thích; giỏ thuộc tài
+khoản và đồng bộ với app qua backend. Ở bước đặt hàng, toàn bộ giá, mã ưu đãi,
+tồn kho và tổng tiền được tính lại từ dữ liệu server. Đơn COD
 xác nhận ngay; Stripe và VNPay chỉ báo thành công **sau** callback thật từ cổng
 thanh toán.
 
@@ -615,7 +668,7 @@ Toàn bộ biến môi trường tham khảo nằm trong [`.env.example`](.env.e
 
 ```bash
 npm run check                      # backend tests + mobile typecheck + python tests
-npm --workspace backend test       # 429 test (2026-09-03)
+npm --workspace backend test       # 434 test (2026-09-04)
 npm --workspace mobile run typecheck
 python3 -m unittest discover -s backend/test/python -v
 
@@ -683,3 +736,30 @@ japano/
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) trước khi dùng lại.
 
 </div>
+
+### Benchmark 20 ca thử đồ trên PC — 05/09/2026
+
+4 trang phục × 5 mẫu, fast/M, không profile/số đo: 19/20 trả ảnh 960×1280;
+1 ca sơ mi bị quality gate chặn sau hai lần sinh nội bộ. Trung bình 37,61 giây/ca,
+P50 37,435 giây, toàn batch 12 phút 35 giây; hai lượt đầu 65,99/81,39 giây.
+Sơ mi giữ đặc điểm chính tốt hơn trong bộ mẫu này; Yukata/Haori vẫn sai phom,
+cardigan có ca rút ngắn hoặc thay đổi cả quần. Đây là tỷ lệ trả ảnh, không phải
+tỷ lệ đúng trang phục. Xem [review và gallery](test-results/tryon/2026-09-05/4-outfits-x-5-people-091037/REVIEW.md).
+
+### Chạy Storefront trực tiếp trên PC
+
+Khi backend đang chạy ở cổng 4100, dùng
+`JAPANO_API_ORIGIN=http://127.0.0.1:4100 npm --prefix web run dev`
+để Storefront gọi backend nội bộ. Mở <http://localhost:4200> và
+Web Admin tại <http://localhost:4100/admin/>. Không cần Tailscale cho hai địa chỉ này.
+
+### Ori: giới hạn thời gian chờ phản hồi
+
+Ori dùng chung ngân sách chờ AI cho nhận diện ý định và diễn đạt câu trả lời:
+`JAPANO_CHAT_BUDGET_MS=8000` mặc định (tối đa 12000 ms), bước nhận diện tối đa
+3000 ms. Khi AI chậm/lỗi, Ori trả bản nháp đã truy hồi từ catalog; giới hạn
+áp dụng cả khi đọc nội dung JSON. Lỗi xử lý trả thông báo để gửi lại, lỗi lưu
+lịch sử không làm mất câu trả lời đã tạo. Web tự cuộn tới tin mới.
+Kiểm chứng ngày 05/09: backend 441 test đạt; 6 câu trên web đăng nhập thật
+trả trong 97–853 ms, kiểm tra phục hồi sau HTTP 503 đạt. Chưa xác nhận thao tác
+chat trên Redmi trong lượt này vì thiết bị đang thử đồ.

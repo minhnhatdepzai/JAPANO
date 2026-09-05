@@ -124,6 +124,10 @@ export const ProductCard = React.memo(({ p, width=150, reason, imgH=180, index=0
           <View style={st.meta}>
             <Text style={st.nm} numberOfLines={2}>{p.name}</Text>
             <Price value={p.price} old={p.old} size={13} />
+            <View style={st.stats}>
+              <Text style={st.stat}>{p.rating>0?`★ ${p.rating}`:'Chưa đánh giá'}</Text>
+              <Text style={st.stat}>Đã bán {Math.max(0,Number(p.sold)||0)}</Text>
+            </View>
             {!!displayReason && (
               <View style={st.reasonPill}>
                 <Text style={st.reasonSpark}>✦</Text>
@@ -151,8 +155,10 @@ const st = StyleSheet.create({
   heart:{ position:'absolute', top:8, right:8, width:44, height:44, borderRadius:22, backgroundColor:'rgba(255,255,255,0.96)', alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:'rgba(17,17,17,0.08)' },
   saleTag:{ position:'absolute', top:10, left:10, backgroundColor:C.shu, borderRadius:7, paddingHorizontal:7, paddingVertical:4 },
   saleTagT:{ color:'#fff', fontFamily:F.bodyX, fontSize:10 },
-  meta:{ minHeight:101, paddingHorizontal:10, paddingTop:9, paddingBottom:10 },
+  meta:{ minHeight:122, paddingHorizontal:10, paddingTop:9, paddingBottom:10 },
   nm:{ minHeight:34, fontFamily:F.bodyB, fontSize:12.5, lineHeight:17, color:C.ink, marginBottom:3 },
+  stats:{flexDirection:'row',justifyContent:'space-between',gap:5,marginTop:5},
+  stat:{fontFamily:F.bodyM,fontSize:9.5,color:C.muted},
   reasonPill:{ alignSelf:'flex-start', maxWidth:'100%', flexDirection:'row', alignItems:'center', gap:4, marginTop:6, borderRadius:999, backgroundColor:C.washi2, paddingVertical:3, paddingHorizontal:7 },
   reasonSpark:{ color:C.shu, fontFamily:F.bodyB, fontSize:9 },
   reason:{ flexShrink:1, fontFamily:F.bodyM, fontSize:9.5, color:C.ink },

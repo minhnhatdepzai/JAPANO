@@ -90,6 +90,9 @@ Ràng buộc đang được thực thi trong mã:
   `japano_session` với `HttpOnly`, `SameSite=Lax`, `Secure` khi chạy HTTPS.
   JWT không bao giờ vào `localStorage`.
 - Mọi mutation kiểm tra `Origin`/`Sec-Fetch-Site`; yêu cầu chéo site bị trả 403.
+- Khách chỉ có quyền đọc catalog và nội dung công khai. Mọi mutation (ngoại trừ
+  đăng nhập/đăng ký/khôi phục mật khẩu) và các API cá nhân/AI đều cần cookie
+  phiên; thiếu cookie được BFF trả `401` trước khi request chạm backend.
 - Các prefix `admin`, `state`, `seed`, `reset`, `analytics`, `users`, `payments`
   bị chặn ở BFF (trả 404). Admin **không** được proxy qua storefront.
 - Chỉ route công khai (`storefront/home`, `products`, `shop`, `categories`,
@@ -98,9 +101,15 @@ Ràng buộc đang được thực thi trong mã:
 - `lib/server-api.ts` giữ một bộ đệm TTL 30 giây trong tiến trình cho các lần đọc
   catalog công khai, để một lần render trang không gọi backend nhiều lần. Không
   có dữ liệu cá nhân nào đi qua bộ đệm này.
-- Giỏ hàng khách được hợp nhất vào tài khoản sau khi đăng nhập
-  (`POST /api/carts/sync` với `merge: true`), rồi giao diện dựng lại giỏ từ chính
-  kết quả hợp nhất. Backend giữ số lượng lớn hơn nên không mất sản phẩm.
+- Sau khi có phiên đăng nhập, Storefront nạp giỏ và wishlist của đúng tài khoản
+  (`POST /api/carts/sync` và `/api/wishlist/sync`), dựng lại giao diện từ catalog
+  hiện tại và tiếp tục đồng bộ mọi thay đổi về backend. Storefront không tạo giỏ
+  hoặc wishlist khách; cache `localStorage` được tách theo user đã xác thực và
+  các khóa guest cũ bị loại bỏ để không lộ dữ liệu giữa những người dùng chung
+  trình duyệt. Mobile cũng đọc nguồn backend này khi đăng nhập.
+- Mọi thẻ và trang chi tiết đều hiện `Đã bán N`, gồm cả `0`. `N` được backend
+  tính từ đơn thành công thật, bỏ đơn demo/test; trang bán chạy không dùng số
+  seed hoặc nhãn gắn tay.
 
 ## Async AI jobs
 
@@ -184,13 +193,17 @@ Full workerd production còn lộ hydration React/Vinext #418 ở các trang cli
 sau điều hướng, nên chưa được ghi là toàn bộ pass. Suite chạy hai project
 (`mobile-390`, `desktop-1440`) và phủ: catalog
 thật ở trang chủ, hàng mới, bán chạy không gắn nhãn giả, search/filter/sort trên
-URL, PDP màu–size–tồn kho, quick-add và số lượng giỏ, wishlist, hợp nhất giỏ
-khách sau đăng nhập thật, voucher do backend quyết định, store locator QTSC9
+URL, PDP màu–size–tồn kho, quick-add và số lượng giỏ, wishlist, phân quyền khách
+đọc-only và đồng bộ tài khoản thật, voucher do backend quyết định, store locator QTSC9
 (10.8537915, 106.6260636), 360/390 không tràn ngang, điều hướng bàn phím,
 `prefers-reduced-motion`, footage Sakura/Fuji, React Bits adaptations, GSAP
 cart/order/route motion và hợp đồng
 job try-on bằng stub. Mọi test đều fail nếu console có error/warning, có ảnh vỡ,
 hoặc có nút nhỏ hơn 44×44.
+
+Ngày 2026-09-04, unit suite Storefront đạt 13/13, TypeScript sạch, ESLint sạch và
+production build thành công. Case phân quyền khách cũng đạt trên Chromium
+desktop 1440 và mobile 390; phiên đăng nhập thật vẫn mở được phòng thử đồ.
 
 ### Smoke AI thật (cần GPU)
 

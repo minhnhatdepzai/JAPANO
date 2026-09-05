@@ -385,11 +385,14 @@ ownership. Preserve Android app data; use update installs, not uninstall.
   `1c3a617d9107eaef7ad429e73938d84bca7e1f1a1accc98cdf388d0482faa599`).
   Mobile JWT and Storefront HttpOnly-session JWT resolve the same normalized
   email to the same backend user id, so catalog, user identity and orders are
-  shared. Cross-device cart/wishlist parity is not complete: Mobile caches cart
-  per user in AsyncStorage and syncs it to the backend, whereas Storefront keeps
-  both collections in browser localStorage and only merges a non-empty guest
-  cart at login. Use the backend as source of truth before claiming full data
-  synchronization.
+  shared. On 2026-09-04 cross-device cart/wishlist parity was completed:
+  authenticated Mobile and Storefront both hydrate from and write to backend
+  `carts`/`wishlists`. Storefront guests are read-only: they may browse/search
+  products, but cart, wishlist, checkout, account, Ori and AI try-on require a
+  verified session. The BFF also returns 401 for protected API access without
+  its HttpOnly cookie, so this is not merely a disabled button. Legacy shared
+  guest cache is discarded; local storage is now keyed by authenticated user
+  and remains only a fast/offline cache, not an independent source of truth.
 
 - `web/` là **website độc lập**, không phải Expo Web. React 19 + App Router qua
   `vinext`, TypeScript strict, TanStack Query, Zod, React Hook Form, Motion for
@@ -719,6 +722,160 @@ Bản gốc SHA-256 `4636587c5a2e…` sao lưu trong scratchpad phiên làm vi�
   tra trực quan ba mẫu đại diện cho thấy đúng người/dáng và đúng trang phục,
   nhưng còn artifact nhỏ ở biên tay/áo nên `ok=true` không thay thế QA bằng mắt.
 
+## Try-on warm-up 70 lượt (2026-09-04 tối)
+
+- Chạy tuần tự đúng 70 request qua API thật: 5 preset người lớn đã duyệt × 14
+  trang phục (không dùng phụ kiện), size M, `qualityMode=fast`, GPU focus
+  `tryon`. Kiểm tra cache trước khi chạy cho thấy 70/70 tổ hợp đều chưa có;
+  kết quả thực tế có 0 cache hit và 0 `GPU_JOB_CANCELLED`.
+- 67/70 request trả ảnh hợp lệ bằng `fashn-vton-1.5+fast-16steps`; 3 request
+  trả `TRYON_AI_UNAVAILABLE` sau khi cả hai ảnh sinh nội bộ đều bị quality gate
+  chặn vì `face_changed_or_covered`. Đây không phải lỗi OOM hay service chết.
+  Thời gian client trung bình 21,56 giây, nhỏ nhất 19,86 giây, lớn nhất 37,76
+  giây. GPU đạt đỉnh 100% ở cả 70 lượt; VRAM cao nhất 4.962/16.311 MiB.
+- Sau lượt cuối, GPU queue rỗng, FASHN `gpuJobActive=false`, Motion `busy=false`
+  và GPU utilization về 0%. FASHN vẫn được giữ warm trong VRAM; arbiter sẽ nhả
+  nó khi người dùng chuyển sang Motion. Log có cấu trúc ở
+  `test-results/tryon-warmup/20260904-212756/results.json`. Ảnh test không được
+  đăng, gắn tài khoản hay tự động hiển thị trên UI; không có kiểm tra trực quan
+  67 ảnh trong lượt warm-up này.
+
+## Explore Japan 10 địa điểm × 5 preset (2026-09-04 tối)
+
+- Chạy đúng 50 luồng theo mặc định hiện tại của app: gọi gợi ý theo từng
+  preset, lấy sản phẩm đầu tiên và size API đề xuất, giữ nguyên pose, chạy
+  `/api/tryon`, rồi ghép scene đầu tiên tại slot đầu tiên qua
+  `/api/japan-spots/scene-photo`. Kết quả: 48/50 ảnh cảnh 1024×1536 thành công,
+  cả 48 đều `groundSafe:true`; 2 lượt Kênh Otaru bị `COVERAGE_UNSAFE` ở bước
+  try-on nên không ghép ảnh lỗi vào cảnh.
+- Có 22 lượt inference mới và 28 cache hit do nhiều địa điểm cùng gợi ý đúng
+  sản phẩm/size; cache cho phép đổi nền mà không đốt lại GPU. Inference mới
+  trung bình 21,76 giây, ghép cảnh thành công trung bình 0,46 giây. GPU đạt đỉnh
+  100%, VRAM cao nhất 5.055/16.311 MiB; sau test queue rỗng và GPU về 0%.
+  Kết quả, 48 ảnh và contact sheet nằm ở
+  `test-results/explore-japan-matrix/20260904-220446/`.
+- Kiểm tra trực quan một ảnh mỗi địa điểm và đủ 5 vóc dáng tại Arashiyama:
+  khuôn mặt/hình thể được giữ, kể cả preset ngoại cỡ; vị trí chân hợp lệ theo
+  metadata. Chất lượng trình bày chưa đạt đồng đều: người mẫu đi chân trần,
+  bóng/ánh sáng còn cảm giác ghép, và sản phẩm `khoac-nhat` (ảnh nguồn là happi
+  đỏ mở vạt) bị FASHN biến thành áo ngắn gần kiểu T-shirt ở nhiều cảnh.
+- Phát hiện lỗi size chưa sửa: preset 155 cm/115 kg được `sizeFromBody()` xác
+  định cần 4XL, nhưng khi sản phẩm chỉ còn S–XXL, recommender rơi về
+  `available[0]` nên trả S với confidence thấp ở cả 10 địa điểm. Cần đổi sang
+  size khả dụng gần nhất (XXL) thay vì size đầu tiên. Đây là kết quả audit; chưa
+  chỉnh code trong lượt test này.
+
+## Try-on 15 trang phục × 5 ảnh và scene 4 × 10 (2026-09-05)
+
+- Chạy tuần tự 75 request thật (15 trang phục × 5 ảnh VITON-HD có license kiểm
+  thử), size M, profile người dùng nhập, `qualityMode=fast`, `fitEffect=false`.
+  74/75 request trả ảnh; `so-mi-trang × very-slim` bị fail-closed HTTP 503 ở cả
+  lượt chính và một lượt retry, không có overlay giả. P50 22,6 giây, P95 40,3
+  giây, trung bình 28,0 giây; ca đổi pose chậm nhất 101,4 giây. Tổng batch chính
+  2.109,6 giây.
+- 74 output đều đọc được, kích thước 960×1280 và có 74 SHA-256 khác nhau.
+  Contact sheet không thấy ảnh trắng/hỏng hoặc overlay thô, nhưng độ phủ người
+  vẫn phụ thuộc ảnh đầu vào: nhiều mẫu chỉ có tới hông/đùi, không phải ảnh toàn
+  thân phù hợp để ghép phong cảnh.
+- Lấy bốn output pass đại diện (Kimono, Cardigan, Furina, Happi) ghép vào 10
+  scene đã duyệt: 40/40 HTTP pass, 40/40 `groundSafe:true`, ảnh JPEG 1024×1536,
+  40 hash khác nhau; bước `segmentation-composite` trung bình 0,51 giây. Visual
+  review chỉ 10/40 đạt cảm giác đứng tự nhiên (ảnh Cardigan toàn thân); 30/40
+  còn lại dùng ba ảnh nguồn đã cắt chân nên nhìn cụt/lơ lửng dù validator vùng
+  đất đạt. Cần chặn hoặc cảnh báo ảnh không đủ chân trước khi cho ghép scene.
+- Toàn bộ ảnh, JSON và contact sheet nằm ở
+  `test-results/tryon/2026-09-05/15-outfits-x-5-samples-20260905-035506/`.
+
+## Try-on 10 trang phục bổ sung × 5 ảnh full-body AI (2026-09-05)
+
+- Chạy tuần tự 50 request thật với 10 SKU chưa dùng ở batch 15 bộ, size M,
+  profile người dùng nhập, `qualityMode=fast`, `fitEffect=false`. Năm ảnh người
+  là ảnh mẫu đã AI-outpaint phần chân, không phải ground truth đo cơ thể.
+- 49/50 request trả ảnh; `hakama-nu × average` fail-closed HTTP 503 ở cả lượt
+  chính và retry, không dùng overlay giả. P50 36,2 giây, P95 39,1 giây, trung
+  bình 32,43 giây, chậm nhất 72,1 giây; batch chính mất 1.621,9 giây.
+- 49/49 output đọc được, đều 960×1280 và có hash khác nhau. Manual visual review
+  nghiêm ngặt: 0/50 giữ đúng đồng thời loại, kết cấu và phom garment; 35/50 còn
+  nhận ra màu/họa tiết nhưng sai dáng, 14/50 không còn nhận ra đúng garment, 1
+  lỗi kỹ thuật. Kimono/Yukata thường bị rút thành váy/áo ngắn, Samue thành suit,
+  Hakama thành váy hoặc quần phổ thông. Không dùng tỷ lệ API 49/50 làm tỷ lệ
+  thành công thị giác.
+- Sáu SKU Yukata/Kimono/Haori có `_tryon-flat.png` nhưng chưa nằm trong allowlist
+  flat-lay mặc định, nên runtime dùng `_1.jpg`; các cặp ảnh gần giống nhau nên
+  đây chỉ là yếu tố cấu hình cần kiểm chứng thêm, không phải nguyên nhân đã được
+  chứng minh. Riêng `hakama-nu_1.jpg` là garment gấp khó đọc.
+- Kết quả, contact sheet, ảnh garment đã dùng và review nằm ở
+  `test-results/tryon/2026-09-05/10-more-outfits-x-5-full-body-ai-20260905-050239/`.
+
+## Bikini 1 bộ × 5 ảnh full-body AI (2026-09-05)
+
+- Test thật `bikini-hoa-anh-dao`, size M, fast, không fit-effect/body-analysis,
+  xác nhận 18+: 5/5 HTTP pass; 5 PNG 1152×1536 và 5 hash khác nhau. P50 36,72
+  giây, trung bình 46,43 giây, cold-start 88,19 giây; bốn lượt sau trung bình
+  35,99 giây.
+- Visual review: 5/5 giữ đúng thiết kế hai mảnh, nền trắng và họa tiết hoa; mặt
+  vẫn nhận ra. Nhưng 0/5 giữ nghiêm ngặt pose ban đầu và chưa đủ bằng chứng kết
+  luận giữ chính xác hình thể/số đo; ba lượt báo `+pose`. Phần chân ảnh đầu vào
+  do AI outpaint nên không phải ground truth.
+- Log tách pha: cổng Qwen3-VL 18+ mất 28 giây ở lượt đầu và 4–7 giây ở các lượt
+  sau; pose/fit 1–5 giây; sinh+validate bikini 55 giây lượt đầu và 26–30 giây
+  sau. Pipeline dùng một lượt FLUX.2 đa tham chiếu cho người+áo+quần, 5 step
+  low-memory/sequential offload (17–20 giây sampling), không phải hai lượt
+  FASHN. GPU queue rỗng trước batch.
+- Arbiter chuyển `vision → browse → swimwear → browse`; khi về `browse`, FLUX
+  bị nhả và request sau lại nạp model. Cold-start Qwen/FLUX là nguyên nhân chính
+  của cảm giác lâu. Kết quả và review:
+  `test-results/tryon/2026-09-05/bikini-1-outfit-x-5-full-body-ai-20260905054341/`.
+
+## Commerce, Lens and travel latency pass (2026-09-04)
+
+- Product cards on Mobile/Storefront and the web PDP always show `Đã bán N`,
+  including zero. The backend value remains derived only from successful real
+  orders and excludes demo/admin-test orders; no fake sales or live Atlas
+  mutations were introduced. Existing 70-product catalog remains the data set.
+- Mobile catalog search now strips Vietnamese diacritics including `đ`, requires
+  every token of a multi-word query to occur, and limits typo tolerance to one
+  sufficiently long token. `Hà Nội` therefore returns an empty product result
+  instead of matching `Haori` through the loose token `ha`. Storefront search
+  already used strict whole-query substring matching.
+- JAPANO Lens first runs the CPU color/catalog recommendation (`quick=true`) and
+  renders usable products/copy, then enriches portrait/mood analysis in the
+  background. The UI now has a moving scan line, staged labels and a real elapsed
+  timer; no fake percentage is shown. Product detail likewise renders a grounded
+  catalog description immediately while visual wording is upgraded in the
+  background.
+- Explore Japan uses the same fast VTON profile with body analysis skipped and
+  caches only the current session's generated try-on in RAM. Re-composing a
+  scene or revisiting the same photo/product/size/pose no longer reruns VTON;
+  personal photos are still not written to disk or MongoDB. The UI reports the
+  measured try-on/scene durations for each run.
+- Hidden preset `nu-mem-mai` now points to the generated adult image
+  `nu-mem-mai-110-120.jpg` and is labelled as a designed 110-120 kg size target.
+  This range is a design prior, not a weight inferred from pixels; direct or
+  user-entered measurements still win. Anchor generation is now 2.
+- Payment-receipt and refund/return email templates always include the immutable
+  address snapshot from the order (or `Chưa cung cấp` for legacy orders).
+- Validation: 434/434 backend Node tests, 110 Python tests (108 pass, 2 configured
+  skips), Mobile TypeScript, Storefront 13/13 Vitest, TypeScript and production
+  build and ESLint all passed. After restarting only Backend/Storefront, direct
+  backend and BFF returned byte-identical 70-product payloads; current real-sale
+  distribution is 7 positive / 63 zero, with Yukata xanh highest at 12. The
+  quick Lens endpoint returned grounded output in 160 ms and set
+  `portraitPending=true`; preset metadata and the new JPEG both returned 200.
+- Storefront guest-policy verification on 2026-09-04 passed in real Chromium at
+  desktop 1440 and mobile 390: catalog stayed public, legacy guest cache was
+  removed, cart/wishlist clicks and protected pages redirected to login, direct
+  unauthenticated try-on POST returned 401, and an authenticated session still
+  rendered `/thu-do` with HTTP 200.
+- Release APK (SHA-256 `2f516ba83ebfdb950c2007483157695599032bbd4ac42482c3c21c8d8ca19fd2`)
+  was built and update-installed with `adb install -r` on USB Redmi Note 8 Pro;
+  version stays 1.0.19/20 and the logged-in account survived. UI-tree checks on
+  the installed bundle confirmed `Đã bán 4`/`Đã bán 12`, query `ha noi` →
+  `0 sản phẩm` + `Không tìm thấy`, the Lens heading/three staged modes, and a
+  grounded Yukata style description visible one second after direct navigation.
+  The animation itself and Explore Japan VTON were not exercised with a personal
+  photo. All six JAPANO services remained active; the GPU queue was empty.
+
 ## Fast navigation
 
 - Body: `backend/body_analysis.py`, `backend/body_geometry.py`,
@@ -808,3 +965,60 @@ Bản gốc SHA-256 `4636587c5a2e…` sao lưu trong scratchpad phiên làm vi�
   `scripts/verify-oppo.sh`
 - Brand splash: `mobile/components/BrandSplash.tsx`, `mobile/app/_layout.tsx`,
   `mobile/assets/brand/`
+
+## Test mới 2 trang phục × 5 người (2026-09-05, 06:43)
+
+- Yukata xanh chàm + Haori Seigaiha: 10/10 API trả PNG 960×1280, 10 hash khác nhau.
+- Fast, size M, không fit-effect, bỏ body analysis và không gửi profile/số đo.
+- Trung bình 33,16 s, P50 36,535 s, tổng request 331,55 s; queue rỗng khi kết thúc.
+- Visual: Yukata 0/5 giữ đúng phom; Haori 2/5 còn nhận ra mở vạt nhưng chưa
+  đạt xác nhận nghiêm ngặt, 3/5 bị đóng thành sơ mi (1 ca đổi thành tay dài).
+  Sáu lượt có FLUX pose; ảnh người có phần chân AI outpaint, không là ground truth.
+- Đã nhường GPU khi app có job. Test API, không phải xác nhận thao tác trên thiết bị.
+- Ảnh, contact sheet và REVIEW.md: `test-results/tryon/2026-09-05/2-outfits-x-5-people-064308/`.
+
+## Runtime stopped at user request (2026-09-05T08:23:51)
+
+- Stopped only japano-backend, japano-body-analysis, japano-fashn and japano-motion user services.
+- Verified all four inactive; no listening sockets on 4100/7862/7863/7864.
+- Backend-served Web Admin is unavailable while stopped; app API calls cannot complete.
+- Unrelated services and networking were not changed.
+
+## Local PC runtime restored (2026-09-05T09:08:08)
+
+- User is now physically on the PC (not remote). Backend + Body + FASHN + Motion started; all health endpoints returned HTTP 200. FASHN/FLUX load on demand.
+- Started transient user service `japano-storefront-local` from repo `web/`, with `JAPANO_API_ORIGIN=http://127.0.0.1:4100` and `npm run dev` on 4200.
+- Admin `http://localhost:4100/admin/` and Storefront `http://localhost:4200` returned 200; opened both through xdg-open on local X11 display :1.
+- Existing remote networking unchanged. This does not launch the Android app or validate a fresh AI generation.
+
+## Test 4 trang phục × 5 người trên PC (2026-09-05, 09:10)
+
+- Chạy mới 20 ca API: Yukata xanh chàm, Haori Seigaiha, sơ mi trắng, cardigan dài.
+  Fast/M, không fit-effect, bỏ body analysis, không profile/số đo; 5 ảnh có chân AI outpaint.
+- 19/20 ảnh PNG 960×1280, hash khác nhau. Ca 11 sơ mi × very-slim HTTP 503:
+  hai lần sinh nội bộ bị flat_or_blurred_garment/garment_unchanged chặn.
+- Trung bình 37,61 s/ca, P50 37,435 s, min 21,26/max 81,39; batch 754,78 s.
+  Hai lượt đầu 65,99/81,39 s; 18 lượt sau trung bình 33,60 s. Queue rỗng khi kết thúc.
+- Visual: Yukata 0/5 giữ phom dài; Haori 3/5 đóng vạt, một ca đổi tay dài.
+  Sơ mi 4 ảnh trả được giữ đặc điểm chính; cardigan có 3 ca rút ngắn và 2 ca
+  đổi cả quần ngoài mục tiêu. Không đánh đồng HTTP thành công với chất lượng thị giác.
+- Gallery offline, contact sheet, REVIEW.md, results.json và ZIP: `test-results/tryon/2026-09-05/4-outfits-x-5-people-091037/`.
+
+## Ori response reliability and active device caveat (2026-09-05)
+
+- `backend/lib/chatHttp.js` bounds the complete JSON response, including body
+  after headers. Previous shared fetch timeout stopped at headers; reproduced
+  a 60 ms request still pending until an external abort at 352 ms.
+- Ori planning + rewriting now share `JAPANO_CHAT_BUDGET_MS` (default 8000,
+  maximum 12000); planner at most 3000 ms, then remaining budget for rewriting.
+  On timeout return the existing grounded draft; no invented catalog facts.
+- Async chat exceptions return JSON; history write failures keep the answer
+  and set historySaved=false. Web AiStylist scrolls to new responses.
+- Backend 441/441, Web 13/13 + TypeScript and component ESLint passed. Real
+  authenticated Chromium: six replies in 97–853 ms, bottom gap zero, simulated
+  503 recovery followed by successful real retry. Evidence: `test-results/ori-fix-20260905/`.
+- Applied backend restart at 09:33:58. Redmi was subsequently observed still
+  showing a try-on timer (181 s) while backend queue and FASHN job state were
+  idle. Restart may have interrupted the client request; exact stage unresolved.
+  User is actively testing try-on: do not restart or launch competing benchmarks.
+  Mobile chat tap validation was deferred; no APK reinstall was needed for server fix.

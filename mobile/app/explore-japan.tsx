@@ -226,6 +226,11 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
   const [tab, setTab] = useState<'before' | 'tryon' | 'scene'>('scene');
   const [error, setError] = useState('');
   const [sceneRetry, setSceneRetry] = useState(false);
+  // Cache chỉ sống trong RAM của đúng màn hình/ảnh hiện tại. Nó giúp đổi góc
+  // chụp hoặc quay lại cùng sản phẩm không chạy lại 20–40 giây VTON, nhưng
+  // tuyệt đối không ghi ảnh cá nhân ra đĩa hay backend cache.
+  const sessionTryOnCache = useRef(new Map<string, string>());
+  const [performanceNote, setPerformanceNote] = useState('');
 
   // Gợi ý tải ngay khi mở địa điểm, song song với mọi thứ khác. Huỷ khi đổi
   // địa điểm để một phản hồi đến muộn không ghi đè danh sách mới.
@@ -302,21 +307,26 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.85, base64: true });
     const asset = pick.canceled ? null : pick.assets?.[0];
     if (!asset?.base64) return;
+    sessionTryOnCache.current.clear();
     setPhoto({ uri: asset.uri, base64: `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`, label: 'Ảnh của bạn' });
+    setPerformanceNote('');
     clearResult();
   };
 
   const run = async (item: SpotRecommendation, chosenSize: string, sceneOnly = false) => {
     if (!photo) { Alert.alert('Chưa có ảnh', 'Hãy chụp ảnh hoặc chọn ảnh có sẵn.'); return; }
     setError(''); setSceneRetry(false);
+    const cacheKey = `${photo.uri}|${item.product.slug}|${chosenSize}|${travelPoseId || 'giu-dang'}`;
+    let worn = sceneOnly ? tryonImage : (sessionTryOnCache.current.get(cacheKey) || '');
+    const reusedTryOn = Boolean(worn);
+    const tryOnStartedAt = Date.now();
     // Làm nóng FASHN SONG SONG với phần chuẩn bị, thay vì để cold-start cộng
     // nối tiếp vào thời gian chờ — đây là cách màn "Thử đồ thông minh" đang làm
     // và là một trong hai lý do màn này chậm hơn hẳn.
-    const focusReady = reportGpuFocus('tryon');
-    setStep(sceneOnly ? 'scene' : 'tryon');
+    const focusReady = reusedTryOn ? Promise.resolve() : reportGpuFocus('tryon');
+    setStep(reusedTryOn ? 'scene' : 'tryon');
     await focusReady;
-    beginGpuJob();
-    let worn = sceneOnly ? tryonImage : '';
+    if (!reusedTryOn) beginGpuJob();
     try {
       if (!worn) {
         setStep('tryon');
@@ -337,10 +347,13 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
         if (!output.imageUrl) throw new Error(output.message || 'Chưa tạo được ảnh thử đồ.');
         setStep('fit');
         worn = output.imageUrl;
+        sessionTryOnCache.current.set(cacheKey, worn);
         setTryonImage(worn);
         setTab('tryon');
       }
+      const tryOnMs = Date.now() - tryOnStartedAt;
       setStep('scene');
+      const sceneStartedAt = Date.now();
       const composed = await composeScenePhoto({
         place: spot.place, prefecture: spot.prefecture,
         personImageBase64: worn,
@@ -350,6 +363,9 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
       setStep('finishing');
       setSceneImage(composed.imageUrl);
       setTab('scene');
+      setPerformanceNote(reusedTryOn
+        ? `Đã dùng lại ảnh mặc thử trong phiên · ghép cảnh ${Math.max(1,Math.round((composed.durationMs||Date.now()-sceneStartedAt)/100)/10)} giây`
+        : `Thử đồ ${Math.round(tryOnMs/1000)} giây · ghép cảnh ${Math.max(1,Math.round((composed.durationMs||Date.now()-sceneStartedAt)/100)/10)} giây`);
     } catch (err: any) {
       if (err instanceof TryOnSafetyError) setError(err.message);
       else if (worn) {
@@ -363,7 +379,7 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
         setTab('tryon');
       } else setError(String(err?.message || 'Chưa tạo được ảnh. Hãy thử lại.'));
     } finally {
-      endGpuJob();
+      if (!reusedTryOn) endGpuJob();
       setStep('idle');
       if (gpuScreenActive.current) void reportGpuFocus('tryon');
     }
@@ -580,6 +596,7 @@ function TravelTryOnBox({ spot }: { spot: JapanSpot }) {
             })}
           </View>
           <SmartImage source={{ uri: shownImage }} style={st.tvResult} recyclingKey={`tv-out-${tab}`} />
+          {!!performanceNote && <Text style={st.tvPerformance}>{performanceNote}</Text>}
           {!!activeScene && tab === 'scene' && <Text style={st.photoCredit}>{activeScene.attribution}</Text>}
         </>
       )}
@@ -920,6 +937,7 @@ const st = StyleSheet.create({
   tvTabT: { fontFamily: F.bodyB, fontSize: 10, color: C.ink },
   tvTabTOn: { color: '#fff' },
   tvResult: { width: '100%', aspectRatio: 2 / 3, borderRadius: 12, marginTop: 8, backgroundColor: C.washi2 },
+  tvPerformance: { fontFamily:F.bodyM, fontSize:10.5, color:C.ai, textAlign:'center', marginTop:7 },
   tvBuy: { marginTop: 12, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 12, backgroundColor: C.card },
   tvBuyName: { fontFamily: F.bodyX, fontSize: 14, color: C.ink },
   tvBuyPrice: { fontFamily: F.bodyB, fontSize: 12, color: C.shu, marginTop: 2 },

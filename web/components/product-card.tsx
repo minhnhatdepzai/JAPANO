@@ -6,13 +6,14 @@ import { useRef } from "react";
 import { useStore } from "@/components/store-provider";
 import { cloudinarySrcSet, cloudinaryUrl, formatCurrency, productHoverImage, productImage } from "@/lib/format";
 import { sellableVariants, totalStock, uniqueColors } from "@/lib/product";
+import { loginHref } from "@/lib/storefront-access";
 import type { Product } from "@/lib/types";
 
 const catalogLoadedAt = Date.now();
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const { addProduct, wishlist, toggleWishlist } = useStore();
+  const { addProduct, authStatus, wishlist, toggleWishlist } = useStore();
   const variants = sellableVariants(product);
   const stock = totalStock(variants);
   const main = productImage(product);
@@ -21,6 +22,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
   const liked = wishlist.includes(product.slug);
   const isNew = Boolean(product.createdAt && catalogLoadedAt - Number(product.createdAt) < 45 * 86400000);
   const label = stock === 0 ? "Hết hàng" : stock <= 5 ? "Sắp hết" : Number(product.sold || 0) > 0 ? "Bán chạy" : isNew ? "Mới" : "";
+  const tryOnPath = `/thu-do?product=${encodeURIComponent(product.slug)}`;
 
   const quickAdd = () => {
     if (!variants[0]) return;
@@ -37,13 +39,13 @@ export function ProductCard({ product, priority = false }: { product: Product; p
       <button className={`wishlist-button ${liked ? "active" : ""}`} aria-label={liked ? `Bỏ ${product.name} khỏi yêu thích` : `Thêm ${product.name} vào yêu thích`} aria-pressed={liked} onClick={() => toggleWishlist(product.slug)}><Heart aria-hidden="true" fill={liked ? "currentColor" : "none"} /></button>
       <div className="quick-actions">
         <button onClick={quickAdd} disabled={!variants[0]}><ShoppingBag aria-hidden="true" />{variants[0] ? `Thêm nhanh · ${variants[0].size}` : "Hết hàng"}</button>
-        <a href={`/thu-do?product=${encodeURIComponent(product.slug)}`}><Sparkles aria-hidden="true" />Thử ngay</a>
+        <a href={authStatus === "guest" ? loginHref(tryOnPath) : tryOnPath}><Sparkles aria-hidden="true" />Thử ngay</a>
       </div>
     </div>
     <div className="product-copy">
       <div><a className="product-name" href={`/san-pham/${product.slug}`}>{product.name}</a>{product.kanji && <span className="product-kanji">{product.kanji}</span>}</div>
       <div className="price-line"><strong>{formatCurrency(product.price)}</strong>{product.old && product.old > product.price ? <del>{formatCurrency(product.old)}</del> : null}</div>
-      <div className="product-meta"><span>{product.rating ? `★ ${product.rating}` : "Chưa có đánh giá"}</span>{Number(product.sold || 0) > 0 && <span>Đã bán {product.sold}</span>}</div>
+      <div className="product-meta"><span>{product.rating ? `★ ${product.rating}` : "Chưa có đánh giá"}</span><span>Đã bán {Math.max(0, Number(product.sold || 0))}</span></div>
       <ul className="swatches" aria-label="Màu đang có">{uniqueColors(variants).slice(0, 5).map((variant) => <li key={variant.key} title={variant.colorName} style={{ backgroundColor: variant.colorHex || "#ddd" }} />)}</ul>
     </div>
   </motion.article>;

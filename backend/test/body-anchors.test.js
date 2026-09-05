@@ -48,7 +48,7 @@ test('anchor chỉ bổ sung prior chọn size, không giả làm estimate đo �
   assert.equal(merged.sources.height, 'body-anchor-prior');
   assert.equal(merged.sources.weight, 'body-anchor-prior');
   assert.equal(merged.profile.height, 155);
-  assert.equal(merged.profile.weight, 75);
+  assert.equal(merged.profile.weight, 115);
 
   const summary = summarizeBodyAnalysis(analysis);
   assert.equal(summary.measurementStatus, 'insufficient_evidence');

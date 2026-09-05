@@ -11,7 +11,7 @@
 
 const { listTryonPresets } = require('./tryonPresets');
 
-const ANCHOR_GENERATION = 1;
+const ANCHOR_GENERATION = 2;
 const MIN_FEATURES = 3;
 const MIN_SIZING_CONFIDENCE = 0.28;
 
@@ -25,8 +25,8 @@ const SIGNATURES = Object.freeze({
     legRatio: 0.4600, bodyWidthRatio: 0.1797, shoulderHipRatio: 1.2851,
   },
   'nu-mem-mai': {
-    shoulderWidthRatio: 0.2830, hipWidthRatio: 0.2382, torsoRatio: 0.2897,
-    legRatio: 0.4611, bodyWidthRatio: 0.2179, shoulderHipRatio: 1.1883,
+    shoulderWidthRatio: 0.3444, hipWidthRatio: 0.3379, torsoRatio: 0.3000,
+    legRatio: 0.4544, bodyWidthRatio: 0.3388, shoulderHipRatio: 1.0193,
   },
   'nu-nang-dong': {
     shoulderWidthRatio: 0.2451, hipWidthRatio: 0.1949, torsoRatio: 0.2840,

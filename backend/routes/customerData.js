@@ -67,6 +67,17 @@ module.exports = function registerCustomerDataRoutes(api, ctx) {
     res.json({ ok: true });
   });
 
+  // Giỏ hàng của tài khoản là nguồn sự thật dùng chung cho Mobile và
+  // Storefront. Trước đây chỉ có POST /carts/sync: client mới đăng nhập mà
+  // không có giỏ cục bộ sẽ không có cách đọc giỏ đã tạo trên thiết bị khác.
+  api.get('/carts', requireSelfOrStaff((req) => req.query.userId), (req, res) => {
+    const userId = String(req.query.userId || '');
+    const cart = (read().carts || [])
+      .filter((item) => String(item.userId) === userId)
+      .sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
+    res.json({ ok: true, cart });
+  });
+
   api.post('/carts/sync', requireSelfOrStaff((req) => req.body?.userId), (req, res) => {
     try {
       const userId = String(req.body?.userId || '');
@@ -113,7 +124,7 @@ module.exports = function registerCustomerDataRoutes(api, ctx) {
     res.json({ ok: true, wishlist: slugs });
   });
 
-  api.post('/wishlist/sync', (req, res) => {
+  api.post('/wishlist/sync', requireSelfOrStaff((req) => req.body?.userId), (req, res) => {
     try {
       const userId = String(req.body?.userId || '');
       if (!userId || userId === 'guest') throw httpError(401, 'Bạn cần đăng nhập để lưu yêu thích.');
@@ -122,10 +133,12 @@ module.exports = function registerCustomerDataRoutes(api, ctx) {
       update((state) => {
         state.wishlists = state.wishlists || [];
         const existing = new Map(state.wishlists.filter((w) => w.userId === userId).map((w) => [w.productSlug, w]));
+        const merge = req.body?.merge === true;
+        const requested = merge ? [...existing.keys(), ...slugs] : slugs;
         state.wishlists = state.wishlists.filter((w) => w.userId !== userId);
         const now = Date.now();
         const seen = new Set();
-        for (const raw of slugs) {
+        for (const raw of requested) {
           const slug = String(raw || '');
           if (!slug || seen.has(slug)) continue;
           const product = state.products.find((p) => p.slug === slug || p.id === slug);

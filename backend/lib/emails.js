@@ -78,6 +78,19 @@ const orderTotal = (order, payment) => Number(
   ?? (order?.items || []).reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 1), 0),
 );
 
+// Luôn lấy snapshot địa chỉ trên đơn, không đọc lại sổ địa chỉ hiện tại của
+// người dùng: khách có thể đổi địa chỉ sau khi mua nhưng hoá đơn cũ phải giữ
+// nguyên nơi giao tại thời điểm đặt hàng.
+function orderAddress(order) {
+  const plain = String(order?.address || '').trim();
+  if (plain) return plain;
+  const detail = order?.addressDetails && typeof order.addressDetails === 'object' ? order.addressDetails : {};
+  return [detail.street, detail.ward, detail.district, detail.province]
+    .map((value) => String(value || '').trim())
+    .filter((value, index, values) => value && values.indexOf(value) === index)
+    .join(', ');
+}
+
 // ctx-aware như makeSendPushToUser trong lib/push.js: tự tra email của user từ
 // state, để route chỉ cần truyền userId.
 function makeMailNotifier({ read }) {
@@ -135,6 +148,7 @@ function makeMailNotifier({ read }) {
     const currency = payment?.currency || order?.payment?.currency || 'vnd';
     const total = orderTotal(order, payment);
     const code = order?.code || payment?.orderCode || order?.id || '';
+    const address = orderAddress(order);
     return deliver('payment-receipt', {
       to,
       subject: `${BRAND} — Đã nhận thanh toán đơn #${code}`,
@@ -144,6 +158,7 @@ function makeMailNotifier({ read }) {
         rows: [
           ['Mã đơn hàng', `#${esc(code)}`],
           ['Sản phẩm', itemLines(order?.items) || '—'],
+          ['Địa chỉ trên hoá đơn', esc(address || 'Chưa cung cấp')],
           ['Phương thức', esc(payment?.method || order?.payment?.method || 'Trực tuyến')],
           ['Mã giao dịch', esc(payment?.transactionCode || payment?.txn || order?.payment?.txn || '—')],
           ['Thời điểm', esc(when(payment?.updatedAt || payment?.createdAt))],
@@ -151,7 +166,7 @@ function makeMailNotifier({ read }) {
         ],
         note: 'Bạn có thể theo dõi tiến trình giao hàng trong mục <b>Đơn hàng</b> của ứng dụng. Hoá đơn này cũng là bằng chứng thanh toán khi cần đổi/trả.',
       }),
-      text: `JAPANO đã nhận thanh toán ${money(total, currency)} cho đơn #${code}. Cảm ơn bạn!`,
+      text: `JAPANO đã nhận thanh toán ${money(total, currency)} cho đơn #${code}. Địa chỉ trên hoá đơn: ${address || 'Chưa cung cấp'}. Cảm ơn bạn!`,
     });
   }
 
@@ -165,6 +180,7 @@ function makeMailNotifier({ read }) {
     const value = Number(amount ?? returnRequest?.amount ?? 0);
     const code = returnRequest?.orderCode || order?.code || '';
     const isCancel = String(returnRequest?.kind || '') === 'cancel';
+    const address = orderAddress(order);
     return deliver('refund-notice', {
       to,
       subject: `${BRAND} — Đã hoàn tiền đơn #${code}`,
@@ -175,6 +191,7 @@ function makeMailNotifier({ read }) {
           ['Mã đơn hàng', `#${esc(code)}`],
           ['Mã yêu cầu', esc(returnRequest?.code || '—')],
           ['Loại yêu cầu', isCancel ? 'Huỷ đơn' : 'Trả hàng'],
+          ['Địa chỉ trên hoá đơn', esc(address || 'Chưa cung cấp')],
           ...(returnRequest?.items?.length ? [['Sản phẩm hoàn', itemLines(returnRequest.items)]] : []),
           ['Thời điểm', esc(when(returnRequest?.updatedAt))],
           ['Số tiền hoàn', `<span style="color:${C.shu};font-size:15px">${esc(money(value, currency))}</span>`],
@@ -183,11 +200,11 @@ function makeMailNotifier({ read }) {
           ? 'Khoản này được cửa hàng hoàn <b>thủ công</b> (chuyển khoản/tiền mặt). Nếu sau 24 giờ bạn chưa nhận được, hãy liên hệ hotline để được hỗ trợ.'
           : 'Tiền được hoàn về đúng phương thức bạn đã thanh toán. Ngân hàng thường cần <b>5–10 ngày làm việc</b> để ghi có vào tài khoản của bạn.',
       }),
-      text: `JAPANO đã hoàn ${money(value, currency)} cho đơn #${code}.`,
+      text: `JAPANO đã hoàn ${money(value, currency)} cho đơn #${code}. Địa chỉ trên hoá đơn: ${address || 'Chưa cung cấp'}.`,
     });
   }
 
   return { sendLoginAlert, sendPasswordChangedAlert, sendPaymentReceipt, sendRefundNotice };
 }
 
-module.exports = { makeMailNotifier };
+module.exports = { makeMailNotifier, orderAddress };
