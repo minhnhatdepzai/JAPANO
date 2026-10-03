@@ -1,0 +1,146 @@
+{
+  "dataset": "ANSUR II",
+  "license": "CC0-1.0",
+  "seed": 73,
+  "split": {
+    "train": 3883,
+    "validation": 971,
+    "test": 1214
+  },
+  "metricNature": "Physical breadth table regression; NOT photo-to-body accuracy",
+  "models": {
+    "weight_kg": {
+      "validationMAE": 3.1805091555737954,
+      "testMAE": 3.206883594162355,
+      "testP90AbsoluteError": 6.784210979017888,
+      "testBias": -0.2580081216409383,
+      "testCount": 1214,
+      "weightSubgroups": {
+        "under50kg": {
+          "count": 13,
+          "mae": 3.375816629182075
+        },
+        "50to100kg": {
+          "count": 1084,
+          "mae": 3.047687956242181
+        },
+        "100kgPlus": {
+          "count": 117,
+          "mae": 4.663054039035964
+        },
+        "150kgPlus": {
+          "count": 0,
+          "mae": null
+        }
+      }
+    },
+    "chest_circ_cm": {
+      "validationMAE": 2.7663945805431798,
+      "testMAE": 2.667919693729266,
+      "testP90AbsoluteError": 5.4296997242579135,
+      "testBias": -0.02539638597344401,
+      "testCount": 1214,
+      "weightSubgroups": {
+        "under50kg": {
+          "count": 13,
+          "mae": 2.9911333877030697
+        },
+        "50to100kg": {
+          "count": 1084,
+          "mae": 2.6309982518866555
+        },
+        "100kgPlus": {
+          "count": 117,
+          "mae": 2.9740826418978994
+        },
+        "150kgPlus": {
+          "count": 0,
+          "mae": null
+        }
+      }
+    },
+    "waist_circ_cm": {
+      "validationMAE": 2.378483676282799,
+      "testMAE": 2.361673379818738,
+      "testP90AbsoluteError": 4.969280550944782,
+      "testBias": -0.21329895197685061,
+      "testCount": 1214,
+      "weightSubgroups": {
+        "under50kg": {
+          "count": 13,
+          "mae": 1.7795919053872036
+        },
+        "50to100kg": {
+          "count": 1084,
+          "mae": 2.278074016127315
+        },
+        "100kgPlus": {
+          "count": 117,
+          "mae": 3.2008936311786704
+        },
+        "150kgPlus": {
+          "count": 0,
+          "mae": null
+        }
+      }
+    },
+    "hip_circ_cm": {
+      "validationMAE": 1.9032991700737492,
+      "testMAE": 1.7971561972512782,
+      "testP90AbsoluteError": 3.7278913405856273,
+      "testBias": -0.2379817824925957,
+      "testCount": 1214,
+      "weightSubgroups": {
+        "under50kg": {
+          "count": 13,
+          "mae": 2.3612653737515448
+        },
+        "50to100kg": {
+          "count": 1084,
+          "mae": 1.7720582875162216
+        },
+        "100kgPlus": {
+          "count": 117,
+          "mae": 1.9670084609974139
+        },
+        "150kgPlus": {
+          "count": 0,
+          "mae": null
+        }
+      }
+    },
+    "bmi": {
+      "validationMAE": 1.3166551044711856,
+      "testMAE": 1.2968534432766923,
+      "testP90AbsoluteError": 2.7104478365966407,
+      "testBias": -0.056761451069983045,
+      "testCount": 1214,
+      "weightSubgroups": {
+        "under50kg": {
+          "count": 13,
+          "mae": 2.170304473144213
+        },
+        "50to100kg": {
+          "count": 1084,
+          "mae": 1.179899400450004
+        },
+        "100kgPlus": {
+          "count": 117,
+          "mae": 2.283377537600217
+        },
+        "150kgPlus": {
+          "count": 0,
+          "mae": null
+        }
+      }
+    }
+  },
+  "productionApproved": false,
+  "hashes": {
+    "body_bmi_estimator.joblib": "4473cb6696c6b5c5c0e0f6e25411116f9c6c67f35287007dd00ceb3e95748dd0",
+    "anthropometry.json": "3571c7bc125ebecb1fec230319c7fe11cfc20173bca9e20372ae028278dc1c97",
+    "body_girth_estimators.joblib": "ace2998b39068e4cbc98e6db030cdeae5522faffe96de63b94861865986665f0",
+    "body_weight_estimator.joblib": "dfb2a7a9c9b946b65f397901cff5a2e6dce70aa3ff2ac3d8c3320809a65474f1"
+  },
+  "reloadVerified": true
+}

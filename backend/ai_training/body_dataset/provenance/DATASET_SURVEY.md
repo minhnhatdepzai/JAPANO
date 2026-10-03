@@ -1,6 +1,6 @@
 # Khảo sát dataset cho bài toán ẢNH → SỐ ĐO CƠ THỂ (JAPANO)
 
-Cập nhật: 2026-08-28. Người khảo sát: phiên làm việc sửa lỗi ước lượng 206cm/119kg.
+Cập nhật: 2026-09-30. Người khảo sát: các phiên sửa lỗi và huấn luyện ảnh → số đo.
 
 Mục tiêu: tìm dữ liệu hợp pháp để (a) huấn luyện/hiệu chuẩn bước đo cơ thể từ một
 ảnh, và (b) **đo được sai số thật** của nó. Trước khảo sát này, dự án chỉ có ANSUR
@@ -12,7 +12,7 @@ của riêng bước hồi quy, không phải sai số từ ảnh.
 | Dataset | Ảnh người? | Chiều cao thật | Cân nặng thật | Vòng ngực/eo/hông | SMPL/3D | Có identity để chia tập | Đa dạng vóc dáng | Ảnh mặc đồ rộng | License | Dùng thương mại | Kết luận |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | **ANSUR II** (US Army 2012) | ❌ chỉ CSV | ✅ | ✅ | ✅ (93 số đo) | ❌ | ✅ 1 hàng = 1 người | Quân nhân Mỹ, BMI 15–43.5 | ❌ | CC0-1.0 | ✅ được | **ĐANG DÙNG** — prior nhân trắc + hồi quy số-đo→cân-nặng/vòng. KHÔNG đo được sai số từ ảnh. |
-| **BodyM** (Amazon, arXiv 2210.05667) | ✅ silhouette nhị phân (chính diện + nghiêng) | ✅ | ✅ | ✅ 14 số đo | ❌ | ✅ `subject_id`, 3 tập người rời nhau | 2.505 người, có testB "ngoài phòng lab" | ❌ mặc đồ bó sát | CC-BY-NC-4.0 | ❌ **phi thương mại** | **ĐANG DÙNG** — bộ DUY NHẤT đo được sai số end-to-end. Xem `bodym.manifest.json`. |
+| **BodyM** (Amazon, arXiv 2210.05667) | ✅ silhouette nhị phân (chính diện + nghiêng) | ✅ | ✅ | ✅ 14 số đo | ❌ | ✅ `subject_id`; lọc 1 subject trùng testA/testB | 2.505 người, có testB "ngoài phòng lab" | ❌ mặc đồ bó sát | CC-BY-NC-4.0 | ❌ **phi thương mại** | **ĐANG DÙNG** — bộ DUY NHẤT đo được sai số end-to-end. Xem `bodym.manifest.json`. |
 | **VITON-HD** (Zalando) | ✅ RGB 768×1024 | ❌ | ❌ | ❌ | ❌ (có DensePose dạng ảnh màu, không giải mã được nhãn) | ⚠️ chỉ có split train/test của tác giả | Người mẫu thời trang, gần như toàn dáng thon | ✅ nhiều kiểu áo | CC-BY-NC-SA-4.0 | ❌ phi thương mại + ShareAlike | **ĐANG DÙNG** — nhãn `image-parse-v3` tách tay/thân/mặt, dùng hiệu chuẩn hình học. Không có số đo. |
 | **SURREAL** (INRIA/MPI) | ✅ render tổng hợp, 6M frame | ⚠️ suy từ mesh | ❌ | ⚠️ phải tự đo trên mesh | ✅ SMPL | ✅ theo chuỗi MoCap | Shape lấy từ CAESAR, đa dạng | ⚠️ texture quần áo dán phẳng, không có vải rủ thật | Yêu cầu ký thoả thuận, **research-only** | ❌ | **KHÔNG DÙNG lần này** — chi phí dựng pipeline render lớn; giữ làm hướng nếu cần synthetic. |
 | **AGORA** (MPI) | ✅ render từ scan có quần áo, 173K crop | ⚠️ từ SMPL-X | ❌ | ⚠️ tự đo trên mesh | ✅ SMPL-X | ✅ | 4.240 scan, có cả trẻ em | ✅ quần áo thật | Phải đăng ký + ký license, **phi thương mại** | ❌ | **KHÔNG DÙNG lần này** — cần đăng ký thủ công, không tự động hoá được trong phiên. |
@@ -27,9 +27,9 @@ của riêng bước hồi quy, không phải sai số từ ảnh.
    trắc. Mọi MAE của nó phải ghi rõ là sai số bước hồi quy.
 
 2. **BodyM là bộ cho phép nói câu "sai số từ ảnh là bao nhiêu".** Có
-   `subject_id`, và ba tập `train`/`testA`/`testB` là ba nhóm người rời nhau nên
-   chia theo danh tính là sẵn có, không phải tự chế. `testB` được tác giả cố ý
-   chụp trong điều kiện ít kiểm soát — dùng làm tập báo cáo chính.
+   `subject_id`; train rời test, nhưng CSV công bố có một subject trùng testA và
+   testB. Training loại subject đó khỏi validation trước khi fit và giữ testB
+   nguyên. `testB` dùng làm tập báo cáo chính.
 
 3. **VITON-HD dùng cho phần hình học, không cho phần số đo.** Nhãn parsing của
    nó tách được tay khỏi thân, đúng thứ cần để sửa lỗi gốc.
@@ -55,3 +55,18 @@ của riêng bước hồi quy, không phải sai số từ ảnh.
   nằm trong bất kỳ con số nào ở đây.
 - Không bộ nào có dân số Việt Nam. Prior chiều cao đang để rộng (sd 9–10cm) để
   không kéo sai một nhóm nào, và đó là lựa chọn có ý thức, không phải hiệu chuẩn.
+
+## Rà soát mở rộng 30/09/2026
+
+| Nguồn | Quy mô / nhãn | Trạng thái |
+|---|---|---|
+| Celeb-FBI (Kaggle) | 6.196 ảnh hợp lệ có cao+nặng metadata | Đã fine-tune ResNet18/DenseNet201; không vượt baseline, không promote |
+| jpersonwiki (Kaggle/Wikidata) | 15.752 dòng cao+nặng hợp lệ | Đã train prior bảng; không phải model ảnh |
+| BODIES (Zenodo) | 12.000 cơ thể tổng hợp, ảnh front/side + cao/nặng + mesh | CC-BY-4.0; `data16` nữ+nam đã checksum, giải nén, pretrain ConvNeXt và test transfer; chỉ dùng làm synthetic pretraining |
+| Digital Scale / WayBED | Paper 84.963 ảnh; repo không kèm data/trọng số BMI | Chưa có quyền truy cập |
+| SHAPY Model Agency | 95K URL, cao/ngực/eo/hông | Cần đăng ký; research-only |
+| 2DImage2BMI | Khoảng 4.189 ảnh/~3.000 subject theo repo | Chưa đủ rõ về quyền dữ liệu/triển khai |
+| Body2BMI-ITU | Paper báo 6.105 ảnh, 34–250 kg | Chưa phát hành artifact để train |
+
+Kết quả và hash đầy đủ nằm ở
+`evaluation/body_training_20260930.json` và `runs/*20260930/report.json`.

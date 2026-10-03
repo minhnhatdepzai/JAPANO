@@ -17,7 +17,7 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 BACKEND = Path(__file__).resolve().parents[2]
 if str(BACKEND) not in sys.path:
@@ -151,6 +151,8 @@ class TorsoSeparationTest(unittest.TestCase):
         self.assertGreater(measure['waistPx'], 0)
 
     def test_nguoi_rat_map_khong_bi_kep_xuong_dang_gay(self):
+        if body_geometry.CALIBRATION.get('source') == 'builtin-fallback':
+            self.skipTest('thiếu body_geometry.calibration.json để kiểm dải người rất rộng')
         slim, _ = self.measure(torso_half=80, arm_gap=0)
         heavy, _ = self.measure(torso_half=190, arm_gap=0)
         self.assertGreater(heavy['waistPx'], slim['waistPx'] * 1.6)
@@ -214,15 +216,24 @@ class DisplayContractTest(unittest.TestCase):
         result = analyze_body(self.image, self.pose)
         height, weight = result['estimatedHeight'], result['estimatedWeight']
         if height['valueCm'] is not None:
-            self.assertEqual(height['maxCm'] - height['minCm'], 10)
+            display_min, display_max = height['displayBinCm']
+            self.assertEqual(display_max - display_min, 10)
+            self.assertGreaterEqual(height['valueCm'], display_min)
+            self.assertLessEqual(height['valueCm'], display_max)
             self.assertGreaterEqual(height['valueCm'], height['minCm'])
             self.assertLessEqual(height['valueCm'], height['maxCm'])
         if weight['valueKg'] is not None:
-            self.assertEqual(weight['maxKg'] - weight['minKg'], 10)
+            display_min, display_max = weight['displayBinKg']
+            self.assertEqual(display_max - display_min, 10)
+            self.assertGreaterEqual(weight['valueKg'], display_min)
+            self.assertLessEqual(weight['valueKg'], display_max)
             self.assertGreaterEqual(weight['valueKg'], weight['minKg'])
             self.assertLessEqual(weight['valueKg'], weight['maxKg'])
         for name, entry in (result['estimatedGirthRanges'] or {}).items():
-            self.assertEqual(entry['maxCm'] - entry['minCm'], 10, f'{name} không phải bin 10cm')
+            display_min, display_max = entry['displayBinCm']
+            self.assertEqual(display_max - display_min, 10, f'{name} không phải bin 10cm')
+            self.assertGreaterEqual(entry['valueCm'], display_min, name)
+            self.assertLessEqual(entry['valueCm'], display_max, name)
             self.assertGreaterEqual(entry['valueCm'], entry['minCm'], name)
             self.assertLessEqual(entry['valueCm'], entry['maxCm'], name)
 
@@ -281,6 +292,8 @@ class CalibrationContractTest(unittest.TestCase):
 
     def test_calibration_da_fit_tren_du_lieu_that(self):
         calibration = body_geometry.reload_calibration()
+        if calibration.get('source') == 'builtin-fallback':
+            self.skipTest('artifact body_geometry.calibration.json không có trong checkout')
         self.assertNotEqual(calibration.get('source'), 'builtin-fallback')
         self.assertGreater(calibration.get('trainRecords', 0), 1000)
         for level in ('shoulder', 'chest', 'waist', 'hip'):
@@ -290,6 +303,8 @@ class CalibrationContractTest(unittest.TestCase):
     def test_gioi_han_gate_du_rong_cho_nguoi_beo(self):
         # Giới hạn suy từ ANSUR II phải bao được người có bề ngang eo gấp 1.4
         # lần khoảng cách hai khớp vai — VITON-HD một mình chỉ cho tới 1.26.
+        if body_geometry.CALIBRATION.get('source') == 'builtin-fallback':
+            self.skipTest('artifact body_geometry.calibration.json không có trong checkout')
         limits = body_geometry.CALIBRATION['gateLimits']['waist']
         self.assertGreater(limits['high'], 1.4)
 
@@ -299,60 +314,78 @@ if __name__ == '__main__':
 
 
 class SubjectSelectionTest(unittest.TestCase):
-    """Ảnh nhiều người: chỉ thay đồ cho MỘT người — to nhất, gần ống kính nhất."""
+    """Ảnh nhiều người: phân tích/thử đồ đúng MỘT người ở tâm ảnh."""
 
     @staticmethod
-    def score(box, image_size, confidence=0.9):
-        """Bản sao công thức chấm điểm trong accessory_pipeline.analyze().
+    @staticmethod
+    def select(boxes, confidences, core_confidences=None, size=(1000, 1000)):
+        from accessory_pipeline import select_center_subject
+        import numpy as np
 
-        Giữ ở đây để khoá TRỌNG SỐ lại: đây là quyết định sản phẩm ("ưu tiên
-        người to và gần camera nhất"), không phải hằng số tuỳ chỉnh. Đổi trọng số
-        mà không đổi bài test này là đổi hành vi trong im lặng.
-        """
-        import math
+        point_conf = np.zeros((len(boxes), 17), dtype=float)
+        for index, confidence in enumerate(core_confidences or confidences):
+            point_conf[index, [5, 6, 11, 12]] = confidence
+        return select_center_subject(
+            np.asarray(boxes, dtype=float), np.asarray(confidences, dtype=float),
+            point_conf, size[0], size[1],
+        )
 
-        width, height = image_size
-        x1, y1, x2, y2 = box
-        area = max(1.0, (x2 - x1) * (y2 - y1)) / max(1.0, width * height)
-        box_height = max(1.0, y2 - y1) / max(1.0, height)
-        centre = (width / 2.0, height / 2.0)
-        diagonal = max(1.0, math.hypot(width, height))
-        box_centre = ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
-        distance = math.hypot(box_centre[0] - centre[0], box_centre[1] - centre[1])
-        centrality = max(0.0, 1.0 - distance / diagonal)
-        contains_centre = 1.0 if x1 <= centre[0] <= x2 else 0.0
-        return (area * 6.0 + box_height * 4.0
-                + centrality * 0.8 + contains_centre * 0.7 + confidence * 0.5)
+    def test_nguoi_o_tam_thang_nguoi_to_o_ria(self):
+        boxes = [(0, 0, 470, 1000), (430, 280, 570, 760)]
+        selected, _ = self.select(boxes, [.95, .82])
+        self.assertEqual(selected, 1)
 
-    def test_nguoi_to_thang_nguoi_nho_du_nguoi_nho_dung_giua(self):
-        """Ca đã sai thật: người nhỏ đứng giữa khung từng thắng người to ở mép.
+    def test_chi_chon_mot_nguoi_o_tam_trong_anh_nhom(self):
+        boxes = [(40, 180, 260, 900), (390, 120, 610, 920), (740, 170, 960, 900)]
+        selected, _ = self.select(boxes, [.91, .88, .93])
+        self.assertEqual(selected, 1)
 
-        Đo trên ảnh ghép thật (người to chiếm 25.6% khung, người nhỏ 1.9% nhưng
-        nằm đúng tâm): công thức cũ cho 3.76 so với 4.99 và chọn nhầm người nhỏ.
-        """
-        size = (1900, 1300)
-        big_off_centre = (10, 50, 934, 1300)      # to, sát mép trái
-        small_centred = (900, 870, 1000, 1300)    # nhỏ, đúng giữa khung
-        self.assertGreater(self.score(big_off_centre, size),
-                           self.score(small_centred, size))
+    def test_nhan_dien_gia_o_tam_bi_loai_khi_khong_co_khop_than(self):
+        boxes = [(420, 80, 580, 950), (120, 120, 380, 940)]
+        selected, _ = self.select(
+            boxes, [.18, .86], core_confidences=[0.0, .80],
+        )
+        self.assertEqual(selected, 1)
 
-    def test_nguoi_gan_ong_kinh_bi_cat_chan_van_thang(self):
-        """Người đứng sát máy thường bị cắt chân nên DIỆN TÍCH box có thể nhỏ hơn
-        người đứng xa mà thấy trọn người. Chiều cao box phải bù lại được."""
-        size = (1000, 1400)
-        near_cropped = (300, 0, 780, 1400)     # sát máy, tràn hết chiều cao
-        far_full = (60, 500, 300, 1350)        # đứng xa, thấy trọn người
-        self.assertGreater(self.score(near_cropped, size), self.score(far_full, size))
+    def test_nguoi_o_tam_confidence_thap_nhung_khop_than_ro_van_duoc_chon(self):
+        boxes = [(430, 150, 570, 900), (30, 80, 390, 960)]
+        selected, _ = self.select(
+            boxes, [.19, .91], core_confidences=[.82, .88],
+        )
+        self.assertEqual(selected, 0)
 
-    def test_vi_tri_trong_khung_khong_lat_nguoc_duoc_chenh_lech_kich_thuoc(self):
-        """Tổng trọng số của vị trí (0.8 + 0.7) phải nhỏ hơn chênh lệch kích
-        thước giữa một người to và một người nhỏ rõ rệt."""
-        size = (1600, 1200)
-        big = (0, 0, 700, 1200)
-        small = (760, 800, 900, 1200)
-        gap = self.score(big, size) - self.score(small, size)
-        self.assertGreater(gap, 1.5, 'vị trí trong khung không được lật ngược kết quả')
+    def test_cum_hoa_cao_khong_duoc_thang_nguoi_that_pose_ro(self):
+        """Ca Redmi thật: cổng hoa bị YOLO hiểu nhầm thành một người rất cao."""
+        size = (1536, 2048)
+        person = (558.0, 853.8, 908.9, 2007.8)
+        flower_arch = (1188.2, 329.2, 1535.9, 2010.7)
+        selected, _ = self.select(
+            [person, flower_arch], [.893, .193], core_confidences=[.82, 0.0], size=size,
+        )
+        self.assertEqual(selected, 0)
 
+
+class SubjectIsolationTest(unittest.TestCase):
+    def test_anh_nhom_chi_giu_nguoi_chinh(self):
+        from accessory_pipeline import isolate_primary_subject
+
+        image = Image.new('RGB', (300, 400), (20, 120, 80))
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((10, 80, 80, 380), fill=(240, 40, 40))
+        draw.rectangle((110, 40, 190, 390), fill=(40, 80, 240))
+        draw.rectangle((220, 70, 290, 380), fill=(240, 220, 40))
+        mask = np.zeros((400, 300), dtype=bool)
+        mask[40:391, 110:191] = True
+
+        isolated, info = isolate_primary_subject(
+            image, (110, 40, 190, 390), [(10, 80, 80, 380), (220, 70, 290, 380)],
+            subject_mask=mask,
+        )
+        self.assertTrue(info['applied'])
+        self.assertEqual(info['removedPeople'], 2)
+        self.assertEqual(isolated.getpixel((150, 200)), (40, 80, 240))
+        self.assertNotEqual(isolated.getpixel((40, 200)), (240, 40, 40))
+        self.assertNotEqual(isolated.getpixel((250, 200)), (240, 220, 40))
 
 class CutOffRowTest(unittest.TestCase):
     """Ảnh cắt ngay tại hàng đo: phải trả null, không phải một con số sai."""

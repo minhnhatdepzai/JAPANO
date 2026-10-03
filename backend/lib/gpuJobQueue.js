@@ -6,6 +6,7 @@ const DEFAULT_PRIORITIES = Object.freeze({
   swimwear: 200,
   vision: 120,
   recommendation: 100,
+  chat: 90,
 });
 
 class GpuJobCancelledError extends Error {

@@ -7,7 +7,9 @@ const { routeChatIntent, semanticSimilarity, normalizeText } = require('./postTr
 const { describeDay, seasonFromMessage, seasonalPicks, upcomingHolidays, SEASON_NOTE } = require('./calendarVi');
 
 const INTENTS = [
-  { name: 'greeting', test: /\b(chào|hi|hello|xin chào|alo)\b/i },
+  // `\b` của JavaScript chỉ hiểu chữ ASCII. Nó từng coi "hi" ở đầu từ
+  // "hiện" là một lời chào vì `ệ` bị xem như ký tự không-phải-word.
+  { name: 'greeting', test: /(^|[^\p{L}\p{N}])(chào|hi|hello|xin chào|alo)(?=$|[^\p{L}\p{N}])/iu },
   { name: 'discount', test: /(giảm giá|khuyến mãi|voucher|mã giảm|sale|ưu đãi)/i },
   { name: 'order', test: /(đơn hàng|đơn của tôi|đã đặt|tình trạng đơn|giao hàng|ship tới đâu|vận chuyển)/i },
   { name: 'size', test: /(size|kích thước|mặc vừa|số đo|vòng ngực|vòng eo)/i },
@@ -47,7 +49,11 @@ const DEFAULT_TRAVEL_SCENE_IDS = [
 
 function isTravelQuestion(message) {
   const normalized = normalizeText(message);
-  return /(dia diem|noi|cho|canh|phong canh).*(nao|dep|goi y|nen di|chup anh)|((nao|dep|goi y|nen di).*(dia diem|noi|cho|canh|phong canh))|di dau.*nhat/.test(normalized);
+  // `cho` can mean either a place or "for" in Vietnamese. Requiring the place
+  // noun before its qualifier avoids treating "gợi ý đồ đẹp cho tôi" as travel.
+  const asksForPlace = /(dia diem|phong canh|canh dep|(noi|cho).{0,12}(nao|dep|nen di|chup anh))/.test(normalized);
+  const travelContext = /(nhat|du lich|tham quan|dia diem|phong canh|di dau|chup anh)/.test(normalized);
+  return /di dau.*nhat/.test(normalized) || (asksForPlace && travelContext);
 }
 
 function isRainQuestion(message) {
@@ -74,6 +80,12 @@ function detectRuleIntent(message, hasMentionedProduct = false) {
   const rawIntent = INTENTS.find((item) => item.test.test(message))?.name;
   if (rawIntent) return rawIntent;
   const normalized = normalizeText(message);
+  // Broad style goals are still an outfit request. Handle them locally so a
+  // useful grounded answer does not depend on the LoRA adapter acquiring GPU
+  // within the request budget.
+  if (/(^| )(toi|minh|em|anh|chi)? ?(muon|can) (mac )?dep($| )|goi y (do|trang phuc).*(dep|cho (toi|minh))/.test(normalized)) {
+    return 'outfit';
+  }
   if (/(shop|cua hang|san pham|quan ao|ao quan|do mac|thoi trang|mua do|mua ao|mua quan|co do|co ao|co quan|do hang|hang nao)/.test(normalized)) {
     return 'shopping';
   }
@@ -104,7 +116,7 @@ function matchProducts(message, products, limit = 4) {
 
 function hasLexicalProductMention(message, products) {
   const normalized = normalizeText(message);
-  const garment = normalized.match(/\b(yukata|kimono|haori|hakama|jinbei|samue|noragi|happi|obi|kanzashi|furoshiki|cardigan|blazer)\b/)?.[1];
+  const garment = normalized.match(/\b(yukata|kimono|haori|hakama|jinbei|samue|noragi|happi|obi|kanzashi|furoshiki|cardigan|blazer|bikini)\b/)?.[1];
   if (garment && products.some((product) => normalizeText([product.name, product.garmentType, product.cat].filter(Boolean).join(' ')).includes(garment))) return true;
   return products.some((product) => {
     const name = normalizeText(product.name);

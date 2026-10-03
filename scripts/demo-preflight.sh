@@ -45,6 +45,24 @@ else
   truot FASHN "cổng 7862 im — systemctl --user start japano-fashn"
 fi
 
+# --- Ảnh khách tải lên: cổng thị giác trước khi thử đồ 18+ -------------------
+# Preset đã duyệt có thể chạy dù bước này hỏng; phải kiểm tra độc lập.
+OLLAMA="${JAPANO_OLLAMA_URL:-http://127.0.0.1:11434}"
+VISION_MODEL="${JAPANO_VISION_MODEL:-qwen3-vl:8b}"
+if TAGS="$(curl -fsS --max-time 5 "$OLLAMA/api/tags" 2>/dev/null)"; then
+  if printf '%s' "$TAGS" | python3 -c '
+import json, sys
+models = json.load(sys.stdin).get("models", [])
+raise SystemExit(0 if any(m.get("name") == sys.argv[1] for m in models) else 1)
+' "$VISION_MODEL"; then
+    dat "Vision" "$VISION_MODEL có trên đĩa; cần thử ảnh thật để xác nhận suy luận"
+  else
+    truot "Vision" "thiếu $VISION_MODEL — ollama pull $VISION_MODEL"
+  fi
+else
+  truot "Vision" "$OLLAMA không trả lời — khởi động Ollama"
+fi
+
 # --- GPU -------------------------------------------------------------------
 if command -v nvidia-smi >/dev/null 2>&1; then
   read -r DUNG TONG < <(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | head -1 | tr ',' ' ')

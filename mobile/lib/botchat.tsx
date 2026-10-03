@@ -481,7 +481,7 @@ export function BotChatProvider({ children }: { children: React.ReactNode }) {
                 <View style={styles.oriAvatar}><Text style={styles.oriLetter}>織</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.panelTitle}>Ori · Botchat mua sắm</Text>
-                  <Text style={styles.panelStatus}>● Qwen3-VL tools · catalog-grounded</Text>
+                  <Text style={styles.panelStatus}>● Tư vấn từ sản phẩm JAPANO</Text>
                 </View>
                 <Pressable accessibilityLabel="Mở chat toàn màn hình" style={styles.headerIcon} onPress={() => navigate('/chat')}>
                   <Ionicons name="expand-outline" size={19} color={C.ink} />

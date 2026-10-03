@@ -3,6 +3,8 @@
 // và chatbot Ori.
 const { serviceHealth } = require('../lib/httpFetch');
 const { fetchChatJson } = require('../lib/chatHttp');
+const { replyWithGraph } = require('../lib/chatGraph');
+const { verifyToken, tokenFromHeader } = require('../lib/auth');
 const { CATVTON_URL, FASHN_URL, MOTION_URL, AI_GATEWAY_URL, OLLAMA_URL, EMBEDDING_URL } = require('../lib/serviceUrls');
 const { setFocus, getFocus } = require('../lib/gpuArbiter');
 const { pushNotification } = require('../lib/notify');
@@ -17,8 +19,6 @@ const {
 } = require('../lib/bodyAnalysis');
 const { matchBodyAnchor } = require('../lib/bodyAnchors');
 const { logger } = require('../lib/logger');
-const { safetyPolicyFor } = require('../lib/garmentCoverage');
-const { checkAdultImage } = require('../lib/adultImageCheck');
 
 // map 4 lựa chọn phong cách của app sang đúng từ vựng tag đang có trong catalog (backend/seed.js) để content-based match được
 const STYLE_LABELS = {
@@ -603,24 +603,10 @@ module.exports = function registerStylistRoutes(api, ctx) {
       const productId = String(b.productId || '').trim();
       const state = read();
       const product = productId ? state.products.find((item) => item.slug === productId || item.id === productId) : null;
-      const adultPolicy = product ? safetyPolicyFor([product]) : null;
-      let adultVerification;
-      if (adultPolicy?.requires18Plus) {
-        const focusBeforeCheck = getFocus()?.focus || 'browse';
-        await setFocus('vision').catch(() => undefined);
-        try {
-          adultVerification = await checkAdultImage({
-            imageBase64,
-            ollamaUrl: OLLAMA_URL,
-            cacheKey: analysis.imageFingerprint,
-          });
-        } finally {
-          const restoreFocus = adultPolicy.garmentTypes.includes('bikini_two_piece')
-            ? 'swimwear'
-            : focusBeforeCheck;
-          await setFocus(restoreFocus).catch(() => undefined);
-        }
-      }
+      // Endpoint này chỉ đo vóc dáng. Không nạp model thị giác để kiểm tra 18+
+      // theo sản phẩm đang mở: bước đó mất lâu hơn timeout 20 giây của mobile
+      // và từng làm ảnh người thật đứng ở trạng thái quay dù worker đã đo xong.
+      // Cổng 18+ bắt buộc vẫn chạy trong POST /api/tryon ngay trước inference.
       const advice = adviseSize(merged.profile, product);
       logger.info(bodyAnalysisLogLine(analysis));
       res.json({
@@ -631,11 +617,6 @@ module.exports = function registerStylistRoutes(api, ctx) {
         sources: merged.sources,
         usedEstimate: merged.usedEstimate,
         usedAnchor: merged.usedAnchor,
-        adultVerification: adultVerification ? {
-          available: adultVerification.available,
-          verdict: adultVerification.verdict,
-          cached: Boolean(adultVerification.cached),
-        } : undefined,
       });
     } catch (error) {
       res.status(500).json({ ok: false, message: error.message || 'Lỗi phân tích vóc dáng.' });
@@ -699,15 +680,20 @@ module.exports = function registerStylistRoutes(api, ctx) {
         return res.status(400).json({ ok:false, code:'CHAT_MESSAGE_REQUIRED', message:'Bạn nhập câu hỏi cho Ori nhé.' });
       }
       const s = read();
-      const userId = String(b.userId || 'guest');
+      const graphEnabled = process.env.JAPANO_CHAT_LANGGRAPH === '1';
+      // Private history/behavior must belong to the verified caller, never a body-supplied id.
+      const identity = verifyToken(tokenFromHeader({ headers:req.headers || {} }));
+      const userId = graphEnabled ? String(identity?.sub || 'guest') : String(b.userId || 'guest');
       const stored = s.profiles.find((row) => row.userId === userId);
       const profile = { ...stored, ...(b.profile || {}) };
-      const storedHistory = (s.chats || []).filter((row) => String(row.userId) === userId).slice(-12);
+      const storedHistory = userId === 'guest' ? [] : (s.chats || []).filter((row) => String(row.userId) === userId).slice(-12);
       const requestHistory = Array.isArray(b.history) ? b.history.slice(-12) : [];
       const history = requestHistory.length ? requestHistory : storedHistory;
-      let result = chatbot.reply(s, { userId, message: b.message, profile, history });
+      let result = graphEnabled
+        ? await replyWithGraph(s, {userId,message:b.message,profile,history}, {replyFn:chatbot.reply,timeoutMs:remainingMs()})
+        : chatbot.reply(s, { userId, message: b.message, profile, history });
       let planner = null;
-      if (result.modelTrace?.ruleIntent === 'fallback') {
+      if (!graphEnabled && result.modelTrace?.ruleIntent === 'fallback') {
         planner = await planChatRequest(b.message, history, Math.min(3000, remainingMs()));
         if (planner?.actionId && planner.actionId !== 'none') {
           const label = actionLabels[planner.actionId] || 'Mở trang';
@@ -734,14 +720,14 @@ module.exports = function registerStylistRoutes(api, ctx) {
         .map((product) => ({ name:String(product.name), price:`${Number(product.price || 0).toLocaleString('vi-VN')}₫` }));
       // Action trực tiếp phải phản hồi tức thì; Qwen chỉ làm nhiệm vụ diễn đạt cho
       // tư vấn, không được quyền sinh route hay tự điều hướng ứng dụng.
-      const shouldPolish = !result.productIds?.length && ['greeting', 'fallback'].includes(result.intent);
+      const shouldPolish = !graphEnabled && !result.productIds?.length && ['greeting', 'fallback'].includes(result.intent);
       const generation = result.intent === 'navigation'
         ? { message:result.message, used:false, model:'whitelisted-action-router', latencyMs:0, fallbackReason:'deterministic-action' }
         : shouldPolish
           ? await polishWithOllama(b.message, result.message, referencedProducts, remainingMs())
           : { message:result.message, used:false, model:'local-grounded-retrieval', latencyMs:0, fallbackReason:'grounded-answer-protected' };
       const message = generation.message;
-      const engine = generation.used ? 'hybrid-post-transformer+ollama' : 'hybrid-post-transformer';
+      const engine = graphEnabled ? 'langgraph-catalog-grounded' : generation.used ? 'hybrid-post-transformer+ollama' : 'hybrid-post-transformer';
       const informationSources = [];
       const sourceUrls = new Set();
       for (const product of s.products || []) {
@@ -783,6 +769,7 @@ module.exports = function registerStylistRoutes(api, ctx) {
         historySaved, responseLatencyMs:Date.now() - startedAt,
         ok: true, message, reply: message, productIds: result.productIds,
         products: result.productIds, engine, intent: result.intent,
+        ...(graphEnabled ? {behaviorSummary:result.behaviorSummary,catalogLinks:result.catalogLinks} : {}),
         actions,
         confidence: result.confidence,
         models: [...new Set([...(result.modelTrace?.models || []), generation.model])],

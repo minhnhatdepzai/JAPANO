@@ -3,14 +3,16 @@ import { ActivityIndicator, Alert, Animated, Easing, Pressable, ScrollView, Styl
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { ResizeMode, Video } from 'expo-av';
 import { Screen, Header, Btn } from '../components/ui';
 import { useCatalog } from '../lib/data';
 import { getVariantStock, Product, variantPrice } from '../lib/catalog';
-import { analyzeBodyFromPhoto, BodyAnalysis, FitEffect, generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit, TryOnSafety, TryOnSafetyError } from '../lib/api';
+import { analyzeBodyFromPhoto, BodyAnalysis, cancelTryOnGeneration, FitEffect, generateTryOn, generateTryOnMotion, getSizeAdvice, getTryOnMotionPresets, MotionPreset, reportGpuFocus, SizeFit, TryOnSafety, TryOnSafetyError } from '../lib/api';
 import { BODY_ESTIMATOR_GENERATION, DEFAULT_STYLE_PROFILE, loadStyleProfile, SavedStyleProfile, saveStyleProfile } from '../lib/profile';
 import { saveMediaToLibrary, shareMedia } from '../lib/media';
 import { useStore } from '../lib/store';
+import { bodyEstimateDisplay, bodyEstimateUncertainty } from '../lib/bodyEstimateDisplay';
 import { C, F } from '../theme/tokens';
 import { SmartImage } from '../components/SmartImage';
 import { beginGpuJob, endGpuJob, useGpuFocus } from '../lib/useGpuFocus';
@@ -33,7 +35,24 @@ const MOTION_ICONS:Record<string, keyof typeof Ionicons.glyphMap>={
   sit_stand:'accessibility-outline',
 };
 const one=(value:string|string[]|undefined)=>Array.isArray(value)?value[0]:value;
-const dataUri=(asset:ImagePicker.ImagePickerAsset)=>`data:${asset.mimeType||'image/jpeg'};base64,${asset.base64||''}`;
+const dataUri=(mimeType:string|undefined,base64:string)=>`data:${mimeType||'image/jpeg'};base64,${base64}`;
+
+// Đọc đúng file mà ImagePicker trả về thay vì ghép `asset.uri` để hiển thị với
+// `asset.base64` để phân tích. Trên một số phiên MIUI, hai trường này từng lệch
+// nhau sau khi chọn nhiều ảnh liên tiếp: màn hình hiện mẫu 10 nhưng worker nhận
+// bytes của ảnh trước và trả 59–69kg. Một data URI duy nhất giờ là nguồn cho cả
+// SmartImage, body-analysis và try-on nên ba bước không thể nói về ba ảnh khác.
+const readPickedDataUri=async(asset:ImagePicker.ImagePickerAsset)=>{
+  // ImagePicker đã mã hoá JPEG theo `quality` của chính lượt chọn. Dùng bytes
+  // này cho cả preview và upload; đọc lại asset.uri trước từng vô tình lấy ảnh
+  // gốc 10–30 MB, khiến Android mất hàng phút chỉ để gửi body lên Express.
+  if(asset.base64)return dataUri(asset.mimeType,asset.base64);
+  try{
+    const base64=await FileSystem.readAsStringAsync(asset.uri,{encoding:FileSystem.EncodingType.Base64});
+    if(base64)return dataUri(asset.mimeType,base64);
+  }catch{/* Dùng payload của ImagePicker làm đường lùi khi content URI không đọc trực tiếp được. */}
+  throw new Error('Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');
+};
 const DEFAULT_TRYON_MESSAGE='Chọn ảnh rõ và đủ sáng để hệ thống ghép trang phục tự nhiên hơn.';
 const DEFAULT_TRYON_COLORS=[
   {name:'Mực',hex:'#24211F'},
@@ -234,8 +253,23 @@ export default function TryOn() {
   const [bodyAnalysis,setBodyAnalysis]=useState<BodyAnalysis|null>(null);
   const [bodyLoading,setBodyLoading]=useState(false);
   const bodyAnalysisTask=useRef<Promise<(BodyAnalysis&{ok:boolean;message?:string})|null>|null>(null);
+  const bodyAnalysisVersion=useRef(0);
+  // Mỗi ảnh/lượt tạo có một phiên riêng. Callback cũ tuyệt đối không được ghi
+  // lỗi hay kết quả lên ảnh mới sau khi request lâu vừa kết thúc.
+  const tryOnVersion=useRef(0);
   const [bodyError,setBodyError]=useState('');
+  const [bodyRunNotice,setBodyRunNotice]=useState('');
   const [usingEstimate,setUsingEstimate]=useState(false);
+  const hasBodySuggestions=!!bodyAnalysis&&[
+    bodyAnalysis.estimatedHeight?.valueCm,bodyAnalysis.estimatedWeight?.valueKg,
+    bodyAnalysis.estimatedGirthRanges?.bust?.valueCm,
+    bodyAnalysis.estimatedGirthRanges?.waist?.valueCm,
+    bodyAnalysis.estimatedGirthRanges?.hip?.valueCm,
+  ].some(value=>typeof value==='number'&&Number.isFinite(value)&&value>0);
+  const hasUsableBodySuggestions=!!bodyAnalysis&&[
+    bodyAnalysis.estimatedHeight?.usableForSizing===false?null:bodyAnalysis.estimatedHeight?.valueCm,
+    bodyAnalysis.estimatedWeight?.usableForSizing===false?null:bodyAnalysis.estimatedWeight?.valueKg,
+  ].some(value=>typeof value==='number'&&Number.isFinite(value)&&value>0);
   const [showManualMeasurements,setShowManualMeasurements]=useState(false);
   const [adultConsent,setAdultConsent]=useState(false);
   const [safety,setSafety]=useState<TryOnSafety|null>(null);
@@ -244,6 +278,11 @@ export default function TryOn() {
   const [error,setError]=useState('');
   const [warning,setWarning]=useState('');
   const [loading,setLoading]=useState(false);
+  // Phiên nào đã bật overlay thì chỉ phiên đó mới được tắt nó. Trước đây nếu
+  // product/photo effect tăng tryOnVersion trong 4,5 giây chờ body-analysis,
+  // `run` thoát trước khối finally và để màn hình quay mãi dù backend chưa hề
+  // nhận POST /api/tryon.
+  const loadingRunVersion=useRef(0);
   const [loadingSeconds,setLoadingSeconds]=useState(0);
   const [loadingMode,setLoadingMode]=useState<'outfit'|'accessory'>('outfit');
   const loadingPulse=useRef(new Animated.Value(0)).current;
@@ -299,13 +338,25 @@ export default function TryOn() {
   // Fast Refresh có thể giữ cờ loading nhưng không còn callback của lượt chạy
   // cũ để hạ cờ. Không để người dùng phải đóng app mới bấm tạo lại được.
   useEffect(()=>{
+    tryOnVersion.current+=1;
+    loadingRunVersion.current=0;
     setLoading(false);
+    setError('');setSafetyError(null);
+    // Fast Refresh có thể bỏ lại một fetch body-analysis không còn callback.
+    // Vô hiệu lượt cũ để thẻ số đo không quay vô hạn sau khi bundle cập nhật.
+    bodyAnalysisVersion.current+=1;
+    bodyAnalysisTask.current=null;
+    setBodyLoading(false);
     setMessage(current=>current.startsWith('Hệ thống đang nhận diện')?DEFAULT_TRYON_MESSAGE:current);
   },[]);
   // Màn hình này được Expo Router tái sử dụng khi đổi sản phẩm. Không giữ lại
   // món phối của sản phẩm trước, vì nó có thể âm thầm tạo một bộ xung đột trong
   // khi mục "Mặc thêm món khác" đang thu gọn.
   useEffect(()=>{
+    tryOnVersion.current+=1;
+    loadingRunVersion.current=0;
+    setLoading(false);
+    void cancelTryOnGeneration();
     setExtraGarments([]);
     setShowGarments(false);
     setError('');
@@ -329,19 +380,27 @@ export default function TryOn() {
   },[]);
 
   const choose=async(camera:boolean)=>{
-    setError('');setWarning('');
+    // Vô hiệu ngay lượt cũ trước khi mở thư viện. Nếu model đang chạy, yêu cầu
+    // backend nhả GPU theo clientId; callback cũ vẫn về cũng bị version chặn.
+    tryOnVersion.current+=1;
+    loadingRunVersion.current=0;
+    void cancelTryOnGeneration();
+    setLoading(false);setError('');setWarning('');setSafetyError(null);setSafety(null);
     if(camera){const permission=await ImagePicker.requestCameraPermissionsAsync();if(!permission.granted){Alert.alert('Cần quyền camera','Hãy cấp quyền camera để chụp ảnh thử đồ.');return;}}
     const pick=camera
       ? await ImagePicker.launchCameraAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,quality:.82,base64:true})
       : await ImagePicker.launchImageLibraryAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,quality:.82,base64:true});
     const asset=pick.canceled?null:pick.assets?.[0];
     if(!asset)return;
-    if(!asset.base64){setError('Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');return;}
-    const picked={uri:asset.uri,base64:dataUri(asset)};
+    let pickedData:string;
+    try{pickedData=await readPickedDataUri(asset);}catch(e:any){setError(e?.message||'Không đọc được dữ liệu ảnh. Vui lòng chọn lại.');return;}
+    // Hiển thị đúng bytes được gửi đi phân tích; không dùng một URI khác làm
+    // ảnh xem trước rồi vô tình gắn kết quả đo của payload base64 lên đó.
+    const picked={uri:pickedData,base64:pickedData};
     setPhoto(picked);setResult('');setResultRecipe('');setAppliedAccessoryIds([]);setResultEngine('');setSizeFit(null);setFitEffect(null);setWarning('');setMotionVideo('');setMotionPanel(false);setMotionError('');
     // Mỗi ảnh mới có thể là một người khác. Mặc định đọc vóc dáng từ chính ảnh
     // này; số đo thật đã lưu chỉ dùng khi khách chủ động chuyển sang nhập tay.
-    setBodyAnalysis(null);setBodyError('');setUsingEstimate(true);
+    setBodyAnalysis(null);setBodyError('');setBodyRunNotice('');setUsingEstimate(true);
     // Ảnh mới có thể là người hoàn toàn khác. Xoá estimate của ảnh trước ngay
     // khi chọn ảnh; nếu lượt phân tích mới thiếu trường nào thì trường đó phải
     // để trống, tuyệt đối không hiện/lấy lại cân nặng cũ cho bước fit.
@@ -351,34 +410,46 @@ export default function TryOn() {
       heightEstimateConfidence:0,weightEstimateConfidence:0,estimateConfidence:0,
       heightSource:'image-estimation',weightSource:'image-estimation',measurementSource:'image-estimation',
     }));
-    void runBodyAnalysis(picked.base64);
+    void runBodyAnalysis(picked.base64,'auto');
   };
 
   // Phân tích vóc dáng chạy trên CPU (pose + tách nền), không giành GPU với
   // try-on, nên tự chạy ngay sau khi có ảnh. Kết quả chỉ là ƯỚC LƯỢNG và luôn
   // được trình bày dưới dạng khoảng kèm độ tin cậy.
-  const runBodyAnalysis=(imageBase64:string)=>{
-    if(!imageBase64)return;
+  const runBodyAnalysis=(imageBase64:string,trigger:'auto'|'manual'='auto')=>{
+    if(!imageBase64){setBodyError('Chưa có ảnh để phân tích vóc dáng.');return;}
+    const version=++bodyAnalysisVersion.current;
     const task=(async()=>{
-      setBodyLoading(true);setBodyError('');
+      setBodyLoading(true);setBodyError('');setBodyRunNotice('');
       try{
+      // Luot nay phai chi doc chinh anh dang hien thi. So do nguoi dung da luu
+      // co the thuoc ve mot nguoi/anh truoc; gui lai profile o nut "Phan tich
+      // lai" se bien 59/69 kg cu thanh ket qua cua mau moi. So do that van duoc
+      // uu tien rieng o buoc tu van size, khong chen vao ket qua AI cua anh.
       const analysis=await analyzeBodyFromPhoto({personImageBase64:imageBase64,productId:product.slug});
+      if(version!==bodyAnalysisVersion.current)return null;
       if(!analysis.ok)throw new Error(analysis.message||'Không phân tích được vóc dáng.');
       setBodyAnalysis(analysis);
+      const completedAt=new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      setBodyRunNotice(trigger==='manual'
+        ? `Đã phân tích lại đúng ảnh đang hiển thị lúc ${completedAt}. Cùng một ảnh sẽ cho cùng kết quả.`
+        : 'Đã phân tích ảnh đang hiển thị.');
       const height=analysis.estimatedHeight?.source==='user_provided'?null:analysis.estimatedHeight?.valueCm;
       const weight=analysis.estimatedWeight?.source==='user_provided'?null:analysis.estimatedWeight?.valueKg;
-      if(height||weight||analysis.referenceProfile?.usableForSizing){
+      const sizingHeight=analysis.estimatedHeight?.usableForSizing===false?null:height;
+      const sizingWeight=analysis.estimatedWeight?.usableForSizing===false?null:weight;
+      if(sizingHeight||sizingWeight||analysis.referenceProfile?.usableForSizing){
         setUsingEstimate(true);
         setProfile(current=>{
           const next={
             ...current,
-            heightEstimateCm:height??undefined,
-            weightEstimateKg:weight??undefined,
-            heightEstimateConfidence:height?analysis.estimatedHeight?.confidence??0:0,
-            weightEstimateConfidence:weight?analysis.estimatedWeight?.confidence??0:0,
+            heightEstimateCm:sizingHeight??undefined,
+            weightEstimateKg:sizingWeight??undefined,
+            heightEstimateConfidence:sizingHeight?analysis.estimatedHeight?.confidence??0:0,
+            weightEstimateConfidence:sizingWeight?analysis.estimatedWeight?.confidence??0:0,
             estimateConfidence:Math.max(
-              height?analysis.estimatedHeight?.confidence??0:0,
-              weight?analysis.estimatedWeight?.confidence??0:0,
+              sizingHeight?analysis.estimatedHeight?.confidence??0:0,
+              sizingWeight?analysis.estimatedWeight?.confidence??0:0,
             ),
             heightSource:'image-estimation' as const,
             weightSource:'image-estimation' as const,
@@ -390,19 +461,27 @@ export default function TryOn() {
           void saveStyleProfile(next);
           return next;
         });
-        if(analysis.recommendedSize&&selectableSizes.includes(analysis.recommendedSize)){
+        if(!result&&analysis.recommendedSize&&selectableSizes.includes(analysis.recommendedSize)){
           // Một chạm: ảnh mới tự đổi sang size backend vừa khuyến nghị. Khách vẫn
           // có thể bấm size khác để xem hiệu ứng chật/rộng sau đó.
           setSize(analysis.recommendedSize);
         }
         setMessage(`AI đã tự phân tích vóc dáng${analysis.recommendedSize?` và chọn cỡ ${analysis.recommendedSize}`:''}. Bạn có thể tạo ảnh ngay hoặc chọn size khác để xem độ chật/rộng.`);
+      }else{
+        setUsingEstimate(false);
+        if(height||weight){
+          setMessage('AI đã dự đoán khoảng tham khảo từ ảnh. Các số có độ tin cậy thấp nên không tự đổi kích cỡ; hãy nhập số đo thật nếu muốn tư vấn size.');
+        }
       }
       return analysis;
       }catch(e:any){
+        if(version!==bodyAnalysisVersion.current)return null;
         setBodyAnalysis(null);
+        setUsingEstimate(false);
+        setBodyRunNotice('');
         setBodyError(e?.message||'Không phân tích được vóc dáng từ ảnh này.');
         return null;
-      }finally{setBodyLoading(false);}
+      }finally{if(version===bodyAnalysisVersion.current)setBodyLoading(false);}
     })();
     bodyAnalysisTask.current=task;
     void task.finally(()=>{if(bodyAnalysisTask.current===task)bodyAnalysisTask.current=null;});
@@ -414,8 +493,10 @@ export default function TryOn() {
   const useEstimatedBody=async()=>{
     // Nếu Python trả source=user_provided thì đó là số khách đã nhập được đưa
     // vào để hiệu chỉnh scale, không phải dự đoán mới của AI.
-    const height=bodyAnalysis?.estimatedHeight?.source==='user_provided'?null:bodyAnalysis?.estimatedHeight?.valueCm;
-    const weight=bodyAnalysis?.estimatedWeight?.source==='user_provided'?null:bodyAnalysis?.estimatedWeight?.valueKg;
+    const height=bodyAnalysis?.estimatedHeight?.source==='user_provided'||bodyAnalysis?.estimatedHeight?.usableForSizing===false
+      ? null:bodyAnalysis?.estimatedHeight?.valueCm;
+    const weight=bodyAnalysis?.estimatedWeight?.source==='user_provided'||bodyAnalysis?.estimatedWeight?.usableForSizing===false
+      ? null:bodyAnalysis?.estimatedWeight?.valueKg;
     if(!height&&!weight)return;
     const patch:Record<string,unknown>={
       heightEstimateCm:height??undefined,
@@ -614,6 +695,8 @@ export default function TryOn() {
       return;
     }
     if(outfitConflict){setShowGarments(true);setError(`${outfitConflict} Hãy bỏ món bị trùng rồi tạo lại ảnh.`);return;}
+    const runVersion=++tryOnVersion.current;
+    loadingRunVersion.current=runVersion;
     const pendingAccessories=selectedAccessories.filter(slug=>!appliedAccessoryIds.includes(slug));
     const removedAccessories=appliedAccessoryIds.filter(slug=>!selectedAccessories.includes(slug));
     // Món quần áo chưa nằm trong ảnh (bỏ qua sản phẩm gốc — nó luôn là nền).
@@ -642,7 +725,7 @@ export default function TryOn() {
       : `Đang tạo ảnh nét bằng GPU (một món thường 20–40 giây): nhận diện đúng người, mặc ${chosenGarments.length>1?`lần lượt ${chosenGarments.map(item=>item.name).join(' rồi ')}`:'trang phục'}${pickedNames.length?`, rồi ghép ${pickedNames.join(', ')}`:''} và kiểm tra lại mặt, cơ thể, độ nét…`);
     // Bắt đầu làm nóng FASHN song song với phân tích vóc dáng CPU.
     // Cold-start vì thế không cộng nối tiếp vào thời gian người dùng chờ.
-    const focusReady=reportGpuFocus(tryonFocus);
+    void reportGpuFocus(tryonFocus);
     // Phân tích cơ thể CPU trên Redmi có thể mất 30–45 giây. Nó hữu ích cho gợi
     // ý size nhưng không được chặn cả lượt thử đồ: chờ tối đa đúng giai đoạn
     // "kiểm tra ảnh" 4,5 giây, sau đó cho FASHN chạy và để phân tích hoàn tất
@@ -655,15 +738,24 @@ export default function TryOn() {
           new Promise<null>(resolve=>setTimeout(()=>resolve(null),4_500)),
         ])
       : bodyAnalysis;
+    if(runVersion!==tryOnVersion.current){
+      if(loadingRunVersion.current===runVersion){
+        loadingRunVersion.current=0;
+        setLoading(false);
+      }
+      return;
+    }
     const automaticSize=analysisForRequest?.recommendedSize;
     const requestSize=automaticSize&&selectableSizes.includes(automaticSize)?automaticSize:size;
     if(requestSize!==size)setSize(requestSize);
-    await focusReady;
     // Đánh dấu "đang chạy" để tín hiệu focus nền không huỷ mất tác vụ này khi
     // màn hình tự tắt hoặc người dùng kéo thanh thông báo (xem lib/useGpuFocus).
     beginGpuJob();
     try{
-      const saved=continueFromResult?profile:await saveStyleProfile(profile);
+      // Lưu hồ sơ là tác vụ nền; request đã có toàn bộ profile trong state nên
+      // không cần chờ AsyncStorage của MIUI trước khi gửi ảnh tới backend.
+      if(!continueFromResult)void saveStyleProfile(profile).catch(()=>undefined);
+      const saved=profile;
       const output=await generateTryOn(continueFromResult?{
         // Chỉ gửi món MỚI và dùng ảnh kết quả hiện tại làm ảnh người. Backend
         // vì thế chỉ mặc/ghép phần còn thiếu thay vì dựng lại cả bộ từ đầu:
@@ -691,6 +783,7 @@ export default function TryOn() {
         // unknown cho lượt này, đúng hơn việc bịa số đo hoặc bắt khách chờ.
         skipBodyAnalysis:true,
       });
+      if(runVersion!==tryOnVersion.current)return;
       if(!output.imageUrl)throw new Error(output.message||'Backend chưa trả ảnh kết quả.');
       setResult(output.imageUrl);setResultEngine(output.engine||'ai-gateway');setMessage(output.message);
       setResultRecipe(outfitRecipeFor(requestSize));
@@ -725,6 +818,9 @@ export default function TryOn() {
         [{text:'Để sau',style:'cancel'},{text:'Chọn chuyển động',onPress:()=>setMotionPanel(true)}],
       );
     }catch(e:any){
+      // Ảnh/sản phẩm đã đổi: đây là callback của phiên cũ, không được xóa kết
+      // quả, hiện timeout hay đổi thông báo trên phiên mới.
+      if(runVersion!==tryOnVersion.current)return;
       // Nối tiếp mà hỏng thì GIỮ NGUYÊN ảnh cũ — khách không mất kết quả đã có.
       if(!continueFromResult){setResult('');setResultEngine('');setSizeFit(null);setFitEffect(null);setResultRecipe('');setAppliedAccessoryIds([]);setAppliedGarmentIds([]);}
       if(e instanceof TryOnSafetyError){
@@ -738,8 +834,11 @@ export default function TryOn() {
     }
     finally{
       endGpuJob();
-      setLoading(false);
-      if(gpuScreenActive.current)void reportGpuFocus(tryonFocus);
+      if(runVersion===tryOnVersion.current&&loadingRunVersion.current===runVersion){
+        loadingRunVersion.current=0;
+        setLoading(false);
+        if(gpuScreenActive.current)void reportGpuFocus(tryonFocus);
+      }
     }
   };
 
@@ -954,16 +1053,22 @@ export default function TryOn() {
               <Text style={st.bodyTitle}>PHÂN TÍCH VÓC DÁNG</Text>
               {bodyLoading
                 ? <ActivityIndicator size="small" color={C.ink} />
-                : <Pressable onPress={()=>void runBodyAnalysis(photo.base64)}><Text style={st.bodyRetry}>Phân tích lại</Text></Pressable>}
+                : <Pressable accessibilityRole="button" accessibilityLabel="Kiểm tra kết quả phân tích vóc dáng của ảnh đang hiển thị" onPress={()=>{
+                  // Chạy lại thật sự trên đúng bytes đang xem. Bản cũ chỉ đổi
+                  // timestamp nếu đã có bodyAnalysis, khiến kết quả lỗi/stale
+                  // không thể được cập nhật sau khi worker hoặc model được sửa.
+                  void runBodyAnalysis(photo.base64,'manual');
+                }}><Text style={st.bodyRetry}>{bodyAnalysis?'Kiểm tra lại':'Phân tích lại'}</Text></Pressable>}
             </View>
-            {bodyLoading&&<Text style={st.bodyHint}>Đang đo tỉ lệ cơ thể từ ảnh…</Text>}
+            {bodyLoading&&<Text accessibilityLiveRegion="polite" style={st.bodyHint}>Đang đo tỉ lệ cơ thể từ ảnh…</Text>}
+            {!!bodyRunNotice&&!bodyLoading&&<Text accessibilityLiveRegion="polite" style={st.bodySuccess}>{bodyRunNotice}</Text>}
             {!!bodyError&&!bodyLoading&&<Text style={st.bodyWarn}>{bodyError}</Text>}
             {!!bodyAnalysis&&!bodyLoading&&(
               <>
                 {!!bodyAnalysis.measurementMessage&&(
                   <View style={bodyAnalysis.measurementStatus==='insufficient_evidence'?st.cutoffBox:undefined}>
                     {bodyAnalysis.measurementStatus==='insufficient_evidence'&&(
-                      <Text style={st.cutoffTitle}>Không đủ bằng chứng để đo — vẫn thử đồ được</Text>
+                      <Text style={st.cutoffTitle}>{hasBodySuggestions?'Ước lượng tham khảo — chưa phải số đo thật':'Ảnh này chưa đủ để ước lượng — vẫn thử đồ được'}</Text>
                     )}
                     <Text style={bodyAnalysis.measurementStatus==='insufficient_evidence'?st.cutoffMsg:st.bodyHint}>
                       {bodyAnalysis.measurementMessage}
@@ -973,7 +1078,7 @@ export default function TryOn() {
                 <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>{bodyAnalysis.estimatedHeight?.source==='user_provided'?'Chiều cao bạn đã nhập':bodyAnalysis.estimatedHeight?.minCm!=null?'Chiều cao AI ước lượng':'Chiều cao tham chiếu AI'}</Text>
                   <Text style={st.bodyValue}>
-                    {rangeText(bodyAnalysis.estimatedHeight?.minCm,bodyAnalysis.estimatedHeight?.maxCm,'cm')
+                    {bodyEstimateDisplay(bodyAnalysis.estimatedHeight,'cm')
                       ||rangeText(bodyAnalysis.referenceProfile?.heightCm?.[0],bodyAnalysis.referenceProfile?.heightCm?.[1],'cm')
                       ||'Không đủ dữ liệu'}
                   </Text>
@@ -981,7 +1086,7 @@ export default function TryOn() {
                 <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>{bodyAnalysis.estimatedWeight?.source==='user_provided'?'Cân nặng bạn đã nhập':bodyAnalysis.estimatedWeight?.minKg!=null?'Cân nặng AI ước lượng':'Cân nặng tham chiếu AI'}</Text>
                   <Text style={st.bodyValue}>
-                    {rangeText(bodyAnalysis.estimatedWeight?.minKg,bodyAnalysis.estimatedWeight?.maxKg,'kg')
+                    {bodyEstimateDisplay(bodyAnalysis.estimatedWeight,'kg')
                       ||rangeText(bodyAnalysis.referenceProfile?.weightKg?.[0],bodyAnalysis.referenceProfile?.weightKg?.[1],'kg')
                       ||'Không đủ dữ liệu'}
                   </Text>
@@ -989,7 +1094,7 @@ export default function TryOn() {
                 <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>Vòng ngực AI ước lượng</Text>
                   <Text style={st.bodyValue}>
-                    {rangeText(bodyAnalysis.estimatedGirthRanges?.bust?.minCm,bodyAnalysis.estimatedGirthRanges?.bust?.maxCm,'cm')
+                    {bodyEstimateDisplay(bodyAnalysis.estimatedGirthRanges?.bust,'cm')
                       ||rangeText(bodyAnalysis.referenceProfile?.bustCm?.[0],bodyAnalysis.referenceProfile?.bustCm?.[1],'cm')
                       ||'Không đủ dữ liệu'}
                   </Text>
@@ -997,7 +1102,7 @@ export default function TryOn() {
                 <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>Vòng eo AI ước lượng</Text>
                   <Text style={st.bodyValue}>
-                    {rangeText(bodyAnalysis.estimatedGirthRanges?.waist?.minCm,bodyAnalysis.estimatedGirthRanges?.waist?.maxCm,'cm')
+                    {bodyEstimateDisplay(bodyAnalysis.estimatedGirthRanges?.waist,'cm')
                       ||rangeText(bodyAnalysis.referenceProfile?.waistCm?.[0],bodyAnalysis.referenceProfile?.waistCm?.[1],'cm')
                       ||'Không đủ dữ liệu'}
                   </Text>
@@ -1005,7 +1110,7 @@ export default function TryOn() {
                 <View style={st.bodyRow}>
                   <Text style={st.bodyLabel}>Vòng hông AI ước lượng</Text>
                   <Text style={st.bodyValue}>
-                    {rangeText(bodyAnalysis.estimatedGirthRanges?.hip?.minCm,bodyAnalysis.estimatedGirthRanges?.hip?.maxCm,'cm')
+                    {bodyEstimateDisplay(bodyAnalysis.estimatedGirthRanges?.hip,'cm')
                       ||rangeText(bodyAnalysis.referenceProfile?.hipCm?.[0],bodyAnalysis.referenceProfile?.hipCm?.[1],'cm')
                       ||'Không đủ dữ liệu'}
                   </Text>
@@ -1016,11 +1121,11 @@ export default function TryOn() {
                   cân nặng, nên màn hình phải nói thẳng là cần chụp lại chứ không
                   hiển thị một ô trống không giải thích.
                 */}
-                {!!(bodyAnalysis as any).measurementRowsCutOff?.length&&(
+                {!!bodyAnalysis.measurementRowsCutOff?.length&&(
                   <View style={st.cutoffBox}>
                     <Text style={st.cutoffTitle}>Cần chụp lại ảnh</Text>
                     <Text style={st.cutoffMsg}>
-                      Ảnh bị cắt ngay tại vị trí đo {((bodyAnalysis as any).measurementRowsCutOff as string[])
+                      Ảnh bị cắt ngay tại vị trí đo {bodyAnalysis.measurementRowsCutOff
                         .map((k)=>({chest:'vòng ngực',waist:'vòng eo',hip:'vòng hông'} as Record<string,string>)[k]||k)
                         .join(', ')}. Hệ thống không đo được ở đó nên đã bỏ trống thay vì đoán.
                       {'\n'}Hãy chụp lại thấy trọn người từ đầu tới bàn chân, đứng thẳng, hai tay hơi tách khỏi thân.
@@ -1072,18 +1177,30 @@ export default function TryOn() {
                 )}
                 <Text style={st.bodyNote}>
                   {(bodyAnalysis.warnings&&bodyAnalysis.warnings[0])||'Ước lượng từ một ảnh 2D có sai số, không phải phép đo nhân trắc chính xác.'}
-                  {'\n'}Mỗi khoảng hiển thị rộng đúng 10 đơn vị. Khi ảnh thiếu vật làm mốc kích thước, kết quả chỉ là khoảng tham khảo chứ không phải số đo bằng thước.
+                  {'\n'}{hasBodySuggestions?'Nhóm 10 đơn vị chỉ giúp đọc nhanh, không phải khoảng sai số. Chưa được kiểm chứng như số đo bằng thước.':'Hãy dùng ảnh thấy trọn từ đầu đến bàn chân, đứng thẳng, hai tay hơi tách thân. Bạn có thể nhập số đo thật và tiếp tục thử đồ ngay.'}
                 </Text>
+                {bodyAnalysis.girthsArePopulationPrior&&<Text style={st.bodyNote}>
+                  Ba vòng là prior dân số suy từ chiều cao/BMI dự đoán, không phải đường viền được đo trực tiếp trên phần cơ thể bị khuất.
+                </Text>}
+                {hasBodySuggestions&&<Text style={st.bodyNote}>
+                  Khoảng bất định của mô hình (chưa hiệu chuẩn):{'\n'}
+                  {[
+                    ['Chiều cao',bodyEstimateUncertainty(bodyAnalysis.estimatedHeight,'cm')],
+                    ['Cân nặng',bodyEstimateUncertainty(bodyAnalysis.estimatedWeight,'kg')],
+                    ['Vòng ngực',bodyEstimateUncertainty(bodyAnalysis.estimatedGirthRanges?.bust,'cm')],
+                    ['Vòng eo',bodyEstimateUncertainty(bodyAnalysis.estimatedGirthRanges?.waist,'cm')],
+                    ['Vòng hông',bodyEstimateUncertainty(bodyAnalysis.estimatedGirthRanges?.hip,'cm')],
+                  ].filter(([,value])=>value).map(([label,value])=>`${label}: ${value}`).join(' · ')}
+                </Text>}
                 <View style={st.bodyActions}>
                   <Pressable
                     style={[st.bodyBtn,st.bodyBtnMain,usingEstimate&&st.bodyBtnOn]}
                     onPress={()=>void useEstimatedBody()}
                     disabled={
-                      (bodyAnalysis.estimatedHeight?.source==='user_provided'||!bodyAnalysis.estimatedHeight?.valueCm)
-                      &&(bodyAnalysis.estimatedWeight?.source==='user_provided'||!bodyAnalysis.estimatedWeight?.valueKg)
+                      !hasUsableBodySuggestions
                     }
                   >
-                    <Text style={st.bodyBtnMainT}>{usingEstimate?'AI đang tự dùng số liệu':'Dùng lại số liệu AI'}</Text>
+                    <Text style={st.bodyBtnMainT}>{!hasBodySuggestions?'Chưa có số liệu AI':!hasUsableBodySuggestions?'Chỉ để tham khảo':usingEstimate?'Đang xem ước lượng AI':'Dùng lại số liệu AI'}</Text>
                   </Pressable>
                   <Pressable style={st.bodyBtn} onPress={()=>{
                     setUsingEstimate(false);
@@ -1105,13 +1222,18 @@ export default function TryOn() {
             <Text style={st.optionalLink}>{showManualMeasurements?'Ẩn số đo':'Nhập số đo thật · tùy chọn'}</Text>
           </Pressable>
         </View>
-        {usingEstimate&&!!photo&&<Text style={st.estimateTag}>JAPANO đang dùng khoảng ước lượng từ ảnh để gợi ý kích cỡ. Bạn vẫn có thể nhập số đo thật nếu muốn.</Text>}
+        {usingEstimate&&!!photo&&<Text style={st.estimateTag}>{hasBodySuggestions?'Các khoảng AI chỉ để tham khảo. Số đo thật giúp chọn kích cỡ đáng tin cậy hơn.':'Chưa có ước lượng từ ảnh này. Bạn vẫn có thể tự chọn kích cỡ và thử đồ hoặc nhập số đo thật.'}</Text>}
         {showManualMeasurements&&(
           <View style={st.manualBox}>
             <Text style={st.manualHint}>Số đo thật luôn được ưu tiên hơn ước lượng từ ảnh.</Text>
             <View style={st.measureRow}>
               <Measure label="Chiều cao" value={effectiveMeasurement('height')} onChange={v=>updateProfile('height',v)} unit="cm" />
               <Measure label="Cân nặng" value={effectiveMeasurement('weight')} onChange={v=>updateProfile('weight',v)} unit="kg" />
+            </View>
+            <View style={st.measureRow}>
+              <Measure label="Vòng ngực" value={String(profile.bust||'')} onChange={v=>updateProfile('bust',v)} unit="cm" />
+              <Measure label="Vòng eo" value={String(profile.waist||'')} onChange={v=>updateProfile('waist',v)} unit="cm" />
+              <Measure label="Vòng hông" value={String(profile.hip||'')} onChange={v=>updateProfile('hip',v)} unit="cm" />
             </View>
           </View>
         )}
@@ -1348,6 +1470,7 @@ const st=StyleSheet.create({
   bodyTitle:{fontFamily:F.bodyB,fontSize:11,color:C.muted,letterSpacing:.7},
   bodyRetry:{fontFamily:F.bodyB,fontSize:11,color:C.ai},
   bodyHint:{fontFamily:F.body,fontSize:11.5,color:C.muted,marginTop:8},
+  bodySuccess:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:'#236B45',marginTop:8},
   bodyWarn:{fontFamily:F.bodyM,fontSize:11.5,lineHeight:17,color:'#A44',marginTop:8},
   bodyRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:9},
   bodyLabel:{fontFamily:F.body,fontSize:11.5,color:C.muted,flex:1},

@@ -1,0 +1,322 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JAPANO · Bằng chứng huấn luyện</title>
+<style>body{font:17px/1.6 system-ui;background:#f5f1e9;color:#202d29;max-width:1080px;margin:40px auto;padding:24px}h1{font-size:42px;line-height:1.2}small{color:#55645e}section{background:white;padding:24px;margin:20px 0;border-radius:12px}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:12px;border-bottom:1px solid #ddd}code,pre{white-space:pre-wrap;overflow-wrap:anywhere}button{padding:10px 16px;cursor:pointer}a{color:#315f4c}</style>
+<small>JAPANO · 28/09/2026 · KẾT QUẢ THỰC TẾ</small><h1>Từ dữ liệu đến adapter.<br>Có checkpoint, có phép đo.</h1>
+<section><h2>Luồng demo</h2><p>Database JSON / CSV → chỉ lấy sản phẩm công khai → JSONL có nguồn → tách train/validation/test theo nhóm → LoRA / VeRA → nạp lại + SHA-256 → LangGraph → trả lời từ catalog hiện tại.</p><p>LangGraph điều phối. Qwen học phân loại ý định. Giá và tồn kho do backend lấy từ database.</p></section>
+<section><h2>Huấn luyện đã chạy</h2><table><tr><th>Mô hình</th><th>Bước cập nhật</th><th>Độ đúng tập kiểm tra</th><th>Nạp lại được</th></tr><tr><td>chat-lora-20260928</td><td>60</td><td>98.68%</td><td>true</td></tr><tr><td>chat-vera-20260928</td><td>60</td><td>100.00%</td><td>true</td></tr><tr><td>fashion-resnet18-20260928</td><td>171</td><td>98.83%</td><td>true</td></tr></table><p>Chat: 76 câu kiểm tra, baseline 75%; nhãn tổng hợp cần người rà soát. Ảnh: 600 ảnh studio, ba nhóm sản phẩm. Không suy rộng thành độ đúng mọi hội thoại hoặc độ chân thật thử đồ.</p></section>
+<section><h2>Dữ liệu đã tải</h2><table><tr><th>Nguồn Kaggle</th><th>Giấy phép công bố</th><th>Loại</th></tr><tr><td><a href="https://www.kaggle.com/datasets/bitext/bitext-gen-ai-chatbot-customer-support-dataset">bitext-gen-ai-chatbot-customer-support-dataset</a></td><td>Community Data License Agreement - Sharing - Version 1.0</td><td>Tổng hợp</td></tr><tr><td><a href="https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small">fashion-product-images-small</a></td><td>MIT</td><td>Ảnh catalog</td></tr><tr><td><a href="https://www.kaggle.com/datasets/mohammadtalib786/retail-sales-dataset">retail-sales-dataset</a></td><td>CC0-1.0</td><td>Tổng hợp</td></tr></table><p>Retail Sales là dữ liệu giả lập của tác giả, không phải doanh thu/khách JAPANO. Dữ liệu khách riêng tư không nằm trong tập SFT.</p></section>
+<section><h2>Ranh giới bằng chứng</h2><p>ResNet18 phân loại ảnh sản phẩm. FASHN/FLUX vẫn chạy trọng số gốc để thử đồ. Chưa fine-tune bộ sinh ảnh thử đồ hoặc mô hình chuyển động. Không suy ra số đo cơ thể chính xác từ một ảnh.</p><details><summary>Xem toàn bộ số liệu và hash</summary><pre>{
+  &quot;reports&quot;: {
+    &quot;chat-lora-20260928&quot;: {
+      &quot;status&quot;: &quot;TRAINED_AND_RELOADED&quot;,
+      &quot;method&quot;: &quot;lora&quot;,
+      &quot;baseModel&quot;: &quot;Qwen/Qwen3-4B-Instruct-2507&quot;,
+      &quot;baseRevision&quot;: &quot;cdbee75f17c01a7cc42f958dc650907174af0554&quot;,
+      &quot;baseLicense&quot;: &quot;Apache-2.0&quot;,
+      &quot;optimizerSteps&quot;: 60,
+      &quot;changedParameterTensors&quot;: 144,
+      &quot;trainableParameters&quot;: 5898240,
+      &quot;totalParameters&quot;: 4028366336,
+      &quot;seconds&quot;: 90.95220551399962,
+      &quot;peakAllocatedGiB&quot;: 10.185965061187744,
+      &quot;batchSize&quot;: 8,
+      &quot;baselineAccuracy&quot;: 0.75,
+      &quot;adapterAccuracy&quot;: 0.9868421052631579,
+      &quot;baselineTestLoss&quot;: 1.7668609986127901,
+      &quot;adapterTestLoss&quot;: 0.0025707959399756527,
+      &quot;reloadVerified&quot;: true,
+      &quot;hashes&quot;: {
+        &quot;tokenizer_config.json&quot;: &quot;3b4cbdf9456d2c725b4397b51a0a42fdea26efae75e01c3225f115fbcbb6fa79&quot;,
+        &quot;adapter_model.safetensors&quot;: &quot;1f17474a0120c69f65e45f735d1f652120cca2e377c6118b2eb271509a8b854e&quot;,
+        &quot;README.md&quot;: &quot;64f73e39bbc6055ebe544bd45a11181e4b0935c9c51580e15b59877edb679a30&quot;,
+        &quot;chat_template.jinja&quot;: &quot;64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326&quot;,
+        &quot;tokenizer.json&quot;: &quot;be75606093db2094d7cd20f3c2f385c212750648bd6ea4fb2bf507a6a4c55506&quot;,
+        &quot;adapter_config.json&quot;: &quot;1faab1e1a8a5e813ff12528cbc5a57101bb2f1bc2fd935271a5317562be8ec63&quot;
+      },
+      &quot;datasetManifestSha256&quot;: &quot;da5221a6c5f8a46ddd68942f0202829edab6f8724246740236e0432a8a162ecb&quot;,
+      &quot;engineeringGate&quot;: true,
+      &quot;productionApproved&quot;: false,
+      &quot;limitations&quot;: &quot;Small synthetic/English intent evaluation; not free-form answer quality or human approval&quot;,
+      &quot;versions&quot;: {
+        &quot;torch&quot;: &quot;2.14.0&quot;,
+        &quot;transformers&quot;: &quot;5.17.0&quot;,
+        &quot;peft&quot;: &quot;0.21.0&quot;
+      }
+    },
+    &quot;chat-vera-20260928&quot;: {
+      &quot;status&quot;: &quot;TRAINED_AND_RELOADED&quot;,
+      &quot;method&quot;: &quot;vera&quot;,
+      &quot;baseModel&quot;: &quot;Qwen/Qwen3-4B-Instruct-2507&quot;,
+      &quot;baseRevision&quot;: &quot;cdbee75f17c01a7cc42f958dc650907174af0554&quot;,
+      &quot;baseLicense&quot;: &quot;Apache-2.0&quot;,
+      &quot;optimizerSteps&quot;: 60,
+      &quot;changedParameterTensors&quot;: 144,
+      &quot;trainableParameters&quot;: 202752,
+      &quot;totalParameters&quot;: 4022670848,
+      &quot;seconds&quot;: 173.727569701,
+      &quot;peakAllocatedGiB&quot;: 12.676308155059814,
+      &quot;batchSize&quot;: 16,
+      &quot;baselineAccuracy&quot;: 0.75,
+      &quot;adapterAccuracy&quot;: 1.0,
+      &quot;baselineTestLoss&quot;: 1.7609548938175863,
+      &quot;adapterTestLoss&quot;: 0.0014901826868203183,
+      &quot;reloadVerified&quot;: true,
+      &quot;hashes&quot;: {
+        &quot;tokenizer_config.json&quot;: &quot;3b4cbdf9456d2c725b4397b51a0a42fdea26efae75e01c3225f115fbcbb6fa79&quot;,
+        &quot;adapter_model.safetensors&quot;: &quot;321e00d04823e3b971a8cf8c0f01f7a0929c02420ee472842e9d5c9f41762046&quot;,
+        &quot;README.md&quot;: &quot;6f75692b814516e651f1c31fa5f92e57924aea2cb3e5f9abdc4da0ba52e50d5d&quot;,
+        &quot;chat_template.jinja&quot;: &quot;64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326&quot;,
+        &quot;tokenizer.json&quot;: &quot;be75606093db2094d7cd20f3c2f385c212750648bd6ea4fb2bf507a6a4c55506&quot;,
+        &quot;adapter_config.json&quot;: &quot;d0380d5838f547c7147daca2f23b5ebecaa55565b38ee95d9b1da1ad6331442c&quot;
+      },
+      &quot;datasetManifestSha256&quot;: &quot;da5221a6c5f8a46ddd68942f0202829edab6f8724246740236e0432a8a162ecb&quot;,
+      &quot;engineeringGate&quot;: true,
+      &quot;productionApproved&quot;: false,
+      &quot;limitations&quot;: &quot;Small synthetic/English intent evaluation; not free-form answer quality or human approval&quot;,
+      &quot;versions&quot;: {
+        &quot;torch&quot;: &quot;2.14.0&quot;,
+        &quot;transformers&quot;: &quot;5.17.0&quot;,
+        &quot;peft&quot;: &quot;0.21.0&quot;
+      }
+    },
+    &quot;fashion-resnet18-20260928&quot;: {
+      &quot;status&quot;: &quot;TRAINED_AND_RELOADED&quot;,
+      &quot;technique&quot;: &quot;supervised transfer learning: ResNet18 layer4 + classifier head&quot;,
+      &quot;task&quot;: &quot;3-class product image classification, NOT image generation or measurement&quot;,
+      &quot;classes&quot;: [
+        &quot;Apparel&quot;,
+        &quot;Footwear&quot;,
+        &quot;Accessories&quot;
+      ],
+      &quot;optimizerSteps&quot;: 171,
+      &quot;epochs&quot;: 3,
+      &quot;baselineUntrainedHead&quot;: {
+        &quot;accuracy&quot;: 0.41333333333333333,
+        &quot;confusionMatrix&quot;: [
+          [
+            1,
+            1,
+            198
+          ],
+          [
+            1,
+            55,
+            144
+          ],
+          [
+            1,
+            7,
+            192
+          ]
+        ],
+        &quot;rows&quot;: 600
+      },
+      &quot;heldout&quot;: {
+        &quot;accuracy&quot;: 0.9883333333333333,
+        &quot;confusionMatrix&quot;: [
+          [
+            198,
+            0,
+            2
+          ],
+          [
+            0,
+            200,
+            0
+          ],
+          [
+            5,
+            0,
+            195
+          ]
+        ],
+        &quot;rows&quot;: 600
+      },
+      &quot;history&quot;: [
+        {
+          &quot;epoch&quot;: 1,
+          &quot;loss&quot;: 0.12760504315558233,
+          &quot;validation&quot;: {
+            &quot;accuracy&quot;: 0.9966666666666667,
+            &quot;confusionMatrix&quot;: [
+              [
+                199,
+                0,
+                1
+              ],
+              [
+                0,
+                200,
+                0
+              ],
+              [
+                1,
+                0,
+                199
+              ]
+            ],
+            &quot;rows&quot;: 600
+          }
+        },
+        {
+          &quot;epoch&quot;: 2,
+          &quot;loss&quot;: 0.017345716588591274,
+          &quot;validation&quot;: {
+            &quot;accuracy&quot;: 0.9983333333333333,
+            &quot;confusionMatrix&quot;: [
+              [
+                200,
+                0,
+                0
+              ],
+              [
+                0,
+                200,
+                0
+              ],
+              [
+                1,
+                0,
+                199
+              ]
+            ],
+            &quot;rows&quot;: 600
+          }
+        },
+        {
+          &quot;epoch&quot;: 3,
+          &quot;loss&quot;: 0.006815781261314426,
+          &quot;validation&quot;: {
+            &quot;accuracy&quot;: 0.9983333333333333,
+            &quot;confusionMatrix&quot;: [
+              [
+                200,
+                0,
+                0
+              ],
+              [
+                0,
+                200,
+                0
+              ],
+              [
+                1,
+                0,
+                199
+              ]
+            ],
+            &quot;rows&quot;: 600
+          }
+        }
+      ],
+      &quot;seconds&quot;: 7.265171684000052,
+      &quot;peakAllocatedGiB&quot;: 0.3594841957092285,
+      &quot;sha256&quot;: &quot;79527d9a7fc7c21d2dbefb71c59b05488dd4b008c6c135fead302f31047465f2&quot;,
+      &quot;reloadVerified&quot;: true,
+      &quot;dataset&quot;: {
+        &quot;source&quot;: &quot;https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small&quot;,
+        &quot;license&quot;: &quot;MIT&quot;,
+        &quot;downloadedAt&quot;: &quot;2026-09-28T05:06:05.575177+00:00&quot;,
+        &quot;sha256&quot;: &quot;e223d09ba5fb5829892e507989dba11b2549a31fabed994ad5353e4b6ef87b7a&quot;,
+        &quot;bytes&quot;: 592614936,
+        &quot;synthetic&quot;: false,
+        &quot;use&quot;: &quot;offline-training-and-evaluation; never JAPANO inventory&quot;,
+        &quot;licenseEvidence&quot;: &quot;/home/admin123/Documents/JAPANO/backend/ai_training/workbench/raw/fashion/dataset-metadata.json&quot;
+      },
+      &quot;split&quot;: &quot;product ID and exact-image hash disjoint; near-duplicate images not independently audited&quot;,
+      &quot;productionApproved&quot;: false,
+      &quot;limitations&quot;: &quot;Catalog studio photos; no validation on people, bikinis, try-on realism or JAPANO photos&quot;
+    }
+  },
+  &quot;sources&quot;: [
+    {
+      &quot;source&quot;: &quot;https://www.kaggle.com/datasets/bitext/bitext-gen-ai-chatbot-customer-support-dataset&quot;,
+      &quot;license&quot;: &quot;Community Data License Agreement - Sharing - Version 1.0&quot;,
+      &quot;downloadedAt&quot;: &quot;2026-09-28T05:03:54.820814+00:00&quot;,
+      &quot;sha256&quot;: &quot;2388c8303786e3ba2909e1bcddd9a9708fcd06a6e1c4bce43f126123fe7b8e51&quot;,
+      &quot;bytes&quot;: 3007665,
+      &quot;synthetic&quot;: true,
+      &quot;use&quot;: &quot;offline-training-and-evaluation; never JAPANO inventory&quot;,
+      &quot;licenseEvidence&quot;: &quot;/home/admin123/Documents/JAPANO/backend/ai_training/workbench/raw/support/dataset-metadata.json&quot;
+    },
+    {
+      &quot;source&quot;: &quot;https://www.kaggle.com/datasets/paramaggarwal/fashion-product-images-small&quot;,
+      &quot;license&quot;: &quot;MIT&quot;,
+      &quot;downloadedAt&quot;: &quot;2026-09-28T05:06:05.575177+00:00&quot;,
+      &quot;sha256&quot;: &quot;e223d09ba5fb5829892e507989dba11b2549a31fabed994ad5353e4b6ef87b7a&quot;,
+      &quot;bytes&quot;: 592614936,
+      &quot;synthetic&quot;: false,
+      &quot;use&quot;: &quot;offline-training-and-evaluation; never JAPANO inventory&quot;,
+      &quot;licenseEvidence&quot;: &quot;/home/admin123/Documents/JAPANO/backend/ai_training/workbench/raw/fashion/dataset-metadata.json&quot;
+    },
+    {
+      &quot;source&quot;: &quot;https://www.kaggle.com/datasets/mohammadtalib786/retail-sales-dataset&quot;,
+      &quot;license&quot;: &quot;CC0-1.0&quot;,
+      &quot;downloadedAt&quot;: &quot;2026-09-28T05:03:56.138021+00:00&quot;,
+      &quot;sha256&quot;: &quot;0414c1ac8287dc1516555df88332395378d5842f694ced731b0997f8029ce2e6&quot;,
+      &quot;bytes&quot;: 11509,
+      &quot;synthetic&quot;: true,
+      &quot;use&quot;: &quot;offline-training-and-evaluation; never JAPANO inventory&quot;,
+      &quot;licenseEvidence&quot;: &quot;/home/admin123/Documents/JAPANO/backend/ai_training/workbench/raw/retail/dataset-metadata.json&quot;
+    }
+  ],
+  &quot;dataset&quot;: {
+    &quot;purpose&quot;: &quot;intent classification, NOT memorizing inventory or free-form answers&quot;,
+    &quot;license&quot;: &quot;internal synthetic examples + catalog authorization; Bitext CDLA-Sharing-1.0 retained&quot;,
+    &quot;reviewStatus&quot;: &quot;synthetic labels require human review; heldout is an engineering check&quot;,
+    &quot;splitMethod&quot;: &quot;Vietnamese template / Bitext source-intent group disjoint&quot;,
+    &quot;splits&quot;: {
+      &quot;train&quot;: {
+        &quot;rows&quot;: 280,
+        &quot;groups&quot;: 86,
+        &quot;sha256&quot;: &quot;cf48952cbacc6322cb41ea963672999fbabe87364805b965a6359d26522f32bf&quot;
+      },
+      &quot;validation&quot;: {
+        &quot;rows&quot;: 76,
+        &quot;groups&quot;: 22,
+        &quot;sha256&quot;: &quot;b06397fb7cdc05d36ec7a00ea85f0cc71b87fc9e6d2fb0092f94d96c061ab27f&quot;
+      },
+      &quot;test&quot;: {
+        &quot;rows&quot;: 76,
+        &quot;groups&quot;: 22,
+        &quot;sha256&quot;: &quot;58841e10b60c60bd073235ba1b64592d2b753741d2dc9fc394fe2ab68fed0012&quot;
+      }
+    },
+    &quot;sources&quot;: [
+      {
+        &quot;source&quot;: &quot;https://www.kaggle.com/datasets/bitext/bitext-gen-ai-chatbot-customer-support-dataset&quot;,
+        &quot;license&quot;: &quot;Community Data License Agreement - Sharing - Version 1.0&quot;,
+        &quot;downloadedAt&quot;: &quot;2026-09-28T05:03:54.820814+00:00&quot;,
+        &quot;sha256&quot;: &quot;2388c8303786e3ba2909e1bcddd9a9708fcd06a6e1c4bce43f126123fe7b8e51&quot;,
+        &quot;bytes&quot;: 3007665,
+        &quot;synthetic&quot;: true,
+        &quot;use&quot;: &quot;offline-training-and-evaluation; never JAPANO inventory&quot;,
+        &quot;licenseEvidence&quot;: &quot;/home/admin123/Documents/JAPANO/backend/ai_training/workbench/raw/support/dataset-metadata.json&quot;
+      },
+      {
+        &quot;sourceKind&quot;: &quot;local-product-export&quot;,
+        &quot;sourceSha256&quot;: &quot;c18cc24d50c39491c6152e46b260e9c2d6d54400243a92c26e86cd702611380c&quot;,
+        &quot;rows&quot;: 53,
+        &quot;fields&quot;: [
+          &quot;cat&quot;,
+          &quot;category&quot;,
+          &quot;id&quot;,
+          &quot;name&quot;,
+          &quot;price&quot;,
+          &quot;slug&quot;,
+          &quot;status&quot;,
+          &quot;tags&quot;
+        ],
+        &quot;license&quot;: &quot;user-authorized JAPANO internal catalog; internal use only&quot;,
+        &quot;containsCustomerRecords&quot;: false,
+        &quot;purpose&quot;: &quot;context examples, not inventory authority&quot;
+      }
+    ]
+  },
+  &quot;gpuObserved&quot;: {
+    &quot;model&quot;: &quot;RTX 5060 Ti&quot;,
+    &quot;vramTotalMiB&quot;: 16311,
+    &quot;veraSampleUsedMiB&quot;: 15193,
+    &quot;veraSampleUtilizationPercent&quot;: 100
+  },
+  &quot;warning&quot;: &quot;Small offline evaluations; no human production approval. Image classifier is not a fine-tuned try-on generator.&quot;
+}</pre></details></section><button onclick="window.print()">In / lưu PDF để trình bày</button></html>

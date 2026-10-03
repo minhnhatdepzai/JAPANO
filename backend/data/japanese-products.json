@@ -445,6 +445,8 @@
     "cat": "haori",
     "category": "haori",
     "garmentType": "haori",
+    "sleeveCoverage": "short",
+    "constructionCoveredZones": [],
     "adultOnlyTryOn": false,
     "tearAllowed": false,
     "colorHex": "#3A3F44",

@@ -103,6 +103,15 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+// Public APKs are signed from environment-backed secrets. The historical
+// debug signing fallback remains available for local research builds only;
+// CI always supplies the four JAPANO_UPLOAD_* variables below.
+def releaseStoreFile = System.getenv('JAPANO_UPLOAD_STORE_FILE')
+def releaseStorePassword = System.getenv('JAPANO_UPLOAD_STORE_PASSWORD')
+def releaseKeyAlias = System.getenv('JAPANO_UPLOAD_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('JAPANO_UPLOAD_KEY_PASSWORD')
+def releaseSigningReady = [releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -114,8 +123,8 @@ android {
         applicationId 'vn.japano.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20
-        versionName "1.0.19"
+        versionCode 21
+        versionName "1.0.20"
     }
     signingConfigs {
         debug {
@@ -124,15 +133,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (releaseSigningReady) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig releaseSigningReady ? signingConfigs.release : signingConfigs.debug
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

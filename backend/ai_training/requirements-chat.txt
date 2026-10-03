@@ -1,0 +1,10 @@
+# Versions validated in the 2026-09-28 runs; install CUDA-compatible torch first.
+torch==2.14.0
+torchvision==0.29.0
+transformers==5.17.0
+peft==0.21.0
+accelerate>=1.10,<2
+kaggle>=2.2,<3
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pillow>=11,<13

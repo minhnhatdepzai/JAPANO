@@ -22,6 +22,20 @@ const ALWAYS_COVERED_ZONES = ['chest', 'pelvis', 'buttocks'];
 const COVERED = 'covered';
 const EXPOSED = 'exposed';
 
+// Những vùng tạo nên phom đặc trưng của trang phục Nhật. Đây là cổng trung
+// thực thiết kế, tách khỏi ALWAYS_COVERED_ZONES vốn chỉ là sàn an toàn. Ví dụ
+// Kimono che tay và chân; nếu kết quả để trần hai vùng đó thì model đã biến nó
+// thành váy/romper dù ngực và vùng chậu vẫn kín.
+const CONSTRUCTION_COVERED_ZONES = {
+  kimono: ['upperArms', 'legs'],
+  yukata: ['upperArms', 'legs'],
+  haori: ['upperArms'],
+  hakama: ['legs'],
+  samue: ['upperArms', 'legs'],
+  noragi: ['upperArms'],
+  happi: ['upperArms'],
+};
+
 // Mỗi loại khai báo tường minh, không suy đoán. `adultOnlyTryOn` bật cho đồ bơi
 // và đồ hở nhiều; `tearAllowed` là quyền được mô phỏng bục đường may khi quá
 // chật — đồ bơi và đồ ngắn KHÔNG BAO GIỜ được phép.
@@ -87,6 +101,12 @@ const GARMENT_PROFILES = {
                 legs: COVERED, pelvis: COVERED, buttocks: COVERED, back: COVERED },
   },
   cardigan: {
+    zone: 'upper', layer: 'upper-outer', fashnCategory: 'tops',
+    adultOnlyTryOn: false, tearAllowed: true, outerwear: true,
+    coverage: { chest: COVERED, abdomen: COVERED, shoulders: COVERED, upperArms: COVERED,
+                legs: COVERED, pelvis: COVERED, buttocks: COVERED, back: COVERED },
+  },
+  blazer: {
     zone: 'upper', layer: 'upper-outer', fashnCategory: 'tops',
     adultOnlyTryOn: false, tearAllowed: true, outerwear: true,
     coverage: { chest: COVERED, abdomen: COVERED, shoulders: COVERED, upperArms: COVERED,
@@ -175,8 +195,10 @@ const TYPE_PATTERNS = [
   ['sleeveless_top', new RegExp(`(${W}s[áa]t\\s*n[áa]ch|${W}kh[oô]ng\\s*tay|sleeveless|tank\\s*top|${W}ba\\s*l[ỗo])`, 'i')],
   ['short_skirt', /(ch[âa]n\s*v[áa]y\s*ng[ắa]n|v[áa]y\s*ng[ắa]n|mini\s*skirt|short\s*skirt)/i],
   ['shorts', /(qu[ầa]n\s*(short|đùi|[đd]ui|ng[ắa]n)|shorts\b)/i],
-  // Tên/slug hiện đại phải thắng category nhóm hàng cũ. Ví dụ cardigan p6
-  // từng nằm trong cat="haori" và bị cấm hiệu ứng bục đường may như Haori.
+  // Tên/slug hiện đại phải thắng category nhóm hàng cũ. Ví dụ blazer p5 và
+  // cardigan p6 từng nằm trong cat="haori", làm cổng thiết kế Haori từ chối
+  // tay áo hiện đại dù model đã tạo đúng sản phẩm.
+  ['blazer', /(blazer|trench|[áa]o\s*kho[áa]c\s*kaki)/i],
   ['cardigan', /(cardigan|[áa]o\s*len\s*kho[áa]c)/i],
   // "Kimono"/"yukata" trong tên áo thường chỉ KIỂU TAY, không phải loại trang phục.
   //
@@ -228,6 +250,12 @@ function coverageProfileFor(product = {}) {
   // KHÔNG được hạ sàn an toàn.
   const coverage = { ...profile.coverage, ...(product.coverageProfile || {}) };
   for (const zone of ALWAYS_COVERED_ZONES) coverage[zone] = COVERED;
+  // Một loại truyền thống vẫn có thể có biến thể tay ngắn. Catalog phải khai
+  // báo rõ theo từng SKU; mảng rỗng là lựa chọn có chủ đích, không được dùng
+  // toán tử `||` vì nó sẽ âm thầm trả về mặc định tay dài của cả loại Haori.
+  const constructionCoveredZones = Array.isArray(product.constructionCoveredZones)
+    ? product.constructionCoveredZones.filter((zone) => BODY_ZONES.includes(zone))
+    : [...(CONSTRUCTION_COVERED_ZONES[type] || [])];
   return {
     garmentType: type,
     coverageProfile: coverage,
@@ -243,6 +271,7 @@ function coverageProfileFor(product = {}) {
     outerwear: Boolean(profile.outerwear),
     preserveHemLength: Boolean(profile.preserveHemLength),
     preserveConstruction: Boolean(profile.preserveConstruction),
+    constructionCoveredZones,
   };
 }
 
@@ -257,8 +286,10 @@ const exposedZonesOf = (coverage) => BODY_ZONES.filter((zone) => coverage[zone] 
 function safetyPolicyFor(products = []) {
   const profiles = (Array.isArray(products) ? products : [products]).map(coverageProfileFor);
   const exposed = new Set();
+  const constructionCovered = new Set();
   for (const profile of profiles) {
     for (const zone of exposedZonesOf(profile.coverageProfile)) exposed.add(zone);
+    for (const zone of profile.constructionCoveredZones) constructionCovered.add(zone);
   }
   return {
     garmentTypes: profiles.map((profile) => profile.garmentType),
@@ -296,6 +327,7 @@ function safetyPolicyFor(products = []) {
         : 'construction'),
     preserveHemLength: profiles.some((profile) => profile.preserveHemLength),
     preserveConstruction: profiles.some((profile) => profile.preserveConstruction),
+    constructionCoveredZones: [...constructionCovered],
   };
 }
 

@@ -81,8 +81,10 @@ test('garmentLayerFor phân biệt áo trong với Haori khoác ngoài', () => {
 
 test('Haori flat-lay luôn đối chiếu lại chiều dài và tay áo dù refine toàn cục đang tắt', () => {
   const haori = { name: 'Áo choàng Haori', cat: 'haori' };
+  const kimono = { name: 'Kimono Tomesode đen', garmentType: 'kimono' };
   const shirt = { name: 'Sơ mi trắng', cat: 'trang-phuc' };
   assert.equal(shouldRefineGarment(haori, '/tmp/haori-dang-dai_tryon-flat.png', false), true);
+  assert.equal(shouldRefineGarment(kimono, '/tmp/kimono-tomesode-den_tryon-flat.png', false), true);
   assert.equal(shouldRefineGarment(shirt, '/tmp/so-mi-trang_tryon-flat.png', false), false);
   assert.equal(shouldRefineGarment(haori, '/tmp/haori-dang-dai_1.jpg', true), false);
 });
@@ -137,6 +139,20 @@ const { resolveGarmentImage } = require('../lib/garmentImages');
 
 test('Haori dùng ảnh flat-lay đã duyệt thay vì bộ ảnh khăn bị gắn nhầm', () => {
   assert.equal(path.basename(resolveGarmentImage('haori-dang-dai')), 'haori-dang-dai_tryon-flat.png');
+});
+
+test('Tomesode dùng flat-lay đã duyệt để giữ đúng cấu trúc Kimono', () => {
+  assert.equal(
+    path.basename(resolveGarmentImage('kimono-tomesode-den')),
+    'kimono-tomesode-den_tryon-flat.png',
+  );
+});
+
+test('Furisode tay dài dùng flat-lay đã duyệt thay vì ảnh người mẫu catalog', () => {
+  assert.equal(
+    path.basename(resolveGarmentImage('kimono-furisode-do')),
+    'kimono-furisode-do_tryon-flat.png',
+  );
 });
 
 test('bikini hai mảnh dùng flat-lay sạch chỉ có một áo và một quần', () => {

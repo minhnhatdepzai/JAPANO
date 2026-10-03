@@ -9,7 +9,7 @@ const PRODUCT_ASSETS_DIR = path.join(__dirname, '..', '..', 'mobile', 'assets', 
 // thể để sót da/tay/người mẫu; tự động tin mọi file *_tryon-flat sẽ làm model
 // mặc cả những phần đó lên khách hàng.
 const APPROVED_TRYON_FLATS = new Set(
-  String(process.env.JAPANO_APPROVED_TRYON_FLATS || 'kimono-hong,ao-len-cardigan,yumeko,haori-dang-dai,bikini-hoa-anh-dao')
+  String(process.env.JAPANO_APPROVED_TRYON_FLATS || 'kimono-hong,kimono-tomesode-den,kimono-furisode-do,ao-len-cardigan,yumeko,haori-dang-dai,bikini-hoa-anh-dao')
     .split(',').map((value) => value.trim()).filter(Boolean),
 );
 

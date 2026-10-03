@@ -388,8 +388,15 @@ Sai số end-to-end ảnh → số đo, đo trên **BodyM testB, 400 người**:
 | Vòng eo | 9,96 cm | **6,50 cm** | +5,26 → −1,5 |
 | Vòng hông | 12,24 cm | **5,57 cm** | +6,19 → −1,3 |
 
-Độ trễ `/api/stylist/body-analysis`: **0,35 s** P50 — model được giữ thường trú
-trong một worker thay vì nạp lại mỗi request, thay cho ~4,1 s trước đó.
+Độ trễ `/api/stylist/body-analysis` đo lại ngày 30/09/2026 trên bốn
+profile thân rộng là **1,17–1,29 s/request**. Model được giữ thường trú
+trong một worker thay vì nạp lại mỗi request. Con số 0,35 s cũ là
+benchmark trên pipeline/dữ liệu khác và không còn được dùng làm cam kết runtime.
+
+FASHN được giữ ấm tối đa 180 giây khi chuyển nhanh giữa Thử đồ,
+Home và Duyệt sản phẩm. Đo trên stack local: lượt cold-start đầu tiên
+7,515 s; chuỗi `tryon → browse → tryon` sau đó là 10 ms và 9 ms.
+Chuyển sang Chat/Motion vẫn nhả FASHN ngay để dành VRAM.
 
 Đầu ra luôn là **khoảng 10 đơn vị kèm độ tin cậy**, và pipeline có một cổng tỉnh
 táo chạy trên chính đầu ra: số nào bất khả thi về giải phẫu thì bị bỏ kèm lý do,
@@ -662,6 +669,35 @@ cd mobile/android
 JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew assembleRelease
 ```
 
+### Public API và APK Android
+
+Bản Android công khai hiện dùng API HTTPS qua Tailscale Funnel:
+
+- API/Admin: <https://admin123-system-product-name.tailfeea7a.ts.net/>
+- Admin UI: <https://admin123-system-product-name.tailfeea7a.ts.net/admin/>
+- APK: xem GitHub Releases của repo; workflow
+  `.github/workflows/android-release.yml` tự build APK đã ký khi push tag `v*`.
+
+Máy host phải giữ `tailscaled` và user stack hoạt động. Cài unit user từ repo:
+
+```bash
+install -Dm644 deploy/systemd-user/japano-stack.service \
+  ~/.config/systemd/user/japano-stack.service
+systemctl --user daemon-reload
+systemctl --user enable --now japano-stack.service
+sudo loginctl enable-linger "$USER"   # một lần, để chạy sau reboot khi chưa đăng nhập
+tailscale funnel --bg --yes 4100
+```
+
+Khóa ký production không nằm trong Git. Máy phát hành giữ bản sao ngoại tuyến;
+GitHub Actions đọc bốn secret `JAPANO_ANDROID_*`. Không đổi hoặc làm mất khóa
+này, nếu không Android sẽ từ chối cài bản cập nhật lên trên APK 1.0.20.
+
+DrayTek Smart VPN Client không phải điều kiện để người dùng tải APK. Để chuyển
+stack sang Proxmox/datacenter, yêu cầu quản trị viên cấp profile OpenVPN hoặc
+WireGuard (server, port, route, CA/certificate), hoặc cài Tailscale trực tiếp
+trên VM. Chỉ email/mật khẩu portal không xác định được giao thức và route VPN.
+
 Toàn bộ biến môi trường tham khảo nằm trong [`.env.example`](.env.example).
 
 ## Kiểm thử
@@ -763,3 +799,332 @@ lịch sử không làm mất câu trả lời đã tạo. Web tự cuộn tới
 Kiểm chứng ngày 05/09: backend 441 test đạt; 6 câu trên web đăng nhập thật
 trả trong 97–853 ms, kiểm tra phục hồi sau HTTP 503 đạt. Chưa xác nhận thao tác
 chat trên Redmi trong lượt này vì thiết bị đang thử đồ.
+
+
+## LoRA, VeRA và LangGraph — cập nhật 28/09/2026
+
+Xem [README huấn luyện và kịch bản thuyết trình](docs/README_AI_TRAINING.md)
+và [bảng bằng chứng có thể in PDF](docs/ai-evidence-20260928/presentation.html).
+Đã train thật LoRA + VeRA cho phân loại ý định Qwen3-4B và ResNet18 cho ảnh
+sản phẩm, có checkpoint, SHA-256, nạp lại và tập kiểm tra riêng. LangGraph
+điều phối chatbot; giá/tồn kho vẫn lấy từ database live. Không gọi LangGraph
+là mô hình được fine-tune, không gọi bộ phân loại ảnh là bộ sinh ảnh thử đồ.
+
+Chạy demo trên máy đã có model: `./scripts/start-ai-demo.sh`. Website
+`http://localhost:4200`, Admin `http://localhost:4100/admin/`. Phải đọc
+readiness của từng model; tiến trình đang chạy không đồng nghĩa model đầy đủ.
+
+Ảnh khách tải lên để thử bikini còn cần **Ollama + `qwen3-vl:8b`** cho cổng
+kiểm tra ảnh 18+. Chạy `ollama pull qwen3-vl:8b` nếu thiếu model, rồi
+`./scripts/check-ai-ready.sh` và `./scripts/demo-preflight.sh`. Kiểm tra model
+có trên đĩa chưa thay thế việc chạy một ảnh thật. Preset người lớn đã duyệt
+có thể thành công ngay cả khi đường tải ảnh của khách bị lỗi
+`AGE_VERIFICATION_UNAVAILABLE`; cần kiểm thử riêng cả hai đường.
+
+Kiểm chứng 28/09 trên **Redmi Note 8 Pro**: ảnh khách tải lên + bikini hoa anh
+đào cỡ S đã tạo thành công và hiển thị trên điện thoại; API tạo ảnh mất 40,9 giây
+sau bước kiểm tra ảnh khoảng 19 giây. Đây là một ca đã kiểm chứng, không bảo đảm
+mọi ảnh đều thành công. Ảnh đó bị cắt bàn chân nên bộ số đo vẫn trả thiếu bằng
+chứng; tạo được bikini không chứng minh dự đoán số đo đã chính xác.
+
+Trong màn thử đồ, nhập số đo rồi bấm **Phân tích lại** để gửi thông tin bổ sung
+lên server. Khi chọn ảnh mới, app không tự áp số đo của ảnh trước. Số người dùng
+nhập được ghi nguồn riêng, không tính là AI dự đoán đúng. Luồng API đã kiểm tra;
+kiểm tra giao diện mới trên Redmi đang chờ đăng nhập lại.
+
+Sửa lỗi đầu bị thay đổi khi thử đồ với ảnh khoanh tay: giữ nguyên tư thế và đi
+trực tiếp qua FASHN, không ép dựng lại toàn thân chỉ vì tay che áo. Đã chạy lại
+ảnh khách với Happi Matsuri trong 32,79 giây và kiểm tra ảnh đầu ra. Ảnh cũ cần
+tạo lại. Áo sơ mi, bikini và chuyển động đều đã có kết quả thật; chi tiết và
+giới hạn trong README huấn luyện.
+
+Lời thoại trình bày chi tiết: [LangGraph, LoRA/VeRA, vector và AI ảnh](docs/LOI_THOAI_THUYET_TRINH_AI.md). Cập nhật: video đã tạo được MP4 thật 49 frame/12 fps trong 57,13 giây qua API; xem giới hạn trong README huấn luyện. Phân tích ảnh đơn hiện trả thiếu bằng chứng cho số đo chưa được kiểm chứng, giữ số đo nhập tay (đã thử 160 cm/150 kg), không tự dùng mẫu vóc dáng làm số đo thật.
+
+Theo yêu cầu khôi phục dự đoán ảnh: ảnh toàn thân đủ rõ có thể nhận khoảng ước lượng tham khảo; không coi đó là số đo thật. Xem trạng thái thiếu mô hình hiệu chuẩn và giới hạn ở [README AI](docs/README_AI_TRAINING.md).
+
+Cập nhật tiếp: đã train lại hồi quy ANSUR II và nạp các checkpoint cân nặng/BMI/vòng đo còn thiếu. 5/6 ảnh preset trả được gợi ý theo khoảng; mẫu ngoại cỡ vẫn thiếu bằng chứng. MAE trên bảng số đo không phải độ chính xác từ ảnh; [báo cáo và giới hạn](docs/README_AI_TRAINING.md).
+
+Cập nhật 29/09: bộ đo ảnh nhận thêm tín hiệu đùi trên để tránh ép người thân
+rộng về vóc dáng trung bình. Trên 10 ảnh hồ sơ tổng hợp, các mẫu rộng `03/06/07/10`
+được xếp lần lượt khoảng 100,3/79,4/111,8/84,2 kg; sáu ảnh còn lại không bị
+tăng theo quy tắc này. Đây là kiểm tra thứ tự hình học trên ảnh không nhãn,
+không phải benchmark độ chính xác. `mau-07` đã được phân tích lại trực tiếp trên
+Redmi và hiển thị nhóm 107–117 kg. Chat LangGraph trả đúng giá bikini từ catalog
+live; một lượt bikini FLUX.2 mới, không cache, đạt trong 51,34 giây và ảnh ghép
+Naoshima đạt `groundSafe=true` trong 1,29 giây. Chi tiết, giới hạn và số vòng đo
+ở [README AI](docs/README_AI_TRAINING.md).
+
+Ngay trên Redmi, kết quả bikini của mẫu `mau-07` đã tạo tiếp clip đi bộ local
+trong 57,33 giây: 49 frame/12 fps/384×512, quality gate đạt và video hiển thị
+trong app. Đây là một ca thiết bị được quan sát trực tiếp, không phải bảo đảm
+100% cho mọi ảnh.
+
+Cập nhật 30/09: app dùng đúng cùng byte ảnh đã chọn cho preview, phân tích và
+thử đồ; Phân tích lại không còn gửi profile cũ. `mau-10` trên Redmi hiển thị
+156-166 cm, 79-89 kg, ngực/eo/hông 97-107/95-105/114-124 cm, kèm khoảng bất
+định rộng hơn và cảnh báo đây không phải số đo thật. Sơ mi trắng size S tạo
+thành công, được đánh dấu **Rất chật**, khuyên XXL và chỉ mô phỏng bục đường may
+nhỏ ở vai/cánh tay ngoài. Đồ bơi/bikini không áp dụng hiệu ứng bục. Từ chính ảnh
+kết quả, worker CUDA tạo và app phát MP4 H.264 384×640, 10 fps, 3,3 giây; GPU
+đạt 100% khi render. Đây là kiểm chứng một ảnh tổng hợp không có ground truth,
+không phải fine-tuning hoặc cam kết độ chính xác cho mọi ảnh.
+
+Thẻ phân tích hiện xác nhận rõ khi ảnh mới đã được xử lý. Với ảnh đã có kết quả,
+**Kiểm tra lại** chỉ xác nhận đúng ảnh/thời gian và không tải trùng cùng ảnh qua
+ADB; đổi ảnh mới luôn chạy worker thật. Timeout kết nối của bước này là 20 giây,
+không còn spinner chờ ba phút khi upload bị đứt.
+
+Kiểm chứng ngày 01/10 với hai ảnh Messenger thật trên Redmi: ảnh đứng toàn thân
+váy trắng trả các nhóm **157–167 cm, 43–53 kg, 74–84/60–70/80–90 cm** trong
+giao diện. Ảnh ngồi bị cắt dưới đầu gối dùng fallback ConvNeXt crop và prior
+ANSUR II, trả **156–166 cm, 52–62 kg, 82–92/71–81/90–100 cm** với confidence
+thấp, khoảng bất định rộng và `usableForSizing=false`. Bước phân tích vóc dáng cũng không còn chờ model
+kiểm tra 18+ của sản phẩm đang mở; cổng 18+ vẫn bắt buộc ở request tạo ảnh thử
+đồ. Bằng chứng: `test-results/live-debug/real-fullbody-selected-final.png`.
+
+Ảnh ngồi sàn có thể bị JPEG của Android nén lại làm confidence mắt cá vượt
+ngưỡng và bị hiểu nhầm là ảnh đứng đủ người. Pipeline hiện kiểm tra thêm hướng
+hông→gối: khi hai đùi gần nằm ngang, ảnh vẫn đi qua checkpoint ảnh ngồi/cắt
+khung dù detector thấy cả hai mắt cá. Trên đúng ảnh Redmi, bản gốc và bản JPEG
+quality 82 đều trả cùng nhóm **149–159 cm, 42–52 kg,
+78–88/66–76/82–92 cm**, `measurementStatus=partial` và
+`usableForSizing=false`. Đây là gợi ý thống kê độ tin cậy rất thấp.
+
+Luồng tạo ảnh cũng không còn chờ vô hạn nếu `AsyncStorage` của MIUI treo khi
+lưu hồ sơ: app ghi hồ sơ ở nền và gửi request GPU ngay bằng state đang hiển thị.
+Trước mỗi lượt thử đồ, client dò `/api/health` với timeout 2,5 giây cho từng
+địa chỉ; chỉ địa chỉ đã phản hồi mới nhận POST inference dài. Vì vậy IP Wi-Fi
+cũ không còn giữ spinner 720 giây trước khi app thử ADB reverse/Tailscale.
+Timeout mặc định của một lượt tạo ảnh được hạ còn 180 giây; lỗi mạng sẽ hiện để
+thử lại thay vì quay quá 10 phút. Lượt
+Redmi với chính ảnh ngồi và Yukata đã qua bước này, `POST /api/tryon` trả 200
+sau 47,571 giây. Một lượt kiểm chứng độc lập trên đúng JPEG quality 82 trả 200
+sau 55,35 giây với engine
+`flux2-klein-4b-pose+fashn-vton-1.5+fast-16steps+adaptive-low-memory`; ảnh giữ
+cổ chéo, obi, tay rộng và vạt Yukata dài. Artifact kiểm thử nằm tại
+`test-results/live-debug/seated-current/seated-yukata-direct.jpg`. Backend
+không lưu ảnh khách trong cache runtime; artifact này chỉ được ghi chủ động cho
+lượt kiểm thử cục bộ.
+
+Với bikini, tín hiệu focus trùng nhau từ AppState/điều hướng được gộp lại thay
+vì xếp nối tiếp nhiều lượt nhả/nạp model. Ca kiểm chứng trực tiếp trên ảnh Redmi
+ngày 01/10 qua cổng 18+ trong khoảng 10 giây, FLUX sinh bikini hai mảnh trong
+khoảng 29 giây và toàn API trả 200 sau **47,564 giây**. Ảnh kết quả đã hiện trên
+điện thoại; xem `test-results/live-debug/bikini-focus-fix/result-visible.png`.
+
+Khi đổi ảnh giữa lúc đang tạo, app cấp phiên riêng cho từng lượt và gọi
+`/api/tryon/cancel` theo `clientId`. Callback timeout/kết quả của ảnh cũ không
+được ghi đè ảnh mới; backend cũng hủy job cùng thiết bị khi socket bị ngắt. Ảnh
+từ Android dùng trực tiếp JPEG quality 82 của ImagePicker cho cả preview, phân
+tích và upload, thay vì đọc lại file gốc lớn. Trong ca đo ngày 01/10, payload
+giảm từ khoảng **879 KB** qua ADB Wi-Fi bị đứt sau 102 giây xuống **114 KB** qua
+LAN và request hoàn tất HTTP 200 trong 43,499 giây.
+
+Quality gate của bikini tách khỏi luật trang phục kín: thay váy dài bằng bikini
+có thể hợp lệ khi bụng/chân thay đổi. Lý do `body_changed_not_garment` vì thế là
+cảnh báo mềm chỉ với swimwear; đổi mặt, mất nhân vật, bikini không xuất hiện và
+ảnh mờ vẫn là lỗi cứng. Ảnh cuối vẫn bắt buộc qua coverage gate cho ngực, vùng
+chậu và mông. Ca ảnh thật tiếp theo trả HTTP 200 trong 45,974 giây sau thay đổi.
+
+### Một lệnh chạy toàn bộ AI và điện thoại
+
+```bash
+cd /home/admin123/Documents/JAPANO
+./run-all.sh
+```
+
+Dùng `./run-all.sh --no-phone` cho web/AI; thêm `--device SERIAL` khi có nhiều
+điện thoại ADB. Lệnh kiểm tra mô hình, cảnh Nhật Bản, database và đường HTTP tới
+điện thoại, tự mở scrcpy nếu đã cài và không xóa dữ liệu. Nếu cổng ADB Wi-Fi
+thay đổi, launcher tự theo thiết bị đã ghép đôi duy nhất. Với ADB không dây,
+launcher tự tìm IP LAN của máy tính và ghi riêng `debug_http_host` để điện thoại
+tải bundle Metro trực tiếp qua Wi-Fi. API cũng dùng địa chỉ LAN đó làm đường
+chính; tunnel 4100 chỉ là dự phòng. Endpoint cấu hình luôn được thử trước nên
+một lần backend restart không thể ghim cả phiên vào tunnel ADB chậm. Cách này
+tránh bundle hoặc ảnh base64 bị treo giữa chừng, đồng thời vẫn giữ nguyên token
+và dữ liệu ứng dụng. Launcher dừng riêng tiến trình JAPANO trước khi mở lại để
+trình chọn ảnh/Facebook còn sót không nằm đè lên MainActivity; thao tác này không
+xóa tài khoản, dữ liệu app hay ảnh điện thoại. Khi không truyền `--device`, serial
+ADB online được xác định trước khi Metro khởi động; nếu Metro cũ đang giữ API
+`127.0.0.1`, launcher tự khởi động lại với API LAN thay vì chuyển ảnh lớn qua
+ADB reverse. Quy tắc này cũng áp dụng khi ADB đang cắm **USB**: launcher đọc
+địa chỉ `wlan0` của điện thoại và giữ USB cho gỡ lỗi/scrcpy, còn ảnh phân tích
+và thử đồ đi thẳng qua LAN. Nếu điện thoại không có Wi-Fi, ADB reverse vẫn là
+đường dự phòng. Dịch vụ
+`japano-adb-reverse` giữ hai tunnel 4100/8081 và tự dựng lại khi chúng bị mất.
+Redmi đã tạo ảnh Kimono thật sau một lần xóa chủ động toàn bộ tunnel: API trả
+200 sau 28,004 giây và ảnh hoàn tất hiện trực tiếp trong app; đây là một ca đã
+kiểm chứng, không phải cam kết mọi ảnh đều đạt. Scrcpy `japano-phone-mirror`
+hiển thị màn hình thật trên máy tính. Xem
+[hướng dẫn và giới hạn số đo](docs/README_AI_TRAINING.md).
+
+Kiểm chứng ngày 02/10/2026 với ADB qua USB: launcher phát hiện Redmi
+`192.168.100.26`, đổi Metro/API sang máy `192.168.100.10`; phân tích vóc dáng
+trả HTTP 200 trong **1,301 giây** và thử bikini trả HTTP 200 trong **52,271
+giây**, rồi hiển thị ảnh ở bước **Hoàn tất**. Trước bản sửa, cùng luồng qua ADB
+reverse chỉ gửi 40.960/301.661 byte và treo **306–324 giây** trước khi abort.
+
+Kiểm chứng lại ngày 01/10/2026 bằng đúng `./run-all.sh` không tham số: launcher
+tự tìm Redmi ở cổng ADB Wi-Fi mới, phát hiện Metro cũ đang dùng API loopback và
+khởi động lại với `EXPO_PUBLIC_API_URL=http://192.168.100.10:4100`. Ảnh đang có
+trên máy đi hết luồng client → backend → GPU, trả HTTP 200 sau **39,807 giây**
+và hiển thị ở bước **Hoàn tất** trên điện thoại/scrcpy.
+
+Google Sign-In native yêu cầu OAuth client loại **Android** trên Google Cloud
+khớp package `vn.japano.app` và SHA-1 của APK debug
+`5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`. Backend hiện
+bật Google và Client ID trong app/backend trùng nhau, nhưng Google Play Services
+trả `DEVELOPER_ERROR` nếu credential Cloud chưa đăng ký đúng cặp này. Tạo/sửa
+credential rồi chạy `npm run setup:auth`, build/cài lại APK; không bỏ bước xác
+minh chữ ký/audience ở backend để né lỗi cấu hình.
+
+Nếu điện thoại rớt khỏi ADB Wi-Fi và `adb devices` chỉ còn trạng thái `offline`,
+`./run-all.sh` nay thoát với `CHƯA SẴN SÀNG` thay vì vẫn in rằng toàn bộ hệ thống
+đã sẵn sàng. Scrcpy cũng không restart vô hạn vào serial chết và launcher đợi
+qua thời gian bắt tay trước khi xác nhận màn hình ảo. Bật lại **Gỡ lỗi không
+dây** trên điện thoại hoặc cắm USB, rồi chạy lại cùng lệnh; backend/web đang chạy
+không đồng nghĩa app trên điện thoại còn kết nối.
+
+Quality policy của thử đồ ưu tiên giữ dáng gốc: FASHN nay dùng human parsing mặc
+định để giới hạn thay đổi vào đúng vùng áo/quần thay vì cho model vẽ lại toàn
+thân. Chế độ `segmentation_free` chỉ còn là opt-in chẩn đoán. Khi không yêu cầu
+đổi pose, quality gate so sánh vị trí tương đối của khuỷu, cổ tay, gối và mắt cá;
+ảnh tự đổi nhiều khớp sẽ bị chặn với `pose_changed_unexpectedly` thay vì hiện một
+dáng đứng cứng hoặc dạng chân bất thường.
+
+Kiểm chứng cục bộ sau sửa trên ảnh người thật đang ngồi/co một chân với áo sát
+nách: FASHN `reposed=false` trả HTTP 200 trong 28,6 giây và giữ nguyên dáng ngồi,
+tay chống bàn, chân co, góc người, mặt và nền. Pose detector so được sáu khớp,
+drift trung bình 0,018, lớn nhất 0,041 và không có khớp nào vượt ngưỡng 0,16.
+Artifact: `test-results/live-debug/pose-preserve-fix/top-result.png`.
+
+Ảnh đứng hợp lệ không bị dựng lại chỉ vì phần chân nằm ngoài khung. Với áo khoác
+hiện đại, catalog dùng profile `blazer`/`cardigan` thay vì áp cổng kết cấu tay áo
+của Haori. Tín hiệu chuyển màn hình thụ động `home`/`browse` cũng không huỷ job
+GPU đang tạo ảnh; thao tác đổi ảnh vẫn huỷ đúng job qua `/api/tryon/cancel`.
+Kiểm tra thực tế ngày 01/10/2026 bằng ảnh người cầm máy và sản phẩm
+`blazer-kaki`: API trả HTTP 200 trong 29,7 giây, Redmi hoàn tất bước 3 trong
+30,1 giây và giữ góc đầu, hai tay cùng chiếc máy ảnh. Artifact:
+`test-results/live-debug/pose-gate-failure/phone-camera-blazer-preserved.png`.
+
+Khi ảnh thật sự cần dựng lại pose, preset `relaxed` dùng dáng fashion nữ tự
+nhiên: một chân chịu lực, chân kia lùi và khép nhẹ, vai–hông nghiêng ngược rất
+nhẹ, một tay hạ mềm và tay kia cong nhẹ cạnh đùi. Reposer chạy 6 bước để bám
+skeleton thay vì dừng ở dáng đối xứng sau 4 bước. Hồ sơ khai báo nam dùng
+`relaxed-masculine` với khoảng chân trung tính. Hệ thống không suy đoán giới tính
+từ khuôn mặt; ảnh không có thông tin giới tính dùng dáng fashion tự nhiên.
+
+Ảnh đã có dáng đứng dùng được luôn giữ nguyên pose gốc, kể cả đứng nghiêng,
+lệch vai, giơ tay hoặc bắt chéo chân. Hệ thống chỉ tự dựng lại khi vai/hông bị
+che hoặc mất đến mức không còn đủ hình học thân người, khi người dùng chủ động
+chọn một travel pose, hoặc khi bật cờ chẩn đoán cưỡng bức.
+Ảnh ngồi hoặc ảnh bán thân chỉ mất hai khớp hông vẫn được mặc trực tiếp nếu hai
+vai và thân trên còn rõ; hệ thống không dựng người đứng rồi tự loại kết quả với
+`pose_not_corrected`. Replay ảnh ngồi tại bàn với `vay-lien-sakura` trả HTTP 200
+trong 50,4 giây và giữ nguyên đầu nghiêng, tay chống cằm cùng tay đặt trên bàn.
+Cổng pose của bikini phân biệt chuyển động tay thật với sai lệch khớp chân do
+trang phục nguồn che khuất. Khi thay một váy dài bằng bikini, khớp đầu gối mới
+lộ ra không còn tự làm kết quả hợp lệ bị loại; tay đổi mạnh vẫn là lỗi cứng.
+Kiểm tra Redmi bằng ảnh váy dài giơ bàn tay về phía máy ảnh trả HTTP 200 trong
+78,4 giây, giữ nguyên bàn tay, góc người và nền cầu thang.
+Cổng hậu kiểm chỉ kết luận model tự đổi pose khi sai lệch đồng thời xuất hiện ở
+cả nhóm tay và nhóm chân. Sai lệch riêng khuỷu/cổ tay do tay áo mới che detector
+không còn làm hai ảnh hợp lệ bị bỏ rồi trả 503.
+Các cổng kết cấu trang phục Nhật đọc metadata theo từng SKU: Haori Nami tay ngắn
+không bị ép che bắp tay, trong khi Haori tay dài, Kimono và Yukata vẫn phải giữ
+đúng vùng tay/chân theo thiết kế.
+
+Quality gate coi riêng `garment_construction_exposed:upperArms` là cảnh báo
+chất lượng, không còn xoá ảnh đã sinh và trả 503. Bắp tay không thuộc
+ba vùng an toàn bắt buộc; các lỗi đổi mặt/cơ thể, ngực, thân, hông,
+chân và các vùng phải kín vẫn chặn cứng. Kiểm tra USB ngày 02/10/2026
+bằng đúng ảnh Redmi đang lỗi và `yukata-xanh` trả HTTP 200, PNG
+960×1280 trong 29,399 giây, giữ khuôn mặt, dáng và nền gốc kèm cảnh báo
+bắp tay.
+
+Kimono Furisode `kimono-furisode-do` dùng ảnh sản phẩm phẳng đã duyệt
+`kimono-furisode-do_tryon-flat.png`, không dùng ảnh catalog có người mẫu làm
+reference. Cổng kết cấu cho phép bàn chân/cổ chân tự nhiên chiếm tối đa 10% ô
+chân nhưng vẫn chặn vạt ngắn hoặc lộ cả chân. Replay đúng ảnh Redmi mặc váy
+vàng ngày 02/10/2026 trả HTTP 200 trong 44,66 giây; ảnh 960×1280 giữ khuôn mặt,
+dáng giơ tay và nền cầu thang, đồng thời tạo đúng Furisode dài, tay rộng và obi.
+
+FASHN giao ảnh kết quả cho backend dưới dạng JPEG chất lượng 92. Việc này giảm
+response của ca Furisode trên từ 2,60 MB PNG-base64 xuống 0,61 MB JSON (ảnh
+454 KB) để React Native không kẹt đọc body qua ADB reverse; model và các cổng
+chất lượng vẫn chấm chính ảnh được giao. Lượt bấm thật tiếp theo từ Redmi trả
+HTTP 200 trong 35,95 giây. Backend đã xác nhận thành công, nhưng lần kiểm tra
+đó chưa giữ được bằng chứng màn Hoàn tất vì thiết bị đã quay về trang sản phẩm
+trước lúc chụp màn hình.
+
+Metadata tay ngắn của Nami được đồng bộ vào hai catalog và MongoDB live. Replay
+đúng ảnh ngồi cạnh bóng đỏ trả HTTP 200 trong 64,470 giây; lần thử lại từ Redmi
+trả HTTP 200 trong 26,786 giây. Với Yukata/Kimono dài, tay áo rộng và vạt dài có
+thể che khớp tay/chân khiến detector bám theo mép vải. Quality gate chỉ bỏ tín
+hiệu khớp thuộc đúng vùng bị kết cấu sản phẩm che; vẫn giữ cổng khuôn mặt, chủ
+thể, thân người, độ nét, trang phục và vùng an toàn. Replay đúng ảnh váy đỏ ngồi
+sofa trả HTTP 200 trong 40,237 giây, không có lượt sinh bị loại. Ba lượt Redmi
+tiếp theo đều trả HTTP 200 trong 27,643 giây, 55,944 giây và 25,800 giây; lượt
+ảnh đứng cuối đã hiển thị ở bước Hoàn tất. Bằng chứng:
+`test-results/live-debug/pose-gate-failure/phone-standing-result-visible.png`.
+
+Kiểm chứng cục bộ ngày 2026-10-01 trên ảnh nữ đang ngồi: luồng đầy đủ
+FLUX re-pose → FASHN fast trả HTTP 200 trong khoảng 52 giây; ảnh trung gian và
+ảnh đã mặc đồ đều có toàn thân đứng tự nhiên, một chân lùi/khép, không còn dạng
+chân rộng cứng. Artifacts: `test-results/live-debug/pose-guides/feminine-standing-v2-reposed.png`
+và `test-results/live-debug/pose-guides/feminine-standing-v2.png`.
+
+Kimono Tomesode dùng ảnh phẳng đã duyệt
+`kimono-tomesode-den_tryon-flat.png` và đi thẳng qua nhánh FLUX đa tham chiếu
+`japanese-full-length`; không đưa ảnh catalog có người mẫu vào FASHN
+`one-pieces`. Cổng cuối yêu cầu giữ cổ chéo, tay rộng và vạt dài che đầu gối;
+ảnh váy ngắn, trễ vai hoặc sát nách sẽ bị từ chối. Ca Redmi ngày 2026-10-01 đã
+hiển thị đúng Kimono dài với engine
+`flux2-klein-4b-japanese-full-length+fast-16steps+adaptive-low-memory`; ảnh màn
+hình và raw output nằm trong `test-results/live-debug/kimono-fix/`.
+
+Ảnh nhiều người luôn khoá **một người có tâm bounding box gần tâm ảnh nhất** cho
+cả phân tích vóc dáng và thử đồ. Những người còn lại bị tách khỏi ảnh đầu vào và
+thay bằng nền studio trước khi model chạy, nên kết quả chỉ chứa người thử đồ.
+Confidence YOLO và các khớp vai-hông loại cụm hoa, rèm, tượng hoặc phản chiếu bị
+nhận nhầm; kích thước người chỉ dùng để phá hoà. Cache pose từ ảnh nhóm không
+được dùng tắt vì phải chạy bước crop/tách chủ thể. Nút **Kiểm tra lại** chạy lại
+phép phân tích trên đúng bytes ảnh đang hiển thị. Ca cổng hoa Redmi ngày
+2026-10-01 chọn đúng người thật confidence 0.893 ở giữa thay vì hai box trang
+trí confidence thấp. Các khoảng vóc dáng vẫn chỉ là gợi ý thống kê, không phải
+số đo bằng thước và không tự chọn size.
+
+### Photo-measurement training audit (2026-09-30)
+
+- Downloaded/audited 7,211 Celeb-FBI files (6,196 accepted), all 8,978 BodyM
+  frontal masks, and 236,717 jpersonwiki rows (15,752 usable height/weight rows).
+- Fine-tuned ResNet18, DenseNet201 and ConvNeXt-Tiny with real optimizer updates
+  and immutable held-out splits. Best RGB photo-only MAE is 6.486kg versus the
+  same-split baseline 6.244kg; with measured/user-supplied height ConvNeXt gets
+  4.804kg versus baseline 4.946kg. The person-crop ConvNeXt is used only as a
+  low-confidence fallback for seated/cropped photos; it never chooses a size.
+- Trained a separate ANSUR II height+BMI to chest/waist/hip prior on a locked
+  3,883/971/1,214 split. Held-out table-regression MAE is
+  2.954/3.612/3.090cm; photo error is additional, so runtime uncertainty is much
+  wider and the checkpoint remains an experimental population prior.
+- Downloaded and checksum-verified BODIES v1.0 `data16`: 12,000 CC-BY-4.0
+  synthetic subjects, including 91 test subjects ≥140kg. ConvNeXt reaches
+  3.076/1.249kg MAE on its synthetic test, but BODIES-initialized Celeb-FBI
+  reaches 6.620/4.876kg and does not improve over ImageNet initialization.
+- The BODIES TorchScript checkpoint is now used only as a guarded secondary
+  prior when a full-body mask has three agreeing broad-build signals and the
+  checkpoint itself predicts at least 135kg. It raised generated profiles
+  `mau-03/07/10` to 137.2/137.2/128.9kg while leaving the moderately broad
+  `mau-06` at 79.4kg and all six non-broad profiles unchanged. These generated
+  profiles have no measured ground truth, so this proves gating behavior rather
+  than customer-photo accuracy.
+- A BodyM silhouette ResNet18 improved held-out testB MAE to weight7.293kg,
+  chest4.084cm, waist4.667cm and hip3.958cm, but BodyM is CC-BY-NC-4.0, so this
+  checkpoint is research-only and not deployed commercially.
+- Real-photo extreme-weight evidence remains insufficient: Celeb-FBI test has
+  one sample at or above140kg; BodyM testB has none. Synthetic coverage cannot
+  validate customer photos. The app keeps uncertainty/manual measurement
+  priority and does not label a photo 150kg from appearance alone.
+- Full reports, hashes, commands, license review and external-model survey:
+  `docs/README_AI_TRAINING.md` and
+  `backend/ai_training/evaluation/body_training_20260930.json`.

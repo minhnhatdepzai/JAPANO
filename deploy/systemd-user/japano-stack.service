@@ -1,0 +1,24 @@
+[Unit]
+Description=JAPANO full application stack
+Wants=network-online.target
+After=network-online.target tailscaled.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=HOME=%h
+Environment=PATH=%h/.nvm/versions/node/v24.21.0/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/Documents/JAPANO
+ExecStart=%h/Documents/JAPANO/run-all.sh --no-phone
+ExecStop=-/usr/bin/systemctl --user stop japano-storefront-local.service
+ExecStop=-/usr/bin/systemctl --user stop japano-backend.service
+ExecStop=-/usr/bin/systemctl --user stop japano-chat-adapter.service
+ExecStop=-/usr/bin/systemctl --user stop japano-motion.service
+ExecStop=-/usr/bin/systemctl --user stop japano-fashn.service
+ExecStop=-/usr/bin/systemctl --user stop japano-body-analysis.service
+ExecStop=-/usr/bin/systemctl --user stop japano-ollama.service
+TimeoutStartSec=600
+TimeoutStopSec=90
+
+[Install]
+WantedBy=default.target

@@ -69,3 +69,45 @@ test('estimate ảnh đủ tin cậy luôn thắng midpoint của anchor', () =>
   assert.equal(merged.sources.weight, 'image-estimation');
   assert.equal(merged.usedAnchor, false);
 });
+
+test('ảnh bị cắt chân nói rõ lý do thay vì trông như model không chạy', () => {
+  const summary = summarizeBodyAnalysis(analysisFor('nu-can-doi', {
+    quality: {
+      analysisConfidence: 0.83,
+      fullBodyVisible: false,
+      headVisible: true,
+      feetVisible: false,
+      coverage: 'knee',
+    },
+    absoluteMeasurementsRestricted: true,
+  }));
+  assert.equal(summary.measurementStatus, 'insufficient_evidence');
+  assert.match(summary.measurementMessage, /không thấy trọn bàn chân/i);
+  assert.doesNotMatch(summary.measurementMessage, /dải vóc dáng tham chiếu/i);
+});
+
+test('ảnh ngồi hoặc cắt chân có dự đoán thống kê vẫn mang trạng thái partial', () => {
+  const summary = summarizeBodyAnalysis(analysisFor('nu-can-doi', {
+    quality: {
+      analysisConfidence: 0.83,
+      fullBodyVisible: false,
+      headVisible: true,
+      feetVisible: false,
+      coverage: 'knee',
+    },
+    absoluteMeasurementsRestricted: true,
+    measurementStatus: 'partial',
+    estimatedHeight: { valueCm: 161.4, minCm: 156, maxCm: 166, confidence: 0.28, usableForSizing: false },
+    estimatedWeight: { valueKg: 56.6, minKg: 52, maxKg: 62, confidence: 0.28, usableForSizing: false },
+    estimatedGirthRanges: {
+      bust: { valueCm: 87, confidence: 0.22, usableForSizing: false },
+      waist: { valueCm: 76.4, confidence: 0.22, usableForSizing: false },
+      hip: { valueCm: 95.3, confidence: 0.22, usableForSizing: false },
+    },
+    girthsArePopulationPrior: true,
+  }));
+  assert.equal(summary.measurementStatus, 'partial');
+  assert.equal(summary.girthsArePopulationPrior, true);
+  assert.match(summary.measurementMessage, /ảnh thiếu một phần cơ thể hoặc đang ngồi/i);
+  assert.match(summary.measurementMessage, /không dùng.*tự chọn size/i);
+});

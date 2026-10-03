@@ -1,0 +1,22 @@
+{
+  "dataset": "Celeb-FBI person-focused derivative",
+  "sourceManifest": "celeb_fbi.manifest.json",
+  "localPath": "/home/admin123/jp/datasets/celeb-fbi-person-crops",
+  "license": "Community Data License Agreement - Permissive 1.0 (inherited from source metadata)",
+  "preprocessing": {
+    "detector": "YOLOv8n-pose",
+    "selection": "largest detected person by bounding-box area",
+    "margin": 0.08,
+    "failurePolicy": "retain decoded full image"
+  },
+  "processed": 6196,
+  "personCrop": 6196,
+  "fullImageFallback": 0,
+  "cropManifestSha256": "ac959deeb691d4f1b0547d7fce9857f093b328bda1de14de8edfe19878b1e3df",
+  "limits": [
+    "Cropping reduces background but does not improve weak or stale height/weight labels.",
+    "The detector selecting one person does not prove that the selected person is the named celebrity.",
+    "The held-out cropped-image model still underperformed the fixed population baseline and was not promoted."
+  ],
+  "containsCredential": false
+}

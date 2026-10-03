@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-01",
+  "status": "BEHAVIOR_CHECK_NO_GROUND_TRUTH",
+  "checkpoint": {
+    "path": "backend/ai_training/runs/bodies-convnext-both-20260930/bodies_height_bmi_convnext_tiny.torchscript.pt",
+    "sha256": "f032720235e3d53f8c22a727008ec1c55fec5d2d456004252bc2591f0be79562",
+    "trainingDataset": "BODIES v1.0 data16",
+    "license": "CC BY 4.0"
+  },
+  "policy": {
+    "requiresFullBody": true,
+    "requiresThreeSignalBroadBuild": true,
+    "checkpointHeavyActivationKg": 135,
+    "finalBmiCap": 49.8,
+    "manualMeasurementsTakePriority": true
+  },
+  "importantLimit": "Ten generated profiles have no measured height or weight. These rows verify gating and output ordering, not accuracy.",
+  "rows": [
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-01.png",
+      "heightSuggestionCm": 157.4,
+      "weightSuggestionKg": 49.5,
+      "displayBinKg": [
+        40,
+        50
+      ],
+      "uncertaintyKg": [
+        42,
+        57
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1124
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-02.png",
+      "heightSuggestionCm": 160.8,
+      "weightSuggestionKg": 55.9,
+      "displayBinKg": [
+        50,
+        60
+      ],
+      "uncertaintyKg": [
+        47,
+        65
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1100
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-03.png",
+      "heightSuggestionCm": 166.0,
+      "weightSuggestionKg": 137.2,
+      "displayBinKg": [
+        130,
+        140
+      ],
+      "uncertaintyKg": [
+        83,
+        165
+      ],
+      "model": "ansur2+bodies-convnext-broad-build",
+      "broadBuild": true,
+      "bodiesPrior": {
+        "heightCm": 183.7,
+        "bmi": 46.4,
+        "weightKg": 156.7,
+        "model": "bodies-convnext-tiny-height-bmi",
+        "checkpointSha256": "f032720235e3d53f8c22a727008ec1c55fec5d2d456004252bc2591f0be79562",
+        "domain": "synthetic-full-body-prior",
+        "applied": true,
+        "activationKg": 135.0
+      },
+      "durationMs": 1150
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-04.png",
+      "heightSuggestionCm": 162.1,
+      "weightSuggestionKg": 51.3,
+      "displayBinKg": [
+        50,
+        60
+      ],
+      "uncertaintyKg": [
+        43,
+        59
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1119
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-05.png",
+      "heightSuggestionCm": 160.8,
+      "weightSuggestionKg": 54.9,
+      "displayBinKg": [
+        50,
+        60
+      ],
+      "uncertaintyKg": [
+        46,
+        63
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1106
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-06.png",
+      "heightSuggestionCm": 159.2,
+      "weightSuggestionKg": 79.4,
+      "displayBinKg": [
+        70,
+        80
+      ],
+      "uncertaintyKg": [
+        67,
+        92
+      ],
+      "model": "ansur2-bmi-from-ratios",
+      "broadBuild": true,
+      "bodiesPrior": null,
+      "durationMs": 1177
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-07.png",
+      "heightSuggestionCm": 166.0,
+      "weightSuggestionKg": 137.2,
+      "displayBinKg": [
+        130,
+        140
+      ],
+      "uncertaintyKg": [
+        92,
+        165
+      ],
+      "model": "ansur2+bodies-convnext-broad-build",
+      "broadBuild": true,
+      "bodiesPrior": {
+        "heightCm": 171.4,
+        "bmi": 51.9,
+        "weightKg": 152.5,
+        "model": "bodies-convnext-tiny-height-bmi",
+        "checkpointSha256": "f032720235e3d53f8c22a727008ec1c55fec5d2d456004252bc2591f0be79562",
+        "domain": "synthetic-full-body-prior",
+        "applied": true,
+        "activationKg": 135.0
+      },
+      "durationMs": 1152
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-08.png",
+      "heightSuggestionCm": 168.1,
+      "weightSuggestionKg": 52.3,
+      "displayBinKg": [
+        50,
+        60
+      ],
+      "uncertaintyKg": [
+        44,
+        61
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1146
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-09.png",
+      "heightSuggestionCm": 155.5,
+      "weightSuggestionKg": 51.4,
+      "displayBinKg": [
+        50,
+        60
+      ],
+      "uncertaintyKg": [
+        43,
+        59
+      ],
+      "model": "ansur2-bmi+breadth",
+      "broadBuild": false,
+      "bodiesPrior": null,
+      "durationMs": 1103
+    },
+    {
+      "image": "output/imagegen/10-mau-rieng/mau-10.png",
+      "heightSuggestionCm": 160.9,
+      "weightSuggestionKg": 128.9,
+      "displayBinKg": [
+        120,
+        130
+      ],
+      "uncertaintyKg": [
+        71,
+        155
+      ],
+      "model": "ansur2+bodies-convnext-broad-build",
+      "broadBuild": true,
+      "bodiesPrior": {
+        "heightCm": 182.4,
+        "bmi": 42.2,
+        "weightKg": 140.6,
+        "model": "bodies-convnext-tiny-height-bmi",
+        "checkpointSha256": "f032720235e3d53f8c22a727008ec1c55fec5d2d456004252bc2591f0be79562",
+        "domain": "synthetic-full-body-prior",
+        "applied": true,
+        "activationKg": 135.0
+      },
+      "durationMs": 1153
+    }
+  ]
+}

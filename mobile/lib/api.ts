@@ -90,6 +90,8 @@ export type BodyEstimate = {
   displayBinCm?: [number,number];
   uncertaintyMinKg?: number|null; uncertaintyMaxKg?: number|null;
   displayBinKg?: [number,number];
+  usableForSizing?: boolean;
+  estimateKind?: string;
 };
 export type BodyAnalysis = {
   estimatedHeight: BodyEstimate;
@@ -97,6 +99,8 @@ export type BodyAnalysis = {
   estimatedGirths?: { bust?:number; waist?:number; hip?:number };
   estimatedGirthRanges?: { bust?:BodyEstimate; waist?:BodyEstimate; hip?:BodyEstimate };
   girthsMeasureClothing?: boolean;
+  girthsArePopulationPrior?: boolean;
+  measurementRowsCutOff?: string[]|null;
   bodyShape?: Record<string, number>;
   quality?: {
     fullBodyVisible:boolean; feetVisible:boolean; headVisible:boolean;
@@ -275,8 +279,8 @@ const trim = (value?: string | null) => String(value || '').trim().replace(/\/+$
 // Endpoint triển khai hiện tại của JAPANO. Đây không phải secret; giữ fallback
 // ngay trong bundle để release APK vẫn gọi được server khi Expo Constants
 // không mang `extra` sang bare Android và không có adb reverse.
-const DEPLOYED_API_LAN_URL = 'http://192.168.1.51:4100';
-const DEPLOYED_API_TAILSCALE_URL = 'https://rd-system.tail6502ce.ts.net:4101';
+const DEPLOYED_API_LAN_URL = 'http://192.168.100.10:4100';
+const DEPLOYED_API_TAILSCALE_URL = 'https://admin123-system-product-name.tailfeea7a.ts.net';
 
 class ApiHttpError extends Error {
   status: number;
@@ -355,9 +359,16 @@ export async function requestJson<T = any>(path: string, options: RequestOptions
   const { timeoutMs: _timeout, ...fetchOptions } = options;
   const method = String(fetchOptions.method || 'GET').toUpperCase();
   const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
-  const bases = activeBase
-    ? [activeBase, ...apiBaseCandidates().filter(base => base !== activeBase)]
-    : apiBaseCandidates();
+  const candidates = apiBaseCandidates();
+  const preferredBase = candidates[0] || '';
+  // Địa chỉ cấu hình tường minh (LAN khi debug Wi-Fi, Tailscale ở release)
+  // luôn được thử trước. Một lần backend restart không được phép ghim cả phiên
+  // sang ADB reverse chậm; activeBase chỉ là phương án thứ hai có ghi nhớ.
+  const bases = [...new Set([
+    preferredBase,
+    activeBase && activeBase !== preferredBase ? activeBase : '',
+    ...candidates,
+  ].filter(Boolean))];
   let lastError: Error = new Error('Không tìm thấy địa chỉ backend JAPANO.');
 
   for (const base of bases) {
@@ -606,7 +617,9 @@ export async function analyzeBodyFromPhoto(payload: {
   profile?: StyleProfile;
   productId?: string;
 }): Promise<BodyAnalysis & { ok:boolean; message?:string }> {
-  const data: any = await jsonPost('/api/stylist/body-analysis', { userId: USER_ID, ...payload }, 180000);
+  // Worker ấm thường trả trong 1-5 giây. Không để một upload ảnh bị đứt giữa
+  // ADB reverse giữ thẻ số đo ở trạng thái quay suốt ba phút.
+  const data: any = await jsonPost('/api/stylist/body-analysis', { userId: USER_ID, ...payload }, 20000);
   return {
     ok: Boolean(data?.ok),
     message: data?.message ? String(data.message) : undefined,
@@ -615,6 +628,10 @@ export async function analyzeBodyFromPhoto(payload: {
     estimatedGirths: data?.estimatedGirths || {},
     estimatedGirthRanges: data?.estimatedGirthRanges || {},
     girthsMeasureClothing: data?.girthsMeasureClothing !== false,
+    girthsArePopulationPrior: data?.girthsArePopulationPrior === true,
+    measurementRowsCutOff: Array.isArray(data?.measurementRowsCutOff)
+      ? data.measurementRowsCutOff.map(String)
+      : null,
     bodyShape: data?.bodyShape || {},
     quality: data?.quality,
     warnings: Array.isArray(data?.warnings) ? data.warnings.map(String) : [],
@@ -658,8 +675,13 @@ export class TryOnSafetyError extends Error {
 }
 
 export async function generateTryOn(payload: Record<string, unknown>): Promise<TryOnResult> {
-  const configured=Number(process.env.EXPO_PUBLIC_TRYON_TIMEOUT_MS||720000);
-  const timeout=Number.isFinite(configured)&&configured>=30000?configured:720000;
+  // A long inference timeout must only be used after we know which backend is
+  // reachable. Otherwise an old Wi-Fi/Metro address can consume the whole
+  // timeout before requestJson reaches adb reverse or Tailscale, while the real
+  // server sees no request at all.
+  await requestJson('/api/health', { timeoutMs: 2_500 });
+  const configured=Number(process.env.EXPO_PUBLIC_TRYON_TIMEOUT_MS||180000);
+  const timeout=Number.isFinite(configured)&&configured>=30000?configured:180000;
   let data: any;
   try {
     data = await jsonPost('/api/tryon', { userId: USER_ID, clientId: CLIENT_ID, ...payload }, timeout);
@@ -686,6 +708,14 @@ export async function generateTryOn(payload: Record<string, unknown>): Promise<T
     appliedAccessories: Array.isArray(data?.appliedAccessories) ? data.appliedAccessories.map((item:any)=>String(item?.name||item?.id||'')).filter(Boolean) : [],
     skippedAccessories: Array.isArray(data?.skippedAccessories) ? data.skippedAccessories.map(String) : [],
   };
+}
+
+/**
+ * Dừng đúng lượt try-on của thiết bị hiện tại. Dùng khi người dùng đổi ảnh
+ * giữa lúc model đang chạy để job cũ không tiếp tục giữ GPU và chặn ảnh mới.
+ */
+export async function cancelTryOnGeneration(): Promise<void> {
+  await jsonPost('/api/tryon/cancel', { clientId: CLIENT_ID }, 8_000).catch(() => undefined);
 }
 
 /**

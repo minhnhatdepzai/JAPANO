@@ -202,7 +202,7 @@ function mergeBodySignals(profile = {}, bodyAnalysis = null) {
     // phép tư vấn; response số đo vẫn giữ null và nói rõ đây là dải tham chiếu.
     // Như vậy khách không phải nhập tay nhưng hệ thống cũng không gọi prior là
     // số đo thật.
-    const referenceProfile = bodyAnalysis?.referenceProfile || matchBodyAnchor(
+    const referenceProfile = bodyAnalysis?.absoluteMeasurementsRestricted ? null : bodyAnalysis?.referenceProfile || matchBodyAnchor(
       bodyAnalysis,
       profile.gender || profile.sex,
     );
@@ -238,7 +238,7 @@ function mergeBodySignals(profile = {}, bodyAnalysis = null) {
 // không mang theo ảnh.
 function summarizeBodyAnalysis(bodyAnalysis) {
   if (!bodyAnalysis?.ok) return null;
-  const referenceProfile = bodyAnalysis.referenceProfile || matchBodyAnchor(bodyAnalysis);
+  const referenceProfile = bodyAnalysis.absoluteMeasurementsRestricted ? null : bodyAnalysis.referenceProfile || matchBodyAnchor(bodyAnalysis);
   const measurementCount = [
     bodyAnalysis.estimatedHeight?.valueCm,
     bodyAnalysis.estimatedWeight?.valueKg,
@@ -246,19 +246,37 @@ function summarizeBodyAnalysis(bodyAnalysis) {
     bodyAnalysis.estimatedGirthRanges?.waist?.valueCm,
     bodyAnalysis.estimatedGirthRanges?.hip?.valueCm,
   ].filter((value) => Number(value) > 0).length;
-  const measurementStatus = measurementCount === 0
+  const explicitStatus = ['estimated', 'partial', 'insufficient_evidence'].includes(bodyAnalysis.measurementStatus)
+    ? bodyAnalysis.measurementStatus : null;
+  const measurementStatus = explicitStatus || (measurementCount === 0
     ? 'insufficient_evidence'
-    : measurementCount < 5 ? 'partial' : 'estimated';
+    : measurementCount < 5 ? 'partial' : 'estimated');
   const rejectedCue = String(bodyAnalysis.estimatedHeight?.cueRejected || '');
+  const quality = bodyAnalysis.quality || {};
+  const missingFullBody = quality.fullBodyVisible === false;
+  const missingFrameMessage = missingFullBody
+    ? (!quality.headVisible && !quality.feetVisible
+      ? 'Ảnh bị cắt cả đầu và bàn chân nên không có chiều dài toàn thân để suy ra số đo.'
+      : !quality.feetVisible
+        ? 'Ảnh không thấy trọn bàn chân hoặc tư thế làm mất chiều dài toàn thân nên không thể suy ra số đo.'
+        : !quality.headVisible
+          ? 'Ảnh bị cắt phần đầu nên không có chiều dài toàn thân để suy ra số đo.'
+          : 'Ảnh chưa thấy trọn cơ thể nên không thể suy ra số đo.')
+    : '';
   const measurementMessage = measurementStatus === 'insufficient_evidence'
-    ? (rejectedCue === 'head_count_out_of_range'
+    ? (missingFrameMessage
+      ? `${missingFrameMessage}${referenceProfile ? ' AI chỉ dùng dải vóc dáng tham chiếu gần nhất để chọn size, không coi đó là số đo thật.' : ' Bạn vẫn có thể thử trang phục.'}`
+      : rejectedCue === 'head_count_out_of_range'
       ? `Tỉ lệ cơ thể nằm ngoài miền dữ liệu có thể đo tuyệt đối.${referenceProfile ? ' AI dùng dải vóc dáng tham chiếu gần nhất để chọn size và thử đồ, không coi đó là số đo thật.' : ' Bạn vẫn có thể thử trang phục.'}`
       : `Ảnh chưa có đủ bằng chứng để suy ra số đo tuyệt đối.${referenceProfile ? ' AI dùng dải vóc dáng tham chiếu gần nhất để chọn size và thử đồ, không coi đó là số đo thật.' : ' Bạn vẫn có thể thử trang phục.'}`)
     : measurementStatus === 'partial'
-      ? 'AI chỉ ước lượng được một phần số đo từ ảnh này; các ô trống không được dùng để chọn size.'
+      ? (missingFullBody
+        ? 'Ảnh thiếu một phần cơ thể hoặc đang ngồi. AI vẫn dự đoán khoảng tham khảo bằng mô hình ảnh thật; độ tin cậy thấp và không dùng các số này để tự chọn size.'
+        : 'AI chỉ ước lượng được một phần số đo từ ảnh này; các ô trống không được dùng để chọn size.')
       : 'Các số dưới đây là khoảng ước lượng từ ảnh, không phải phép đo bằng thước.';
   return {
     estimatedHeight: bodyAnalysis.estimatedHeight,
+    absoluteMeasurementsRestricted: bodyAnalysis.absoluteMeasurementsRestricted === true,
     estimatedWeight: bodyAnalysis.estimatedWeight,
     estimatedGirths: bodyAnalysis.estimatedGirths || {},
     estimatedGirthRanges: bodyAnalysis.estimatedGirthRanges || {},
@@ -268,6 +286,8 @@ function summarizeBodyAnalysis(bodyAnalysis) {
     // Cờ này phải đi kèm số đo vòng ở MỌI nơi hiển thị: đó là vòng ngoài quần
     // áo, không phải vòng cơ thể, nên không dùng để chốt size.
     girthsMeasureClothing: bodyAnalysis.girthsMeasureClothing !== false,
+    girthsArePopulationPrior: bodyAnalysis.girthsArePopulationPrior === true,
+    measurementRowsCutOff: bodyAnalysis.measurementRowsCutOff || null,
     bodyShape: bodyAnalysis.bodyShape,
     referenceProfile,
     quality: bodyAnalysis.quality,

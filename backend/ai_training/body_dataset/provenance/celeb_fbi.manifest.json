@@ -1,0 +1,32 @@
+{
+  "dataset": "Celeb-FBI: full-body images with age, gender, height and weight labels",
+  "canonicalUrl": "https://www.kaggle.com/datasets/pronaydebnath1/celeb-fbi",
+  "paper": "Debnath et al., Celeb-FBI (arXiv:2407.03486)",
+  "license": "Community Data License Agreement - Permissive 1.0 (as declared by Kaggle dataset metadata)",
+  "localPath": "/home/admin123/jp/datasets/celeb-fbi/Celeb-FBI Dataset",
+  "rawFiles": 7211,
+  "acceptedForTraining": 6196,
+  "rejectedByReason": {
+    "age_out_of_range": 11,
+    "filename_schema": 4,
+    "height_out_of_range": 455,
+    "weight_out_of_range": 545
+  },
+  "identityField": "filename serial number; verified unique after filtering",
+  "split": "deterministic gender + weight-bin stratification; 4,958 train / 619 validation / 619 test; identity-disjoint",
+  "acceptedWeightBins": {
+    "110_139": 92,
+    "50_69": 3657,
+    "70_89": 1737,
+    "90_109": 332,
+    "ge140": 12,
+    "lt50": 366
+  },
+  "limits": [
+    "Celebrity height and weight are public metadata, not measurements taken when each photo was captured.",
+    "The paper reports the validated weight range as 41-110 kg; raw Kaggle files include sparse values above 110 kg that are treated as weak labels.",
+    "Only 12 accepted images are >=140 kg, so no production claim is allowed for that range.",
+    "Images contain background, clothing, pose and public-figure biases."
+  ],
+  "containsCredential": false
+}

@@ -2,13 +2,10 @@
   "expo": {
     "name": "JAPANO",
     "slug": "japano",
-    "version": "1.0.19",
+    "version": "1.0.20",
     "icon": "./assets/brand/japano-app-icon.png",
     "orientation": "portrait",
-    "scheme": [
-      "japano",
-      "com.googleusercontent.apps.818888909731-ef99sfuk4784soea0c7fca922u2gkcfg"
-    ],
+    "scheme": "japano",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/brand/japano-logo-transparent.png",
@@ -24,7 +21,7 @@
     },
     "android": {
       "package": "vn.japano.app",
-      "versionCode": 20,
+      "versionCode": 21,
       "icon": "./assets/brand/japano-app-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/japano-adaptive-foreground.png",
@@ -78,8 +75,8 @@
         "webClientId": ""
       },
       "api": {
-        "lanUrl": "http://192.168.1.51:4100",
-        "tailscaleUrl": "https://rd-system.tail6502ce.ts.net:4101"
+        "lanUrl": "http://192.168.100.10:4100",
+        "tailscaleUrl": "https://admin123-system-product-name.tailfeea7a.ts.net"
       }
     }
   }

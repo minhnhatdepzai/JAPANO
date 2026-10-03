@@ -66,6 +66,9 @@ def warm_up():
     BA.load_girth_estimators()
     BA.load_bmi_estimator()
     BA.load_population_calibration()
+    BA.load_bodies_photo_prior()
+    BA.load_partial_photo_prior()
+    BA.load_partial_girth_prior()
     print(f'[body-worker] sẵn sàng sau {time.time() - start:.1f}s, cổng {PORT}', flush=True)
 
 

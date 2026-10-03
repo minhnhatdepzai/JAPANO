@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-30",
+  "decision": "NO_NEW_PRODUCTION_MODEL_PROMOTED",
+  "reason": "ConvNeXt slightly beat the known-height population baseline but not the photo-only baseline. BODIES synthetic pretraining greatly improves synthetic held-out extremes but does not improve the locked real-photo test over ImageNet initialization; real >=110 kg evidence remains too sparse. The BodyM model improves strongly but is research-only under CC-BY-NC-4.0.",
+  "datasets": {
+    "celebFbi": {
+      "acceptedImages": 6196,
+      "split": {
+        "train": 4958,
+        "validation": 619,
+        "test": 619
+      },
+      "license": "CDLA-Permissive-1.0",
+      "ge140ImagesTotal": 12
+    },
+    "celebFbiPersonCrops": {
+      "processed": 6196,
+      "detectedPerson": 6196,
+      "manifestSha256": "ac959deeb691d4f1b0547d7fce9857f093b328bda1de14de8edfe19878b1e3df"
+    },
+    "bodyM": {
+      "trainPhotos": 6133,
+      "validationPhotos": 1662,
+      "testPhotos": 1160,
+      "license": "CC-BY-NC-4.0"
+    },
+    "jpersonwiki": {
+      "rawRows": 236717,
+      "acceptedRows": 15752,
+      "license": "CC-BY-SA-4.0"
+    },
+    "bodiesZenodo": {
+      "subjects": 12000,
+      "split": {
+        "train": 8000,
+        "validation": 2000,
+        "test": 2000
+      },
+      "viewsPerSubject": 2,
+      "license": "CC-BY-4.0",
+      "synthetic": true,
+      "testGe140Subjects": 91,
+      "weightRangeKg": [
+        10.693294932076718,
+        226.65434162547453
+      ]
+    }
+  },
+  "experiments": {
+    "directWeightResNet18": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineWeightMaeKg": 6.2598,
+      "testWeightMaeKg": 6.9029,
+      "checkpointSha256": "d99232913e80da81ab0efef36afcd22d3c36ea5ba4e7ce18270025990830d67c"
+    },
+    "bmiResNet18": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "testEstimatedHeightWeightMaeKg": 7.1513,
+      "testKnownHeightWeightMaeKg": 5.1241,
+      "checkpointSha256": "92f546c30be26f35623edcafd8206cb6843f083f3509b55f0485345b0ff415c5"
+    },
+    "bmiDenseNet201": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "testEstimatedHeightWeightMaeKg": 6.9118,
+      "testKnownHeightWeightMaeKg": 5.055,
+      "checkpointSha256": "6f985bf8b9c07e36f6d9ff396200795518273fd604fbadc279f1681ccf1694df"
+    },
+    "bmiCroppedResNet18": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "testEstimatedHeightWeightMaeKg": 6.9864,
+      "testKnownHeightWeightMaeKg": 5.3255,
+      "checkpointSha256": "a96ffd5a524f5fe05f5ee923a350cdea917b9b365de37e4597d3960871a48ce3"
+    },
+    "bodyMSilhouetteResNet18": {
+      "status": "TRAINED_RESEARCH_ONLY_NOT_PROMOTED",
+      "baselineWeightMaeKg": 13.5433,
+      "testWeightMaeKg": 7.2934,
+      "testChestMaeCm": 4.0839,
+      "testWaistMaeCm": 4.6672,
+      "testHipMaeCm": 3.9584,
+      "checkpointSha256": "ad23f48e05218d289553ce3de98134dd38ffc9fac0159aeb78a2a16a830292d5"
+    },
+    "japanesePopulationPrior": {
+      "status": "TRAINED_POPULATION_PRIOR_NOT_IMAGE_MODEL_NOT_PROMOTED",
+      "baselineWeightMaeKg": 11.3295,
+      "testWeightMaeKg": 6.3789,
+      "checkpointSha256": "7327839c5644f3ac4dfc364adb823df94bf8921379efa302e00aa4524a67b753"
+    },
+    "bmiConvNextTiny": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "baselineKnownHeightWeightMaeKg": 4.9462,
+      "testEstimatedHeightWeightMaeKg": 6.486,
+      "testKnownHeightWeightMaeKg": 4.8041,
+      "test90To109KnownHeightMaeKg": 7.3363,
+      "test110To139KnownHeightMaeKg": 28.9906,
+      "checkpointSha256": "eeb035f0d0b15e3308b9dfa93fc51495ee272787ef2776608dd558c6e16eac4c"
+    },
+    "bmiCroppedConvNextTiny": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "baselineKnownHeightWeightMaeKg": 4.9462,
+      "testEstimatedHeightWeightMaeKg": 6.5939,
+      "testKnownHeightWeightMaeKg": 4.8095,
+      "test90To109KnownHeightMaeKg": 7.1024,
+      "test110To139KnownHeightMaeKg": 27.4006,
+      "checkpointSha256": "f42fc6b240b9703250d4cfb55f90113aa95d0fc4c11c0f1e7926ccb1e15714ca"
+    },
+    "bodiesSyntheticConvNextTiny": {
+      "status": "TRAINED_SYNTHETIC_PRETRAINING_NOT_PRODUCTION",
+      "baselineEstimatedHeightWeightMaeKg": 25.5207,
+      "testEstimatedHeightWeightMaeKg": 3.0758,
+      "testKnownHeightWeightMaeKg": 1.2485,
+      "testGe140Count": 91,
+      "testGe140EstimatedHeightWeightMaeKg": 6.7714,
+      "testGe140KnownHeightWeightMaeKg": 1.9406,
+      "checkpointSha256": "2eabff59cd0470c2881604e1b5cf7aa836275cf1c696052ec9c971505694141c"
+    },
+    "bmiConvNextBodiesInitialization": {
+      "status": "TRAINED_EXPERIMENTAL_NOT_PROMOTED",
+      "baselineEstimatedHeightWeightMaeKg": 6.2437,
+      "baselineKnownHeightWeightMaeKg": 4.9462,
+      "testEstimatedHeightWeightMaeKg": 6.6199,
+      "testKnownHeightWeightMaeKg": 4.8759,
+      "test90To109KnownHeightMaeKg": 8.1235,
+      "test110To139KnownHeightMaeKg": 27.6933,
+      "checkpointSha256": "8a87f897222fa797e8ac34474698fd8f900853567cce3130c457c7b16ed329e2",
+      "initializationCheckpointSha256": "2eabff59cd0470c2881604e1b5cf7aa836275cf1c696052ec9c971505694141c"
+    }
+  },
+  "extremeWeightEvidence": {
+    "celebFbiTestGe140Count": 1,
+    "bodyMTestMaxBin": "110_139",
+    "bodyMTest110To139Photos": 54,
+    "conclusion": "Synthetic extreme-weight coverage is now substantial, but BODIES-to-photo transfer did not improve the locked real-photo test. Celeb-FBI still has only one >=140 kg test image, so 150 kg real-photo accuracy is not established.",
+    "bodiesSyntheticTestGe140Count": 91,
+    "bodiesSyntheticTestGe140EstimatedHeightMaeKg": 6.7714,
+    "bodiesSyntheticTestGe140KnownHeightMaeKg": 1.9406
+  },
+  "gpu": {
+    "device": "NVIDIA GeForce RTX 5060 Ti 16 GB",
+    "observedDenseNetVramMiB": 11919,
+    "observedDenseNetUtilizationPercent": 99,
+    "policy": "Use the largest stable batch; do not force 100% VRAM and risk OOM.",
+    "observedConvNextUtilizationPercent": 100,
+    "observedConvNextVramMiB": 15686,
+    "bodiesPeakReservedMiB": 14422.0
+  },
+  "externalCandidatesReviewed": [
+    {
+      "name": "Digital Scale / WayBED",
+      "availability": "code public; data and BMI weights by request",
+      "decision": "not trained"
+    },
+    {
+      "name": "SHAPY Model Agency",
+      "availability": "registration and non-commercial research license",
+      "decision": "not downloaded"
+    },
+    {
+      "name": "2DImage2BMI",
+      "availability": "repository public; dataset/use terms not clear enough for deployment",
+      "decision": "audit only"
+    },
+    {
+      "name": "Body2BMI-ITU",
+      "availability": "paper says release forthcoming",
+      "decision": "not available for training"
+    },
+    {
+      "name": "BODIES v1.0 data16",
+      "availability": "Zenodo CC BY 4.0; downloaded and checksum verified",
+      "decision": "trained for synthetic pretraining; not production due real-photo domain gap"
+    }
+  ]
+}

@@ -3,14 +3,14 @@
 Lỗi thật đã quan sát được (2026-08-29, khi dựng bộ mẫu thử nhanh): ảnh người mẫu
 ngoại cỡ trả về
 
-    valueKg 79.4 | minKg 70 | maxKg 80
+    valueKg 79.4 | displayBinKg [70, 80]
     uncertaintyMinKg 48 | uncertaintyMaxKg 65 | displayBinKg [50, 60]
 
 Điểm ước lượng 79.4 nằm NGOÀI khoảng bất định 48-65 của chính nó, và bin hiển
 thị nói 50-60. Nguyên nhân: `calibrate_to_population` nâng valueKg lên nhưng
-nhánh áp dụng chỉ cập nhật minKg/maxKg, để nguyên hai field uncertainty* và
-displayBinKg từ trước hiệu chuẩn. Hệ quả không chỉ là hiển thị sai — gợi ý size
-đọc phải con số của một cơ thể khác.
+nhánh áp dụng chỉ cập nhật bin, để nguyên hai field uncertainty* và displayBinKg
+từ trước hiệu chuẩn. Chính sách bằng chứng hiện giữ `minKg/maxKg` là khoảng bất
+định rộng và `displayBinKg` là nhóm 10 kg dễ đọc; cả hai phải chứa điểm ước lượng.
 """
 
 import sys
@@ -60,11 +60,13 @@ class WeightCalibrationConsistency(unittest.TestCase):
                 hi, value - 0.5,
                 f'{label}: biên trên {hi} nhỏ hơn chính điểm ước lượng {value}')
         bin_min, bin_max = weight['displayBinKg']
-        self.assertEqual([bin_min, bin_max], [weight['minKg'], weight['maxKg']],
-                         f'{label}: displayBinKg lệch khỏi minKg/maxKg')
+        self.assertEqual(bin_max - bin_min, 10, f'{label}: displayBinKg không rộng 10kg')
         self.assertTrue(
             bin_min <= value <= bin_max,
             f'{label}: bin hiển thị {bin_min}-{bin_max} không chứa giá trị {value}')
+        self.assertTrue(
+            weight['minKg'] <= value <= weight['maxKg'],
+            f"{label}: khoảng công khai {weight['minKg']}-{weight['maxKg']} không chứa {value}")
 
     def test_hieu_chuan_tang_can_nang_keo_theo_khoang_va_bin(self):
         result = self._analyze_with_forced_calibration(1.4)

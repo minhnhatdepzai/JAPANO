@@ -21,8 +21,9 @@ if str(BACKEND) not in sys.path:
 
 import body_analysis  # noqa: E402
 from body_analysis import (  # noqa: E402
+    apply_broad_build_weight_prior,
     analyze_body, body_shape_ratios, estimate_height, estimate_weight,
-    measure_body, pose_quality, _row_runs,
+    measure_body, pose_quality, regression_measure_for_build, _row_runs,
 )
 
 # --- Người tổng hợp: cao 900px trên ảnh 1000px, tỉ lệ 7.5 đầu ----------------
@@ -227,6 +228,46 @@ class BodyAnalysisTest(unittest.TestCase):
             results.append(estimate_weight(measure, shape, height, quality)['valueKg'])
         self.assertLess(results[0], results[1])
 
+    def test_than_duoi_rong_dung_silhouette_da_cat_tay_cho_hoi_quy(self):
+        # Thân/hông/đùi cùng rộng: không được để khoảng cách hai khớp hông kéo
+        # người plus-size trở về bề ngang trung bình.
+        self.mask = synthetic_mask(torso_width=300, head_width=120, leg_width=120, arm_width=34)
+        body_analysis.person_mask = lambda image, box=None: self.mask
+        measure = measure_body(self.image, self.pose)
+        measure['mask'] = self.mask
+        measure['meanTorsoPx'] = 210
+        for level, key, silhouette in (
+                ('chest', 'bustPx', 230), ('waist', 'waistPx', 250), ('hip', 'hipPx', 280)):
+            measure['torsoProfile'][level].update(
+                rawSilhouettePx=300, silhouettePx=silhouette, armsCarved=True)
+            measure[key] = silhouette * 0.80
+        measure['clothingSlack'] = 1.24
+        corrected, detail = regression_measure_for_build(measure)
+        self.assertTrue(detail['applied'])
+        self.assertGreater(corrected['hipPx'], measure['hipPx'])
+        self.assertLessEqual(corrected['clothingSlack'], 1.08)
+        self.assertEqual(detail['method'], 'arm_carved_silhouette_with_upper_thigh_confirmation')
+
+    def test_than_tren_rong_nhung_dui_khong_rong_thi_khong_hieu_chinh(self):
+        # Áo rộng hoặc tay dính vào thân không đủ bằng chứng để kết luận thân
+        # dưới rộng; tín hiệu đùi độc lập phải chặn ca này.
+        self.mask = synthetic_mask(torso_width=300, head_width=120, leg_width=55, arm_width=45)
+        body_analysis.person_mask = lambda image, box=None: self.mask
+        measure = measure_body(self.image, self.pose)
+        corrected, detail = regression_measure_for_build(measure)
+        self.assertFalse(detail['applied'])
+        self.assertIs(corrected, measure)
+
+    def test_cue_dau_hong_van_tra_prior_rong_khong_dung_chon_size(self):
+        measure = measure_body(self.image, self.pose)
+        measure['headPx'] = measure['staturePx'] / 5.0
+        height = estimate_height(measure, 1.0)
+        self.assertEqual(height['basis'], 'population_prior_only')
+        self.assertEqual(height['valueCm'], body_analysis.HEIGHT_PRIOR_CM['unknown']['mean'])
+        self.assertFalse(height['usableForSizing'])
+        self.assertEqual(height['cueWeight'], 0.0)
+        self.assertGreater(height['uncertaintyMaxCm'] - height['uncertaintyMinCm'], 35)
+
     def test_can_nang_nguoi_dung_nhap_luon_thang_uoc_luong(self):
         measure = measure_body(self.image, self.pose)
         shape = body_shape_ratios(measure)
@@ -236,17 +277,39 @@ class BodyAnalysisTest(unittest.TestCase):
         self.assertEqual(weight['valueKg'], 65)
         self.assertEqual(weight['source'], 'user_provided')
 
+    def test_prior_bodies_chi_nang_nguoi_rong_rat_nang(self):
+        base = {
+            'valueKg': 80.5, 'minKg': 80, 'maxKg': 90,
+            'uncertaintyMinKg': 68, 'uncertaintyMaxKg': 93,
+            'confidence': 0.522, 'source': 'image_estimate',
+            'model': 'ansur2-bmi-from-ratios',
+        }
+        height = {'valueCm': 157.4}
+        broad = {'applied': True}
+        prior = {'heightCm': 182.4, 'bmi': 42.2, 'weightKg': 140.6,
+                 'model': 'bodies-convnext-tiny-height-bmi'}
+        adjusted = apply_broad_build_weight_prior(
+            base, height, {'coverage': 'full'}, broad, prior)
+        self.assertAlmostEqual(adjusted['valueKg'], 123.4, delta=0.2)
+        self.assertEqual(adjusted['displayBinKg'], [120, 130])
+        self.assertGreater(adjusted['uncertaintyMaxKg'], adjusted['valueKg'])
+        self.assertEqual(adjusted['model'], 'ansur2+bodies-convnext-broad-build')
+
+    def test_prior_bodies_khong_nang_nguoi_chi_hoi_rong(self):
+        base = {'valueKg': 76.1, 'confidence': 0.52, 'source': 'image_estimate'}
+        moderate = {'heightCm': 172.9, 'bmi': 41.8, 'weightKg': 125.0}
+        adjusted = apply_broad_build_weight_prior(
+            base, {'valueCm': 155.9}, {'coverage': 'full'}, {'applied': True}, moderate)
+        self.assertIs(adjusted, base)
+
     def test_vong_do_tu_anh_duoc_danh_dau_la_do_quan_ao(self):
         # Silhouette của người mặc quần áo là silhouette của quần áo — kết quả
         # phải nói rõ điều đó để không ai đem số này đi chốt size.
         result = analyze_body(self.image, self.pose)
         self.assertTrue(result['girthsMeasureClothing'])
+        self.assertEqual(result['estimatedGirthRanges'], {})
         for key in ('bust', 'waist'):
-            estimate = result['estimatedGirthRanges'][key]
-            self.assertEqual(estimate['maxCm'] - estimate['minCm'], 10)
-            self.assertEqual(estimate['displayBinCm'], [estimate['minCm'], estimate['maxCm']])
-            self.assertIn('uncertaintyMinCm', estimate)
-            self.assertIn('uncertaintyMaxCm', estimate)
+            self.assertIn(key, result['rejectedGirths'])
 
     def test_analyze_body_tra_du_cau_truc_cho_api(self):
         result = analyze_body(self.image, self.pose)
@@ -255,11 +318,16 @@ class BodyAnalysisTest(unittest.TestCase):
             self.assertIn(key, result)
         self.assertIn('bodyWidthRatio', result['bodyShape'])
         self.assertIn('poseConfidence', result['quality'])
-        self.assertTrue(any('sai số' in warning for warning in result['warnings']))
+        self.assertTrue(any('không đủ bằng chứng' in warning for warning in result['warnings']))
         # Vòng đo suy từ silhouette chỉ để tham khảo; bảng size không coi nó là
         # số đo thật do người dùng nhập.
-        self.assertIn('bust', result['estimatedGirths'])
-        self.assertIn('bust', result['estimatedGirthRanges'])
+        self.assertEqual(result['estimatedGirths'], {})
+        self.assertEqual(result['estimatedGirthRanges'], {})
+        for key, field in (('estimatedHeight', 'valueCm'), ('estimatedWeight', 'valueKg')):
+            estimate = result[key]
+            self.assertFalse(estimate['usableForSizing'])
+            if estimate[field] is not None:
+                self.assertEqual(estimate['estimateKind'], 'uncalibrated_statistical_suggestion')
 
 
 if __name__ == '__main__':

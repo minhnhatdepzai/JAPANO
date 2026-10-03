@@ -135,7 +135,7 @@ export default function Chat() {
         <Enso size={38} sw={7} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: F.display, fontSize: 16, color: C.sumi }}>Trợ lý Ori</Text>
-          <Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.matcha }}>● Qwen3-VL tools · catalog-grounded</Text>
+          <Text style={{ fontFamily: F.bodyB, fontSize: 11, color: C.matcha }}>● Tư vấn từ sản phẩm JAPANO</Text>
         </View>
       </View>
       <KeyboardAvoidingView

@@ -21,6 +21,8 @@ test('nhận dạng từng loại trang phục, không gộp bằng một mẫu 
     ['Áo lửng cổ tròn', 'crop_top'],
     ['Áo sát nách họa tiết sóng', 'sleeveless_top'],
     ['Áo trễ vai tay bồng', 'off_shoulder_top'],
+    ['Áo khoác kaki dáng dài', 'blazer'],
+    ['Blazer kaki trench', 'blazer'],
     ['Quần short phối hoa văn Nhật', 'shorts'],
     ['Chân váy ngắn xếp ly', 'short_skirt'],
     ['Yukata hoa anh đào', 'yukata'],
@@ -54,6 +56,22 @@ test('không khớp nhầm chuỗi con: "lưng cao bikini" không phải áo bik
 test('garmentType khai báo trong catalog thắng suy đoán từ tên', () => {
   const product = { name: 'Sản phẩm tên mơ hồ', garmentType: 'crop_top' };
   assert.equal(garmentTypeFor(product), 'crop_top');
+});
+
+test('áo khoác hiện đại trong category haori không bị áp cổng tay áo Nhật', () => {
+  const profile = coverageProfileFor({
+    slug: 'blazer-kaki',
+    name: 'Áo khoác kaki dáng dài',
+    category: 'haori',
+    garmentType: 'blazer',
+  });
+  assert.equal(profile.garmentType, 'blazer');
+  assert.equal(profile.layer, 'upper-outer');
+  assert.equal(profile.fashnCategory, 'tops');
+  assert.equal(profile.outerwear, true);
+  assert.equal(profile.japanese, false);
+  assert.equal(profile.preserveConstruction, false);
+  assert.deepEqual(profile.constructionCoveredZones, []);
 });
 
 test('catalog cũ không có garmentType vẫn rơi về ba vùng như trước', () => {
@@ -203,4 +221,19 @@ test('trang phục Nhật yêu cầu giữ nguyên kết cấu', () => {
   for (const name of ['Yukata', 'Kimono furisode', 'Haori', 'Hakama nữ']) {
     assert.equal(safetyPolicyFor([{ name }]).preserveConstruction, true, `${name} phải giữ kết cấu`);
   }
+  assert.deepEqual(
+    safetyPolicyFor([{ name: 'Kimono Tomesode đen' }]).constructionCoveredZones.sort(),
+    ['legs', 'upperArms'],
+  );
+  assert.deepEqual(safetyPolicyFor([{ name: 'Hakama nữ' }]).constructionCoveredZones, ['legs']);
+});
+
+test('Haori tay ngắn chỉ bỏ cổng bắp tay khi catalog khai báo tường minh', () => {
+  const shortSleeve = safetyPolicyFor([{
+    name: 'Haori họa tiết sóng Nami', garmentType: 'haori',
+    sleeveCoverage: 'short', constructionCoveredZones: [],
+  }]);
+  assert.equal(shortSleeve.preserveConstruction, true);
+  assert.deepEqual(shortSleeve.constructionCoveredZones, []);
+  assert.deepEqual(safetyPolicyFor([{ name:'Haori tay dài' }]).constructionCoveredZones, ['upperArms']);
 });

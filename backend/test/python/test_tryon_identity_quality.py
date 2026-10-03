@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from accessory_pipeline import add_safe_seam_split, add_safe_tight_fit, tryon_quality  # noqa: E402
+from accessory_pipeline import add_safe_seam_split, add_safe_tight_fit, normalized_pose_drift, tryon_quality  # noqa: E402
 
 
 POSE = {
@@ -43,6 +43,66 @@ def person_image(face=(205, 150, 125), garment=(40, 90, 170)):
 
 
 class TryOnIdentityQualityTest(unittest.TestCase):
+    def test_normalized_pose_drift_accepts_small_detector_jitter(self):
+        source = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_wrist':[20, 90, .9], 'right_wrist':[80, 90, .9],
+            'left_knee':[40, 145, .9], 'right_knee':[60, 145, .9],
+        }}
+        result = {'box':[10, 20, 210, 420], 'keypoints':{
+            'left_wrist':[52, 202, .9], 'right_wrist':[168, 198, .9],
+            'left_knee':[92, 310, .9], 'right_knee':[128, 312, .9],
+        }}
+        drift = normalized_pose_drift(source, result)
+        self.assertEqual(drift['changed'], 0)
+        self.assertEqual(drift['changedGroups'], 0)
+        self.assertLess(drift['mean'], .04)
+
+    def test_normalized_pose_drift_detects_changed_limbs(self):
+        source = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_wrist':[20, 90, .9], 'right_wrist':[80, 90, .9],
+            'left_knee':[40, 145, .9], 'right_knee':[60, 145, .9],
+        }}
+        result = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_wrist':[50, 35, .9], 'right_wrist':[50, 35, .9],
+            'left_knee':[18, 155, .9], 'right_knee':[82, 155, .9],
+        }}
+        drift = normalized_pose_drift(source, result)
+        self.assertGreaterEqual(drift['changed'], 2)
+        self.assertEqual(drift['changedGroups'], 2)
+        self.assertGreater(drift['mean'], .105)
+
+    def test_normalized_pose_drift_does_not_treat_sleeve_detector_shift_as_full_pose_change(self):
+        source = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_elbow':[20, 70, .9], 'right_elbow':[80, 70, .9],
+            'left_wrist':[18, 105, .9], 'right_wrist':[82, 105, .9],
+            'left_knee':[40, 145, .9], 'right_knee':[60, 145, .9],
+            'left_ankle':[40, 190, .9], 'right_ankle':[60, 190, .9],
+        }}
+        result = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_elbow':[46, 58, .9], 'right_elbow':[54, 58, .9],
+            'left_wrist':[45, 96, .9], 'right_wrist':[55, 96, .9],
+            'left_knee':[41, 146, .9], 'right_knee':[59, 146, .9],
+            'left_ankle':[41, 189, .9], 'right_ankle':[59, 189, .9],
+        }}
+        drift = normalized_pose_drift(source, result)
+        self.assertGreaterEqual(drift['changed'], 2)
+        self.assertEqual(drift['changedGroups'], 1)
+
+    def test_long_garment_ignores_detector_drift_in_occluded_limb_groups(self):
+        source = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_wrist':[20, 90, .9], 'right_wrist':[80, 90, .9],
+            'left_knee':[40, 145, .9], 'right_knee':[60, 145, .9],
+        }}
+        result = {'box':[0, 0, 100, 200], 'keypoints':{
+            'left_wrist':[50, 35, .9], 'right_wrist':[50, 35, .9],
+            'left_knee':[18, 155, .9], 'right_knee':[82, 155, .9],
+        }}
+        drift = normalized_pose_drift(source, result, ['arms', 'legs'])
+        self.assertGreaterEqual(drift['changed'], 2)
+        self.assertEqual(drift['detectedChangedGroups'], 2)
+        self.assertEqual(drift['changedGroups'], 0)
+        self.assertEqual(drift['ignoredGroups'], ['arms', 'legs'])
+
     def test_doi_mat_bi_chan_du_trang_phuc_da_thay(self):
         source = person_image()
         changed = person_image(face=(20, 20, 20), garment=(170, 50, 50))
@@ -73,6 +133,8 @@ class TryOnIdentityQualityTest(unittest.TestCase):
         with patch('accessory_pipeline.analyze', return_value=POSE):
             changed, seam = add_safe_seam_split(source)
         self.assertTrue(seam['applied'])
+        self.assertEqual(seam['exposedZone'], 'upper_arm')
+        self.assertEqual(seam['underlay'], 'matched_skin_tone')
         self.assertEqual(source.crop((75, 20, 125, 70)).tobytes(), changed.crop((75, 20, 125, 70)).tobytes())
         self.assertNotEqual(source.tobytes(), changed.tobytes())
 

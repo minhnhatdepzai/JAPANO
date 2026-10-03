@@ -16,8 +16,9 @@ ra chiều cao tuyệt đối chính xác. Vì vậy có hai chế độ:
       độ lệch chuẩn ~1cm — hằng số nhân trắc ổn định nhất có thể đo trên ảnh),
       chỉ trả về KHOẢNG kèm confidence; confidence thấp thì trả None.
 
-Không load thêm model nặng: dùng lại YOLOv8n-pose đã có trong accessory_pipeline
-và (tuỳ chọn) mặt nạ nền rembg vốn đã được cài cho phụ kiện.
+Dùng lại YOLOv8n-pose và mặt nạ nền rembg đã có. Với ảnh toàn thân mà ba tín
+hiệu hình học cùng xác nhận thân rộng, có thể dùng thêm checkpoint ConvNeXt
+BODIES trên CPU như một prior phụ; checkpoint này không thay số đo thật.
 """
 
 import json
@@ -34,6 +35,33 @@ ROOT = Path(__file__).resolve().parent
 TRAINED_MODEL_PATH = Path(
     os.getenv('JAPANO_BODY_ESTIMATOR_MODEL', str(ROOT / 'ai_training/models/body_weight_estimator.joblib'))
 )
+BODIES_PHOTO_PRIOR_PATH = Path(os.getenv(
+    'JAPANO_BODIES_PHOTO_PRIOR_MODEL',
+    str(ROOT / 'ai_training/runs/bodies-convnext-both-20260930/'
+        'bodies_height_bmi_convnext_tiny.torchscript.pt'),
+))
+BODIES_PHOTO_PRIOR_TARGET_MEAN = np.array([171.23009139059286, 27.179013187180747], dtype=np.float32)
+BODIES_PHOTO_PRIOR_TARGET_STD = np.array([15.113960137931873, 9.681668112709877], dtype=np.float32)
+BODIES_PHOTO_PRIOR_SHA256 = 'f032720235e3d53f8c22a727008ec1c55fec5d2d456004252bc2591f0be79562'
+BODIES_PHOTO_PRIOR_HEAVY_KG = float(os.getenv('JAPANO_BODIES_PHOTO_PRIOR_HEAVY_KG', '135'))
+_BODIES_PHOTO_PRIOR = None
+PARTIAL_PHOTO_PRIOR_PATH = Path(os.getenv(
+    'JAPANO_PARTIAL_PHOTO_PRIOR_MODEL',
+    str(ROOT / 'ai_training/runs/photo-bmi-convnext-tiny-cropped-celeb-fbi-20260930/'
+        'photo_bmi_convnext_tiny.torchscript.pt'),
+))
+PARTIAL_PHOTO_PRIOR_TARGET_MEAN = np.array(
+    [173.64470754336426, 21.574294993369836], dtype=np.float32)
+PARTIAL_PHOTO_PRIOR_TARGET_STD = np.array(
+    [10.22026506586431, 3.4577621815861574], dtype=np.float32)
+PARTIAL_PHOTO_PRIOR_SHA256 = '615cfb1f19c95c8cb40834911250a700c5e94ff12f9b538d27debed2bbf36c1d'
+PARTIAL_GIRTH_PRIOR_PATH = Path(os.getenv(
+    'JAPANO_PARTIAL_GIRTH_PRIOR_MODEL',
+    str(ROOT / 'ai_training/runs/partial-girth-prior-20261001/partial_girth_prior.joblib'),
+))
+PARTIAL_GIRTH_PRIOR_SHA256 = '9f6bf3f477aa3a448798be1d27790d47096dc1c28d9810658d2349775cfe5b6e'
+_PARTIAL_PHOTO_PRIOR = None
+_PARTIAL_GIRTH_PRIOR = None
 
 # --- Hằng số nhân trắc -------------------------------------------------------
 # Mặc định là bảng Drillis & Contini (1966). Nếu đã chạy
@@ -565,6 +593,90 @@ def body_shape_ratios(measure):
     }
 
 
+def regression_measure_for_build(measure):
+    """Chọn bề ngang dùng cho hồi quy khi khung xương bóp nhỏ người thân rộng.
+
+    `torso_profile` trộn silhouette với bề ngang suy từ hai khớp. Cách đó chặn
+    tay và áo rộng khá tốt, nhưng với cơ thể có thân dưới rộng thật thì khoảng
+    cách hai khớp hông nằm sâu bên trong cơ thể. Kết quả là silhouette hông/đùi
+    rất rộng nhưng đầu vào hồi quy vẫn gần người trung bình.
+
+    Chỉ sửa khi ba tín hiệu độc lập cùng đồng ý: hông thô rộng, trung vị thân
+    rộng và hàng đùi trên cũng rộng. Sau đó dùng silhouette ĐÃ CẮT TAY, không
+    dùng đường viền thô. Đây là hiệu chỉnh hình học để giữ thứ tự vóc dáng; nó
+    không biến ảnh tổng hợp không nhãn thành dữ liệu đo thật.
+    """
+    profile = measure.get('torsoProfile') or {}
+    stature = float(measure.get('staturePx') or 0.0)
+    mask = measure.get('mask')
+    if stature <= 0 or mask is None or measure.get('coverage') != 'full':
+        return measure, {'applied': False, 'reason': 'requires_full_body_mask'}
+
+    hip = profile.get('hip') or {}
+    raw_hip_ratio = float(hip.get('rawSilhouettePx') or 0.0) / stature
+    torso_ratio = float(measure.get('meanTorsoPx') or 0.0) / stature
+
+    # Đùi trên nằm dưới hàng hông 10-16% chiều cao. Lấy dải trung tâm gần trục
+    # thân để hai tay không thể làm rộng tín hiệu này.
+    thigh_ratios = []
+    center_x = float(measure.get('centerX') or mask.shape[1] / 2.0)
+    for fraction in (0.10, 0.13, 0.16):
+        y = int(round(float(measure.get('hipY') or 0.0) + stature * fraction))
+        if not (0 <= y < mask.shape[0]):
+            continue
+        runs = _row_runs(mask[y])
+        if not runs:
+            continue
+        nearby = [run for run in runs
+                  if abs((run[0] + run[1]) / 2.0 - center_x) <= stature * 0.225]
+        if nearby:
+            thigh_ratios.append((max(run[1] for run in nearby)
+                                  - min(run[0] for run in nearby) + 1) / stature)
+    thigh_ratio = float(np.median(thigh_ratios)) if thigh_ratios else 0.0
+
+    broad = raw_hip_ratio >= 0.30 and torso_ratio >= 0.22 and thigh_ratio >= 0.24
+    if not broad:
+        return measure, {
+            'applied': False,
+            'reason': 'broad_build_signals_not_met',
+            'rawHipRatio': round(raw_hip_ratio, 4),
+            'upperThighRatio': round(thigh_ratio, 4),
+        }
+
+    corrected = dict(measure)
+    replacements = {}
+    for level, key in (('chest', 'bustPx'), ('waist', 'waistPx'), ('hip', 'hipPx')):
+        entry = profile.get(level) or {}
+        silhouette = float(entry.get('silhouettePx') or 0.0)
+        if entry.get('armsCarved') and silhouette > float(corrected.get(key) or 0.0):
+            corrected[key] = silhouette
+            replacements[level] = round(silhouette, 2)
+    if 'hip' not in replacements:
+        return measure, {
+            'applied': False,
+            'reason': 'hip_silhouette_not_reliable',
+            'rawHipRatio': round(raw_hip_ratio, 4),
+            'upperThighRatio': round(thigh_ratio, 4),
+        }
+
+    corrected['meanTorsoPx'] = float(np.median([
+        corrected[key] for key in ('shoulderPx', 'bustPx', 'waistPx', 'hipPx')
+        if corrected.get(key)
+    ]))
+    # Với thân rộng, tỉ số silhouette/khớp đang đo cả mô mềm chứ không chỉ áo.
+    # Chặn nó ở 1.08 để model không trừ mất chính phần cơ thể vừa quan sát được.
+    corrected['clothingSlack'] = min(float(measure.get('clothingSlack') or 1.0), 1.08)
+    return corrected, {
+        'applied': True,
+        'method': 'arm_carved_silhouette_with_upper_thigh_confirmation',
+        'rawHipRatio': round(raw_hip_ratio, 4),
+        'upperThighRatio': round(thigh_ratio, 4),
+        'originalClothingSlack': measure.get('clothingSlack', 1.0),
+        'regressionClothingSlack': round(corrected['clothingSlack'], 3),
+        'replacedPx': replacements,
+    }
+
+
 def pose_quality(pose, measure):
     """Điểm 0..1 cho biết ảnh này đáng tin tới đâu cho việc đo đạc."""
     score = float(pose.get('confidence') or 0.0)
@@ -582,6 +694,35 @@ def pose_quality(pose, measure):
     if pose.get('fallback'):
         score -= 0.4
     return round(_clamp(score, 0.0, 1.0), 3)
+
+
+def is_seated_pose(pose, measure):
+    """Nhận ra tư thế ngồi khi detector vẫn gắn nhãn đủ đầu và hai bàn chân.
+
+    JPEG recompression can move an ankle confidence across the visibility
+    threshold.  Coverage alone would then turn the same seated photo from
+    ``knee`` into ``full`` and disable the partial-photo model.  A seated thigh
+    is close to horizontal in the common floor/cross-legged pose, so use the
+    hip-to-knee geometry as an independent posture cue.
+    """
+    keypoints = pose.get('keypoints') or {}
+    vectors = []
+    for side in ('left', 'right'):
+        hip = keypoints.get(f'{side}_hip') or ()
+        knee = keypoints.get(f'{side}_knee') or ()
+        if len(hip) < 3 or len(knee) < 3 or min(float(hip[2]), float(knee[2])) < 0.45:
+            continue
+        dx = abs(float(knee[0]) - float(hip[0]))
+        dy = abs(float(knee[1]) - float(hip[1]))
+        length = math.hypot(dx, dy)
+        if length > 0:
+            vectors.append((dx, dy, length))
+    if len(vectors) < 2:
+        return False
+    stature = max(float(measure.get('staturePx') or 0.0), 1.0)
+    horizontal = [dx / length >= 0.72 for dx, _dy, length in vectors]
+    long_enough = [length / stature >= 0.12 for _dx, _dy, length in vectors]
+    return all(horizontal) and all(long_enough)
 
 
 def _sex_key(sex):
@@ -678,6 +819,32 @@ def estimate_height(measure, quality, user_height_cm=0.0, reference=None, sex='u
     if not cue or cue.get('valueCm') is None:
         reason = (cue or {}).get('reason', 'no_head_reference')
         detail = f" (đo được {cue['headCount']} đầu/thân)" if cue and cue.get('headCount') else ''
+        # Một cue đầu/thân hỏng không có nghĩa là ta biết chiều cao bằng 0. Với
+        # ảnh toàn thân rõ, trả prior dân số thật rộng như một GỢI Ý thống kê để
+        # chuỗi cân nặng còn có thể xếp hạng vóc dáng. `usableForSizing=False`
+        # và `basis=population_prior_only` ngăn số này đi vào chọn size.
+        if measure.get('coverage') == 'full' and quality >= 0.60:
+            spread = 1.96 * prior['sd']
+            value = float(prior['mean'])
+            confidence = round(min(0.25, quality * 0.25), 3)
+            return _with_cm_display_bin({
+                'valueCm': round(value, 1),
+                'minCm': round(value - spread, 1),
+                'maxCm': round(value + spread, 1),
+                'confidence': confidence,
+                'mode': 'A',
+                'source': 'image_estimate',
+                'method': (f'cue đầu/thân bị loại ({reason}{detail}); '
+                           f'chỉ dùng prior dân số {prior["mean"]}±{prior["sd"]}cm'),
+                'priorMeanCm': prior['mean'],
+                'priorSdCm': prior['sd'],
+                'posteriorSdCm': prior['sd'],
+                'cueWeight': 0.0,
+                'usableForSizing': False,
+                'basis': 'population_prior_only',
+                'cueRejected': reason,
+                'sexAssumed': _sex_key(sex),
+            })
         return {**unusable, 'method': f'không đo được chiều dài đầu đáng tin cậy: {reason}{detail}',
                 'cueRejected': reason}
 
@@ -748,7 +915,9 @@ def estimate_height(measure, quality, user_height_cm=0.0, reference=None, sex='u
 GIRTH_PLAUSIBLE_CM = {'bust': (60.0, 170.0), 'waist': (48.0, 170.0), 'hip': (60.0, 180.0)}
 # Quan hệ giữa các vòng. Biên lấy rộng hơn phân bố ANSUR II nhiều lần.
 GIRTH_RATIO_LIMITS = {('hip', 'bust'): (0.70, 1.45), ('waist', 'hip'): (0.50, 1.35)}
-BMI_PLAUSIBLE = (13.0, 45.0)
+# Đồng bộ với chốt trong estimate_weight: nhóm rất nặng vẫn có thể nằm ở
+# BMI 45-50. Trên 50 cần bằng chứng đo thật thay vì ngoại suy từ một ảnh.
+BMI_PLAUSIBLE = (13.0, 50.0)
 
 
 def girth_plausibility(girths, height_cm):
@@ -1033,6 +1202,190 @@ def bmi_from_ratios(measure):
     return value if BMI_PLAUSIBLE[0] <= value <= BMI_PLAUSIBLE[1] else None
 
 
+def load_bodies_photo_prior():
+    """Nạp checkpoint BODIES một lần trên CPU; thiếu model thì tắt an toàn."""
+    global _BODIES_PHOTO_PRIOR
+    if _BODIES_PHOTO_PRIOR is None:
+        if str(os.getenv('JAPANO_BODIES_PHOTO_PRIOR', '1')).strip() == '0' or not BODIES_PHOTO_PRIOR_PATH.is_file():
+            _BODIES_PHOTO_PRIOR = False
+        else:
+            try:
+                import torch
+                _BODIES_PHOTO_PRIOR = torch.jit.load(
+                    str(BODIES_PHOTO_PRIOR_PATH), map_location='cpu').eval()
+            except Exception:
+                _BODIES_PHOTO_PRIOR = False
+    return _BODIES_PHOTO_PRIOR or None
+
+
+def predict_bodies_photo_prior(image):
+    """Trả height/BMI/weight của checkpoint synthetic, chưa quyết định đầu ra."""
+    model = load_bodies_photo_prior()
+    if model is None:
+        return None
+    try:
+        import torch
+        source = ImageOps.exif_transpose(image).convert('RGB')
+        width, height = source.size
+        edge = max(width, height)
+        square = Image.new('RGB', (edge, edge), (124, 116, 104))
+        square.paste(source, ((edge - width) // 2, (edge - height) // 2))
+        resized = square.resize((224, 224), Image.Resampling.BILINEAR)
+        pixels = np.asarray(resized, dtype=np.float32) / 255.0
+        pixels = (pixels - np.array((0.485, 0.456, 0.406), dtype=np.float32)) \
+            / np.array((0.229, 0.224, 0.225), dtype=np.float32)
+        tensor = torch.from_numpy(np.transpose(pixels, (2, 0, 1))).unsqueeze(0)
+        with torch.inference_mode():
+            raw = model(tensor)[0].detach().cpu().numpy()
+        predicted_height, predicted_bmi = (
+            raw * BODIES_PHOTO_PRIOR_TARGET_STD + BODIES_PHOTO_PRIOR_TARGET_MEAN)
+        predicted_weight = predicted_bmi * (predicted_height / 100.0) ** 2
+        if not (130.0 <= predicted_height <= 210.0 and 12.0 <= predicted_bmi <= 65.0
+                and 25.0 <= predicted_weight <= 250.0):
+            return None
+        return {
+            'heightCm': round(float(predicted_height), 1),
+            'bmi': round(float(predicted_bmi), 1),
+            'weightKg': round(float(predicted_weight), 1),
+            'model': 'bodies-convnext-tiny-height-bmi',
+            'checkpointSha256': BODIES_PHOTO_PRIOR_SHA256,
+            'domain': 'synthetic-full-body-prior',
+        }
+    except Exception:
+        return None
+
+
+def load_partial_photo_prior():
+    """Nạp ConvNeXt đã fine-tune trên crop ảnh thật, một lần trên CPU."""
+    global _PARTIAL_PHOTO_PRIOR
+    if _PARTIAL_PHOTO_PRIOR is None:
+        if (str(os.getenv('JAPANO_PARTIAL_PHOTO_PRIOR', '1')).strip() == '0'
+                or not PARTIAL_PHOTO_PRIOR_PATH.is_file()):
+            _PARTIAL_PHOTO_PRIOR = False
+        else:
+            try:
+                import torch
+                _PARTIAL_PHOTO_PRIOR = torch.jit.load(
+                    str(PARTIAL_PHOTO_PRIOR_PATH), map_location='cpu').eval()
+            except Exception:
+                _PARTIAL_PHOTO_PRIOR = False
+    return _PARTIAL_PHOTO_PRIOR or None
+
+
+def load_partial_girth_prior():
+    """Nạp hồi quy ANSUR chiều cao+BMI -> ba vòng; không phải phép đo ảnh."""
+    global _PARTIAL_GIRTH_PRIOR
+    if _PARTIAL_GIRTH_PRIOR is None:
+        if not PARTIAL_GIRTH_PRIOR_PATH.is_file():
+            _PARTIAL_GIRTH_PRIOR = False
+        else:
+            try:
+                import joblib
+                _PARTIAL_GIRTH_PRIOR = joblib.load(PARTIAL_GIRTH_PRIOR_PATH)
+            except Exception:
+                _PARTIAL_GIRTH_PRIOR = False
+    return _PARTIAL_GIRTH_PRIOR or None
+
+
+def predict_partial_photo_prior(image):
+    """Dự đoán thống kê cho ảnh cắt/ngồi; quyết định hiển thị nằm ở policy.
+
+    Checkpoint nhìn RGB để dự đoán chiều cao và BMI. Ba vòng đến từ một model
+    ANSUR riêng dùng chính hai giả thuyết đó, nên sai số của hai tầng phải được
+    cộng và đầu ra tuyệt đối không được dùng để tự chọn size.
+    """
+    model = load_partial_photo_prior()
+    if model is None:
+        return None
+    try:
+        import torch
+        source = ImageOps.exif_transpose(image).convert('RGB')
+        width, height = source.size
+        edge = max(width, height)
+        square = Image.new('RGB', (edge, edge), (124, 116, 104))
+        square.paste(source, ((edge - width) // 2, (edge - height) // 2))
+        resized = square.resize((224, 224), Image.Resampling.BILINEAR)
+        pixels = np.asarray(resized, dtype=np.float32) / 255.0
+        pixels = (pixels - np.array((0.485, 0.456, 0.406), dtype=np.float32)) \
+            / np.array((0.229, 0.224, 0.225), dtype=np.float32)
+        tensor = torch.from_numpy(np.transpose(pixels, (2, 0, 1))).unsqueeze(0)
+        with torch.inference_mode():
+            raw = model(tensor)[0].detach().cpu().numpy()
+        predicted_height, predicted_bmi = (
+            raw * PARTIAL_PHOTO_PRIOR_TARGET_STD + PARTIAL_PHOTO_PRIOR_TARGET_MEAN)
+        predicted_weight = predicted_bmi * (predicted_height / 100.0) ** 2
+        if not (135.0 <= predicted_height <= 205.0 and 12.0 <= predicted_bmi <= 50.0
+                and 25.0 <= predicted_weight <= 205.0):
+            return None
+        result = {
+            'heightCm': round(float(predicted_height), 1),
+            'bmi': round(float(predicted_bmi), 1),
+            'weightKg': round(float(predicted_weight), 1),
+            'model': 'celeb-fbi-cropped-convnext-tiny-height-bmi',
+            'checkpointSha256': PARTIAL_PHOTO_PRIOR_SHA256,
+            'domain': 'real-photo-person-crop-experimental',
+        }
+        girth_bundle = load_partial_girth_prior()
+        if girth_bundle:
+            row = np.array([[predicted_height, predicted_bmi]], dtype=np.float32)
+            target_names = {
+                'bust': 'chest_circ_cm', 'waist': 'waist_circ_cm', 'hip': 'hip_circ_cm',
+            }
+            result['girths'] = {
+                key: round(float(girth_bundle['models'][target].predict(row)[0]), 1)
+                for key, target in target_names.items()
+                if target in girth_bundle.get('models', {})
+            }
+            result['girthModel'] = 'ansur2-height-bmi-partial-girth-prior'
+            result['girthCheckpointSha256'] = PARTIAL_GIRTH_PRIOR_SHA256
+        return result
+    except Exception:
+        return None
+
+
+def apply_broad_build_weight_prior(weight, height, measure, build_correction, prior):
+    """Dùng BODIES chỉ khi hình học và checkpoint cùng báo nhóm rất nặng.
+
+    BODIES có bằng chứng held-out mạnh trên ảnh synthetic nhưng không đại diện
+    ảnh khách. Vì vậy checkpoint không được phép nâng người thông thường, ảnh
+    cắt, hoặc dự đoán dưới ngưỡng rất nặng. Giá trị cuối vẫn bị chặn theo chiều
+    cao đang hiển thị và BMI 49.8 để hai phần của cùng câu trả lời không mâu thuẫn.
+    """
+    if (not prior or not build_correction.get('applied')
+            or measure.get('coverage') != 'full'
+            or weight.get('source') == 'user_provided'
+            or weight.get('valueKg') is None
+            or float(prior.get('weightKg') or 0.0) < BODIES_PHOTO_PRIOR_HEAVY_KG
+            or float(prior.get('bmi') or 0.0) < 35.0):
+        return weight
+    height_cm = float(height.get('valueCm') or 0.0)
+    if height_cm <= 0:
+        return weight
+    candidate = min(float(prior['weightKg']), 49.8 * (height_cm / 100.0) ** 2)
+    if candidate <= float(weight['valueKg']) + 10.0:
+        return weight
+
+    value = round(candidate, 1)
+    spread = max(20.0, value * 0.20)
+    old_low = weight.get('uncertaintyMinKg')
+    old_high = weight.get('uncertaintyMaxKg')
+    uncertainty_min = round(min(float(old_low), value - spread) if old_low is not None else value - spread)
+    uncertainty_max = round(max(float(old_high), value + spread) if old_high is not None else value + spread)
+    display_min = int(math.floor(value / 10.0) * 10)
+    return {
+        **weight,
+        'valueKg': value,
+        'minKg': display_min,
+        'maxKg': display_min + 10,
+        'displayBinKg': [display_min, display_min + 10],
+        'uncertaintyMinKg': max(0, uncertainty_min),
+        'uncertaintyMaxKg': uncertainty_max,
+        'confidence': round(min(float(weight.get('confidence') or 0.0), 0.45), 3),
+        'model': 'ansur2+bodies-convnext-broad-build',
+        'bodiesPhotoPrior': {**prior, 'applied': True, 'activationKg': BODIES_PHOTO_PRIOR_HEAVY_KG},
+    }
+
+
 def estimate_weight(measure, shape, height, quality, user_weight_kg=0.0):
     if user_weight_kg:
         return {
@@ -1185,9 +1538,21 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
 
     measure = measure_body(image, pose)
     shape = body_shape_ratios(measure)
+    regression_measure, build_correction = regression_measure_for_build(measure)
+    regression_shape = body_shape_ratios(regression_measure)
     quality = pose_quality(pose, measure)
+    seated_pose = is_seated_pose(pose, measure)
     height = estimate_height(measure, quality, _num(user_height_cm), reference, sex)
-    weight = estimate_weight(measure, shape, height, quality, _num(user_weight_kg))
+    weight = estimate_weight(regression_measure, regression_shape, height, quality, _num(user_weight_kg))
+    partial_photo_prior = None
+    if ((seated_pose or measure['coverage'] != 'full'
+         or not measure['headVisible'] or not measure['feetVisible'])
+            and float(pose.get('confidence') or 0.0) >= 0.35
+            and quality >= 0.35):
+        partial_photo_prior = predict_partial_photo_prior(image)
+    bodies_prior = predict_bodies_photo_prior(image) if build_correction.get('applied') else None
+    weight = apply_broad_build_weight_prior(
+        weight, height, measure, build_correction, bodies_prior)
 
     warnings = ['Ước lượng từ một ảnh 2D có sai số, không phải phép đo nhân trắc chính xác.']
     if not measure['feetVisible']:
@@ -1207,12 +1572,21 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
               'Chụp lại thấy trọn người sẽ chính xác hơn nhiều.')
     if float(measure.get('clothingSlack') or 1.0) > 1.15:
         warnings.append('Bạn đang mặc đồ khá rộng — ước lượng cân nặng có thể cao hơn thực tế.')
-    if weight.get('outOfDistribution'):
+    if build_correction.get('applied'):
         warnings.append(
-            'Số đo bề ngang trên ảnh nằm ngoài phân bố dữ liệu huấn luyện '
-            '(thường do quần áo rộng hoặc tay che thân), nên hệ thống dùng mô hình '
-            'hình học thay cho mô hình học máy.'
-        )
+            'Phát hiện thân dưới rộng nhất quán ở hông và đùi; hồi quy dùng '
+            'silhouette đã cắt tay để tránh ép vóc dáng về nhóm trung bình.')
+    if weight.get('outOfDistribution'):
+        if build_correction.get('applied'):
+            warnings.append(
+                'Vóc dáng rộng nằm ngoài phần dày của dữ liệu ANSUR II; kết quả '
+                'chỉ là ngoại suy tham khảo với khoảng bất định rộng, không dùng chốt size.')
+        else:
+            warnings.append(
+                'Số đo bề ngang trên ảnh nằm ngoài phân bố dữ liệu huấn luyện '
+                '(thường do quần áo rộng hoặc tay che thân), nên hệ thống dùng mô hình '
+                'hình học thay cho mô hình học máy.'
+            )
     if height['valueCm'] is None:
         warnings.append('Không đủ dữ liệu để ước lượng chiều cao đáng tin cậy.')
         if height.get('cueRejected') == 'head_count_out_of_range':
@@ -1232,10 +1606,11 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
     # lib/bodyAnalysis.js) — chỉ hiển thị để tham khảo và để chẩn đoán.
     girths = {}
     girth_source = 'none'
-    features = measurement_features(measure, height.get('valueCm') or 0)
+    features = measurement_features(regression_measure, height.get('valueCm') or 0)
     girth_bundle = load_girth_estimators()
     girths_in_distribution = features_in_distribution(features)[0] if features else False
-    if (girth_bundle is not None and features is not None and girths_in_distribution
+    girths_model_allowed = girths_in_distribution or bool(build_correction.get('applied'))
+    if (girth_bundle is not None and features is not None and girths_model_allowed
             and _feature_schema_ok(girth_bundle, len(features))):
         # Model bề ngang → vòng đo, train trên ANSUR II: MAE ~1.8–2.8cm. Chính
         # xác hơn hẳn phép xấp xỉ chu vi elip với tỉ lệ độ sâu giả định, vốn
@@ -1246,17 +1621,18 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
                 model = girth_bundle['models'].get(target)
                 if model is not None:
                     girths[key] = round(float(model.predict(row)[0]), 1)
-            girth_source = 'ansur2-regressor'
+            girth_source = ('ansur2-regressor' if girths_in_distribution
+                            else 'ansur2-regressor-broad-build-extrapolation')
         except Exception:
             girths = {}
     if not girths and features is not None and not girths_in_distribution:
         girth_source = 'ellipse-approximation-out-of-distribution'
-    if not girths and measure['hasMask'] and height.get('valueCm'):
-        px_per_cm = measure['staturePx'] / height['valueCm']
+    if not girths and regression_measure['hasMask'] and height.get('valueCm'):
+        px_per_cm = regression_measure['staturePx'] / height['valueCm']
         for key, pixels, level in (
-            ('bust', measure['bustPx'], 'chest'),
-            ('waist', measure['waistPx'], 'waist'),
-            ('hip', measure['hipPx'], 'hip'),
+            ('bust', regression_measure['bustPx'], 'chest'),
+            ('waist', regression_measure['waistPx'], 'waist'),
+            ('hip', regression_measure['hipPx'], 'hip'),
         ):
             if not pixels:
                 continue
@@ -1272,7 +1648,7 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
     # số cuối cùng mà người dùng nhìn thấy, không phải số trung gian.
     population_calibrated = []
     if apply_population_calibration:
-        slack = measure.get('clothingSlack', 1.0)
+        slack = regression_measure.get('clothingSlack', 1.0)
         height_cm = height.get('valueCm')
         for key in list(girths):
             adjusted, applied = calibrate_to_population(key, girths[key], height_cm, slack, sex)
@@ -1369,7 +1745,8 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             'model': girth_source,
         }
 
-    return {
+    from body_evidence import apply_measurement_evidence
+    return apply_measurement_evidence({
         'ok': True,
         'bodyShape': {
             'shoulderWidthRatio': shape['shoulderWidthRatio'],
@@ -1392,8 +1769,10 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             'girth': girth_source,
             'anthropometry': ANTHROPOMETRY_SOURCE,
         },
+        'partialPhotoPrior': partial_photo_prior,
         'quality': {
-            'fullBodyVisible': measure['coverage'] == 'full',
+            'fullBodyVisible': (measure['coverage'] == 'full'
+                                and measure['headVisible'] and measure['feetVisible']),
             'armsMergedIntoTorso': measure.get('armsMergedIntoTorso', False),
             'shoulderJointSpanPx': round(measure.get('shoulderJointSpanPx', 0.0), 1),
             'hipJointSpanPx': round(measure.get('hipJointSpanPx', 0.0), 1),
@@ -1402,9 +1781,11 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             'headVisible': measure['headVisible'],
             'segmentationAvailable': measure['hasMask'],
             'coverage': measure['coverage'],
+            'seatedPose': seated_pose,
             'tiltDeg': round(measure['tiltDeg'], 1),
             'poseConfidence': round(float(pose.get('confidence') or 0.0), 3),
             'analysisConfidence': quality,
+            'buildCorrection': build_correction,
         },
         'torsoProfile': {
             level: {key: value for key, value in measure['torsoProfile'][level].items()}
@@ -1422,7 +1803,7 @@ def analyze_body(image, pose=None, user_height_cm=0.0, user_weight_kg=0.0, refer
             'legPx': round(measure['legPx'], 1),
         },
         'warnings': warnings,
-    }
+    }, _num(user_height_cm), _num(user_weight_kg))
 
 
 def analyze_body_file(path, **kwargs):

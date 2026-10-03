@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { GpuJobQueue, GpuJobCancelledError } = require('../lib/gpuJobQueue');
-const { FOCUS_PROFILES, focusRestorePlan } = require('../lib/gpuArbiter');
+const { FOCUS_PROFILES, focusRestorePlan, cancellationTargets } = require('../lib/gpuArbiter');
 
 const deferred = () => {
   let resolve;
@@ -48,15 +48,23 @@ test('đổi focus hủy cả job đang chạy và các job cùng loại đang c
   assert.equal(queue.status().pending.length, 0);
 });
 
-test('try-on và motion độc quyền GPU; vision và suggestion chỉ dùng GPU khi hai job này nghỉ', () => {
+test('try-on và motion độc quyền GPU; browse giữ FASHN ấm tới idle timeout', () => {
   assert.deepEqual(FOCUS_PROFILES.tryon.keep, ['fashn']);
   assert.equal(FOCUS_PROFILES.tryon.embeddingDevice, 'off');
   assert.deepEqual(FOCUS_PROFILES.motion.keep, ['motion']);
   assert.equal(FOCUS_PROFILES.motion.embeddingDevice, 'off');
   assert.deepEqual(FOCUS_PROFILES.vision.keep, ['ollama']);
   assert.equal(FOCUS_PROFILES.vision.embeddingDevice, 'off');
-  assert.deepEqual(FOCUS_PROFILES.browse.keep, ['embedding']);
+  assert.deepEqual(FOCUS_PROFILES.browse.keep, ['embedding', 'fashn']);
   assert.equal(FOCUS_PROFILES.browse.embeddingDevice, 'cuda');
+  assert.deepEqual(FOCUS_PROFILES.home.keep, ['embedding', 'fashn']);
+});
+
+test('home/browse không huỷ ảnh đang tạo; tính năng GPU thật vẫn độc quyền', () => {
+  assert.deepEqual(cancellationTargets('home'), []);
+  assert.deepEqual(cancellationTargets('browse'), []);
+  assert.deepEqual(cancellationTargets('chat'), ['tryon', 'motion', 'vision']);
+  assert.deepEqual(cancellationTargets('motion'), ['tryon', 'vision', 'recommendation']);
 });
 
 test('try-on trả ảnh trước rồi mới làm nóng lại FASHN khi focus không đổi', () => {

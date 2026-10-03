@@ -17,12 +17,14 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 from PIL import Image, ImageFilter, ImageOps
 from starlette.concurrency import run_in_threadpool
 
 import torch
 
 from pose_reposer import travel_pose_guide, travel_pose_ids, travel_pose_instruction
+from model_readiness import missing_flux_files
 
 
 FASHN_HOME = Path(os.getenv("JAPANO_FASHN_HOME", str(Path.home() / "jp/ai/fashn-vton-1.5"))).resolve()
@@ -345,6 +347,18 @@ def normalized_output_size(image: Image.Image, low_memory: bool = False):
     return (768, 1024) if image.height >= image.width else (1024, 768)
 
 
+def segmentation_free_enabled() -> bool:
+    """Use whole-image garment generation only as an explicit diagnostic opt-in.
+
+    FASHN's human parser constrains edits to the requested garment category and
+    therefore preserves the source pose much better. The old default skipped
+    parsing, allowing a simple top replacement to repaint arms, legs and stance.
+    """
+    return os.getenv("JAPANO_FASHN_SEGMENTATION_FREE", "0").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+
+
 def repose_main_subject(
     person: Image.Image,
     output_path: Path,
@@ -377,20 +391,35 @@ def repose_main_subject(
         width=width,
         height=height,
         guidance_scale=float(os.getenv("JAPANO_REPOSE_CFG", "1.0")),
-        num_inference_steps=int(os.getenv("JAPANO_REPOSE_STEPS", "4")),
+        num_inference_steps=int(os.getenv("JAPANO_REPOSE_STEPS", "6")),
         generator=generator,
     ).images[0].convert("RGB")
     result.save(output_path, quality=96)
     return result
 
 
-def refine_garment_fidelity(tryon_image: Image.Image, garment: Image.Image, low_memory: bool = False) -> Image.Image:
+def refine_garment_fidelity(
+    tryon_image: Image.Image,
+    garment: Image.Image,
+    low_memory: bool = False,
+    garment_type: str = "",
+) -> Image.Image:
     pipe = load_flux()
     width, height = normalized_output_size(tryon_image, low_memory)
     # QUAN TRỌNG: không hardcode mô tả một trang phục cụ thể (vd màu/hoạ tiết kimono-hong)
     # ở đây — prompt này chạy cho MỌI sản phẩm one-piece có ảnh flat-lay (kimono, yukata,
     # cosplay...). Chi tiết trang phục phải lấy từ chính ảnh tham chiếu (image 2), không
     # phải từ text, nếu không sẽ vẽ nhầm hoạ tiết của sản phẩm này sang sản phẩm khác.
+    japanese_full_length = ""
+    if garment_type in {"kimono", "yukata"}:
+        japanese_full_length = (
+            "This is a traditional full-length Japanese wrap garment, never a western dress, mini dress, romper, "
+            "bodysuit or sleeveless outfit. Keep the left collar panel crossing over the right and retain a visible "
+            "obi at the waist. Both arms must remain inside wide rectangular sleeve panels that cover the upper arms "
+            "and elbows. The long wrap hem must cover both visible thighs and knees and continue toward the ankles; "
+            "when the seated or cropped photo does not show the ankles, continue the garment naturally to the lower "
+            "image edge instead of ending it at mid-thigh or above the knees. "
+        )
     prompt = (
         "Edit image 1 only. Image 1 is an already valid virtual try-on result. Image 2 is the exact flat-lay garment reference. "
         "Keep the person's face, hair, identity, body proportions, upright pose, hands, feet, background and lighting from image 1 unchanged. "
@@ -401,8 +430,10 @@ def refine_garment_fidelity(tryon_image: Image.Image, garment: Image.Image, low_
         "garment; do not shorten, lengthen, or otherwise change the garment's proportions compared to image 2. "
         "If image 2 is an open-front outer jacket, coat, cardigan or Haori, keep it visibly open, preserve the existing inner shirt through the opening, "
         "and match its full sleeve width, sleeve length and long hem. Never turn long outerwear into a short-sleeve shirt, cropped blazer, dress or closed robe. "
-        "Preserve the trousers, skirt or other lower garment already present in image 1 exactly; the outer garment may overlap it naturally but must not replace it. "
-        "Do not expose the chest, do not alter skin, do not add props or people, do not change the pose. Photorealistic fabric and folds."
+        + japanese_full_length
+        + ("" if garment_type in {"kimono", "yukata"} else
+           "Preserve the trousers, skirt or other lower garment already present in image 1 exactly; the outer garment may overlap it naturally but must not replace it. ")
+        + "Do not expose the chest, do not alter skin, do not add props or people, do not change the pose. Photorealistic fabric and folds."
     )
     generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(
         int(os.getenv("JAPANO_REFINE_SEED", "29"))
@@ -535,8 +566,10 @@ def build_fit_prompt(
             if tear_allowed and force_tear:
                 body += (
                     "MUST show exactly ONE clearly visible 5-10 cm split at an outer shoulder or side garment seam, "
-                    "with stretched stitches and a few frayed threads. Put an opaque neutral inner layer behind the "
-                    "split: no bare skin, no injury. The seam split is required because no sold size fits. "
+                    "with stretched stitches and a few frayed threads. A small patch of ordinary non-sensitive "
+                    "upper-arm or outer-shoulder skin may show through the split, while the chest, pelvis and "
+                    "buttocks remain fully covered. No injury or blood. The seam split is required because no "
+                    "sold size fits. "
                 )
             elif tear_allowed:
                 body += "Allow ONE small realistic split along a garment seam with frayed threads. "
@@ -985,6 +1018,58 @@ def render_two_piece_swimwear(
     ).images[0].convert("RGB")
 
 
+def render_japanese_full_length(
+    person: Image.Image,
+    garment: Image.Image,
+    seed: int,
+    garment_type: str,
+    repose: bool = False,
+    low_memory: bool = False,
+    pose_id: str = 'relaxed',
+) -> Image.Image:
+    """Mặc Kimono/Yukata dài trong một lượt edit đa tham chiếu.
+
+    FASHN `one-pieces` thường rút flat-lay Kimono thành váy ngắn, đặc biệt khi
+    ảnh gốc ngồi hoặc bị cắt chân. FLUX nhận ảnh người, flat-lay và skeleton
+    cùng lúc nên độ dài vạt được quyết định trên hình học toàn thân mới.
+    """
+    pipe = load_flux()
+    width, height = normalized_output_size(person, low_memory)
+    references = [person, garment]
+    pose_note = ""
+    if repose:
+        references.append(travel_pose_guide(pose_id, (width, height)))
+        pose_note = (
+            f"Image 3 is an identity-free OpenPose guide. Move only the main person into {travel_pose_instruction(pose_id)}. "
+            "Show one complete body from head to both feet on the same floor plane, including body parts cropped from image 1. "
+        )
+    label = "Kimono" if garment_type == "kimono" else "Yukata"
+    prompt = (
+        "Edit image 1 only. Image 1 is the user's photograph and the absolute identity, face, hair, age, skin tone, "
+        "body proportion, background and lighting reference. Image 2 is the exact flat-lay Japanese garment. "
+        + pose_note
+        + f"Replace only the main person's current outfit with the exact full-length {label} from image 2. "
+        "It has a traditional T-shaped construction: left collar crossed over right, a visible wide obi at the waist, "
+        "two wide rectangular hanging sleeves, and one continuous ankle-length wrap hem. The sleeves must cover both "
+        "upper arms and elbows. The hem must cover both thighs and both knees and continue to the lower calves or ankles. "
+        "Copy the exact black fabric, gold and silver pine print, print placement and proportions from image 2. "
+        "ABSOLUTELY NO western dress, mini dress, off-shoulder dress, romper, shorts, bodysuit, sleeveless top, separate skirt, "
+        "bare shoulders, bare upper arms or bare thighs. Do not shorten the hem above the knees. "
+        "Keep the same person and scene; no duplicate limbs, extra people, props, text, nudity or transparent fabric. "
+        "Photorealistic Japanese formalwear with natural folds and sharp embroidery."
+    )
+    generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu").manual_seed(seed)
+    return pipe(
+        image=references,
+        prompt=prompt,
+        width=width,
+        height=height,
+        guidance_scale=float(os.getenv("JAPANO_JAPANESE_CFG", "1.0")),
+        num_inference_steps=int(os.getenv("JAPANO_JAPANESE_STEPS", "6")),
+        generator=generator,
+    ).images[0].convert("RGB")
+
+
 def run_swimwear_tryon_locked(
     person_path: Path,
     top_path: Path,
@@ -1034,84 +1119,77 @@ def run_tryon(
     pose_id: str = 'relaxed',
     low_memory: bool = False,
     quality_mode: str = "high",
+    garment_type: str = "",
 ):
     global LAST_ENGINE
     check_cancelled()
     release_ollama_vram()
     cuda_cleanup()
     person = open_rgb(person_path)
-    reposed_path = RUNTIME_DIR / f"reposed-{time.time_ns()}.png"
-    if repose:
-        person = repose_main_subject(person, reposed_path, low_memory, pose_id)
-        check_cancelled()
-        # Do not keep the 13 GB edit model resident while loading FASHN.
-        unload_flux()
-
-    pipeline = load_fashn()
-    check_cancelled()
     cloth = open_rgb(cloth_path)
     quality = tryon_quality_profile(quality_mode)
-    output = pipeline(
-        person_image=person,
-        garment_image=cloth,
-        category=category,
-        garment_photo_type=garment_photo_type,
-        num_samples=1,
-        num_timesteps=quality["steps"],
-        guidance_scale=float(os.getenv("JAPANO_FASHN_CFG", "1.5")),
-        seed=seed,
-        # segmentation_free=True bỏ qua bước human parsing, tức là model được tự
-        # do vẽ lại phần thân ngoài vùng trang phục. Đo trên máy 2026-09-02: thử
-        # MỘT chiếc áo (cardigan/haori, category=tops) lên người đang mặc kín làm
-        # vùng chậu đi từ 0 lên 0.44 và mông từ 0 lên 0.39 — pipeline cởi mất
-        # quần của khách, rồi cổng an toàn chặn đúng và khách không nhận được ảnh.
-        # Đây chính là lỗi "thử áo xong mất quần".
-        #
-        # Bật parser (segmentation_free=False) buộc model chỉ sửa đúng vùng của
-        # category được yêu cầu. FashnHumanParser vốn đã được nạp sẵn trong
-        # pipeline nên không tốn thêm model nào.
-        # MẶC ĐỊNH TRỞ LẠI True sau khi đo trên máy thật ngày 2026-09-02.
-        #
-        # Bật parser (False) ban đầu có vẻ đúng: nó sửa được ca ảnh mẫu dựng sẵn +
-        # một chiếc áo, vốn bị cởi mất quần (chậu 0 -> 0.44). Nhưng trên ẢNH THẬT
-        # của người dùng thì hỏng nặng hơn: một cô gái mặc váy trắng dài, thử áo
-        # len khoác, cho ra chậu 0.145 -> 0.591 và mông 0.155 -> 0.513 — bộ phân
-        # đoạn coi cả chiếc váy dài là "áo", nên lượt category=tops thay luôn cả
-        # váy và để lại thân trần. Cổng an toàn chặn đúng, và khách không thử được.
-        #
-        # Hai chế độ hỏng ở hai lớp ảnh khác nhau, nên đây KHÔNG phải một tham số
-        # có đáp án đúng chung. Giữ mặc định là đường đã chạy ổn với ảnh thật của
-        # khách; bật parser bằng JAPANO_FASHN_SEGMENTATION_FREE=0 khi cần thử lại
-        # trên ảnh mẫu dựng sẵn.
-        segmentation_free=os.getenv("JAPANO_FASHN_SEGMENTATION_FREE", "1").strip().lower() in {"1", "true", "yes", "on"},
-    ).images[0].convert("RGB")
-    check_cancelled()
+    reposed_path = RUNTIME_DIR / f"reposed-{time.time_ns()}.png"
+    japanese_direct = (
+        garment_photo_type == "flat-lay"
+        and garment_type in {"kimono", "yukata"}
+    )
     refined = False
-    if refine:
-        # Đây là đường chạy phổ biến nhất (mọi flat-lay đã duyệt đều qua đây), nên
-        # gỡ FASHN ở chỗ này là nguyên nhân chính của việc tráo model mỗi lượt.
-        evict_other_model(unload_fashn, "JAPANO_FLUX_NEEDS_GB", "6")
-        try:
-            output = refine_garment_fidelity(output, cloth, low_memory)
+    if japanese_direct:
+        output = render_japanese_full_length(
+            person, cloth, seed, garment_type,
+            repose=repose, low_memory=low_memory, pose_id=pose_id,
+        )
+        check_cancelled()
+        unload_flux()
+    else:
+        if repose:
+            person = repose_main_subject(person, reposed_path, low_memory, pose_id)
             check_cancelled()
-            refined = True
-        except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
-            # Fidelity refinement is cosmetic. A valid FASHN result is much
-            # better than making the customer wait and then returning no image.
-            print(f"=== Skipped optional FLUX fidelity refinement: {exc} ===", flush=True)
-        finally:
+            # Do not keep the 13 GB edit model resident while loading FASHN.
             unload_flux()
+
+        pipeline = load_fashn()
+        check_cancelled()
+        output = pipeline(
+            person_image=person,
+            garment_image=cloth,
+            category=category,
+            garment_photo_type=garment_photo_type,
+            num_samples=1,
+            num_timesteps=quality["steps"],
+            guidance_scale=float(os.getenv("JAPANO_FASHN_CFG", "1.5")),
+            seed=seed,
+            # Human parsing is the safe default: a top/bottom edit must not be
+            # allowed to redraw unrelated limbs or turn a natural source pose
+            # into a stiff catalog stance. Whole-image mode remains an explicit
+            # diagnostic opt-in only.
+            segmentation_free=segmentation_free_enabled(),
+        ).images[0].convert("RGB")
+        check_cancelled()
+        if refine:
+            evict_other_model(unload_fashn, "JAPANO_FLUX_NEEDS_GB", "6")
+            try:
+                output = refine_garment_fidelity(output, cloth, low_memory, garment_type)
+                check_cancelled()
+                refined = True
+            except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
+                print(f"=== Skipped optional FLUX fidelity refinement: {exc} ===", flush=True)
+            finally:
+                unload_flux()
     output_path = RUNTIME_DIR / f"tryon-{time.time_ns()}.png"
     output = polish_output(output, quality["longEdge"])
     output.save(output_path, optimize=True)
     stages = []
-    if repose:
+    if japanese_direct:
+        stages.append("flux2-klein-4b-japanese-full-length")
+    elif repose:
         stages.append("flux2-klein-4b-pose")
-    stages.append("fashn-vton-1.5")
+    if not japanese_direct:
+        stages.append("fashn-vton-1.5")
     stages.append(f"{quality['name']}-{quality['steps']}steps")
-    if refined:
+    if refined and not japanese_direct:
         stages.append("flux2-klein-4b-fidelity")
-    elif refine:
+    elif refine and not japanese_direct:
         stages.append("fidelity-skipped-low-vram")
     if low_memory:
         stages.append("adaptive-low-memory")
@@ -1129,6 +1207,7 @@ def run_tryon_locked(
     seed: int,
     pose_id: str = 'relaxed',
     quality_mode: str = "high",
+    garment_type: str = "",
 ):
     """Serialize GPU jobs without ever blocking FastAPI's event loop.
 
@@ -1157,6 +1236,7 @@ def run_tryon_locked(
                         pose_id,
                         low_memory=prefer_low_memory or attempt > 0,
                         quality_mode=quality_mode,
+                        garment_type=garment_type,
                     )
                 except (torch.cuda.OutOfMemoryError, RuntimeError) as exc:
                     retryable = isinstance(exc, torch.cuda.OutOfMemoryError) or any(
@@ -1252,7 +1332,8 @@ def warm_fashn_locked():
 @api.get("/health")
 def health():
     model_ready = (FASHN_WEIGHTS / "model.safetensors").exists()
-    flux_ready = (FLUX_HOME / "model_index.json").exists() and POSE_REFERENCE.exists()
+    flux_missing = missing_flux_files(FLUX_HOME)
+    flux_ready = not flux_missing and POSE_REFERENCE.exists()
     return {
         "ok": model_ready,
         "service": "JAPANO FASHN VTON 1.5 + FLUX.2 Pose API",
@@ -1265,6 +1346,7 @@ def health():
         "fitLora": fit_lora_status(),
         "modelReady": model_ready,
         "poseEditorReady": flux_ready,
+        "missingFluxFiles": flux_missing,
         "travelPoseIds": list(travel_pose_ids()),
         "loaded": {"fashn": FASHN_PIPELINE is not None, "flux": FLUX_PIPELINE is not None},
         "lastEngine": LAST_ENGINE,
@@ -1505,6 +1587,8 @@ async def tryon(
     refine: bool = Form(False),
     seed: int = Form(42),
     quality_mode: str = Form("high"),
+    garment_type: str = Form(""),
+    response_format: str = Form("png"),
 ):
     if category not in {"tops", "bottoms", "one-pieces"}:
         raise HTTPException(status_code=400, detail="category không hợp lệ")
@@ -1519,15 +1603,27 @@ async def tryon(
         normalized_pose_id = pose_id if pose_id in travel_pose_ids() else 'relaxed'
         output_path, reposed_path = await run_in_threadpool(
             run_tryon_locked, person_path, cloth_path, category, garment_photo_type,
-            repose, refine, seed, normalized_pose_id, quality_mode,
+            repose, refine, seed, normalized_pose_id, quality_mode, garment_type,
         )
+        delivery_path = output_path
+        media_type = "image/png"
+        background = None
+        if response_format.strip().lower() in {"jpg", "jpeg"}:
+            delivery_path = RUNTIME_DIR / f"delivery-{time.time_ns()}.jpg"
+            with Image.open(output_path) as generated:
+                generated.convert("RGB").save(
+                    delivery_path, format="JPEG", quality=92, optimize=True, subsampling=0,
+                )
+            media_type = "image/jpeg"
+            background = BackgroundTask(delivery_path.unlink, missing_ok=True)
         return FileResponse(
-            output_path,
-            media_type="image/png",
+            delivery_path,
+            media_type=media_type,
             headers={
                 "x-japano-engine": LAST_ENGINE,
                 "x-japano-reposed": "true" if reposed_path else "false",
             },
+            background=background,
         )
     except torch.cuda.OutOfMemoryError as exc:
         unload_flux()

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "dataset": "BODIES v1.0 data16",
+  "source": {
+    "recordUrl": "https://zenodo.org/records/17912003",
+    "doi": "10.5281/zenodo.17912003",
+    "publisher": "Zenodo",
+    "releaseDate": "2025-12-12",
+    "retrievedDate": "2026-09-30",
+    "license": "CC BY 4.0"
+  },
+  "local": {
+    "archiveDirectory": "/home/admin123/jp/datasets/bodies",
+    "extractedDataset": "/home/admin123/jp/datasets/bodies/extracted/data16",
+    "archives": [
+      {
+        "file": "data16_female.rar",
+        "bytes": 1249564454,
+        "md5": "3254bf28fdc1d25004c24f756930791c",
+        "integrity": "verified"
+      },
+      {
+        "file": "data16_male.rar",
+        "bytes": 1254523198,
+        "md5": "e3a213c1455a79d8c4d156735f48a02b",
+        "integrity": "verified"
+      }
+    ]
+  },
+  "content": {
+    "synthetic": true,
+    "bodyModel": "SUPR",
+    "shapeParameterCount": 16,
+    "genders": [
+      "female",
+      "male"
+    ],
+    "subjectsPerGender": 6000,
+    "totalSubjects": 12000,
+    "viewsPerSubject": [
+      "front",
+      "side"
+    ],
+    "imageShape": [
+      512,
+      512,
+      2
+    ],
+    "imageDtype": "uint8",
+    "labels": [
+      "height_m",
+      "weight_kg"
+    ],
+    "officialSplitPerGender": {
+      "train": 4000,
+      "validation": 1000,
+      "test": 1000
+    },
+    "ranges": {
+      "femaleHeightM": [
+        1.3383726451662685,
+        1.9598403126331383
+      ],
+      "femaleWeightKg": [
+        10.693294932076718,
+        226.65434162547453
+      ],
+      "maleHeightM": [
+        1.4251984342119024,
+        2.117907371464051
+      ],
+      "maleWeightKg": [
+        17.45583603023696,
+        213.88855064950818
+      ]
+    },
+    "weightBinsAllSubjects": {
+      "female": {
+        "lt35": 553,
+        "35_49": 885,
+        "50_69": 1459,
+        "70_89": 1261,
+        "90_109": 886,
+        "110_139": 673,
+        "140_179": 251,
+        "ge180": 32
+      },
+      "male": {
+        "lt35": 133,
+        "35_49": 507,
+        "50_69": 1400,
+        "70_89": 1523,
+        "90_109": 1200,
+        "110_139": 922,
+        "140_179": 290,
+        "ge180": 25
+      }
+    }
+  },
+  "approvedUse": "Synthetic visual-backbone pretraining followed by real-photo fine-tuning and held-out real-photo evaluation.",
+  "limitations": [
+    "Rendered fixed-pose synthetic bodies have a substantial domain gap from uncontrolled customer photos.",
+    "Synthetic test performance cannot establish production accuracy on real people.",
+    "The checkpoint must not replace explicit insufficient-evidence handling for exact measurements from one photo."
+  ]
+}

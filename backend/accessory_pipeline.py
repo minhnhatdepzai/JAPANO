@@ -85,6 +85,56 @@ def crop_and_pad(image, crop):
     return background.resize(TARGET_SIZE, Image.Resampling.LANCZOS)
 
 
+def isolate_primary_subject(image, box, other_boxes, subject_mask=None):
+    """Giữ người chính và thay toàn bộ người phụ bằng nền studio trung tính."""
+    source = image.convert('RGB')
+    if not other_boxes:
+        return source, {'applied': False, 'removedPeople': 0}
+
+    if subject_mask is None:
+        try:
+            from body_analysis import _largest_component, person_mask
+            subject_mask = person_mask(source, box)
+            if subject_mask is not None:
+                subject_mask = _largest_component(subject_mask)
+        except Exception:
+            subject_mask = None
+
+    width, height = source.size
+    if subject_mask is None or not np.asarray(subject_mask).any():
+        # Fail-safe: giữ vùng người chính, không trả nguyên ảnh nhóm khi U2Net
+        # tạm thời không sẵn sàng.
+        x1, y1, x2, y2 = [int(round(value)) for value in box]
+        pad_x = max(8, int((x2 - x1) * .12))
+        pad_y = max(8, int((y2 - y1) * .04))
+        mask_image = Image.new('L', source.size, 0)
+        ImageDraw.Draw(mask_image).rounded_rectangle(
+            (max(0, x1 - pad_x), max(0, y1 - pad_y),
+             min(width, x2 + pad_x), min(height, y2 + pad_y)),
+            radius=max(8, int(min(x2 - x1, y2 - y1) * .06)), fill=255,
+        )
+        mask_source = 'primary_box_fallback'
+    else:
+        mask_array = (np.asarray(subject_mask, dtype=bool) * 255).astype(np.uint8)
+        mask_image = Image.fromarray(mask_array, mode='L').filter(ImageFilter.MaxFilter(11))
+        mask_source = 'u2net_primary_component'
+    mask_image = mask_image.filter(ImageFilter.GaussianBlur(3.5))
+
+    pixels = np.asarray(source, dtype=np.float32)
+    band_height = max(12, int(height * .12))
+    base = np.median(pixels[:band_height].reshape(-1, 3), axis=0)
+    shades = np.linspace(1.06, .82, height, dtype=np.float32)[:, None, None]
+    background = np.clip(base[None, None, :] * shades, 0, 255)
+    background = np.repeat(background, width, axis=1).astype(np.uint8)
+    isolated = Image.composite(source, Image.fromarray(background, mode='RGB'), mask_image)
+    return isolated, {
+        'applied': True,
+        'removedPeople': len(other_boxes),
+        'maskSource': mask_source,
+        'background': 'neutral_gradient',
+    }
+
+
 def target_transform(crop, x, y):
     left, top, right, bottom = crop
     return (float((x - left) * TARGET_SIZE[0] / max(1.0, right - left)),
@@ -243,6 +293,64 @@ def pose_suitability(pose):
     }
 
 
+SUBJECT_SELECTION_STRATEGY = 'center-person-v1'
+
+
+def select_center_subject(boxes, confidences, point_conf, width, height):
+    """Chọn đúng người ở gần tâm ảnh, không mặc thử lần lượt mọi người.
+
+    YOLO đôi lúc trả thêm box cho hoa, tượng hoặc phản chiếu. Khi ảnh có nhiều
+    ứng viên, chỉ xét trước các box có confidence và khớp thân đủ tin cậy. Trong
+    nhóm đó, khoảng cách từ tâm vai-hông tới tâm ảnh là tín hiệu chính; diện
+    tích/chiều cao chỉ phá hoà nên người to ở mép không thể lấn người ở giữa.
+    """
+    image_center = np.array([width / 2.0, height / 2.0], dtype=float)
+    half_diagonal = max(1.0, math.hypot(width, height) / 2.0)
+    core_indices = (5, 6, 11, 12)  # vai trái/phải, hông trái/phải
+    candidates = []
+
+    for index, box in enumerate(boxes):
+        x1, y1, x2, y2 = [float(value) for value in box]
+        area = max(1.0, (x2 - x1) * (y2 - y1)) / max(1.0, width * height)
+        box_height = max(1.0, y2 - y1) / max(1.0, height)
+        core = [float(point_conf[index][joint]) for joint in core_indices]
+        visible_core = [value for value in core if value >= 0.15]
+        core_confidence = sum(visible_core) / len(visible_core) if visible_core else 0.0
+
+        # Tâm box ổn định hơn khi người bị khuất; tâm các khớp thân được dùng
+        # gián tiếp để xác nhận đây là người thật. Giữ helper thuần để test quy
+        # tắc mà không cần chạy YOLO.
+        focus = np.array([(x1 + x2) / 2.0, (y1 + y2) / 2.0], dtype=float)
+        distance_ratio = min(1.0, float(np.linalg.norm(focus - image_center)) / half_diagonal)
+        center_proximity = 1.0 - distance_ratio
+        contains_center = 1.0 if x1 <= image_center[0] <= x2 and y1 <= image_center[1] <= y2 else 0.0
+        confidence = float(confidences[index])
+        # Người thật bị cắt/ngồi có thể có box confidence dưới 0.25 nhưng các
+        # khớp thân vẫn rất rõ. Cho ứng viên đó vào nhóm tin cậy; vật trang trí
+        # confidence thấp với các khớp giả yếu vẫn bị loại.
+        reliable = (len(visible_core) >= 2 and core_confidence >= 0.35
+                    and (confidence >= 0.22 or core_confidence >= 0.55))
+        score = (center_proximity * 12.0 + contains_center * 3.0
+                 + confidence * 2.0 + core_confidence * 2.0
+                 + area * 0.75 + box_height * 0.5)
+        candidates.append({
+            'index': index,
+            'score': score,
+            'areaRatio': area,
+            'heightRatio': box_height,
+            'confidence': confidence,
+            'coreConfidence': core_confidence,
+            'centerDistanceRatio': distance_ratio,
+            'containsCenter': bool(contains_center),
+            'reliable': reliable,
+        })
+
+    reliable_candidates = [candidate for candidate in candidates if candidate['reliable']]
+    pool = reliable_candidates or candidates
+    selected = max(pool, key=lambda candidate: candidate['score'])['index']
+    return selected, candidates
+
+
 def analyze(image, include_normalized=False, source_coordinates=False):
     from ultralytics import YOLO
 
@@ -265,46 +373,19 @@ def analyze(image, include_normalized=False, source_coordinates=False):
     confidences = result.boxes.conf.cpu().numpy()
     points = result.keypoints.xy.cpu().numpy() if result.keypoints is not None else np.zeros((len(boxes), 17, 2))
     point_conf = result.keypoints.conf.cpu().numpy() if result.keypoints is not None and result.keypoints.conf is not None else np.ones((len(boxes), 17))
-    center = np.array([width / 2, height / 2])
-    diagonal = max(1.0, math.hypot(width, height))
-    # Ảnh nhiều người: CHỈ MỘT người được thay đồ, và đó phải là người TO NHẤT,
-    # GẦN ỐNG KÍNH NHẤT. Những người còn lại được giữ nguyên (xem otherBoxes,
-    # restore_secondary_people và cổng secondary_person_changed).
-    #
-    # Không có chiều sâu thật từ một ảnh đơn, nên "gần ống kính" được đo bằng KÍCH
-    # THƯỚC BIỂU KIẾN. Dùng riêng diện tích thì hụt: người đứng sát máy thường bị
-    # cắt mất chân, nên diện tích box của họ có thể nhỏ hơn người đứng xa mà thấy
-    # trọn người. Chiều CAO box bắt được điều đó tốt hơn, nên nó có trọng số riêng.
-    #
-    # Vị trí trong khung chỉ còn là tiêu chí phụ để phân xử khi hai người xấp xỉ
-    # bằng nhau — trước đây centrality + contains_center cộng lại tới 4.5 điểm,
-    # đủ để một người nhỏ hơn đứng giữa khung thắng người to đứng lệch.
-    scored = []
-    for index, box in enumerate(boxes):
-        x1, y1, x2, y2 = box
-        area = max(1.0, (x2 - x1) * (y2 - y1)) / max(1.0, width * height)
-        box_height = max(1.0, y2 - y1) / max(1.0, height)
-        box_center = np.array([(x1 + x2) / 2, (y1 + y2) / 2])
-        centrality = max(0.0, 1.0 - np.linalg.norm(box_center - center) / diagonal)
-        contains_center = 1.0 if x1 <= center[0] <= x2 and y1 <= center[1] <= y2 else 0.0
-        score = (area * 6.0 + box_height * 4.0
-                 + centrality * 0.8 + contains_center * 0.7
-                 + float(confidences[index]) * 0.5)
-        scored.append((score, index))
-    _, selected = max(scored)
+    # Một ảnh có thể có nhiều người nhưng cả dự đoán lẫn thử đồ phải khoá vào
+    # đúng MỘT người ở giữa khung. Hai tính năng dùng chung pose này nên không
+    # thể chọn hai người khác nhau.
+    selected, selection_candidates = select_center_subject(
+        boxes, confidences, point_conf, width, height,
+    )
     subject_scores = [
         {
-            'index': index,
-            'score': round(float(score), 4),
-            'areaRatio': round(float(max(1.0, (boxes[index][2] - boxes[index][0])
-                                         * (boxes[index][3] - boxes[index][1]))
-                                     / max(1.0, width * height)), 4),
-            'heightRatio': round(float(max(1.0, boxes[index][3] - boxes[index][1])
-                                       / max(1.0, height)), 4),
-            'confidence': round(float(confidences[index]), 4),
-            'selected': index == selected,
+            **{key: (round(float(value), 4) if isinstance(value, (float, np.floating)) else value)
+               for key, value in candidate.items()},
+            'selected': candidate['index'] == selected,
         }
-        for score, index in sorted(scored, reverse=True)
+        for candidate in sorted(selection_candidates, key=lambda item: item['score'], reverse=True)
     ]
 
     names = ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder',
@@ -367,22 +448,33 @@ def analyze(image, include_normalized=False, source_coordinates=False):
             continue
         other_boxes.append(transformed_other)
         other_confidences.append(round(other_confidence, 3))
+    source_other_boxes = list(other_boxes)
+    subject_isolation = {'applied': False, 'removedPeople': 0}
+    if not source_coordinates and other_boxes:
+        normalized, subject_isolation = isolate_primary_subject(normalized, box, other_boxes)
+        # Người phụ đã bị xóa khỏi input model; không đưa box cũ vào quality gate
+        # và không cho bất kỳ bước sau nào khôi phục họ.
+        other_boxes = []
+        other_confidences = []
     transformed, inferred = infer_pose_keypoints(transformed, box)
     pose = {
         'box': box,
         'keypoints': transformed,
         'otherBoxes': other_boxes,
         'otherConfidences': other_confidences,
-        'personCount': 1 + len(other_boxes),
+        'sourceOtherBoxes': source_other_boxes,
+        'personCount': max(1, sum(1 for candidate in selection_candidates if candidate['reliable'])),
         # Vì sao đúng người này được chọn — để log/UI giải thích được khi ảnh có
         # nhiều người và khách thấy hệ thống thay đồ cho "người kia".
         'subjectSelection': {
-            'rule': 'to nhất + gần ống kính nhất (diện tích x6 + chiều cao box x4), vị trí chỉ để phân xử',
+            'strategy': SUBJECT_SELECTION_STRATEGY,
+            'rule': 'chỉ người có tâm box gần tâm ảnh nhất; confidence và khớp vai-hông loại nhận diện giả, kích thước chỉ phá hoà',
             'dressedPersonCount': 1,
             'candidates': subject_scores,
         },
         'confidence': round(float(confidences[selected]), 3),
         'fallback': False,
+        'subjectIsolation': subject_isolation,
         'inferredKeypoints': inferred,
         'normalization': {
             'sourceSize': [width, height],
@@ -763,8 +855,57 @@ def _region_pair_diff(left_image, left_box, right_image, right_box, size=(96, 96
     return float(np.abs(left - right).mean())
 
 
+def normalized_pose_drift(source_pose, result_pose, ignored_groups=None):
+    """Compare limb joints in each subject's own bounding-box coordinates."""
+    ignored = {str(group) for group in (ignored_groups or []) if str(group) in {'arms', 'legs'}}
+    names = (
+        'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist',
+        'left_knee', 'right_knee', 'left_ankle', 'right_ankle',
+    )
+
+    def normalized(pose, name):
+        box = (pose or {}).get('box')
+        point_value = ((pose or {}).get('keypoints') or {}).get(name)
+        if not box or not point_value or len(point_value) < 2:
+            return None
+        if len(point_value) > 2 and float(point_value[2]) < .15:
+            return None
+        x1, y1, x2, y2 = [float(value) for value in box]
+        width, height = max(1.0, x2 - x1), max(1.0, y2 - y1)
+        return ((float(point_value[0]) - x1) / width, (float(point_value[1]) - y1) / height)
+
+    joints = {}
+    for name in names:
+        before, after = normalized(source_pose, name), normalized(result_pose, name)
+        if before is None or after is None:
+            continue
+        joints[name] = round(math.hypot(after[0] - before[0], after[1] - before[1]), 3)
+    values = list(joints.values())
+    changed_groups = {
+        'arms': sum(value > .16 for name, value in joints.items()
+                    if 'elbow' in name or 'wrist' in name),
+        'legs': sum(value > .16 for name, value in joints.items()
+                    if 'knee' in name or 'ankle' in name),
+    }
+    return {
+        'joints': joints,
+        'mean': round(float(np.mean(values)), 3) if values else None,
+        'max': round(max(values), 3) if values else None,
+        'changed': sum(value > .16 for value in values),
+        # A long, wide sleeve or hem can hide the anatomical joint. In those
+        # regions the pose detector follows the garment edge, so its movement
+        # is not evidence that the person changed pose. Keep the raw counts for
+        # diagnostics but only use visible groups for the blocking decision.
+        'changedGroups': sum(value > 0 for key, value in changed_groups.items() if key not in ignored),
+        'detectedChangedGroups': sum(value > 0 for value in changed_groups.values()),
+        'groupChangedJoints': changed_groups,
+        'ignoredGroups': sorted(ignored),
+        'compared': len(values),
+    }
+
+
 def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_straight_pose=False,
-                  fit_effect=None, strict_identity=False):
+                  fit_effect=None, strict_identity=False, pose_occluded_groups=None):
     """Reject successful-looking HTTP responses that are unusable try-on images.
 
     This intentionally checks structure, not merely pixel change: the old gate
@@ -849,6 +990,7 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
         result, _face_box(result_pose, result.size),
     )
     body_drift = {}
+    pose_drift = normalized_pose_drift(source_pose, result_pose, pose_occluded_groups)
     if strict_identity:
         if face_diff is None or face_diff > float(os.getenv('JAPANO_TRYON_FACE_DIFF_MAX', '45')):
             reasons.append('face_changed_or_covered')
@@ -865,6 +1007,16 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
                     violations.append(key)
             if len(violations) >= 2:
                 reasons.append('body_changed_not_garment')
+        # No pose transfer was requested, so changing both the arm geometry and
+        # the leg geometry is a model failure rather than a creative variation.
+        # Require both anatomical groups: sleeves and outerwear often make the
+        # detector move or swap elbow/wrist labels on a seated/side-on subject,
+        # even though the visible pose and every leg joint remain unchanged.
+        if (pose_drift['compared'] >= 4
+                and pose_drift['changed'] >= 2
+                and pose_drift['changedGroups'] >= 2
+                and (pose_drift['mean'] or 0) > .105):
+            reasons.append('pose_changed_unexpectedly')
 
     reasons = list(dict.fromkeys(reasons))
 
@@ -877,6 +1029,7 @@ def tryon_quality(image_a, image_b, pose=None, cloth_type='upper', require_strai
         'secondaryDiffs': [round(value, 3) for value in secondary_diffs],
         'faceDiff': round(face_diff, 3) if face_diff is not None else None,
         'bodyDrift': body_drift,
+        'poseDrift': pose_drift,
         'resultPose': result_pose,
     }
 
@@ -922,7 +1075,24 @@ def add_safe_seam_split(image):
     local = np.asarray(result.crop(sample_box).convert('RGB'), dtype=np.float32)
     local_rgb = np.median(local.reshape(-1, 3), axis=0) if local.size else np.array([96, 96, 96])
     luminance = float(local_rgb.mean())
-    inner = tuple(int(max(18, min(78, value * .32))) for value in local_rgb)
+    # Lấy màu da ở vùng mặt đã nhận diện để phần hở nhỏ trông như da vai/bắp tay
+    # thật của chính người đó. Vết bục luôn nằm dọc vai -> khuỷu, cách xa ngực,
+    # vùng chậu và mông; caller cũng chỉ bật mode này cho loại áo được phép rách.
+    nose = keypoints.get('nose')
+    skin_rgb = None
+    if nose:
+        nx, ny = float(nose[0]), float(nose[1])
+        radius = max(3, round(short_edge * .014))
+        face_box = (
+            max(0, int(nx - radius)), max(0, int(ny - radius)),
+            min(result.width, int(nx + radius + 1)), min(result.height, int(ny + radius + 1)),
+        )
+        face_pixels = np.asarray(result.crop(face_box).convert('RGB'), dtype=np.float32)
+        if face_pixels.size:
+            skin_rgb = np.median(face_pixels.reshape(-1, 3), axis=0)
+    if skin_rgb is None:
+        skin_rgb = np.array([176, 128, 108], dtype=np.float32)
+    inner = tuple(int(max(48, min(232, value))) for value in skin_rgb)
     shadow = (6, 7, 10) if luminance < 130 else (17, 17, 20)
     thread = tuple(int(max(45, min(190, value * 1.35 + 12))) for value in local_rgb)
     width = max(5, round(short_edge * .011))
@@ -946,6 +1116,8 @@ def add_safe_seam_split(image):
     return result, {
         'applied': True,
         'side': side,
+        'exposedZone': 'upper_arm',
+        'underlay': 'matched_skin_tone',
         'center': [round(start_x, 1), round(start_y, 1)],
         'lengthPx': round(length, 1),
     }
@@ -1302,6 +1474,7 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
     coverage = coverage or {}
     allowed = set(coverage.get('allowedExposedZones') or [])
     required = set(coverage.get('requiredCoveredZones') or ['chest', 'pelvis', 'buttocks'])
+    construction_covered = set(coverage.get('constructionCoveredZones') or [])
     coverage_style = str(coverage.get('coverageStyle') or 'standard')
 
     clean = clean_image.convert('RGB')
@@ -1375,6 +1548,18 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
         gain = after - before
         zone_info = {'before': round(before, 4), 'after': round(after, 4), 'gain': round(gain, 4)}
         zones[zone] = zone_info
+        if zone in construction_covered:
+            # Các ô này chủ yếu là tay/chân, nên ngưỡng thấp hơn cổng vùng nhạy
+            # cảm. Kimono thật có thể lộ bàn tay/cổ chân ở rìa ô, nhưng một bộ
+            # sát nách hoặc vạt trên gối làm tỷ lệ da vượt rõ ngưỡng này.
+            # Ô chân gồm cả bàn chân/cổ chân. Furisode dài đúng mắt cá trên ảnh
+            # kiểm thử thật vẫn đo 0.0789 vì bàn chân để trần; ngưỡng 0.07 vì
+            # vậy chặn oan một kết quả đúng. 0.10 vẫn cách xa trường hợp vạt
+            # ngắn/lộ cả chân, nhưng cho phép phần bàn chân tự nhiên của Kimono.
+            construction_limit = {'upperArms': 0.08, 'legs': 0.10}.get(zone, 0.10)
+            zone_info['constructionLimit'] = construction_limit
+            if after > construction_limit:
+                reasons.append(f'garment_construction_exposed:{zone}')
         if zone in required:
             if coverage_style == 'minimal-swimwear':
                 clean_core = protected_core(clean_box, zone)
@@ -1505,6 +1690,7 @@ def coverage_quality(clean_image, result_image, pose=None, coverage=None):
         'skinToneDeltas': tone_deltas,
         'allowedExposedZones': sorted(allowed),
         'requiredCoveredZones': sorted(required),
+        'constructionCoveredZones': sorted(construction_covered),
         'coverageStyle': coverage_style,
     }
 
@@ -2039,6 +2225,7 @@ def main():
                 bool(payload.get('requireStraightPose')),
                 payload.get('fitEffect'),
                 bool(payload.get('strictIdentity')),
+                payload.get('poseOccludedGroups'),
             )
             print(json.dumps({'ok': True, 'quality': quality}, ensure_ascii=False))
             return

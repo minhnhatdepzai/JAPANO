@@ -171,3 +171,29 @@ python3 backend/ai_training/evaluate_tryon_manual.py         # tổng hợp đi�
   được ghi rõ là do người chấm, không phải metric của model.
 
 Chưa chấm thì script in `MANUAL_EVALUATION_EMPTY` thay vì bịa số.
+
+## Lượt fine-tune số đo ảnh 30/09/2026
+
+Các script mới tạo checkpoint thật, log từng epoch, split cố định, dự đoán test,
+SHA-256 và kiểm tra nạp lại:
+
+```bash
+python3 backend/ai_training/prepare_celeb_fbi_person_crops.py
+python3 backend/ai_training/train_photo_weight_model.py
+python3 backend/ai_training/train_photo_bmi_model.py --architecture resnet18
+python3 backend/ai_training/train_photo_bmi_model.py --architecture densenet201 --batch-size 96
+python3 backend/ai_training/train_photo_bmi_model.py --architecture convnext_tiny --batch-size 192
+python3 backend/ai_training/train_bodies_pretrain.py --architecture convnext_tiny --batch-size 192
+python3 backend/ai_training/train_bodym_silhouette_model.py
+python3 backend/ai_training/train_japanese_weight_prior.py
+```
+
+Kết luận ở mốc đầu là `NO_NEW_PRODUCTION_MODEL_PROMOTED`; xem
+`evaluation/body_training_20260930.json`. ConvNeXt ImageNet thuần đạt 6,486 kg
+photo-only và 4,804 kg khi biết chiều cao trên Celeb-FBI test; chỉ chỉ số thứ hai
+vượt baseline 4,946 kg. BODIES CC-BY-4.0 cung cấp 12.000 người tổng hợp và 91
+mẫu test ≥140 kg; model đạt 3,076/1,249 kg trên test tổng hợp, nhưng khi dùng
+checkpoint đó khởi tạo Celeb-FBI thì đạt 6,620/4,876 kg và không tốt hơn
+ConvNeXt ImageNet thuần. BodyM silhouette cải thiện mạnh nhưng checkpoint mang
+giấy phép CC-BY-NC-4.0 và chỉ dùng nghiên cứu. Chưa có tập ảnh thật đủ lớn từ
+140 kg để tuyên bố độ chính xác cho người khoảng 150 kg.

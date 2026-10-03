@@ -11,10 +11,30 @@ INFERENCE_SIZE = (576, 768)
 # không mang khuôn mặt/quần áo của một người mẫu khác vào ảnh người dùng.
 TRAVEL_POSE_PRESETS = {
     'relaxed': {
-        'label': 'Đứng thư giãn',
+        'label': 'Đứng thời trang tự nhiên',
         'instruction': (
-            'a relaxed full-body standing pose, weight shifted subtly onto one leg, '
-            'shoulders relaxed, both hands visible and naturally lowered'
+            'a natural feminine full-body fashion stance: the left leg carries most of the weight, the right '
+            'foot is half a step behind with its knee angled slightly inward, the hips and shoulders have a '
+            'subtle opposite tilt, the left arm hangs softly and the right elbow bends slightly so its hand rests '
+            'beside the upper thigh; keep both hands visible and never use a wide-legged, perfectly symmetrical, '
+            'rigid military or mannequin stance'
+        ),
+        'points': {
+            'nose': (.50, .13), 'left_eye': (.53, .12), 'right_eye': (.47, .12),
+            'left_ear': (.56, .13), 'right_ear': (.44, .13), 'neck': (.50, .22),
+            'left_shoulder': (.59, .255), 'right_shoulder': (.41, .245),
+            'left_elbow': (.625, .415), 'right_elbow': (.37, .385),
+            'left_wrist': (.59, .56), 'right_wrist': (.425, .525),
+            'left_hip': (.555, .565), 'right_hip': (.445, .58),
+            'left_knee': (.555, .75), 'right_knee': (.48, .765),
+            'left_ankle': (.55, .93), 'right_ankle': (.49, .91),
+        },
+    },
+    'relaxed-masculine': {
+        'label': 'Đứng nam trung tính',
+        'instruction': (
+            'a relaxed neutral masculine full-body standing pose, feet at a comfortable hip-width distance, '
+            'weight balanced, shoulders relaxed, both hands visible and naturally lowered'
         ),
         'points': {
             'nose': (.50, .13), 'left_eye': (.53, .12), 'right_eye': (.47, .12),
@@ -128,18 +148,18 @@ def canonical_pose(person_box, keypoints, size=TARGET_SIZE):
         'left_ear': (face_center_x + box_w * .115, nose[1] + box_h * .005),
         'right_ear': (face_center_x - box_w * .115, nose[1] + box_h * .005),
         'neck': (face_center_x, shoulder_y - box_h * .025),
-        'left_shoulder': (center_x + box_w * .215, shoulder_y),
-        'right_shoulder': (center_x - box_w * .215, shoulder_y),
-        'left_elbow': (center_x + box_w * .285, shoulder_y + box_h * .205),
-        'right_elbow': (center_x - box_w * .285, shoulder_y + box_h * .205),
-        'left_wrist': (center_x + box_w * .30, shoulder_y + box_h * .43),
-        'right_wrist': (center_x - box_w * .30, shoulder_y + box_h * .43),
-        'left_hip': (center_x + box_w * .13, hip_y),
-        'right_hip': (center_x - box_w * .13, hip_y),
-        'left_knee': (center_x + box_w * .14, knee_y),
-        'right_knee': (center_x - box_w * .14, knee_y),
-        'left_ankle': (center_x + box_w * .15, ankle_y),
-        'right_ankle': (center_x - box_w * .15, ankle_y),
+        'left_shoulder': (center_x + box_w * .19, shoulder_y + box_h * .006),
+        'right_shoulder': (center_x - box_w * .19, shoulder_y - box_h * .006),
+        'left_elbow': (center_x + box_w * .235, shoulder_y + box_h * .20),
+        'right_elbow': (center_x - box_w * .225, shoulder_y + box_h * .17),
+        'left_wrist': (center_x + box_w * .20, shoulder_y + box_h * .40),
+        'right_wrist': (center_x - box_w * .16, shoulder_y + box_h * .35),
+        'left_hip': (center_x + box_w * .115, hip_y),
+        'right_hip': (center_x - box_w * .105, hip_y + box_h * .015),
+        'left_knee': (center_x + box_w * .11, knee_y),
+        'right_knee': (center_x - box_w * .04, knee_y + box_h * .015),
+        'left_ankle': (center_x + box_w * .10, ankle_y),
+        'right_ankle': (center_x - box_w * .02, ankle_y - box_h * .02),
     }
     # Không để skeleton đi ra ngoài canvas.
     return {name: (max(4, min(size[0] - 4, x)), max(4, min(size[1] - 4, y))) for name, (x, y) in pose.items()}
@@ -259,7 +279,9 @@ class PoseReposer:
         generated = self.pipe(
             prompt=(
                 'photorealistic full body photo of the exact same adult person, front facing, '
-                'upright relaxed standing pose with straight legs, both arms lowered naturally beside the torso, '
+                'natural feminine fashion stance with one straight weight-bearing leg, the other foot half a step '
+                'behind and its knee slightly inward, subtle opposite hip and shoulder tilt, relaxed shoulders, '
+                'one arm softly lowered and the other elbow slightly bent beside the upper thigh, '
                 'hands open and visible, anatomically correct body, fully clothed in a plain gray long sleeve '
                 'shirt and plain gray long pants, same indoor background and camera angle'
             ),

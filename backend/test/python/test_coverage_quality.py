@@ -218,6 +218,46 @@ class CoverageQualityTest(unittest.TestCase):
         self.assertFalse(quality['ok'])
         self.assertTrue(any(r.startswith('unexpected_skin') for r in quality['reasons']), quality['reasons'])
 
+    def test_kimono_sat_nach_vat_ngan_bi_chan_vi_sai_ket_cau(self):
+        clean = render()
+        result = render(upper_arms=SKIN, legs=SKIN)
+        quality = coverage_quality(clean, result, POSE, {
+            'allowedExposedZones': [],
+            'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+            'constructionCoveredZones': ['upperArms', 'legs'],
+        })
+        self.assertFalse(quality['ok'])
+        self.assertIn('garment_construction_exposed:upperArms', quality['reasons'])
+        self.assertIn('garment_construction_exposed:legs', quality['reasons'])
+
+    def test_kimono_che_tay_va_chan_thi_qua_cong_ket_cau(self):
+        quality = coverage_quality(render(), render(), POSE, {
+            'allowedExposedZones': [],
+            'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+            'constructionCoveredZones': ['upperArms', 'legs'],
+        })
+        self.assertTrue(quality['ok'], quality)
+        self.assertEqual(quality['constructionCoveredZones'], ['legs', 'upperArms'])
+
+    def test_kimono_dai_den_mat_ca_khong_bi_chan_vi_lo_ban_chan(self):
+        clean = render()
+        result = render()
+        draw = ImageDraw.Draw(result)
+        x1, y1, x2, y2 = zone_box(POSE, SIZE, 'legs')
+        # Mô phỏng bàn chân/cổ chân chiếm khoảng 9% ô chân. Đây vẫn là Kimono
+        # dài bình thường, khác hẳn trường hợp toàn ô chân mang màu da ở test
+        # vạt ngắn phía trên.
+        exposed_height = max(1, int((y2 - y1) * 0.09))
+        draw.rectangle((x1, y2 - exposed_height, x2, y2), fill=SKIN)
+        quality = coverage_quality(clean, result, POSE, {
+            'allowedExposedZones': [],
+            'requiredCoveredZones': ['chest', 'pelvis', 'buttocks'],
+            'constructionCoveredZones': ['upperArms', 'legs'],
+        })
+        self.assertTrue(quality['ok'], quality)
+        self.assertGreater(quality['zones']['legs']['after'], 0.07)
+        self.assertLessEqual(quality['zones']['legs']['after'], 0.10)
+
     def test_mau_da_lech_ton_giua_mat_va_bung_bi_bao_loi(self):
         clean = render()
         # Bụng được dựng lại bằng một mảng màu lệch hẳn tông so với khuôn mặt.

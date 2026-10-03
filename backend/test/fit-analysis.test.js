@@ -54,6 +54,56 @@ test('Case 3 — chọn S, khuyến nghị XXL: very_tight, bắt buộc refine,
   assert.ok(garmentPreScaleDelta(result) < 0);
 });
 
+test('thân rộng đã xác nhận + chọn nhỏ 2 bậc phải hiện rất chật và bục áo thường', () => {
+  const result = fit('S', 'L', {
+    zone: 'upper', category: 'tops',
+    bodyAnalysis: {
+      bodyShape: { bodyWidthRatio: 0.24 },
+      quality: { buildCorrection: { applied: true } },
+    },
+  });
+  assert.equal(result.verdict, 'very_tight');
+  assert.equal(result.severity, 0.78);
+  assert.equal(result.visualEffect.tearAllowed, true);
+  assert.ok(result.signals.includes('confirmed_broad_build'));
+  assert.ok(result.allowedEffects.includes('small_seam_split'));
+});
+
+test('thân rộng đã xác nhận + chọn S dù khuyến nghị tạm M vẫn phải mô phỏng quá chật', () => {
+  const result = fit('S', 'M', {
+    zone: 'upper', category: 'tops',
+    bodyAnalysis: {
+      bodyShape: { bodyWidthRatio: 0.24 },
+      quality: { buildCorrection: { applied: true } },
+    },
+  });
+  assert.equal(result.verdict, 'very_tight');
+  assert.equal(result.severity, 0.78);
+  assert.equal(result.visualEffect.tearAllowed, true);
+  assert.ok(result.allowedEffects.includes('small_seam_split'));
+});
+
+test('ảnh xác nhận thân rất rộng + cỡ S vẫn mô phỏng quá chật khi chưa đủ bằng chứng chốt size', () => {
+  const result = fit('S', null, {
+    zone: 'upper', category: 'tops',
+    bodyAnalysis: { quality: { buildCorrection: { applied: true } } },
+  });
+  assert.equal(result.recommendedSize, null);
+  assert.equal(result.verdict, 'very_tight');
+  assert.equal(result.severity, 0.78);
+  assert.equal(result.visualEffect.tearAllowed, true);
+  assert.deepEqual(result.signals, ['confirmed_broad_build', 'smallest_size_selected']);
+});
+
+test('ảnh thân rộng nhưng chọn M không được tự suy diễn chật khi chưa có size khuyến nghị', () => {
+  const result = fit('M', null, {
+    zone: 'upper', category: 'tops',
+    bodyAnalysis: { quality: { buildCorrection: { applied: true } } },
+  });
+  assert.equal(result.verdict, 'unknown');
+  assert.equal(result.visualEffect.tearAllowed, false);
+});
+
 // --- Case 4: cực kỳ rộng -----------------------------------------------------
 test('Case 4 — chọn XL, khuyến nghị S: very_loose, hiệu ứng rủ rộng, không có hiệu ứng rách', () => {
   const result = fit('XL', 'S');

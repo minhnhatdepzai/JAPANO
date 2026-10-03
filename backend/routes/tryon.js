@@ -8,7 +8,7 @@ const { resolveGarmentImage, resolveTwoPieceGarmentImages, resolveAccessoryImage
 const { fetchWithTimeout, serviceHealth } = require('../lib/httpFetch');
 const { CATVTON_URL, FASHN_URL, MOTION_URL, MOTION_ENGINE_LABEL, OLLAMA_URL } = require('../lib/serviceUrls');
 const { FORCE_REPOSE, FASHN_FIDELITY_REFINE } = require('../lib/tryonConfig');
-const { runGpuJob, GpuJobCancelledError, setFocus, getFocus } = require('../lib/gpuArbiter');
+const { runGpuJob, cancelGpuJobs, GpuJobCancelledError, setFocus, getFocus } = require('../lib/gpuArbiter');
 const { SIZE_ORDER, analyzeFit, fitRefinePlan, garmentPreScaleDelta } = require('../lib/fitAnalysis');
 const {
   mergeBodySignals, summarizeBodyAnalysis, bodyAnalysisLogLine, bodyAnalysisEnabled, analyzeViaWorker,
@@ -57,6 +57,47 @@ const ACCESSORY_QUALITY_LABELS = {
   accessory_quality_check_failed:'không chấm được chất lượng phụ kiện',
 };
 const MAX_TRYON_ACCESSORIES = 3;
+const HARD_TRYON_QUALITY_REASONS = new Set([
+  'main_subject_lost', 'face_changed_or_covered', 'body_changed_not_garment',
+  'secondary_person_changed', 'garment_unchanged', 'flat_or_blurred_garment', 'pose_not_corrected',
+  'pose_changed_unexpectedly',
+]);
+
+// Bắp tay không phải vùng an toàn bắt buộc. Detector che phủ thường đặt hộp
+// upperArms quá sát vai ở ảnh chụp nghiêng hoặc khi người dùng đang cầm túi,
+// khiến Yukata/Kimono hợp lệ bị bỏ dù mặt, ngực, hông và thân áo vẫn nguyên.
+// Giữ tín hiệu này để cảnh báo chất lượng, nhưng chỉ các vùng còn lại mới được
+// phép biến một ảnh đã sinh thành lỗi 503.
+function isSoftConstructionWarning(reason) {
+  return String(reason) === 'garment_construction_exposed:upperArms';
+}
+
+// Thay váy/quần áo kín bằng đồ bơi bắt buộc làm lộ lại bụng và chân, nên độ
+// khác biệt cơ thể ngoài mask áo cũ không tự nó chứng minh ảnh hỏng. Bikini vẫn
+// phải qua face/identity gate và coverage gate bắt buộc ở cuối pipeline.
+function isHardTryOnQualityFailure(reasons = [], policy = {}, quality = {}) {
+  return reasons.some((reason) => {
+    if (reason === 'body_changed_not_garment' && policy.containsSwimwear) return false;
+    if (reason === 'pose_changed_unexpectedly' && policy.containsSwimwear) {
+      const joints = quality?.poseDrift?.joints;
+      // Khi thay váy dài bằng bikini, đầu gối/chân vốn bị vải che mới lộ ra.
+      // Pose detector so khớp đoán trên vạt váy với khớp thật trên chân và báo
+      // sai rằng người đã đổi dáng. Tay vẫn là neo nhìn thấy được ở cả hai ảnh:
+      // chỉ chặn khi ít nhất một khớp tay trôi mạnh hoặc nhiều khớp cùng trôi.
+      // Thiếu payload chẩn đoán vẫn fail-closed như trước.
+      if (!joints || typeof joints !== 'object') return true;
+      const armDrift = Object.entries(joints)
+        .filter(([name]) => name.includes('elbow') || name.includes('wrist'))
+        .map(([, value]) => Number(value))
+        .filter(Number.isFinite);
+      if (!armDrift.length) return true;
+      return Math.max(...armDrift) > 0.32 || armDrift.filter((value) => value > 0.28).length >= 2;
+    }
+    return HARD_TRYON_QUALITY_REASONS.has(reason)
+      || (String(reason).startsWith('garment_construction_exposed:')
+        && !isSoftConstructionWarning(reason));
+  });
+}
 
 // Các loại phụ kiện mà cổng chất lượng đòi một tư thế CẦM thật.
 const GRIP_ACCESSORY_KINDS = new Set(['umbrella', 'bag', 'sword', 'hand']);
@@ -120,8 +161,10 @@ function clothTypeFor(product = {}) {
   return coverageProfileFor(product).zone;
 }
 
-// FLUX phải dựng lại toàn bộ tư thế cho ảnh người quá nhỏ, ngồi/nghiêng hoặc
-// bị vật che. Khi đó so pixel/kích thước mắt-vai của ảnh GỐC với ảnh đã dựng là
+// FLUX chỉ dựng lại toàn bộ tư thế khi thiếu hình học bắt buộc hoặc khách chủ
+// động chọn một travel pose. Ảnh đã có dáng đứng dùng được — kể cả đứng nghiêng,
+// lệch vai, bắt chéo chân hay giơ tay — phải giữ nguyên. Khi thật sự dựng lại,
+// so pixel/kích thước mắt-vai của ảnh GỐC với ảnh đã dựng là
 // sai bài toán: chính phép đổi tư thế làm hai chỉ số này lệch, dù ảnh thử đồ vẫn
 // rõ và nhận ra đúng người. Ta vẫn giữ mọi cổng người/áo/pose/độ che phủ, nhưng
 // chuyển kiểm tra danh tính pixel sang cảnh báo minh bạch. Ảnh có pose phù hợp
@@ -133,6 +176,36 @@ function identityPolicyForPoseTransfer(requiresRepose) {
         warning: 'Ảnh gốc cần AI dựng lại tư thế nên khuôn mặt hoặc tỉ lệ có thể lệch nhẹ. Hãy dùng ảnh đứng rõ toàn thân nếu bạn cần giữ danh tính sát nhất.',
       }
     : { strictIdentity: true, warning: '' };
+}
+
+function defaultPoseIdForSex(value) {
+  const sex = String(value || '').trim().toLocaleLowerCase('vi-VN');
+  return /^(male|man|nam|m)$/.test(sex) ? 'relaxed-masculine' : 'relaxed';
+}
+
+function needsPoseCorrection(pose = {}, force = false) {
+  const region = pose.garmentRegion;
+  const suitability = pose.poseSuitability || {};
+  // Đây là danh sách đóng có chủ đích. side_profile, tilted_shoulders,
+  // leaning_body, arms_raised và hands_cover_torso vẫn là dáng hợp lệ của ảnh
+  // khách; đổi chúng sang pose catalog làm mất đúng dáng mà khách muốn giữ.
+  // Chỉ nội suy lại khi cả vai/hông của thân người bị che hoặc mất tới mức model
+  // không còn hình học thân để mặc đồ.
+  const inferred = new Set(pose.inferredKeypoints || []);
+  const shouldersMissing = inferred.has('left_shoulder') && inferred.has('right_shoulder');
+  const hipsMissing = inferred.has('left_hip') && inferred.has('right_hip');
+  // Người ngồi hoặc ảnh bán thân thường mất hai khớp hông vì bàn/khung ảnh,
+  // nhưng vai và phần thân cần mặc vẫn rõ. Dựng lại toàn bộ người trong ca đó
+  // vừa mất cử chỉ gốc vừa tạo vòng lặp: váy mới che hông nên quality gate lại
+  // kết luận pose chưa sửa. Chỉ coi `occluded_torso` là hỏng hình học khi cả
+  // hai đầu của thân (vai VÀ hông) đều không được detector nhìn thấy.
+  const torsoGeometryMissing = shouldersMissing && hipsMissing;
+  const hardReasons = (suitability.reasons || [])
+    .filter((reason) => reason === 'occluded_torso' && torsoGeometryMissing);
+  // Crossed arms are handled by VTON. Do not let garmentRegion re-enable
+  // whole-person generation after hands_cover_torso was explicitly excluded.
+  const hardOcclusion = region?.ok === false && region.reason !== 'hands_cover_chest';
+  return Boolean(force || hardOcclusion || (suitability.requiresRepose && hardReasons.length));
 }
 
 // Mặc thử NHIỀU món cùng lúc (áo + quần + phụ kiện).
@@ -150,7 +223,8 @@ function shouldRefineGarment(product, garmentImagePath, fidelityFlag = FASHN_FID
   // Áo khoác mở phía trước rất dễ bị VTON rút thành áo ngắn và xoá áo trong.
   // Với flat-lay đã duyệt, luôn chạy lượt đối chiếu cấu trúc cho lớp ngoài;
   // cờ toàn cục vẫn điều khiển các loại trang phục còn lại.
-  return isFlatLay && (fidelityFlag || garmentLayerFor(product) === 'upper-outer');
+  const profile = coverageProfileFor(product);
+  return isFlatLay && (fidelityFlag || profile.layer === 'upper-outer' || profile.preserveConstruction);
 }
 
 // Quần/váy được mặc trước để áo nằm ngoài cạp; lớp khoác luôn đi sau áo trong,
@@ -342,15 +416,28 @@ module.exports = function registerTryonRoutes(api, ctx) {
   // `fitEffect` cho cổng chất lượng biết hiệu ứng vừa vặn nào là CÓ CHỦ ĐÍCH,
   // để một chiếc áo bị kéo căng (bề mặt phẳng, ít kết cấu hơn) không bị đánh
   // nhầm thành ảnh mờ/hỏng.
-  async function validateTryOnResult(personImageBase64, resultImage, pose, clothType, requireStraightPose = false, fitEffect = null, strictIdentity = true) {
+  async function validateTryOnResult(personImageBase64, resultImage, pose, clothType, requireStraightPose = false, fitEffect = null, strictIdentity = true, policy = null) {
     if (!resultImage || !resultImage.startsWith('data:')) return { ok: true, reasons: [] };
     try {
       const compareImageBase64 = resultImage.slice(resultImage.indexOf(',') + 1);
+      const constructionZones = new Set(policy?.constructionCoveredZones || []);
+      const poseOccludedGroups = [];
+      if (constructionZones.has('upperArms')) poseOccludedGroups.push('arms');
+      if (constructionZones.has('legs')) poseOccludedGroups.push('legs');
       const checked = await runAccessoryPipeline({
         mode: 'quality', imageBase64: personImageBase64, compareImageBase64,
-        pose, clothType, requireStraightPose, fitEffect, strictIdentity,
+        pose, clothType, requireStraightPose, fitEffect, strictIdentity, poseOccludedGroups,
       }, 90000);
-      return checked.ok && checked.quality ? checked.quality : { ok: false, reasons: ['quality_check_failed'] };
+      const quality = checked.ok && checked.quality ? checked.quality : { ok: false, reasons: ['quality_check_failed'] };
+      if (quality.ok && policy?.preserveConstruction) {
+        const structure = await validateCoverage(personImageBase64, resultImage, pose, policy);
+        const structureReasons = (structure.reasons || [])
+          .filter((reason) => reason.startsWith('garment_construction_exposed:'));
+        if (structureReasons.length) {
+          return { ...quality, ok: false, reasons: structureReasons, structureCoverage: structure };
+        }
+      }
+      return quality;
     } catch (error) {
       return { ok: false, reasons: [`quality_check_error:${error.message}`] };
     }
@@ -514,6 +601,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
     form.append('person', new Blob([person], { type: 'image/jpeg' }), 'person.jpg');
     form.append('cloth', new Blob([garment], { type: 'image/jpeg' }), path.basename(garmentImagePath));
     form.append('category', fashnCategoryFor(product));
+    form.append('garment_type', garmentTypeFor(product));
     const garmentPhotoType = /_tryon-flat\.(?:jpe?g|png|webp)$/i.test(path.basename(garmentImagePath)) ? 'flat-lay' : 'model';
     form.append('garment_photo_type', garmentPhotoType);
     const effectiveQuality = ['fast', 'balanced', 'high'].includes(String(qualityMode))
@@ -523,14 +611,20 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // ở balanced. Profile high vẫn chạy; balanced/fast bỏ qua với trang phục
     // thường. Riêng áo khoác mở/Haori phải giữ vì FASHN đơn lẻ đã đo thật là
     // rút áo dài thành áo ngắn trễ vai. Fit-refine do lệch size vẫn chạy riêng.
-    const structureCritical = garmentLayerFor(product) === 'upper-outer';
-    const shouldRefine = !skipFidelity
+    const structureCritical = garmentLayerFor(product) === 'upper-outer'
+      || coverageProfileFor(product).preserveConstruction;
+    const shouldRefine = (!skipFidelity || structureCritical)
       && shouldRefineGarment(product, garmentImagePath)
       && (effectiveQuality === 'high' || structureCritical);
     form.append('refine', shouldRefine ? 'true' : 'false');
     form.append('repose', shouldRepose ? 'true' : 'false');
     form.append('pose_id', poseId);
     form.append('quality_mode', effectiveQuality);
+    // PNG 960x1280 thường thành JSON base64 2.5-3 MB. Trên Redmi qua adb
+    // reverse, fetch có thể đã nhận HTTP 200 ở server nhưng vẫn kẹt đọc body
+    // đến hết timeout. JPEG 92 giữ đủ chi tiết vải và giảm mạnh payload giao
+    // về app; cổng chất lượng phía dưới vẫn chấm chính ảnh được giao này.
+    form.append('response_format', 'jpeg');
     form.append('seed', String(Number(process.env.JAPANO_FASHN_SEED || 42) + generationAttempt * 101));
     const response = await fetchWithTimeout(
       `${FASHN_URL}/tryon`,
@@ -703,6 +797,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
         coverage: {
           allowedExposedZones: policy.allowedExposedZones,
           requiredCoveredZones: policy.requiredCoveredZones,
+          constructionCoveredZones: policy.constructionCoveredZones,
           coverageStyle: policy.coverageStyle,
         },
       }, 120000);
@@ -797,9 +892,29 @@ module.exports = function registerTryonRoutes(api, ctx) {
     res.json({ ok: true, presets: listTryonPresets() });
   });
 
+  // Đổi ảnh trong khi model đang chạy phải nhả đúng job của thiết bị đó. Đây
+  // là endpoint idempotent: gọi khi không có job vẫn thành công.
+  api.post('/tryon/cancel', (req, res) => {
+    const owner = String(req.body?.clientId || req.body?.deviceId || req.body?.userId || '').trim();
+    const cancelled = owner
+      ? cancelGpuJobs(['tryon', 'swimwear'], 'Người dùng đã đổi ảnh thử đồ.', owner)
+      : [];
+    res.json({ ok: true, cancelled: cancelled.length });
+  });
+
   api.post('/tryon', async (req, res) => {
     const startedAt = Date.now();
     const b = req.body || {};
+    const jobOwner = String(b.clientId || b.deviceId || b.userId || '').trim();
+    // Khi app mất Wi-Fi hoặc đóng request, không để diffusion chạy mồ côi đến
+    // hết timeout. Chỉ hủy job cùng owner để không ảnh hưởng máy demo khác.
+    const cancelDisconnectedJob = () => {
+      if (!res.writableEnded && jobOwner) {
+        cancelGpuJobs(['tryon', 'swimwear'], 'Thiết bị đã ngắt kết nối khỏi lượt thử đồ.', jobOwner);
+      }
+    };
+    req.once('aborted', cancelDisconnectedJob);
+    res.once('close', cancelDisconnectedJob);
     const requestedTravelPose = b.travelPoseId ? findTravelPose(b.travelPoseId) : null;
     if (b.travelPoseId && !requestedTravelPose) {
       return res.status(400).json({
@@ -991,7 +1106,12 @@ module.exports = function registerTryonRoutes(api, ctx) {
       ? b.bodyAnalysisCache
       : null;
     const currentFingerprint = imageFingerprint(b.personImageBase64);
-    const cachedPose = cachedBody?.imageFingerprint === currentFingerprint && cachedBody?.poseCache?.box
+    // Chỉ dùng lại pose đã được chọn bằng quy tắc người ở tâm hiện hành. Cache
+    // cũ từng ưu tiên người to/gần camera có thể mặc nhầm người trong ảnh nhóm.
+    const cachedPose = cachedBody?.imageFingerprint === currentFingerprint
+      && cachedBody?.poseCache?.box
+      && cachedBody?.poseCache?.subjectSelection?.strategy === 'center-person-v1'
+      && Number(cachedBody?.poseCache?.personCount || 1) <= 1
       ? cachedBody.poseCache
       : null;
     let poseAnalysis = cachedPose
@@ -1021,16 +1141,19 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // sau cùng. Đây là best-effort cho ảnh đứng, ngồi, nghiêng, cận người...
     const occluded = Boolean(garmentRegion && garmentRegion.ok === false);
     const poseSuitability = poseAnalysis.pose.poseSuitability || { requiresRepose: occluded, reasons: [] };
-    // Luôn dùng model sửa ảnh đa tham chiếu cho nhân vật chính. Điều này bảo đảm
-    // ảnh được chấm là "đủ tốt" nhưng vẫn giơ tay/ngồi/nghiêng không đi tắt vào
-    // VTON và giữ nguyên tư thế như pipeline cũ.
     // Tay đặt trước/sau thân là ca FASHN xử lý được bằng mask thân người. Ép
-    // qua FLUX chỉ vì lý do này vừa thêm 15-25 giây vừa có nguy cơ vẽ lại mặt.
-    // Chỉ re-pose cho các lỗi hình học thật sự (ngồi/nghiêng/người quá nhỏ...).
-    const hardPoseReasons = (poseSuitability.reasons || []).filter((reason) => reason !== 'hands_cover_torso');
-    const poseCorrectionRequired = Boolean(
-      FORCE_REPOSE || occluded || (poseSuitability.requiresRepose && hardPoseReasons.length > 0),
-    );
+    // qua FLUX chỉ vì lý do này vừa thêm thời gian vừa có nguy cơ vẽ lại mặt.
+    // Dùng cùng danh sách lý do đã thật sự kích hoạt re-pose để response không
+    // báo sai rằng dáng đứng nghiêng/giơ tay đã bị thay khi ảnh vẫn được giữ.
+    const hardPoseReasons = needsPoseCorrection(poseAnalysis.pose, false)
+      ? (poseSuitability.reasons || []).filter((reason) => reason === 'occluded_torso')
+      : [];
+    // Ảnh bị cắt chân vẫn giữ nguyên đầu, vai, tay, vật đang cầm và góc người.
+    // Trước đây Kimono/Yukata tự re-pose chỉ vì không thấy hai cổ chân; ca cầm
+    // máy ảnh vì vậy mất luôn máy và cử chỉ dù FASHN có thể mặc trực tiếp.
+    // Việc không thấy hết vạt được phản ánh bằng giới hạn của ảnh đầu vào, không
+    // phải lý do để dựng lại toàn bộ con người.
+    const poseCorrectionRequired = needsPoseCorrection(poseAnalysis.pose, FORCE_REPOSE);
     const requiresRepose = Boolean(requestedTravelPose || poseCorrectionRequired);
     const identityPolicy = identityPolicyForPoseTransfer(requiresRepose);
     const reposeReasons = [...new Set([
@@ -1043,6 +1166,9 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // Ảnh mới là nguồn vóc dáng mặc định. Chỉ dùng hồ sơ thật đã lưu khi khách
     // chủ động chuyển sang chế độ nhập số đo.
     const measurementProfile = profileForMeasurementMode(b.profile || {}, b.measurementMode);
+    const defaultPoseId = defaultPoseIdForSex(
+      b.sex || measurementProfile.gender || measurementProfile.sex,
+    );
 
     // ---- Phân tích vóc dáng từ chính bức ảnh vừa chọn ----------------------
     // Dùng lại pose vừa tính (không chạy YOLO lần hai) và mặt nạ nền rembg đã
@@ -1135,10 +1261,13 @@ module.exports = function registerTryonRoutes(api, ctx) {
     // quality gate chặn, rồi fit-refine có thể tiếp tục thêm hai lần nữa: trên
     // điện thoại tổng thời gian dễ vượt 2-5 phút và reverse proxy ngắt kết nối.
     // Checkpoint đã qua acceptance gate 8/8 nên giữ retry là cấu hình opt-in.
-    const automaticAttempts = Math.max(1, Math.min(3, Number(process.env.JAPANO_TRYON_AUTO_ATTEMPTS || 1)));
+    // Swimwear edits can drift in body geometry on the first seed. Retry once
+    // through the same identity/coverage gates; never return a rejected image.
+    const defaultAttempts = (twoPieceGarmentImages || safetyPolicy.preserveConstruction) ? 2 : 1;
+    const automaticAttempts = Math.max(1, Math.min(3, Number(process.env.JAPANO_TRYON_AUTO_ATTEMPTS || defaultAttempts)));
     try {
       // Ghi chủ sở hữu để lượt đổi màn hình của máy KHÁC không huỷ lượt này.
-      const jobOwner = String(b.clientId || b.deviceId || b.userId || '').trim();
+      if (req.aborted || res.destroyed) return;
       await runGpuJob(twoPieceGarmentImages ? 'swimwear' : 'tryon', async ({ signal }) => {
         throwIfCancelled(signal);
         for (let generationAttempt = 0; generationAttempt < automaticAttempts && !imageUrl; generationAttempt += 1) {
@@ -1151,7 +1280,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
               requiresRepose,
               generationAttempt,
               signal,
-              requestedTravelPose?.id || 'relaxed',
+              requestedTravelPose?.id || defaultPoseId,
             )
           : await tryFashn(
               normalizedPersonImageBase64,
@@ -1162,7 +1291,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
               signal,
               fitPlan.shouldRefine,
               b.qualityMode,
-              requestedTravelPose?.id || 'relaxed',
+              requestedTravelPose?.id || defaultPoseId,
             );
         imageUrl = fashn.image;
         poseTransferred = fashn.reposed;
@@ -1172,18 +1301,6 @@ module.exports = function registerTryonRoutes(api, ctx) {
         attempts.push(`FASHN lượt ${generationAttempt + 1}: ${error.message}`);
         continue;
       }
-      if ((poseAnalysis.pose.otherBoxes || []).length) {
-        const restored = await runAccessoryPipeline({
-          mode: 'restore_secondary',
-          imageBase64: normalizedPersonImageBase64,
-          compareImageBase64: imageUrl,
-          boxes: poseAnalysis.pose.otherBoxes,
-        }, 90000);
-        if (restored.ok && restored.imageBase64 && restored.restored > 0) {
-          imageUrl = `data:image/png;base64,${restored.imageBase64}`;
-          engine = `${engine}+secondary-person-lock`;
-        }
-      }
       const quality = await validateTryOnResult(
         normalizedPersonImageBase64,
         imageUrl,
@@ -1192,13 +1309,11 @@ module.exports = function registerTryonRoutes(api, ctx) {
         poseCorrectionRequired,
         sizeFit.visualEffect,
         identityPolicy.strictIdentity,
+        safetyPolicy,
       );
       if (!quality.ok) {
         attempts.push(`FASHN lượt ${generationAttempt + 1} bị quality gate chặn: ${(quality.reasons || []).join(', ')}`);
-        const hardFailure = (quality.reasons || []).some((reason) => [
-          'main_subject_lost', 'face_changed_or_covered', 'body_changed_not_garment',
-          'secondary_person_changed', 'garment_unchanged', 'flat_or_blurred_garment', 'pose_not_corrected',
-        ].includes(reason));
+        const hardFailure = isHardTryOnQualityFailure(quality.reasons || [], safetyPolicy, quality);
         if (!hardFailure) {
           // Cảnh báo mềm không được phép biến một ảnh đã tạo thành màn hình lỗi.
           qualityWarning = quality;
@@ -1222,7 +1337,10 @@ module.exports = function registerTryonRoutes(api, ctx) {
           false,
           signal,
         );
-        const quality = await validateTryOnResult(normalizedPersonImageBase64, catvton.image, poseAnalysis.pose, clothType, false);
+        const quality = await validateTryOnResult(
+          normalizedPersonImageBase64, catvton.image, poseAnalysis.pose, clothType,
+          false, null, true, safetyPolicy,
+        );
         if (!quality.ok) {
           attempts.push(`CatVTON fallback bị chặn: ${(quality.reasons || []).join(', ')}`);
         } else {
@@ -1253,7 +1371,10 @@ module.exports = function registerTryonRoutes(api, ctx) {
           const fashn = await tryFashn(baseImage, extra.imagePath, extra.product, false, layerAttempt, signal, false, b.qualityMode);
           // So với ảnh của LƯỢT TRƯỚC, không phải ảnh gốc: ở đây chỉ cần biết
           // đúng vùng này có thật sự đổi sang món mới hay không.
-          const quality = await validateTryOnResult(baseImage, fashn.image, poseAnalysis.pose, extraClothType, false, sizeFit.visualEffect);
+          const quality = await validateTryOnResult(
+            baseImage, fashn.image, poseAnalysis.pose, extraClothType, false,
+            sizeFit.visualEffect, true, safetyPolicyFor([extra.product]),
+          );
           if (quality.ok) {
             layered = fashn.image;
             layeredEngine = fashn.engine;
@@ -1423,7 +1544,11 @@ module.exports = function registerTryonRoutes(api, ctx) {
       coverageQuality = await validateCoverage(
         normalizedPersonImageBase64, imageUrl, poseAnalysis.pose, safetyPolicy,
       );
-      const criticalCoverage = (coverageQuality.reasons || []).filter((reason) => reason.startsWith('required_zone_exposed'));
+      const criticalCoverage = (coverageQuality.reasons || []).filter((reason) => (
+        reason.startsWith('required_zone_exposed')
+        || (reason.startsWith('garment_construction_exposed:')
+          && !isSoftConstructionWarning(reason))
+      ));
       if (criticalCoverage.length) {
         // Kèm số đo da của từng vùng: khi cổng chặn nhầm, biết "vùng nào, da
         // trước bao nhiêu, sau bao nhiêu" là cách duy nhất phân biệt ảnh thật sự
@@ -1519,15 +1644,6 @@ module.exports = function registerTryonRoutes(api, ctx) {
               } else if (confined?.confine?.reason) {
                 attempts.push(`Không khu trú được vùng phụ kiện (${confined.confine.reason}); giữ ảnh refine nguyên khung.`);
               }
-              if ((poseAnalysis.pose.otherBoxes || []).length) {
-                const restored = await runAccessoryPipeline({
-                  mode:'restore_secondary', imageBase64:cleanTryOnImage,
-                  compareImageBase64:refinedImage, boxes:poseAnalysis.pose.otherBoxes,
-                }, 90000);
-                if (restored.ok && restored.imageBase64 && restored.restored > 0) {
-                  refinedImage = `data:image/png;base64,${restored.imageBase64}`;
-                }
-              }
               const checked = await validateAccessoryResult(cleanTryOnImage, refinedImage, kinds);
               candidates.push({ image:refinedImage, stage:refined.engine, quality:checked });
               if (checked.ok) break;
@@ -1561,6 +1677,7 @@ module.exports = function registerTryonRoutes(api, ctx) {
         owner: jobOwner,
       });
     } catch (error) {
+      if (req.aborted || res.destroyed) return;
       if (error instanceof GpuJobCancelledError || error?.code === 'GPU_JOB_CANCELLED') {
         return res.status(409).json({
           ok: false,
@@ -1764,12 +1881,13 @@ module.exports = function registerTryonRoutes(api, ctx) {
       });
       if (stored) logger.info(`[tryon] đã cache kết quả preset ${activePreset.preset.id} khoá=${cacheKeyForRequest.slice(0, 12)}…`);
     }
-    res.json(response);
+    if (!req.aborted && !res.destroyed) res.json(response);
   });
 
   api.get('/tryon/motion/presets', async (req, res) => {
     const health = await serviceHealth(MOTION_URL);
-    res.json({ ok:true, engine:MOTION_ENGINE_LABEL, ready:Boolean(health.online), presets:MOTION_PRESETS });
+    const ready = Boolean(health.online && health.detail?.modelReady && health.detail?.cudaRuntimeReady && health.detail?.ok);
+    res.json({ ok:true, engine:MOTION_ENGINE_LABEL, ready, presets:MOTION_PRESETS });
   });
 
   api.post('/tryon/motion', async (req, res) => {
@@ -1780,11 +1898,12 @@ module.exports = function registerTryonRoutes(api, ctx) {
     }
     try {
       const health = await serviceHealth(MOTION_URL);
-      if (!health.online) {
+      if (!health.online || !health.detail?.modelReady || !health.detail?.cudaRuntimeReady || !health.detail?.ok) {
         return res.status(503).json({
           ok: false,
           engine: MOTION_ENGINE_LABEL,
-          message: 'Engine chuyển động mới chưa sẵn sàng. Ảnh thử đồ vẫn giữ nguyên; chưa tạo video để tránh dùng model cũ hoặc trả clip lỗi.',
+          code: 'MOTION_NOT_READY',
+          message: 'Chưa thể tạo chuyển động: dịch vụ, trọng số mô hình hoặc CUDA chưa sẵn sàng. Ảnh thử đồ của bạn vẫn được giữ lại.',
         });
       }
       let queuedMs = 0;
@@ -1866,8 +1985,11 @@ module.exports.garmentLayerFor = garmentLayerFor;
 module.exports.shouldRefineGarment = shouldRefineGarment;
 module.exports.fashnCategoryFor = fashnCategoryFor;
 module.exports.makeComputeSizeFit = makeComputeSizeFit;
+module.exports.isHardTryOnQualityFailure = isHardTryOnQualityFailure;
 
 module.exports.resolveOutfitGarments = resolveOutfitGarments;
 module.exports.MAX_TRYON_ACCESSORIES = MAX_TRYON_ACCESSORIES;
 module.exports.choosePassingAccessoryCandidate = choosePassingAccessoryCandidate;
 module.exports.identityPolicyForPoseTransfer = identityPolicyForPoseTransfer;
+module.exports.needsPoseCorrection = needsPoseCorrection;
+module.exports.defaultPoseIdForSex = defaultPoseIdForSex;

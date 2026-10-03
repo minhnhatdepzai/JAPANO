@@ -118,3 +118,14 @@ backend/data/motion/*.mp4
 
 # Claude Code local tooling (không đưa lên repo)
 .claude/
+
+# Reproducible AI data downloads and checkpoints (may contain licensed datasets).
+backend/ai_training/workbench/
+backend/ai_training/runs/
+
+# Runtime snapshots / generated presentation images are not source artifacts.
+backend/data/db.json.*
+output/
+
+# Android production signing material must never enter Git.
+.release-signing/

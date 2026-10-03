@@ -21,7 +21,7 @@ const PROFILE_KEY = '@japano/style-profile/v1';
  *   3 — 2026-08-29: 5 mẫu chuyển thành anchor chạy ngầm; app tự áp size được
  *       backend chọn và không còn lưu kết quả của mẫu như số đo người dùng.
  */
-export const BODY_ESTIMATOR_GENERATION = 3;
+export const BODY_ESTIMATOR_GENERATION = 4;
 
 export type SavedStyleProfile = StyleProfile & {
   style: string;

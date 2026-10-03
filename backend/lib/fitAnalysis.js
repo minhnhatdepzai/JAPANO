@@ -197,8 +197,15 @@ function analyzeFit(options = {}) {
   const chosenIndex = sizeIndex(chosen);
   const recommended = recommendedSize ? String(recommendedSize).toUpperCase() : null;
   const recommendedIndex = recommended ? sizeIndex(recommended) : -1;
+  // Ảnh đơn không đủ bằng chứng để CHỐT một size khuyến nghị, nhưng worker vẫn
+  // có thể xác nhận tương đối rằng silhouette hông-thân-đùi đều rất rộng. Nếu
+  // khách chọn đúng cỡ nhỏ nhất S, đó là đủ để mô phỏng áo thường quá chật mà
+  // không cần bịa cân nặng hay tuyên bố một recommendedSize giả.
+  const broadBuildAtSmallestSize = chosenIndex === 0
+    && recommendedIndex < 0
+    && bodyAnalysis?.quality?.buildCorrection?.applied === true;
 
-  if (chosenIndex < 0 || recommendedIndex < 0) {
+  if (chosenIndex < 0 || (recommendedIndex < 0 && !broadBuildAtSmallestSize)) {
     return {
       chosenSize: chosen,
       chosen,
@@ -218,10 +225,12 @@ function analyzeFit(options = {}) {
     };
   }
 
-  const delta = chosenIndex - recommendedIndex;
-  const signals = ['size_delta'];
-  let direction = Math.sign(delta);
-  let severity = severityFromDelta(delta);
+  const delta = recommendedIndex >= 0 ? chosenIndex - recommendedIndex : 0;
+  const signals = broadBuildAtSmallestSize
+    ? ['confirmed_broad_build', 'smallest_size_selected']
+    : ['size_delta'];
+  let direction = broadBuildAtSmallestSize ? -1 : Math.sign(delta);
+  let severity = broadBuildAtSmallestSize ? 0.78 : severityFromDelta(delta);
 
   // Số đo vòng thật cho phép tính ease bằng cm — tín hiệu mạnh hơn bậc size,
   // vì hai người cùng được khuyên size L vẫn có thể lệch nhau 10cm vòng ngực.
@@ -264,6 +273,18 @@ function analyzeFit(options = {}) {
       signals.push('image_body_ratio');
       if (delta < 0 && body.bodyWidthRatio >= 0.34) severity = clamp01(severity + 0.05);
       if (delta > 0 && body.bodyWidthRatio <= 0.24) severity = clamp01(severity + 0.05);
+    }
+    // `bodyWidthRatio` phía trên là bề ngang đã trộn với khung xương, nên người
+    // có hông/đùi rất rộng vẫn có thể chỉ đạt 0.22–0.25. Body worker chỉ đặt
+    // buildCorrection.applied khi CẢ hông thô, trung vị thân và đùi trên cùng
+    // rộng. Với tín hiệu hình học này, ngay cả khuyến nghị mặc định M cũng có
+    // thể thấp hơn nhiều so với cỡ phù hợp thật. Vì vậy khi khách vẫn chọn một
+    // cỡ nhỏ hơn, đặt sàn very_tight thay vì tin chênh lệch M→S giả tạo. Không
+    // dùng cân nặng phỏng đoán và không tác động người chỉ mặc áo rộng nhưng
+    // chân/đùi trung bình.
+    if (delta < 0 && bodyAnalysis?.quality?.buildCorrection?.applied) {
+      signals.push('confirmed_broad_build');
+      severity = clamp01(Math.max(0.78, severity + 0.12));
     }
   }
 

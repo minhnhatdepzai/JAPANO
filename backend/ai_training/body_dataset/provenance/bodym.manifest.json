@@ -16,19 +16,20 @@
     "subject_to_photo_map.csv": "subject_id -> photo_id (nhiều ảnh mỗi người)",
     "mask/": "silhouette nhị phân CHÍNH DIỆN, mask_left/: silhouette NGHIÊNG"
   },
-  "identitySplit": "Có subject_id. train/testA/testB là ba tập người KHÁC NHAU do tác giả chia; testB chụp trong điều kiện ít kiểm soát nên là lát cắt \"ngoài phòng lab\".",
+  "identitySplit": "Train is disjoint from testA/testB. The published CSVs contain one subject shared by testA and testB; training removes that subject from testA before validation, preserving testB.",
   "limits": [
     "Chỉ có silhouette nhị phân, KHÔNG có ảnh RGB — không đo được ảnh hưởng của tách nền hay hoa văn quần áo.",
     "Người mẫu mặc đồ bó sát khi chụp, nên không đại diện cho ảnh mặc áo phom rộng.",
-    "Không công bố phân bố dân tộc/tuổi chi tiết."
+    "Không công bố phân bố dân tộc/tuổi chi tiết.",
+    "Published testA/testB metadata share one subject ID; 22 validation photos were removed by the training script to prevent leakage."
   ],
-  "downloadedAt": "2026-08-27T21:49:48.782825+00:00",
-  "localPath": "/home/nhat/jp/datasets/bodym",
+  "downloadedAt": "2026-09-30T07:52:24.172991+00:00",
+  "localPath": "/home/admin123/jp/datasets/bodym",
   "splits": {
     "train": {
       "subjects": 2018,
       "photos": 6134,
-      "filesDownloadedNow": 762,
+      "filesDownloadedNow": 6134,
       "views": [
         "mask"
       ],
@@ -36,6 +37,32 @@
         "hwg_metadata.csv": "703e98428939767aaf877f38ccfd12b9563ef7d0b0688e0590738acbf876f175",
         "measurements.csv": "1a21380ea9eb77e4d0736f32fd7b5335859e1d27746a105914677a9e366a94c3",
         "subject_to_photo_map.csv": "21e7486d3952a4e3a63048c88d9fbfa70be3ca6d277763d32b423a03c20497d8"
+      }
+    },
+    "testA": {
+      "subjects": 87,
+      "photos": 1684,
+      "filesDownloadedNow": 1684,
+      "views": [
+        "mask"
+      ],
+      "checksums": {
+        "hwg_metadata.csv": "7a53a109354e7e6dd5d750f98c243317b6acb79afbb9725eebf3642b18165d17",
+        "measurements.csv": "fdf4fe74bbf66d57bc9ad1727cebf437650ebe830569c15c911fc933752d74c5",
+        "subject_to_photo_map.csv": "95c47cad359b1b5c476250f8198dc8a7433a783392760294c5616027b2eda843"
+      }
+    },
+    "testB": {
+      "subjects": 400,
+      "photos": 1160,
+      "filesDownloadedNow": 1160,
+      "views": [
+        "mask"
+      ],
+      "checksums": {
+        "hwg_metadata.csv": "737c148f202cffa81d0cbf5f8d07470f9e7673e1b588b309cb9e261aad6c7637",
+        "measurements.csv": "8e5c8e50680dd959c8691e829b1f4cd42fea18a8d9bd681cda41f91c7ab4816e",
+        "subject_to_photo_map.csv": "03f0eeaf626c50c7f942ac2b418d2f9e77bd5c8fb6b09eba88ae3e4ae1ea7680"
       }
     }
   }

@@ -40,17 +40,21 @@ const FOCUS_PROFILES = {
     label: 'Phân tích ảnh sản phẩm',
   },
   chat: {
-    keep: ['ollama'],
+    keep: ['ollama', 'chatAdapter'],
     embeddingDevice: 'off',
     label: 'Trợ lý Ori',
   },
   home: {
-    keep: ['embedding'],
+    // Điều hướng từ màn thử đồ về tab/home thường chỉ kéo dài vài giây. Giữ
+    // FASHN trong khoảng idle của chính service (180s) để một cleanup focus
+    // ngắn không unload 4 GB rồi lượt try-on kế tiếp lại cold-start 7-9s.
+    // Khi sang chat/motion, profile tương ứng vẫn nhả FASHN ngay để lấy VRAM.
+    keep: ['embedding', 'fashn'],
     embeddingDevice: 'cuda',
     label: 'Trang chủ / gợi ý',
   },
   browse: {
-    keep: ['embedding'],
+    keep: ['embedding', 'fashn'],
     embeddingDevice: 'cuda',
     label: 'Duyệt sản phẩm / gợi ý nền',
   },
@@ -183,6 +187,12 @@ const RELEASERS = {
   fashn: releaseFashn,
   motion: releaseMotion,
   ollama: releaseOllama,
+  chatAdapter: async () => {
+    const url = process.env.JAPANO_CHAT_ADAPTER_URL;
+    if (!url) return {service:'chatAdapter',released:false,reason:'disabled'};
+    const body = await postService(`${url.replace(/\/$/, '')}/unload`, 20000);
+    return {service:'chatAdapter',released:Boolean(body.ok)};
+  },
 };
 
 // Job đang chạy cần service nào. Nhả model của service đó giữa chừng làm hỏng
@@ -192,6 +202,7 @@ const SERVICE_NEEDED_BY_JOB = {
   tryon: 'fashn',
   swimwear: 'fashn',
   motion: 'motion',
+  chat: 'chatAdapter',
 };
 
 function serviceLockedByActiveJob() {
@@ -203,7 +214,13 @@ function serviceLockedByActiveJob() {
 function cancellationTargets(focus) {
   if (focus === 'tryon' || focus === 'swimwear') return ['motion', 'vision', 'recommendation'];
   if (focus === 'motion') return ['tryon', 'vision', 'recommendation'];
-  if (focus === 'home' || focus === 'browse' || focus === 'chat') return ['tryon', 'motion', 'vision'];
+  // home/browse là focus THỤ ĐỘNG do AppState và router phát khi màn hình mờ,
+  // back-stack đổi hoặc component cleanup. Chúng không chứng minh người dùng
+  // muốn bỏ ảnh đang tạo, nên không được biến một inference đã bắt đầu thành
+  // 409 trong khi worker vẫn sinh ảnh mồ côi. Đổi ảnh có /tryon/cancel riêng;
+  // các tính năng GPU thật (chat/motion/tryon) vẫn huỷ đối thủ như trước.
+  if (focus === 'home' || focus === 'browse') return [];
+  if (focus === 'chat') return ['tryon', 'motion', 'vision'];
   return [];
 }
 
@@ -267,7 +284,7 @@ function setFocus(focus, options = {}) {
   const next = FOCUS_PROFILES[focus] ? focus : DEFAULT_FOCUS;
   const changed = next !== currentFocus;
   currentFocus = next;
-  lastChangedAt = Date.now();
+  if (changed) lastChangedAt = Date.now();
 
   let cancelled = [];
   if (options.cancelActive) {
@@ -276,6 +293,30 @@ function setFocus(focus, options = {}) {
       `Đã dừng tác vụ GPU vì người dùng chuyển sang ${focusProfile(next).label}.`,
       options.owner,
     );
+  }
+
+  // AppState/điều hướng có thể gửi nhiều tín hiệu giống nhau trong lúc một
+  // transition nặng đang nhả/nạp model. Trước đây mỗi tín hiệu lại nối thêm
+  // một applyFocus đầy đủ vào transitionChain. Một lượt bikini vì thế phải
+  // chờ gần ba phút các transition "swimwear -> swimwear" vô ích, đến khi
+  // client timeout thì cổng 18+ mới chạy xong và FLUX mới bắt đầu.
+  //
+  // Việc huỷ theo owner ở trên vẫn luôn được thực hiện. Chỉ bỏ phần quản lý
+  // model lặp lại; runGpuJob và các chuyển focus thật dùng force/changed nên
+  // vẫn chờ đúng transition cần thiết.
+  if (!changed && !options.force) {
+    const profile = focusProfile(next);
+    return Promise.resolve({
+      ok: true,
+      focus: next,
+      changed: false,
+      kept: [...profile.keep],
+      embeddingDevice: profile.embeddingDevice,
+      actions: [],
+      cancelled,
+      queue: gpuQueue.status(),
+      deduplicated: true,
+    });
   }
 
   transitionChain = transitionChain
@@ -333,4 +374,5 @@ module.exports = {
   DEFAULT_FOCUS,
   GpuJobCancelledError,
   focusRestorePlan,
+  cancellationTargets,
 };

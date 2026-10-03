@@ -1,0 +1,26 @@
+{
+  "dataset": "jpersonwiki: Japanese public figures from Wikidata",
+  "canonicalUrl": "https://www.kaggle.com/datasets/rentoda/jpersonwiki",
+  "upstream": "Wikidata",
+  "license": "CC-BY-SA-4.0",
+  "localPath": "/home/admin123/jp/datasets/jpersonwiki/jpersonwiki.csv",
+  "rawRows": 236717,
+  "acceptedHeightWeightRows": 15752,
+  "acceptedWeightBins": {
+    "110_139": 110,
+    "50_69": 5238,
+    "70_89": 7742,
+    "90_109": 921,
+    "ge140": 34,
+    "lt50": 1707
+  },
+  "csvSha256": "bab52592b8aa17e2f61e898533759221377648980f46173cb8ba73a3ac4f0b92",
+  "usedFor": "Tabular Japanese population prior only; never represented as image-model training.",
+  "limits": [
+    "This model does not inspect an image.",
+    "Wikidata height and weight may be self-reported, historical or stale.",
+    "Public figures and athletes are not representative of all Japanese customers.",
+    "CC-BY-SA attribution and share-alike obligations must be reviewed before deployment."
+  ],
+  "containsCredential": false
+}

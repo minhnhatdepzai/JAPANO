@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { resolveOutfitGarments } = require('../routes/tryon');
+const { resolveOutfitGarments, isHardTryOnQualityFailure } = require('../routes/tryon');
 const { coverageProfileFor, safetyPolicyFor, garmentTypeFor } = require('../lib/garmentCoverage');
 const { analyzeFit, fitRefinePlan } = require('../lib/fitAnalysis');
 const { evaluateAdultGate } = require('../lib/adultTryonPolicy');
@@ -28,6 +28,48 @@ test('bikini hai mảnh KHÔNG bị gộp thành áo tắm một mảnh', () => 
   ]);
   assert.deepEqual(policy.garmentTypes, ['bikini_top', 'bikini_bottom']);
   assert.ok(!policy.garmentTypes.includes('one_piece_swimsuit'));
+});
+
+test('bikini đổi từ váy kín không bị chặn nhầm vì vùng da dự kiến phải thay đổi', () => {
+  const swimPolicy = safetyPolicyFor([product('a', 'Bikini hai mảnh')]);
+  assert.equal(isHardTryOnQualityFailure(['body_changed_not_garment'], swimPolicy), false);
+  assert.equal(isHardTryOnQualityFailure(['face_changed_or_covered'], swimPolicy), true);
+  assert.equal(isHardTryOnQualityFailure(
+    ['required_zone_exposed:chest'], swimPolicy,
+  ), false, 'vùng nhạy cảm do coverage gate riêng chặn, không được trộn hai cổng');
+  const shirtPolicy = safetyPolicyFor([product('b', 'Áo sơ mi')]);
+  assert.equal(isHardTryOnQualityFailure(['body_changed_not_garment'], shirtPolicy), true);
+});
+
+test('bikini vẫn bị chặn nếu model tự đổi tư thế dù không yêu cầu pose transfer', () => {
+  assert.equal(isHardTryOnQualityFailure(['pose_changed_unexpectedly'], { containsSwimwear:true }), true);
+  assert.equal(isHardTryOnQualityFailure(
+    ['pose_changed_unexpectedly'],
+    { containsSwimwear:true },
+    { poseDrift:{ joints:{ left_wrist:.878, right_wrist:.533, left_knee:.379 } } },
+  ), true, 'tay đổi mạnh là thay pose thật');
+});
+
+test('bikini không bị loại khi váy nguồn che chân làm detector đầu gối lệch', () => {
+  assert.equal(isHardTryOnQualityFailure(
+    ['pose_changed_unexpectedly'],
+    { containsSwimwear:true },
+    { poseDrift:{ joints:{ left_elbow:.231, right_elbow:.164, left_wrist:.201, right_wrist:.192,
+                          left_knee:.355, right_knee:.298 } } },
+  ), false);
+});
+
+test('Yukata chỉ hở bắp tay trả ảnh kèm cảnh báo thay vì lỗi 503', () => {
+  const yukataPolicy = safetyPolicyFor([product('y', 'Yukata vải bông xanh đen')]);
+  assert.equal(yukataPolicy.preserveConstruction, true);
+  assert.equal(
+    isHardTryOnQualityFailure(['garment_construction_exposed:upperArms'], yukataPolicy),
+    false,
+  );
+  assert.equal(
+    isHardTryOnQualityFailure(['garment_construction_exposed:legs'], yukataPolicy),
+    true,
+  );
 });
 
 test('bikini không bao giờ được mô phỏng rách dù lệch size cực lớn', () => {

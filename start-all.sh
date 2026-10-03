@@ -81,6 +81,10 @@ fi
 EMBED_LOG="${JAPANO_EMBEDDING_LOG:-/tmp/japano-embedding-7865.log}"
 EMBED_PID=""
 export JAPANO_EMBEDDING_URL="${JAPANO_EMBEDDING_URL:-http://127.0.0.1:7865}"
+OLLAMA_PID=""
+OLLAMA_LOG="${JAPANO_OLLAMA_LOG:-/tmp/japano-ollama.log}"
+export JAPANO_OLLAMA_URL="${JAPANO_OLLAMA_URL:-http://127.0.0.1:11434}"
+export JAPANO_VISION_MODEL="${JAPANO_VISION_MODEL:-qwen3-vl:8b}"
 
 for required_command in node npm curl awk grep sha256sum lsof readlink; do
   if ! command -v "$required_command" >/dev/null 2>&1; then
@@ -90,6 +94,11 @@ for required_command in node npm curl awk grep sha256sum lsof readlink; do
 done
 
 cleanup() {
+  if [[ -n "$OLLAMA_PID" ]] && kill -0 "$OLLAMA_PID" 2>/dev/null; then
+    echo "→ Dừng Ollama do script khởi động (PID $OLLAMA_PID)…"
+    kill "$OLLAMA_PID" 2>/dev/null || true
+    wait "$OLLAMA_PID" 2>/dev/null || true
+  fi
   if [[ -n "$BACKEND_PID" ]] && kill -0 "$BACKEND_PID" 2>/dev/null; then
     echo
     echo "→ Dừng backend JAPANO (PID $BACKEND_PID)…"
@@ -186,6 +195,33 @@ elif [[ ! -d node_modules ]] || ! npm ls --workspaces --depth=0 >/dev/null 2>&1;
   npm install
 else
   echo "✓ Dependencies đã đầy đủ."
+fi
+
+# Uploaded swimwear photos need vision even when approved presets work.
+if ! curl -fsS --max-time 3 "${JAPANO_OLLAMA_URL%/}/api/tags" >/dev/null 2>&1; then
+  OLLAMA_BIN="${JAPANO_OLLAMA_BIN:-$(command -v ollama || true)}"
+  OLLAMA_BIN="${OLLAMA_BIN:-$HOME/.local/ollama/bin/ollama}"
+  if [[ "$JAPANO_OLLAMA_URL" =~ ^http://(127\.0\.0\.1|localhost):11434/?$ && -x "$OLLAMA_BIN" ]]; then
+    echo "→ Khởi động Ollama để kiểm tra ảnh khách tải lên…"
+    OLLAMA_HOST=127.0.0.1:11434 "$OLLAMA_BIN" serve >"$OLLAMA_LOG" 2>&1 &
+    OLLAMA_PID=$!
+    for ((attempt = 1; attempt <= 30; attempt += 1)); do
+      curl -fsS --max-time 2 "${JAPANO_OLLAMA_URL%/}/api/tags" >/dev/null 2>&1 && break
+      kill -0 "$OLLAMA_PID" 2>/dev/null || break
+      sleep 1
+    done
+  fi
+fi
+if ! curl -fsS --max-time 3 "${JAPANO_OLLAMA_URL%/}/api/tags" | node -e '
+let input=""; process.stdin.on("data", x => input += x);
+process.stdin.on("end", () => {
+  try { process.exit(JSON.parse(input).models.some(m => m.name === process.argv[1]) ? 0 : 1); }
+  catch { process.exit(1); }
+});' "$JAPANO_VISION_MODEL"; then
+  echo "⚠ Chưa sẵn sàng kiểm tra ảnh tải lên: cần Ollama và model $JAPANO_VISION_MODEL."
+  echo "  Dùng ollama pull $JAPANO_VISION_MODEL (hoặc \$HOME/.local/ollama/bin/ollama pull $JAPANO_VISION_MODEL)."
+else
+  echo "✓ Ollama có model $JAPANO_VISION_MODEL; kiểm tra ảnh 18+ được bật."
 fi
 
 if [[ "${JAPANO_SKIP_FASHN:-0}" == "1" ]]; then
