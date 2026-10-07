@@ -58,21 +58,19 @@ extract_parts() {
   local prefix="$1"
   local destination="$2"
   local archive="$DOWNLOAD_DIR/${prefix}.tar.zst"
-  local first_part
+  local -a parts=()
 
-  first_part="$(find "$DOWNLOAD_DIR" -maxdepth 1 -type f -name "${prefix}.tar.zst.part-*" -print -quit)"
-  if [[ -n "$first_part" ]]; then
-    find "$DOWNLOAD_DIR" -maxdepth 1 -type f -name "${prefix}.tar.zst.part-*" -print0 \
-      | sort -z \
-      | xargs -0 cat >"$archive"
-  elif [[ ! -f "$archive" ]]; then
+  mapfile -d '' parts < <(find "$DOWNLOAD_DIR" -maxdepth 1 -type f \
+    -name "${prefix}.tar.zst.part-*" -print0 | sort -z)
+  mkdir -p "$destination"
+  if ((${#parts[@]})); then
+    cat "${parts[@]}" | tar --zstd -xf - -C "$destination"
+  elif [[ -f "$archive" ]]; then
+    tar --zstd -xf "$archive" -C "$destination"
+  else
     echo "Missing archive or parts for $prefix" >&2
     exit 1
   fi
-
-  mkdir -p "$destination"
-  tar --zstd -xf "$archive" -C "$destination"
-  rm -f "$archive"
 }
 
 extract_parts japano-ai-trained-runs "$ROOT_DIR"
