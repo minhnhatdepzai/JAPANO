@@ -88,7 +88,8 @@ Kết quả hiện tại nằm trong `backend/ai_training/runs/chat-lora-2026092
 
 GitHub Release `ai-runtime-2026-10-07` chứa các archive chia part dưới 2 GiB,
 kèm `SHA256SUMS`: toàn bộ `runs/`, `workbench/`, model FASHN/FLUX, One-to-All,
-Hugging Face cache cần cho Qwen adapter và model Ollama `qwen3-vl:8b`. Sau khi
+Hugging Face cache cần cho Qwen adapter, model Ollama `qwen3-vl:8b` và U2Net
+cho phân đoạn cơ thể. Sau khi
 clone repo, chạy `./scripts/restore-ai-release.sh`; script kiểm checksum rồi đặt
 file vào đúng đường dẫn mặc định mà `run-all.sh` sử dụng. Không chạy lại train
 và không gọi downloader model/dataset bên ngoài.
