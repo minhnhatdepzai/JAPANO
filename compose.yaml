@@ -1,0 +1,204 @@
+name: japano
+
+x-runtime-image: &runtime-image
+  image: ghcr.io/minhnhatdepzai/japano-runtime:2026-10-07
+  pull_policy: always
+
+x-host-network: &host-network
+  network_mode: host
+
+x-ai-volumes: &ai-volumes
+  - ${HOME}/jp/ai:/home/admin123/jp/ai:ro
+  - ${HOME}/.cache/huggingface:/home/admin123/.cache/huggingface:ro
+  - ${HOME}/.rembg:/home/admin123/.rembg:ro
+  - ${HOME}/.japano-runtime/venvs/fashn:/home/admin123/jp/ai/fashn-vton-1.5/.venv:ro
+  - ${HOME}/.japano-runtime/venvs/motion:/home/admin123/jp/ai/One-to-All-Animation/.venv:ro
+  - ${HOME}/.japano-runtime/venvs/chat:/home/admin123/Downloads/fanpage-chatbot/.venv:ro
+  - ./backend/ai_training/runs:/workspace/backend/ai_training/runs:ro
+  - ./backend/ai_training/models:/workspace/backend/ai_training/models:ro
+  - japano-gpu-lock:/run/japano
+
+x-ai-environment: &ai-environment
+  HOME: /home/admin123
+  HF_HOME: /home/admin123/.cache/huggingface
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+  JAPANO_TRYON_GPU_LOCK: /run/japano/tryon-gpu.active
+  JAPANO_FASHN_HOME: /home/admin123/jp/ai/fashn-vton-1.5
+  JAPANO_FASHN_WEIGHTS: /home/admin123/jp/ai/fashn-vton-1.5/weights
+  JAPANO_FLUX_REPOSE_HOME: /home/admin123/jp/ai/FLUX.2-klein-4B
+  JAPANO_ONE_TO_ALL_HOME: /home/admin123/jp/ai/One-to-All-Animation
+  JAPANO_ONE_TO_ALL_PYTHON: /home/admin123/jp/ai/One-to-All-Animation/.venv/bin/python
+  JAPANO_OLLAMA_URL: http://127.0.0.1:11434
+  OLLAMA_URL: http://127.0.0.1:11434
+
+services:
+  restore:
+    <<: *runtime-image
+    profiles: [tools]
+    user: "${JAPANO_HOST_UID:-1000}:${JAPANO_HOST_GID:-1000}"
+    environment:
+      HOME: /home/admin123
+    volumes:
+      - ./:/workspace
+      - ${HOME}/jp:/home/admin123/jp
+      - ${HOME}/.cache/huggingface:/home/admin123/.cache/huggingface
+      - ${HOME}/.ollama:/home/admin123/.ollama
+      - ${HOME}/.local/ollama:/home/admin123/.local/ollama
+      - ${HOME}/.rembg:/home/admin123/.rembg
+      - ${HOME}/.japano-runtime:/home/admin123/.japano-runtime
+    command: ["bash", "scripts/restore-ai-release.sh"]
+
+  mongodb:
+    image: mongo:8.0.15-noble
+    pull_policy: always
+    <<: *host-network
+    restart: unless-stopped
+    command: ["mongod", "--bind_ip", "127.0.0.1", "--port", "27017"]
+    volumes:
+      - japano-mongodb:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ollama:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    gpus: all
+    environment:
+      OLLAMA_HOST: 127.0.0.1:11434
+    volumes:
+      - ${HOME}/.ollama:/home/admin123/.ollama:ro
+      - ${HOME}/.local/ollama:/home/admin123/.local/ollama:ro
+    command: ["/home/admin123/.local/ollama/bin/ollama", "serve"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:11434/api/tags"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  body-analysis:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    environment:
+      <<: *ai-environment
+    volumes: *ai-volumes
+    command: ["/home/admin123/jp/ai/fashn-vton-1.5/.venv/bin/python", "backend/body_analysis_service.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7863/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  fashn:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    gpus: all
+    environment:
+      <<: *ai-environment
+      JAPANO_FASHN_HOST: 127.0.0.1
+      JAPANO_FASHN_PORT: "7862"
+      JAPANO_RELEASE_OLLAMA_VRAM: "1"
+      JAPANO_UNLOAD_AFTER_TRYON: "0"
+    volumes: *ai-volumes
+    command: ["/home/admin123/jp/ai/fashn-vton-1.5/.venv/bin/python", "backend/fashn_service.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7862/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+
+  motion:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    gpus: all
+    environment:
+      <<: *ai-environment
+      JAPANO_MOTION_HOST: 127.0.0.1
+      JAPANO_MOTION_PORT: "7864"
+    volumes: *ai-volumes
+    command: ["/home/admin123/jp/ai/fashn-vton-1.5/.venv/bin/python", "backend/motion_service.py"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7864/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+
+  chat-adapter:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    gpus: all
+    environment:
+      <<: *ai-environment
+    volumes: *ai-volumes
+    command:
+      - /home/admin123/Downloads/fanpage-chatbot/.venv/bin/python
+      - backend/ai_training/serve_chat_adapter.py
+      - --run
+      - backend/ai_training/runs/chat-lora-20260928
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7866/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+
+  backend:
+    <<: [*runtime-image, *host-network]
+    restart: unless-stopped
+    depends_on:
+      mongodb: {condition: service_healthy}
+      ollama: {condition: service_healthy}
+      body-analysis: {condition: service_healthy}
+      fashn: {condition: service_healthy}
+      motion: {condition: service_healthy}
+      chat-adapter: {condition: service_healthy}
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      <<: *ai-environment
+      NODE_ENV: production
+      PORT: "4100"
+      MONGODB_URI: mongodb://127.0.0.1:27017
+      MONGODB_DB: japano
+      JAPANO_BODY_WORKER_URL: http://127.0.0.1:7863
+      JAPANO_FASHN_URL: http://127.0.0.1:7862
+      JAPANO_MOTION_URL: http://127.0.0.1:7864
+      JAPANO_CHAT_LANGGRAPH: "1"
+      JAPANO_CHAT_ADAPTER_URL: http://127.0.0.1:7866
+      JAPANO_SKIP_EMBEDDING: "1"
+      JAPANO_ADULT_VISION_CHECK: "1"
+      JAPANO_VISION_MODEL: qwen3-vl:8b
+      PYTHON_BIN: /home/admin123/jp/ai/fashn-vton-1.5/.venv/bin/python
+      JAPANO_ACCESSORY_PYTHON: /home/admin123/jp/ai/fashn-vton-1.5/.venv/bin/python
+    volumes:
+      - ${HOME}/jp/ai:/home/admin123/jp/ai:ro
+      - ${HOME}/.cache/huggingface:/home/admin123/.cache/huggingface:ro
+      - ${HOME}/.rembg:/home/admin123/.rembg:ro
+      - ${HOME}/.japano-runtime/venvs/fashn:/home/admin123/jp/ai/fashn-vton-1.5/.venv:ro
+      - ./backend/ai_training/runs:/workspace/backend/ai_training/runs:ro
+      - ./backend/ai_training/models:/workspace/backend/ai_training/models:ro
+      - ./backend/data:/workspace/backend/data
+      - japano-gpu-lock:/run/japano
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4100/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  storefront:
+    image: ghcr.io/minhnhatdepzai/japano-storefront:2026-10-07
+    pull_policy: always
+    <<: *host-network
+    restart: unless-stopped
+    depends_on:
+      backend: {condition: service_healthy}
+    environment:
+      JAPANO_API_ORIGIN: http://127.0.0.1:4100
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:4200
+
+volumes:
+  japano-mongodb:
+  japano-gpu-lock:

@@ -11,9 +11,17 @@ agents. It contains no credentials and does not replace source code or tests.
   published SHA-256 manifest and restores the repository runs/workbench plus
   `~/jp/ai`, Hugging Face and Ollama model locations used by `run-all.sh`.
 - The bundle removes the need to repeat fine-tuning or fetch model/dataset
-  weights from Hugging Face, Kaggle or Ollama. It intentionally excludes
-  virtualenvs, `node_modules`, secrets, signing keys and customer data; target
-  system/CUDA dependencies still need to be installed.
+  weights from Hugging Face, Kaggle or Ollama. It includes the three validated
+  Python virtualenvs. `compose.yaml` and `scripts/docker-up.sh` pull prebuilt
+  runtime/storefront images from GHCR, restore the release with curl and start
+  MongoDB, Ollama, all AI workers, backend and web without host npm/pip setup.
+  Secrets, signing keys and customer data remain excluded.
+- Docker targets Ubuntu 24.04/Linux x86_64 and still requires Docker Compose,
+  an NVIDIA driver and NVIDIA Container Toolkit. Container CPU imports passed
+  for FASHN, Motion and the chat adapter; the storefront returned HTTP 200.
+  Docker GPU execution was not validated on the source host because its Docker
+  daemon has no NVIDIA CDI/runtime configured. Native AI readiness remained
+  green. Do not upgrade that partial evidence to a Docker GPU validation.
 - The workstation has no recoverable FLUX fit-LoRA checkpoint weight even
   though older status/evidence records an accepted checkpoint. Do not claim
   that missing checkpoint is shipped; all locally present chat/body/image

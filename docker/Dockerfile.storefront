@@ -1,0 +1,19 @@
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+ARG JAPANO_API_ORIGIN=http://127.0.0.1:4100
+ENV JAPANO_API_ORIGIN=${JAPANO_API_ORIGIN}
+RUN npm run build
+
+FROM node:24-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production \
+    JAPANO_API_ORIGIN=http://127.0.0.1:4100 \
+    NEXT_PUBLIC_SITE_URL=http://127.0.0.1:4200
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+EXPOSE 4200
+CMD ["sh", "-c", "exec npx wrangler dev --config dist/server/wrangler.json --ip 127.0.0.1 --port 4200 --var JAPANO_API_ORIGIN:${JAPANO_API_ORIGIN} --var NEXT_PUBLIC_SITE_URL:${NEXT_PUBLIC_SITE_URL}"]

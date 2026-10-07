@@ -1,0 +1,40 @@
+FROM node:24-bookworm-slim AS node-runtime
+
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+COPY --from=node-runtime /usr/local/ /usr/local/
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      ca-certificates curl ffmpeg git libegl1 libgl1 libglib2.0-0 libgomp1 \
+      libsm6 libxext6 libxrender1 python3.12 tini zstd \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV HOME=/home/admin123 \
+    NODE_ENV=production \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/home/admin123/.cache/huggingface \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1
+
+WORKDIR /workspace
+COPY package.json package-lock.json ./
+COPY backend/package.json backend/package.json
+COPY mobile/package.json mobile/package.json
+RUN npm ci --omit=dev --ignore-scripts --workspace backend \
+    && npm cache clean --force
+
+COPY backend backend
+COPY mobile/assets mobile/assets
+COPY mobile/lib/japanSpots.ts mobile/lib/japanSpots.ts
+COPY scripts/restore-ai-release.sh scripts/restore-ai-release.sh
+
+RUN mkdir -p /home/admin123/jp /home/admin123/.cache/huggingface \
+      /home/admin123/.ollama /home/admin123/.local/ollama \
+      /home/admin123/.rembg /home/admin123/.japano-runtime \
+      /workspace/.ai-release-download \
+    && chmod +x /workspace/scripts/restore-ai-release.sh
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["node", "backend/server.js"]

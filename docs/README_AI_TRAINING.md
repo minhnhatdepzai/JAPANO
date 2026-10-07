@@ -89,16 +89,24 @@ Kết quả hiện tại nằm trong `backend/ai_training/runs/chat-lora-2026092
 GitHub Release `ai-runtime-2026-10-07` chứa các archive chia part dưới 2 GiB,
 kèm `SHA256SUMS`: toàn bộ `runs/`, `workbench/`, model FASHN/FLUX, One-to-All,
 Hugging Face cache cần cho Qwen adapter, model Ollama `qwen3-vl:8b` và U2Net
-cho phân đoạn cơ thể. Sau khi
-clone repo, chạy `./scripts/restore-ai-release.sh`; script kiểm checksum rồi đặt
-file vào đúng đường dẫn mặc định mà `run-all.sh` sử dụng. Không chạy lại train
-và không gọi downloader model/dataset bên ngoài.
+cho phân đoạn cơ thể. Release cũng chứa ba virtualenv Python đã được kiểm tra
+import lại trong image Ubuntu 24.04; Docker image runtime chứa Node, dependency
+backend và thư viện hệ thống, còn image storefront chứa build web cùng
+dependency. Sau khi clone repo, chạy `./scripts/docker-up.sh` để pull image,
+khôi phục artifact và bật stack mà không chạy npm/pip/train/downloader.
 
-Virtualenv, `node_modules`, `.env`, token, signing key và dữ liệu khách hàng
-không được đóng gói: chúng phụ thuộc OS/CUDA hoặc là bí mật. Máy đích vẫn phải
-cài dependency ứng dụng theo README. Checkpoint fit LoRA FLUX được tài liệu cũ
-ghi nhận nhưng không còn file weight trên workstation nguồn; release chỉ giữ
-status/evidence và không tuyên bố có thể nạp checkpoint đó.
+Luồng không Docker vẫn dùng `./scripts/restore-ai-release.sh`; script kiểm
+checksum rồi đặt file vào đúng đường dẫn mặc định mà `run-all.sh` sử dụng.
+`.env`, token, signing key và dữ liệu khách hàng không được đóng gói vì là bí
+mật. Checkpoint fit LoRA FLUX được tài liệu cũ ghi nhận nhưng không còn file
+weight trên workstation nguồn; release chỉ giữ status/evidence và không tuyên
+bố có thể nạp checkpoint đó.
+
+Docker yêu cầu Linux x86_64, Docker Compose, NVIDIA driver và NVIDIA Container
+Toolkit. CPU/import của FASHN, Motion và chatbot adapter cùng storefront HTTP
+200 đã được kiểm tra trong container. Host đóng gói chưa có NVIDIA Container
+Toolkit nên chưa có bằng chứng GPU end-to-end bên trong Docker; runtime AI gốc
+trên host vẫn vượt các readiness check.
 
 ```bash
 ./scripts/start-ai-demo.sh

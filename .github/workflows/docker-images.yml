@@ -1,0 +1,54 @@
+name: Publish Docker images
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .dockerignore
+      - compose.yaml
+      - docker/**
+      - scripts/docker-up.sh
+      - scripts/restore-ai-release.sh
+      - package.json
+      - package-lock.json
+      - backend/**
+      - mobile/assets/**
+      - mobile/lib/japanSpots.ts
+      - mobile/package.json
+      - web/**
+      - .github/workflows/docker-images.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: runtime
+            dockerfile: docker/Dockerfile.runtime
+          - name: storefront
+            dockerfile: docker/Dockerfile.storefront
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/minhnhatdepzai/japano-${{ matrix.name }}:2026-10-07
+            ghcr.io/minhnhatdepzai/japano-${{ matrix.name }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -33,7 +33,7 @@ while (($#)); do
   esac
 done
 
-for command_name in gh sha256sum tar zstd; do
+for command_name in curl sha256sum tar zstd; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "Missing required command: $command_name" >&2
     exit 1
@@ -42,12 +42,18 @@ done
 
 mkdir -p "$DOWNLOAD_DIR"
 echo "Downloading JAPANO AI release $TAG from $REPOSITORY ..."
-gh release download "$TAG" \
-  --repo "$REPOSITORY" \
-  --pattern 'japano-ai-*' \
-  --pattern 'SHA256SUMS' \
-  --dir "$DOWNLOAD_DIR" \
-  --clobber
+release_url="https://github.com/${REPOSITORY}/releases/download/${TAG}"
+curl --fail --location --retry 5 --retry-all-errors \
+  --output "$DOWNLOAD_DIR/SHA256SUMS" "$release_url/SHA256SUMS"
+while read -r expected_hash asset_name; do
+  [[ "$asset_name" == japano-ai-* ]] || continue
+  asset_path="$DOWNLOAD_DIR/$asset_name"
+  if [[ -f "$asset_path" ]] && echo "$expected_hash  $asset_path" | sha256sum --check --status; then
+    continue
+  fi
+  curl --fail --location --retry 5 --retry-all-errors \
+    --continue-at - --output "$asset_path" "$release_url/$asset_name"
+done <"$DOWNLOAD_DIR/SHA256SUMS"
 
 (
   cd "$DOWNLOAD_DIR"
@@ -81,6 +87,7 @@ extract_parts japano-ai-motion "$HOME/jp/ai"
 extract_parts japano-ai-hf-cache "$HOME/.cache/huggingface"
 extract_parts japano-ai-ollama-qwen3-vl "$HOME"
 extract_parts japano-ai-body-cache "$HOME"
+extract_parts japano-ai-venvs "$HOME"
 
 echo "AI artifacts restored and SHA-256 verified."
 echo "No fine-tuning or model-weight download is required."

@@ -819,8 +819,32 @@ báo, tồn theo size, hàng hết và sản phẩm không tồn tại.
 
 Checkpoint, log, split, workbench và các model runtime lớn được phát hành ở
 GitHub Release [`ai-runtime-2026-10-07`](https://github.com/minhnhatdepzai/JAPANO/releases/tag/ai-runtime-2026-10-07),
-thay vì nhét hàng chục GB binary vào lịch sử Git. Sau khi clone repo trên máy
-mới, đăng nhập GitHub CLI rồi chạy:
+thay vì nhét hàng chục GB binary vào lịch sử Git. Release còn chứa nguyên trạng
+ba virtualenv Python đã chạy trên Ubuntu 24.04 x86_64. Hai image đã build sẵn ở
+GitHub Container Registry là `ghcr.io/minhnhatdepzai/japano-runtime:2026-10-07`
+và `ghcr.io/minhnhatdepzai/japano-storefront:2026-10-07`.
+
+Đường ngắn nhất trên máy mới là clone rồi chạy Docker:
+
+```bash
+git clone https://github.com/minhnhatdepzai/JAPANO.git
+cd JAPANO
+./scripts/docker-up.sh
+```
+
+Script tự tạo `.env.docker` với secret ngẫu nhiên, pull image, tải Release bằng
+`curl`, kiểm toàn bộ `SHA256SUMS`, giải nén đúng vị trí rồi bật MongoDB, Ollama,
+body analysis, FASHN, motion, chatbot adapter, backend và storefront. Không cần
+cài Node/Python/npm/pip, không chạy train và không gọi downloader của Hugging
+Face/Kaggle/Ollama. Lần đầu phải tải khoảng 66 GiB archive và cần đủ dung lượng
+cho cả file nén lẫn dữ liệu đã giải nén.
+
+Máy đích vẫn cần Linux x86_64, Docker Engine + Compose, NVIDIA driver và NVIDIA
+Container Toolkit để Compose cấp GPU cho container. Secret dịch vụ thật
+(Cloudinary, Stripe, email, Google...) có thể điền thêm trong `.env.docker`;
+credential, signing key và dữ liệu khách hàng không được phát hành.
+
+Nếu không dùng Docker, có thể khôi phục thủ công:
 
 ```bash
 ./scripts/restore-ai-release.sh
@@ -828,12 +852,9 @@ mới, đăng nhập GitHub CLI rồi chạy:
 ```
 
 Script tải tất cả part từ đúng release, kiểm `SHA256SUMS`, ghép và giải nén vào
-`backend/ai_training/`, `~/jp/ai`, Hugging Face cache và Ollama. Vì adapter,
-checkpoint và model weight đã có sẵn, máy mới **không fine-tune và không tải
-model lại từ Hugging Face/Kaggle/Ollama**. Máy vẫn cần Ubuntu/Linux x86_64,
-NVIDIA driver/CUDA tương thích, Node, Python, GitHub CLI và các dependency ứng
-dụng theo phần cài đặt bên dưới; `.env`, credential, signing key và dữ liệu khách
-hàng không nằm trong release.
+`backend/ai_training/`, `~/jp/ai`, Hugging Face cache, Ollama và
+`~/.japano-runtime/venvs`. Luồng thủ công vẫn cần dependency hệ thống phù hợp;
+luồng Docker ở trên là lựa chọn để không phải cài lại dependency ứng dụng.
 
 Release giữ nguyên trạng thái bằng chứng: LoRA/VeRA chatbot, các checkpoint ảnh
 và body-regression đã train được phân phối cùng log/hash; fit LoRA FLUX chỉ có
