@@ -800,6 +800,45 @@ Kiểm chứng ngày 05/09: backend 441 test đạt; 6 câu trên web đăng nh�
 trả trong 97–853 ms, kiểm tra phục hồi sau HTTP 503 đạt. Chưa xác nhận thao tác
 chat trên Redmi trong lượt này vì thiết bị đang thử đồ.
 
+### Ori: hỏi catalog và tồn kho trực tiếp
+
+Các câu như `Shop có bao nhiêu sản phẩm?`, `Yukata xanh còn bao nhiêu?`,
+`size M còn mấy cái?`, `còn màu Sumi không?` và `sản phẩm này hết hàng chưa?`
+đi qua intent `inventory` deterministic. Ori đọc state hiện tại của backend
+(MongoDB khi được cấu hình, `db.json` khi chạy fallback), chỉ tính sản phẩm đang
+công khai và cộng tồn theo đúng biến thể màu–size. Sản phẩm hết hàng vẫn được
+nhận diện để trả `0`; tên không có trong catalog được từ chối thay vì gợi ý một
+món khác. LLM/adapter không được phép sinh tên, giá hoặc số lượng tồn kho.
+
+Đây là **grounding/runtime retrieval**, không phải fine-tuning mới. Bộ hồi quy
+backend ngày 04/10/2026 đạt 477/477 test, gồm tổng catalog, tổng tồn đã khai
+báo, tồn theo size, hàng hết và sản phẩm không tồn tại.
+
+
+## Chuyển toàn bộ AI đã train sang máy khác
+
+Checkpoint, log, split, workbench và các model runtime lớn được phát hành ở
+GitHub Release [`ai-runtime-2026-10-07`](https://github.com/minhnhatdepzai/JAPANO/releases/tag/ai-runtime-2026-10-07),
+thay vì nhét hàng chục GB binary vào lịch sử Git. Sau khi clone repo trên máy
+mới, đăng nhập GitHub CLI rồi chạy:
+
+```bash
+./scripts/restore-ai-release.sh
+./run-all.sh --no-phone
+```
+
+Script tải tất cả part từ đúng release, kiểm `SHA256SUMS`, ghép và giải nén vào
+`backend/ai_training/`, `~/jp/ai`, Hugging Face cache và Ollama. Vì adapter,
+checkpoint và model weight đã có sẵn, máy mới **không fine-tune và không tải
+model lại từ Hugging Face/Kaggle/Ollama**. Máy vẫn cần Ubuntu/Linux x86_64,
+NVIDIA driver/CUDA tương thích, Node, Python, GitHub CLI và các dependency ứng
+dụng theo phần cài đặt bên dưới; `.env`, credential, signing key và dữ liệu khách
+hàng không nằm trong release.
+
+Release giữ nguyên trạng thái bằng chứng: LoRA/VeRA chatbot, các checkpoint ảnh
+và body-regression đã train được phân phối cùng log/hash; fit LoRA FLUX chỉ có
+status/evidence trong checkout hiện tại vì file checkpoint gốc không còn trên
+máy này, nên không được mô tả là artifact có thể khôi phục.
 
 ## LoRA, VeRA và LangGraph — cập nhật 28/09/2026
 

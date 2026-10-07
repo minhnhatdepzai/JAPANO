@@ -5,7 +5,7 @@ const { normalizeText } = require('./postTransformer');
 const { runGpuJob, getFocus } = require('./gpuArbiter');
 const { catalogCandidates } = require('./chatbot');
 
-const SAFE_INTENTS = new Set(['shopping', 'price', 'size', 'outfit', 'order', 'discount', 'tryon', 'travel', 'greeting', 'fallback']);
+const SAFE_INTENTS = new Set(['shopping', 'inventory', 'price', 'size', 'outfit', 'order', 'discount', 'tryon', 'travel', 'greeting', 'fallback']);
 const EVENT_WEIGHTS = { view:1, click:2, wishlist:3, cart:4, purchase:5 };
 
 function available(product) {

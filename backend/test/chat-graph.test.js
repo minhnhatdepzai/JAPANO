@@ -32,6 +32,14 @@ test('out of scope fallback gives no invented inventory', async () => {
   assert.match(out.result.message,/JAPANO/);assert.deepEqual(out.result.productIds,[]);
 });
 
+test('inventory answer remains deterministic through graph grounding', async () => {
+  const graph=createChatGraph(chatbot.reply,async()=>{throw new Error('adapter should not run');});
+  const out=await graph.invoke({state,options:{message:'Áo Nhật size M còn bao nhiêu?'},timeoutMs:100});
+  assert.equal(out.result.intent,'inventory');
+  assert.match(out.result.message,/còn 3 sản phẩm \(size M\)/);
+  assert.deepEqual(out.result.productIds,['a']);
+});
+
 test('price filter keeps relevant live products without treating filtering as deletion', async () => {
   const yukata={...product,id:'y',slug:'y',name:'Yukata xanh'};
   const s={...state,products:[product,yukata]};

@@ -84,6 +84,21 @@ Kết quả hiện tại nằm trong `backend/ai_training/runs/chat-lora-2026092
 
 ## Runtime và kiểm soát câu trả lời
 
+### Khôi phục artifact/model đã có trên máy khác
+
+GitHub Release `ai-runtime-2026-10-07` chứa các archive chia part dưới 2 GiB,
+kèm `SHA256SUMS`: toàn bộ `runs/`, `workbench/`, model FASHN/FLUX, One-to-All,
+Hugging Face cache cần cho Qwen adapter và model Ollama `qwen3-vl:8b`. Sau khi
+clone repo, chạy `./scripts/restore-ai-release.sh`; script kiểm checksum rồi đặt
+file vào đúng đường dẫn mặc định mà `run-all.sh` sử dụng. Không chạy lại train
+và không gọi downloader model/dataset bên ngoài.
+
+Virtualenv, `node_modules`, `.env`, token, signing key và dữ liệu khách hàng
+không được đóng gói: chúng phụ thuộc OS/CUDA hoặc là bí mật. Máy đích vẫn phải
+cài dependency ứng dụng theo README. Checkpoint fit LoRA FLUX được tài liệu cũ
+ghi nhận nhưng không còn file weight trên workstation nguồn; release chỉ giữ
+status/evidence và không tuyên bố có thể nạp checkpoint đó.
+
 ```bash
 ./scripts/start-ai-demo.sh
 curl http://127.0.0.1:7866/health
@@ -96,6 +111,14 @@ curl -H 'content-type: application/json' \
 Website: http://localhost:4200. Admin: http://localhost:4100/admin/. Các unit systemd user là phiên phát triển, không tự cài khởi động sau reboot. Script giữ nguyên unit đang chạy; cấu hình mới cần restart có chủ đích.
 
 Adapter chỉ trả một intent thuộc whitelist, không sinh nội dung giá, tên hàng, mã giảm hay link. GPU arbiter nhả adapter về CPU trước khi FASHN/FLUX chạy; nếu GPU bận hoặc hết hạn chờ, chatbot dùng trả lời có căn cứ sẵn có. Câu hỏi tài khoản dùng `sub` của JWT, không tin `userId` trong body khi bật graph. Không phân tích tâm lý nhạy cảm hay suy diễn số đo từ ảnh. Sự kiện bot tự gợi ý không được dùng làm bằng chứng sở thích.
+
+Intent `inventory` ngày 04/10/2026 là luật + truy hồi database, không phải một
+lượt fine-tune mới. Nó trả tổng số sản phẩm công khai, tổng đơn vị tồn đã khai
+báo, tồn theo tên/màu/size, hàng hết và trạng thái không tìm thấy. Cả câu trả
+lời lẫn `productIds` đều được dựng từ state tại thời điểm request; adapter chỉ
+có thể định tuyến intent và không được giữ số lượng sản phẩm trong trọng số.
+Backend đạt 477/477 test sau thay đổi, trong đó các ca inventory mới kiểm tra
+số đếm bằng phép tính độc lập từ fixture.
 
 ## SEO
 

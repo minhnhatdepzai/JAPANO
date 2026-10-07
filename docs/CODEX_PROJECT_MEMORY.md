@@ -1,7 +1,38 @@
 # JAPANO project memory
 
-Last updated: 2026-10-03. This is the short source-of-truth index for coding
+Last updated: 2026-10-07. This is the short source-of-truth index for coding
 agents. It contains no credentials and does not replace source code or tests.
+
+### Portable AI release bundle (2026-10-07)
+
+- Large trained artifacts and runtime weights are distributed as split GitHub
+  Release assets under tag `ai-runtime-2026-10-07`, not committed into Git
+  history. `scripts/restore-ai-release.sh` downloads all assets, verifies the
+  published SHA-256 manifest and restores the repository runs/workbench plus
+  `~/jp/ai`, Hugging Face and Ollama model locations used by `run-all.sh`.
+- The bundle removes the need to repeat fine-tuning or fetch model/dataset
+  weights from Hugging Face, Kaggle or Ollama. It intentionally excludes
+  virtualenvs, `node_modules`, secrets, signing keys and customer data; target
+  system/CUDA dependencies still need to be installed.
+- The workstation has no recoverable FLUX fit-LoRA checkpoint weight even
+  though older status/evidence records an accepted checkpoint. Do not claim
+  that missing checkpoint is shipped; all locally present chat/body/image
+  checkpoints, logs and evaluations are included.
+
+### Catalog-grounded inventory answers (2026-10-04)
+
+- `backend/lib/chatbot.js` now routes explicit quantity/availability questions
+  to a deterministic `inventory` intent before size, price and shopping. It
+  reads the request's current backend state, counts only public products, sums
+  non-negative variant stock, supports product/color/size filters, reports
+  published-but-sold-out items as zero and rejects names absent from the public
+  catalog instead of substituting recommendations.
+- Product facts remain runtime grounding, not fine-tuning. The LoRA/VeRA intent
+  adapter may classify requests but must never encode or generate names, prices
+  or inventory quantities. `backend/lib/chatGraph.js` whitelists the new intent
+  while its deterministic reply remains protected from LLM rewriting.
+- Focused inventory/graph tests passed 27/27; the full backend Node suite passed
+  477/477. No phone-visible chat validation was performed in this change yet.
 
 ### Public endpoint and Android 1.0.20 release preparation (2026-10-03)
 

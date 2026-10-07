@@ -12,6 +12,10 @@ const INTENTS = [
   { name: 'greeting', test: /(^|[^\p{L}\p{N}])(chào|hi|hello|xin chào|alo)(?=$|[^\p{L}\p{N}])/iu },
   { name: 'discount', test: /(giảm giá|khuyến mãi|voucher|mã giảm|sale|ưu đãi)/i },
   { name: 'order', test: /(đơn hàng|đơn của tôi|đã đặt|tình trạng đơn|giao hàng|ship tới đâu|vận chuyển)/i },
+  // Tồn kho phải được trả từ state hiện tại, không giao cho semantic router hay
+  // model ngôn ngữ đoán. Đặt trước `size`, `price` và `shopping` vì câu như
+  // "size M còn bao nhiêu" hoặc "shop có bao nhiêu sản phẩm" khớp cả ba.
+  { name: 'inventory', test: /(tồn kho|ton kho|còn hàng|con hang|hết hàng|het hang|số lượng|so luong|bao nhiêu\s*(cái|chiếc|món|sản phẩm|san pham|hàng|hang)|còn\s*(bao nhiêu|mấy)|con\s*(bao nhieu|may)|size.{0,24}(bao nhiêu|bao nhieu|mấy|may))/i },
   { name: 'size', test: /(size|kích thước|mặc vừa|số đo|vòng ngực|vòng eo)/i },
   { name: 'tryon', test: /(thử đồ|thử ảnh|ướm thử|xem thử lên người)/i },
   { name: 'trend', test: /(hot|bán chạy|xu hướng|trend|nổi bật|hot trend)/i },
@@ -145,6 +149,108 @@ function isAvailableProduct(product) {
   if (['archived', 'hidden', 'draft', 'out'].includes(status)) return false;
   const variants = Array.isArray(product?.variants) ? product.variants : [];
   return !variants.length || variants.some((variant) => finiteNumber(variant.stock, 0) > 0);
+}
+
+function isPublishedProduct(product) {
+  const status = String(product?.status || 'published').toLowerCase();
+  return status === 'published' || status === 'active';
+}
+
+function stockUnits(variants) {
+  return (variants || []).reduce((total, variant) => total + Math.max(0, Math.floor(finiteNumber(variant?.stock, 0))), 0);
+}
+
+const INVENTORY_QUERY_WORDS = new Set([
+  'shop', 'japano', 'co', 'con', 'hang', 'het', 'ton', 'kho', 'bao', 'nhieu',
+  'may', 'cai', 'chiec', 'mon', 'san', 'pham', 'so', 'luong', 'tong', 'dang',
+  'ban', 'khong', 'size', 'kich', 'thuoc', 'mau', 'gia', 'la', 'va', 'gi',
+]);
+
+function inventoryMatches(message, products, limit = 4) {
+  const queryWords = normalizeText(message).split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 2 && !INVENTORY_QUERY_WORDS.has(word));
+  if (!queryWords.length) return [];
+  const ranked = products.map((product) => {
+    const name = normalizeText(product.name);
+    const nameWords = new Set(name.split(/[^a-z0-9]+/).filter(Boolean));
+    const other = normalizeText([
+      product.kanji, product.cat, product.category, product.garmentType,
+      ...(product.tags || []), ...(product.visualTags || []),
+    ].filter(Boolean).join(' '));
+    let nameHits = 0;
+    let score = 0;
+    for (const word of queryWords) {
+      if (nameWords.has(word)) { nameHits += 1; score += 4; }
+      else if (name.includes(word)) { nameHits += 1; score += 2; }
+      else if (other.split(/[^a-z0-9]+/).includes(word)) score += 0.5;
+    }
+    return { product, nameHits, score };
+  }).filter((row) => row.nameHits > 0).sort((left, right) => right.score - left.score);
+  if (!ranked.length) return [];
+  const bestNameHits = ranked[0].nameHits;
+  return ranked.filter((row) => row.nameHits === bestNameHits).slice(0, limit).map((row) => row.product);
+}
+
+function requestedInventorySize(message) {
+  const match = normalizeText(message).match(/(?:size|co)\s*(xxxl|xxl|xl|xs|s|m|l|\d{1,3})(?:\b|$)/);
+  return match ? match[1].toUpperCase() : '';
+}
+
+function requestedInventoryColor(message, products) {
+  const query = normalizeText(message);
+  const colors = [...new Set(products.flatMap((product) => (product.variants || [])
+    .map((variant) => String(variant.colorName || '').trim()).filter(Boolean)))]
+    .sort((left, right) => right.length - left.length);
+  return colors.find((color) => query.includes(normalizeText(color))) || '';
+}
+
+function inventoryReply(state, message) {
+  const published = (state.products || []).filter(isPublishedProduct);
+  const matched = inventoryMatches(message, published);
+  const normalized = normalizeText(message);
+
+  if (!matched.length) {
+    const asksCatalogTotal = /(shop|japano|catalog|danh muc|san pham|tong)/.test(normalized)
+      && /(bao nhieu|so luong|ton kho|con hang|dang ban)/.test(normalized);
+    if (asksCatalogTotal) {
+      const withDeclaredStock = published.filter((product) => Array.isArray(product.variants) && product.variants.length);
+      const inStock = published.filter((product) => !product.variants?.length || stockUnits(product.variants) > 0);
+      const units = withDeclaredStock.reduce((total, product) => total + stockUnits(product.variants), 0);
+      const undeclared = published.length - withDeclaredStock.length;
+      return {
+        message: `Theo database hiện tại, JAPANO có ${published.length} sản phẩm đang công khai; ${inStock.length} sản phẩm còn hàng, ${published.length - inStock.length} sản phẩm đã hết hàng. Tổng tồn đã khai báo là ${units.toLocaleString('vi-VN')} sản phẩm${undeclared ? `; ${undeclared} sản phẩm chưa khai báo tồn theo biến thể` : ''}.`,
+        productIds: [],
+      };
+    }
+    return { message: 'Mình không tìm thấy sản phẩm đó trong catalog công khai của JAPANO. Bạn gửi đúng tên sản phẩm để mình kiểm tra tồn kho trực tiếp nhé.', productIds: [] };
+  }
+
+  const requestedSize = requestedInventorySize(message);
+  const requestedColor = requestedInventoryColor(message, matched);
+  const lines = matched.map((product) => {
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    if (!variants.length) return `${product.name}: đang công khai nhưng database chưa khai báo số lượng tồn theo biến thể.`;
+    const selected = variants.filter((variant) => {
+      if (requestedSize && String(variant.size || '').trim().toUpperCase() !== requestedSize) return false;
+      if (requestedColor && String(variant.colorName || '').trim() !== requestedColor) return false;
+      return true;
+    });
+    const qualifier = [requestedColor ? `màu ${requestedColor}` : '', requestedSize ? `size ${requestedSize}` : ''].filter(Boolean).join(', ');
+    if (!selected.length) return `${product.name}: không có biến thể ${qualifier || 'được hỏi'} trong database.`;
+    const total = stockUnits(selected);
+    const detail = requestedSize && !requestedColor
+      ? selected.map((variant) => `${variant.colorName || 'Mặc định'}: ${Math.max(0, Math.floor(finiteNumber(variant.stock, 0)))}`).join(', ')
+      : '';
+    if (!total) return `${product.name}: ${qualifier ? `${qualifier} ` : ''}đã hết hàng (0 sản phẩm).`;
+    const sizes = !requestedSize
+      ? [...new Set(selected.filter((variant) => finiteNumber(variant.stock, 0) > 0).map((variant) => String(variant.size || '').trim().toUpperCase()).filter(Boolean))]
+      : [];
+    return `${product.name}: còn ${total.toLocaleString('vi-VN')} sản phẩm${qualifier ? ` (${qualifier})` : ''}${detail ? ` — ${detail}` : ''}${sizes.length ? `; size còn hàng: ${sizes.join(', ')}` : ''}.`;
+  });
+  return {
+    message: `Tồn kho trực tiếp từ database:\n${lines.join('\n')}`,
+    productIds: matched.filter((product) => stockUnits(product.variants) > 0).map(pid),
+  };
 }
 
 function availableSizes(product) {
@@ -390,6 +496,10 @@ function baseReply(state, { userId = 'guest', message = '', profile, history = [
     return { message: `Đơn ${latest.code} đang ở trạng thái "${latest.status}", tổng ${money(latest.total)}. Mở chi tiết đơn hàng nhé.`, productIds: [], actions: [{ id:'open_orders', label:'Mở đơn hàng của tôi', auto:false }] };
   }
 
+  if (intent === 'inventory') {
+    return inventoryReply(state, message);
+  }
+
   if (intent === 'size') {
     const height = profile?.height || profile?.heightCm;
     const weight = profile?.weight || profile?.weightKg;
@@ -511,4 +621,5 @@ function reply(state, { userId = 'guest', message = '', profile, history, planne
 module.exports = {
   reply, matchProducts, availableSizes, catalogCandidates, detectRuleIntent,
   navigationActionFor, recommendJapanPlaces, weatherCandidates, hasLexicalProductMention,
+  inventoryMatches, inventoryReply, stockUnits,
 };

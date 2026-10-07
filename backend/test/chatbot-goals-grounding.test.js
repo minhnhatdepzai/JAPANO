@@ -37,6 +37,44 @@ test('hỏi size sản phẩm trả size còn hàng chứ không đoán chung M-
   assert.doesNotMatch(result.message, /thường quanh M–L/);
 });
 
+test('hỏi tổng catalog trả số đếm và tồn kho đúng từ database', () => {
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Shop có bao nhiêu sản phẩm và còn tổng bao nhiêu hàng?' });
+  const published = state.products.filter((product) => ['published', 'active'].includes(String(product.status || 'published')));
+  const units = published.reduce((total, product) => total + (product.variants || [])
+    .reduce((sum, variant) => sum + Math.max(0, Math.floor(Number(variant.stock) || 0)), 0), 0);
+  assert.equal(result.intent, 'inventory');
+  assert.match(result.message, new RegExp(`${published.length} sản phẩm đang công khai`));
+  assert.match(result.message, new RegExp(`${units.toLocaleString('vi-VN')} sản phẩm`));
+  assert.deepEqual(result.productIds, []);
+});
+
+test('hỏi tồn theo sản phẩm và size trả đúng tổng từng biến thể', () => {
+  const product = state.products.find((item) => item.slug === 'yukata-xanh');
+  const expected = product.variants.filter((variant) => variant.size === 'M')
+    .reduce((sum, variant) => sum + Number(variant.stock || 0), 0);
+  const result = chatbot.reply(state, { userId:'eval-chat', message:'Yukata vải bông xanh đen còn size M bao nhiêu?' });
+  assert.equal(result.intent, 'inventory');
+  assert.deepEqual(result.productIds, ['yukata-xanh']);
+  assert.match(result.message, new RegExp(`còn ${expected.toLocaleString('vi-VN')} sản phẩm \\(size M\\)`));
+  assert.match(result.message, /Sumi: \d+/);
+  assert.doesNotMatch(result.message, /Yukata là áo choàng/);
+});
+
+test('hỏi sản phẩm hết hàng và không tồn tại không được bịa gợi ý thay thế', () => {
+  const soldOut = state.products.find((product) => product.status === 'published'
+    && product.variants?.length && product.variants.every((variant) => Number(variant.stock) <= 0));
+  assert.ok(soldOut);
+  const empty = chatbot.reply(state, { userId:'eval-chat', message:`${soldOut.name} còn hàng không?` });
+  assert.equal(empty.intent, 'inventory');
+  assert.match(empty.message, /hết hàng \(0 sản phẩm\)/);
+  assert.deepEqual(empty.productIds, []);
+
+  const unknown = chatbot.reply(state, { userId:'eval-chat', message:'iPhone còn hàng không?' });
+  assert.equal(unknown.intent, 'inventory');
+  assert.match(unknown.message, /không tìm thấy.*catalog công khai/i);
+  assert.deepEqual(unknown.productIds, []);
+});
+
 test('câu nối tiếp dùng productIds trong lịch sử để trả đúng giá', () => {
   const result = chatbot.reply(state, {
     userId:'eval-chat', message:'cái đó giá bao nhiêu?',
